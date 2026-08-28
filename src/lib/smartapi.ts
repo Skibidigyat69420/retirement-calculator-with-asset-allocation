@@ -324,3 +324,61 @@ export function loadSession(): SmartApiSession | null {
 export function clearSession() {
   localStorage.removeItem(STORAGE_KEY_SESSION);
 }
+
+export interface CandleDataRequest {
+  exchange: string;
+  symboltoken: string;
+  interval: 'ONE_MINUTE' | 'THREE_MINUTE' | 'FIVE_MINUTE' | 'TEN_MINUTE' | 'FIFTEEN_MINUTE' | 'THIRTY_MINUTE' | 'ONE_HOUR' | 'ONE_DAY';
+  fromdate: string; // YYYY-MM-DD HH:mm
+  todate: string;
+}
+
+export type CandleDataPoint = [string, number, number, number, number, number];
+
+/**
+ * Fetch historical candle data from Angel One SmartAPI.
+ * Requires a valid authenticated session.
+ */
+export async function fetchCandleData(
+  creds: SmartApiCredentials,
+  jwtToken: string,
+  params: CandleDataRequest,
+): Promise<{ success: boolean; data?: CandleDataPoint[]; message?: string }> {
+  try {
+    const endpoint = '/api/angelone/rest/secure/angelbroking/historical/v1/getCandleData';
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: buildHeaders(creds, jwtToken),
+      body: JSON.stringify(params),
+    });
+
+    const res = await response.json();
+    if (res.status && Array.isArray(res.data)) {
+      return { success: true, data: res.data };
+    }
+    return { success: false, message: res.message || res.errorcode || 'No candle data returned' };
+  } catch (err: any) {
+    return { success: false, message: err?.message || 'Network error fetching candle data' };
+  }
+}
+
+/**
+ * Build default SmartAPI credentials, preferring environment variables for the API key
+ * so deployments can inject it without touching committed source code.
+ */
+export function buildDefaultCredentials(partial?: Partial<SmartApiCredentials>): SmartApiCredentials {
+  const saved = loadCredentials();
+  const envKey = typeof import.meta.env !== 'undefined' ? (import.meta.env.VITE_ANGEL_API_KEY as string | undefined) : undefined;
+
+  return {
+    apiKey: envKey || saved?.apiKey || '',
+    clientCode: saved?.clientCode || '',
+    pin: saved?.pin || '',
+    totpSecret: saved?.totpSecret || '',
+    localIp: DEFAULT_NETWORK_INFO.localIp,
+    publicIp: DEFAULT_NETWORK_INFO.publicIp,
+    macAddress: DEFAULT_NETWORK_INFO.macAddress,
+    ...saved,
+    ...partial,
+  };
+}

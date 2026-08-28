@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Activity, PieChart, BarChart3, TrendingUp, Wallet, Target, Calculator, Percent, ShieldCheck } from 'lucide-react';
+import { Menu, X, Activity, PieChart, BarChart3, TrendingUp, Wallet, Target, Calculator, Percent, ShieldCheck, BarChart2, Database } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../../lib/utils';
 
@@ -15,6 +15,8 @@ const navItems = [
   { path: '/retirement', label: 'Retirement', icon: Calculator },
   { path: '/inflation', label: 'Inflation', icon: Percent },
   { path: '/angel-connect', label: 'Angel SmartAPI', icon: ShieldCheck },
+  { path: '/mvo', label: 'MVO', icon: BarChart2 },
+  { path: '/market-data', label: 'Market Data', icon: Database },
 ];
 
 export const Header = () => {

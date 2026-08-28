@@ -10,6 +10,8 @@ import {
   Percent,
   ArrowRight,
   ShieldCheck,
+  BarChart2,
+  Database,
 } from 'lucide-react';
 import { useCalculator } from '../context/CalculatorContext';
 import { MetricCard } from '../components/ui/MetricCard';
@@ -30,6 +32,8 @@ const tools = [
   { path: '/goal', label: 'Goal Planner', icon: Target, desc: 'Reverse-calculate required SIP / lumpsum.' },
   { path: '/retirement', label: 'Retirement Readiness', icon: Calculator, desc: 'FIRE-style readiness check.' },
   { path: '/inflation', label: 'Inflation Impact', icon: Percent, desc: 'Purchasing-power erosion over time.' },
+  { path: '/mvo', label: 'MVO Optimizer', icon: BarChart2, desc: 'Mean-variance optimization with live data.' },
+  { path: '/market-data', label: 'Market Data', icon: Database, desc: 'Explore and download price history.' },
 ];
 
 export const Dashboard = () => {
@@ -48,7 +52,7 @@ export const Dashboard = () => {
       <SectionTitle
         title="Wealth Planning Suite"
         subtitle="A comprehensive set of interconnected calculators for institutional-grade retirement and corpus planning."
-        badge="Sound Thesis Capital"
+        badge="Quant Lab Enabled"
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

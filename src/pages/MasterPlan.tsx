@@ -1,4 +1,5 @@
-import { Plus, Trash2, Activity, Building2, Landmark, PieChart, Wallet } from 'lucide-react';
+import { Plus, Trash2, Activity, Building2, Landmark, PieChart, Wallet, BarChart2, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
 import { useCalculator } from '../context/CalculatorContext';
 import { Card } from '../components/ui/Card';
 import { NumberInput } from '../components/ui/NumberInput';
@@ -14,7 +15,10 @@ import { SWPDrawdownChart } from '../components/charts/SWPDrawdownChart';
 import { DonutChart } from '../components/charts/DonutChart';
 import { ASSET_COLORS } from '../lib/constants';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
-import type { AssetCategory } from '../types';
+import { runRetirementMonteCarlo, type RetirementSimParams } from '../lib/monteCarlo';
+import { MonteCarloFanChart } from '../components/charts/MonteCarloFanChart';
+import { useMarketData } from '../hooks/useMarketData';
+import type { AssetCategory, MonteCarloRun } from '../types';
 
 const categoryOptions: { value: AssetCategory; label: string }[] = [
   { value: 'equity', label: 'Equity' },
@@ -42,6 +46,90 @@ export const MasterPlan = () => {
     updateSWP,
     result,
   } = useCalculator();
+
+  const { data: marketData } = useMarketData();
+  const [mcResult, setMcResult] = useState<MonteCarloRun | null>(null);
+  const [mcLoading, setMcLoading] = useState(false);
+
+  const runMonteCarlo = () => {
+    setMcLoading(true);
+    setTimeout(() => {
+      const sumByCategory: Record<AssetCategory, number> = {
+        equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0,
+      };
+      inputs.assets.forEach((a) => {
+        sumByCategory[a.category] += a.value;
+      });
+      const total = Object.values(sumByCategory).reduce((a, b) => a + b, 0);
+      const weights: Record<AssetCategory, number> = {
+        equity: total > 0 ? sumByCategory.equity / total : inputs.sip.equitySplit / 100,
+        debt: total > 0 ? sumByCategory.debt / total : inputs.sip.debtSplit / 100,
+        gold: total > 0 ? sumByCategory.gold / total : 0.05,
+        realestate: total > 0 ? sumByCategory.realestate / total : 0,
+        liquid: total > 0 ? sumByCategory.liquid / total : 0.05,
+        other: total > 0 ? sumByCategory.other / total : 0,
+      };
+
+      const means: Record<AssetCategory, number> = marketData
+        ? {
+            equity: marketData.stats.find((s) => marketData.instruments.find((i) => i.symbol === s.symbol)?.category === 'index')?.annualizedReturn || inputs.sip.equityReturn / 100,
+            debt: marketData.stats.find((s) => marketData.instruments.find((i) => i.symbol === s.symbol)?.category === 'debt')?.annualizedReturn || inputs.sip.debtReturn / 100,
+            gold: marketData.stats.find((s) => marketData.instruments.find((i) => i.symbol === s.symbol)?.category === 'gold')?.annualizedReturn || 0.08,
+            realestate: 0.03,
+            liquid: inputs.stp.liquidReturn / 100,
+            other: 0.06,
+          }
+        : {
+            equity: inputs.sip.equityReturn / 100,
+            debt: inputs.sip.debtReturn / 100,
+            gold: 0.08,
+            realestate: 0.03,
+            liquid: inputs.stp.liquidReturn / 100,
+            other: 0.06,
+          };
+
+      const cov: Record<AssetCategory, Record<AssetCategory, number>> = {
+        equity: { equity: 0.0225, debt: 0.001, gold: 0.002, realestate: 0.005, liquid: 0.0001, other: 0.003 },
+        debt: { equity: 0.001, debt: 0.0025, gold: 0.0005, realestate: 0.001, liquid: 0.0001, other: 0.0005 },
+        gold: { equity: 0.002, debt: 0.0005, gold: 0.04, realestate: 0.001, liquid: 0.0001, other: 0.001 },
+        realestate: { equity: 0.005, debt: 0.001, gold: 0.001, realestate: 0.01, liquid: 0.0001, other: 0.002 },
+        liquid: { equity: 0.0001, debt: 0.0001, gold: 0.0001, realestate: 0.0001, liquid: 0.0001, other: 0.0001 },
+        other: { equity: 0.003, debt: 0.0005, gold: 0.001, realestate: 0.002, liquid: 0.0001, other: 0.02 },
+      };
+
+      if (marketData) {
+        marketData.symbols.forEach((_, i) => {
+          const inst = marketData.instruments[i];
+          const cat: AssetCategory = inst?.category === 'index' ? 'equity' : inst?.category === 'debt' ? 'debt' : inst?.category === 'gold' ? 'gold' : 'other';
+          cov[cat][cat] = marketData.covariance[i][i];
+          marketData.symbols.forEach((__, j) => {
+            const inst2 = marketData.instruments[j];
+            const cat2: AssetCategory = inst2?.category === 'index' ? 'equity' : inst2?.category === 'debt' ? 'debt' : inst2?.category === 'gold' ? 'gold' : 'other';
+            cov[cat][cat2] = marketData.covariance[i][j];
+          });
+        });
+      }
+
+      const params: RetirementSimParams = {
+        currentAge: inputs.currentAge,
+        retirementAge: inputs.retirementAge,
+        lifeExpectancy: inputs.lifeExpectancy,
+        initialValues: sumByCategory,
+        weights,
+        monthlySIP: inputs.sip.amount,
+        sipStepUp: inputs.sip.stepUp,
+        monthlyNeedAtRetirement: result.monthlyNeedAtRetirement,
+        inflation: inputs.inflation,
+        taxRate: inputs.swp.taxRate,
+        simulations: 1000,
+        means,
+        covariance: cov,
+      };
+
+      setMcResult(runRetirementMonteCarlo(params));
+      setMcLoading(false);
+    }, 100);
+  };
 
   const accData = result.snapshots
     .filter((s) => s.phase === 'accumulation')
@@ -274,6 +362,66 @@ export const MasterPlan = () => {
               <DonutChart data={allocationData} />
             </Card>
           </div>
+
+          <Card>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-serif text-navy flex items-center gap-2">
+                  <BarChart2 size={18} className="text-gold" /> Monte Carlo Simulation
+                </h3>
+                <p className="text-sm text-stone-500 mt-1">
+                  1,000 correlated market paths using current assumptions.
+                </p>
+              </div>
+              <Button onClick={runMonteCarlo} disabled={mcLoading} variant="outline">
+                {mcLoading ? (
+                  <span className="flex items-center gap-2">
+                    <RefreshCw size={14} className="animate-spin" /> Running...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <BarChart2 size={14} /> Run Simulation
+                  </span>
+                )}
+              </Button>
+            </div>
+
+            {mcResult ? (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <MetricCard
+                    label="Success Rate"
+                    value={formatPercent(mcResult.successRate * 100)}
+                    subtext="Sustainable through life expectancy"
+                    variant={mcResult.successRate >= 0.8 ? 'success' : mcResult.successRate >= 0.5 ? 'default' : 'danger'}
+                  />
+                  <MetricCard
+                    label="Median Terminal"
+                    value={formatCurrencyCompact(mcResult.medianTerminalCorpus)}
+                    subtext="50th percentile"
+                  />
+                  <MetricCard
+                    label="P5 Terminal"
+                    value={formatCurrencyCompact(mcResult.percentile5)}
+                    subtext="Stress case"
+                    variant="danger"
+                  />
+                  <MetricCard
+                    label="P95 Terminal"
+                    value={formatCurrencyCompact(mcResult.percentile95)}
+                    subtext="Bull case"
+                    variant="success"
+                  />
+                </div>
+                <MonteCarloFanChart data={mcResult.yearlyPercentiles} />
+              </>
+            ) : (
+              <div className="text-center py-12 text-stone-400 bg-stone-50 rounded-xl border border-stone-100">
+                <BarChart2 size={40} className="mx-auto mb-2 opacity-30" />
+                <p className="text-sm">Run the simulation to see percentile bands.</p>
+              </div>
+            )}
+          </Card>
 
           <Card>
             <h3 className="text-lg font-serif text-navy mb-4">Year-by-Year Projection</h3>

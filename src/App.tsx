@@ -12,6 +12,8 @@ import { GoalPlanner } from './pages/GoalPlanner';
 import { Retirement } from './pages/Retirement';
 import { Inflation } from './pages/Inflation';
 import { AngelConnect } from './pages/AngelConnect';
+import { MVO } from './pages/MVO';
+import { MarketData } from './pages/MarketData';
 
 function App() {
   return (
@@ -30,6 +32,8 @@ function App() {
             <Route path="/retirement" element={<Retirement />} />
             <Route path="/inflation" element={<Inflation />} />
             <Route path="/angel-connect" element={<AngelConnect />} />
+            <Route path="/mvo" element={<MVO />} />
+            <Route path="/market-data" element={<MarketData />} />
           </Routes>
         </Layout>
       </BrowserRouter>

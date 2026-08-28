@@ -26,15 +26,15 @@ import {
   type SmartApiSession,
   type SmartApiHolding,
   type SmartApiFunds,
-  DEFAULT_NETWORK_INFO,
   loginSmartApi,
   fetchRMSFunds,
   fetchAllHoldings,
   saveCredentials,
-  loadCredentials,
   loadSession,
   clearSession,
   generateTOTP,
+  buildDefaultCredentials,
+  fetchCandleData,
 } from '../lib/smartapi';
 import { formatCurrency, formatPercent } from '../lib/formatters';
 import { useCalculator } from '../context/CalculatorContext';
@@ -42,20 +42,7 @@ import { useCalculator } from '../context/CalculatorContext';
 export const AngelConnect = () => {
   const { addAsset } = useCalculator();
 
-  const [creds, setCreds] = useState<SmartApiCredentials>(() => {
-    const saved = loadCredentials();
-    return (
-      saved || {
-        apiKey: '',
-        clientCode: '',
-        pin: '',
-        totpSecret: '',
-        localIp: DEFAULT_NETWORK_INFO.localIp,
-        publicIp: DEFAULT_NETWORK_INFO.publicIp,
-        macAddress: DEFAULT_NETWORK_INFO.macAddress,
-      }
-    );
-  });
+  const [creds, setCreds] = useState<SmartApiCredentials>(() => buildDefaultCredentials());
 
   const [session, setSession] = useState<SmartApiSession | null>(() => loadSession());
   const [funds, setFunds] = useState<SmartApiFunds | null>(null);
@@ -67,6 +54,11 @@ export const AngelConnect = () => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [showAdvancedNetwork, setShowAdvancedNetwork] = useState(false);
   const [activeTab, setActiveTab] = useState<'connect' | 'guide' | 'holdings' | 'scripts'>('connect');
+  const [historicalTest, setHistoricalTest] = useState<{ loading: boolean; count: number; message: string | null }>({
+    loading: false,
+    count: 0,
+    message: null,
+  });
 
   // TOTP live generation loop
   useEffect(() => {
@@ -145,6 +137,31 @@ export const AngelConnect = () => {
     setFunds(null);
     setHoldings([]);
     setStatusMessage({ type: 'info', text: 'Disconnected from Angel One SmartAPI session.' });
+  };
+
+  const handleTestHistoricalData = async () => {
+    if (!session) {
+      setStatusMessage({ type: 'error', text: 'Connect to SmartAPI first.' });
+      return;
+    }
+    setHistoricalTest({ loading: true, count: 0, message: null });
+    const to = new Date();
+    const from = new Date();
+    from.setMonth(to.getMonth() - 3);
+    const res = await fetchCandleData(creds, session.jwtToken, {
+      exchange: 'NSE',
+      symboltoken: '99926000',
+      interval: 'ONE_DAY',
+      fromdate: `${from.toISOString().split('T')[0]} 09:15`,
+      todate: `${to.toISOString().split('T')[0]} 09:15`,
+    });
+    setHistoricalTest({ loading: false, count: res.data?.length || 0, message: res.message || null });
+    setStatusMessage({
+      type: res.success ? 'success' : 'error',
+      text: res.success
+        ? `Historical data test passed: fetched ${res.data?.length || 0} daily candles for NIFTY 50.`
+        : `Historical data test failed: ${res.message}`,
+    });
   };
 
   const handleSyncToPlan = () => {
@@ -427,6 +444,26 @@ export const AngelConnect = () => {
                   </Button>
                 )}
               </div>
+
+              {session && (
+                <div className="pt-4 border-t border-stone-200">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleTestHistoricalData}
+                    disabled={historicalTest.loading}
+                    className="w-full text-xs py-2 flex items-center justify-center gap-1.5"
+                  >
+                    <RefreshCw size={14} className={historicalTest.loading ? 'animate-spin' : ''} />
+                    {historicalTest.loading ? 'Testing NIFTY 50 daily candles...' : 'Test Historical Data (NIFTY 50)'}
+                  </Button>
+                  {historicalTest.count > 0 && (
+                    <p className="text-xs text-emerald-600 mt-2 text-center">
+                      Fetched {historicalTest.count} daily candles successfully.
+                    </p>
+                  )}
+                </div>
+              )}
             </form>
           </Card>
 

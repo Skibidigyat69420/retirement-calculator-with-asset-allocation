@@ -15,11 +15,25 @@ Everything feeds into a single unified timeline:
 - **SIP Generator:** Layer on monthly SIPs with step-ups and target portfolio return rates.
 - **Automated Distribution Phase (SWP):** The engine seamlessly transitions into retirement, applying inflation to your target income and deducing withdrawals and taxes to calculate depletion age.
 
-### 3. Beautiful UI & Visualizations 🎨
-- **Tailwind CSS & Lucide Icons:** Styled identically to your deck using cream backgrounds (`#F4F1EA`), strong navy text (`#1A233A`), and elegant gold accents (`#B68B40`).
-- **Recharts Integration:** Completely replaced the old canvas charts with responsive, highly interactive React charts (Nominal vs. Real Trajectories & Liquid SWP Corpus balances) that look great on any screen.
+### 3. Quant Lab — Live Market Data, MVO & Monte Carlo 🧮
+- **Angel One SmartAPI Historical Data:** Fetch daily candles for NIFTY indices and ETFs, cached locally for 24 hours.
+- **Risk/Return Engine:** Compute annualized returns, volatility, Sharpe ratios, covariance and correlation matrices from real daily prices.
+- **Mean-Variance Optimizer (MVO):** Generate the efficient frontier, max-Sharpe, min-variance, equal-weight and risk-parity portfolios. Export optimal weights straight into the Master Plan.
+- **Monte Carlo Retirement Simulator:** Run 1,000 correlated multi-asset paths with annual rebalancing and inflation-indexed withdrawals. View percentile fan charts on the Master Plan.
+- **Market Data Explorer:** Inspect normalized price history and download raw CSV.
 
-To see it locally:
+### 4. Beautiful UI & Visualizations 🎨
+- **Tailwind CSS & Lucide Icons:** Styled identically to your deck using cream backgrounds (`#F4F1EA`), strong navy text (`#1A233A`), and elegant gold accents (`#B68B40`).
+- **Recharts Integration:** Responsive, interactive charts including accumulation trajectories, asset-class evolution, SWP drawdown, MVO efficient frontier and Monte Carlo fan charts.
+
+### 5. Running Locally
+Set your Angel One API key as an environment variable (optional — the UI also accepts manual entry):
 ```bash
-npm run dev
+# Vite will expose VITE_ANGEL_API_KEY to the client bundle
+VITE_ANGEL_API_KEY=your_key npm run dev
+```
+
+To build for production:
+```bash
+npm run build
 ```
