@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Activity, PieChart, TrendingUp, TrendingDown, Wallet, Target, Calculator, Percent, ShieldCheck, BarChart2, Database, Radio, BrainCircuit, Scissors, RefreshCcw, Grid3X3, FileText, Shield, BarChart3 } from 'lucide-react';
+import { Menu, X, Activity, Shield, PieChart, Target, TrendingUp, BarChart2, FileText, BarChart3, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../../lib/utils';
 
@@ -7,25 +7,12 @@ const navItems = [
   { path: '/', label: 'Dashboard', icon: Activity },
   { path: '/risk', label: 'Risk Profile', icon: Shield },
   { path: '/master-plan', label: 'Master Plan', icon: PieChart },
-  { path: '/goal', label: 'Goal Planner', icon: Target },
-  { path: '/allocation', label: 'Allocation', icon: PieChart },
-  { path: '/sip', label: 'SIP', icon: TrendingUp },
-  { path: '/stp', label: 'STP', icon: Wallet },
-  { path: '/swp', label: 'SWP', icon: Wallet },
-  { path: '/retirement', label: 'Retirement', icon: Calculator },
+  { path: '/goal', label: 'Goals', icon: Target },
+  { path: '/allocation', label: 'Allocation', icon: TrendingUp },
   { path: '/mvo', label: 'MVO', icon: BarChart2 },
   { path: '/reports', label: 'Reports', icon: BarChart3 },
-  { path: '/advanced-allocation', label: 'Advanced Allocation', icon: BrainCircuit },
-  { path: '/trade-analytics', label: 'Trade Analytics', icon: Activity },
-  { path: '/sequence-risk', label: 'Sequence Risk', icon: TrendingDown },
-  { path: '/swr', label: 'SWR', icon: Grid3X3 },
-  { path: '/rebalancing', label: 'Rebalancing', icon: RefreshCcw },
-  { path: '/tax-loss-harvesting', label: 'Tax Loss', icon: Scissors },
-  { path: '/ips', label: 'IPS Template', icon: FileText },
-  { path: '/angel-connect', label: 'Angel SmartAPI', icon: ShieldCheck },
-  { path: '/live-market', label: 'Live Market', icon: Radio },
-  { path: '/market-data', label: 'Market Data', icon: Database },
-  { path: '/inflation', label: 'Inflation', icon: Percent },
+  { path: '/ips', label: 'IPS', icon: FileText },
+  { path: '/angel-connect', label: 'Angel Connect', icon: ShieldCheck },
 ];
 
 export const Header = () => {
@@ -42,11 +29,11 @@ export const Header = () => {
             </div>
             <div>
               <div className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Sound Thesis</div>
-              <div className="text-sm font-serif text-navy leading-tight">Institutional Suite</div>
+              <div className="text-sm font-serif text-navy leading-tight">Wealth Planner</div>
             </div>
           </Link>
 
-          <nav className="hidden lg:flex items-center space-x-1">
+          <nav className="hidden xl:flex items-center space-x-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = location.pathname === item.path;
@@ -69,7 +56,7 @@ export const Header = () => {
           </nav>
 
           <button
-            className="lg:hidden p-2 text-stone-500 hover:text-navy"
+            className="xl:hidden p-2 text-stone-500 hover:text-navy"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             {mobileOpen ? <X size={24} /> : <Menu size={24} />}
@@ -78,7 +65,7 @@ export const Header = () => {
       </div>
 
       {mobileOpen && (
-        <div className="lg:hidden border-t border-stone-200 bg-cream">
+        <div className="xl:hidden border-t border-stone-200 bg-cream">
           <nav className="max-w-7xl mx-auto px-4 py-3 grid grid-cols-2 gap-1">
             {navItems.map((item) => {
               const Icon = item.icon;

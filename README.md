@@ -5,20 +5,15 @@ A comprehensive, institutional-grade individual wealth planning suite built with
 ## Features
 
 ### Core Planning
-- **Executive Dashboard** — Net worth, savings rate, goal health, allocation, and trajectory at a glance.
+- **Executive Dashboard** — Net worth, savings rate, goal health, allocation, trajectory, and Monte Carlo fan chart at a glance.
+- **Risk Profile** — Behavioural questionnaire that drives strategic allocation, MVO constraints, and goal success thresholds.
 - **Master Plan** — Tab-based life model: profile, existing assets, cashflows (SIP/STP/SWP), goals, and probabilistic results.
-- **Goal Planner** — Monte Carlo probability distributions, future value, present value needed, success rate, and required SIP for each goal.
+- **Goals** — Monte Carlo probability distributions, future value, present value needed, success rate, and required SIP for each goal.
 - **Asset Allocation** — Current vs target vs projected allocation, rebalancing gaps, glide path reference, and probability of success under the target mix.
 - **Retirement Readiness** — FIRE-style corpus gap analysis.
 
 ### Quantitative Tools
 - **MVO Optimizer** — Efficient frontier, max-Sharpe, min-variance, equal-weight, and risk-parity portfolios using the historical data backend; falls back to category assumptions offline.
-- **Advanced Allocation** — Black-Litterman, risk parity, glide path, and tactical models.
-- **Portfolio Analytics** — Risk metrics, attribution, and stress tests.
-- **Trade Analytics** — Pre-trade cost estimates, post-trade implementation shortfall, rebalancing impact simulator, and FX/currency contribution.
-- **Sequence Risk** — Early-retirement return shock analysis.
-- **SWR Matrix** — Safe withdrawal rate probability grid.
-- **Tax Loss Harvesting** — Identify harvestable losses and estimate tax alpha.
 
 ### Data & Connectivity
 - **Historical Data Backend** — Real daily prices for Indian indices and ETFs are fetched from Yahoo Finance, stored as CSV/JSON, and served by a Vercel serverless function at `/api/market-data`.
@@ -116,11 +111,11 @@ npm run lint
 │   └── data/
 │       └── market-data.json
 ├── src/
-│   ├── components/      # Reusable UI components and charts
+│   ├── components/      # Reusable UI components, charts, and layout
 │   ├── context/         # CalculatorContext for global state
 │   ├── hooks/           # Custom React hooks (market data, etc.)
 │   ├── lib/             # Calculation engines and utilities
-│   ├── pages/           # Top-level route pages
+│   ├── pages/           # Top-level route pages (cohesive 9-page suite)
 │   ├── types/           # TypeScript type definitions
 │   ├── App.tsx          # Router and providers
 │   └── main.tsx         # Entry point

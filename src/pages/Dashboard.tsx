@@ -2,26 +2,16 @@ import { Link } from 'react-router-dom';
 import {
   Activity,
   PieChart,
-  TrendingUp,
-  Wallet,
   Target,
   Calculator,
   ArrowRight,
   ShieldCheck,
   BarChart2,
-  Database,
-  Radio,
-  BrainCircuit,
-  Scissors,
-  RefreshCcw,
-  Grid3X3,
-  AlertTriangle,
-  TrendingDown,
-  Zap,
-  CheckCircle2,
-  XCircle,
   BarChart3,
   FileText,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useCalculator } from '../context/CalculatorContext';
@@ -39,27 +29,15 @@ import { ASSET_COLORS } from '../lib/constants';
 import { MonteCarloFanChart } from '../components/charts/MonteCarloFanChart';
 
 const tools = [
-  { path: '/risk', label: 'Risk Profile', icon: ShieldCheck, desc: 'Behavioural questionnaire that drives the entire plan.' },
+  { path: '/risk', label: 'Risk Profile', icon: ShieldCheck, desc: 'Behavioural questionnaire that drives allocation.' },
   { path: '/master-plan', label: 'Master Plan', icon: Activity, desc: 'Unified profile, assets, cashflows, goals & results.' },
-  { path: '/goal', label: 'Goal Planner', icon: Target, desc: 'Probability-weighted goals, PV needed & required SIP.' },
-  { path: '/allocation', label: 'Asset Allocation', icon: PieChart, desc: 'Current vs target, projections & MVO target.' },
-  { path: '/mvo', label: 'MVO Optimizer', icon: BarChart2, desc: 'Mean-variance frontier with live Angel One data.' },
-  { path: '/reports', label: 'Plan Reports', icon: BarChart3, desc: 'Comprehensive plan summary, tax & currency.' },
-  { path: '/advanced-allocation', label: 'Advanced Allocation', icon: BrainCircuit, desc: 'Black-Litterman, risk parity & glide path.' },
-  { path: '/portfolio-analytics', label: 'Portfolio Analytics', icon: BarChart3, desc: 'Risk metrics, attribution & stress tests.' },
-  { path: '/trade-analytics', label: 'Trade Analytics', icon: Zap, desc: 'Implementation shortfall & market impact.' },
-  { path: '/sequence-risk', label: 'Sequence Risk', icon: TrendingDown, desc: 'Early-retirement return shock analysis.' },
-  { path: '/swr', label: 'SWR Matrix', icon: Grid3X3, desc: 'Safe withdrawal rate probability grid.' },
-  { path: '/rebalancing', label: 'Rebalancing', icon: RefreshCcw, desc: 'Drift-band rebalancing optimizer.' },
-  { path: '/tax-loss-harvesting', label: 'Tax Loss Harvest', icon: Scissors, desc: 'Harvest losses and estimate tax alpha.' },
-  { path: '/sip', label: 'SIP Engine', icon: TrendingUp, desc: 'Project monthly SIPs with annual step-ups.' },
-  { path: '/stp', label: 'STP Deployment', icon: Wallet, desc: 'Deploy lumpsum via liquid-fund staging.' },
-  { path: '/swp', label: 'SWP Engine', icon: Wallet, desc: 'Inflation-indexed withdrawal longevity.' },
-  { path: '/retirement', label: 'Retirement Readiness', icon: Calculator, desc: 'FIRE-style readiness check.' },
+  { path: '/goal', label: 'Goals', icon: Target, desc: 'Probability-weighted goals, PV needed & required SIP.' },
+  { path: '/retirement', label: 'Retirement', icon: Calculator, desc: 'FIRE-style corpus gap analysis.' },
+  { path: '/allocation', label: 'Asset Allocation', icon: PieChart, desc: 'Current vs target, projections & glide path.' },
+  { path: '/mvo', label: 'MVO Optimizer', icon: BarChart2, desc: 'Mean-variance frontier from historical data.' },
+  { path: '/reports', label: 'Plan Reports', icon: BarChart3, desc: 'Consolidated plan summary, tax & currency.' },
   { path: '/ips', label: 'IPS Template', icon: FileText, desc: 'Generate a CFA-aligned policy statement.' },
-  { path: '/angel-connect', label: 'Angel One SmartAPI', icon: ShieldCheck, desc: 'Live broker sync, TOTP & holdings.' },
-  { path: '/live-market', label: 'Live Market', icon: Radio, desc: 'Real-time streaming quotes and watchlists.' },
-  { path: '/market-data', label: 'Market Data', icon: Database, desc: 'Explore and download price history.' },
+  { path: '/angel-connect', label: 'Angel Connect', icon: ShieldCheck, desc: 'Optional live broker sync & refresh.' },
 ];
 
 const quickActions = [
@@ -104,8 +82,8 @@ export const Dashboard = () => {
     <div className="space-y-8">
       <SectionTitle
         title="Executive Dashboard"
-        subtitle="Comprehensive individual wealth planner — goals, allocation, projections, tax, currency and execution quality in one command center."
-        badge="Wealth OS v3"
+        subtitle="Your complete wealth plan — risk profile, master plan, allocation, goals, and reports in one place."
+        badge="Wealth OS"
       />
 
       {!wealthResult.sustainable && (
