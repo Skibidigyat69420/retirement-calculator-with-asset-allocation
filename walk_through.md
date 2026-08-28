@@ -49,3 +49,27 @@ To build for production:
 ```bash
 npm run build
 ```
+
+### 8. Deploy to Vercel 🚀
+
+**Option A: Vercel Git Integration (Recommended)**
+1. Go to [vercel.com](https://vercel.com) and sign in.
+2. Click **Add New Project** → Import Git Repository.
+3. Select `Skibidigyat69420/retirement-calculator-with-asset-allocation`.
+4. Add environment variable `VITE_ANGEL_API_KEY` with value `7mnk8SRp`.
+5. Click **Deploy**.
+
+**Option B: GitHub Actions Auto-Deploy**
+A workflow is included at `.github/workflows/deploy-vercel.yml`. Add these GitHub secrets in your repository settings:
+- `VERCEL_TOKEN` — from [vercel.com/account/tokens](https://vercel.com/account/tokens)
+- `VERCEL_ORG_ID` — from your Vercel project settings
+- `VERCEL_PROJECT_ID` — from your Vercel project settings
+- `VITE_ANGEL_API_KEY` — `7mnk8SRp`
+
+After setting secrets, every push to `main` will automatically build and deploy to Vercel.
+
+**Option C: Vercel CLI**
+```bash
+npm i -g vercel
+vercel --prod
+```
