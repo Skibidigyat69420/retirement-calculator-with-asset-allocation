@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Activity, PieChart, TrendingUp, TrendingDown, Wallet, Target, Calculator, Percent, ShieldCheck, BarChart2, Database, Radio, BrainCircuit, Scissors, RefreshCcw, Grid3X3, FileText, Shield } from 'lucide-react';
+import { Menu, X, Activity, PieChart, TrendingUp, TrendingDown, Wallet, Target, Calculator, Percent, ShieldCheck, BarChart2, Database, Radio, BrainCircuit, Scissors, RefreshCcw, Grid3X3, FileText, Shield, BarChart3 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../../lib/utils';
 
@@ -14,6 +14,7 @@ const navItems = [
   { path: '/swp', label: 'SWP', icon: Wallet },
   { path: '/retirement', label: 'Retirement', icon: Calculator },
   { path: '/mvo', label: 'MVO', icon: BarChart2 },
+  { path: '/reports', label: 'Reports', icon: BarChart3 },
   { path: '/advanced-allocation', label: 'Advanced Allocation', icon: BrainCircuit },
   { path: '/trade-analytics', label: 'Trade Analytics', icon: Activity },
   { path: '/sequence-risk', label: 'Sequence Risk', icon: TrendingDown },

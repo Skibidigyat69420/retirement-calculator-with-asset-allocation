@@ -1,0 +1,212 @@
+import { FileText, TrendingUp, Target, PieChart, ShieldCheck, AlertTriangle, CheckCircle2, Globe, Wallet } from 'lucide-react';
+import { useCalculator } from '../context/CalculatorContext';
+import { SectionTitle } from '../components/ui/SectionTitle';
+import { Card } from '../components/ui/Card';
+import { MetricCard } from '../components/ui/MetricCard';
+import { Badge } from '../components/ui/Badge';
+import { DonutChart } from '../components/charts/DonutChart';
+import { MonteCarloFanChart } from '../components/charts/MonteCarloFanChart';
+import { formatCurrency, formatPercent } from '../lib/formatters';
+import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
+import type { AssetCategory } from '../types';
+
+const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
+
+export const Reports = () => {
+  const { inputs, riskProfile, wealthResult } = useCalculator();
+
+  const currentAllocationData = CATEGORIES.map((cat) => ({
+    name: ASSET_LABELS[cat],
+    value: wealthResult.currentAllocation[cat] * wealthResult.netWorth,
+    color: ASSET_COLORS[cat],
+  })).filter((d) => d.value > 0);
+
+  const targetAllocationData = CATEGORIES.map((cat) => ({
+    name: ASSET_LABELS[cat],
+    value: wealthResult.netWorth * (riskProfile.targets[cat] / 100),
+    color: ASSET_COLORS[cat],
+  })).filter((d) => d.value > 0);
+
+  const essentialGoals = wealthResult.goalResults.filter((g) => g.goal.priority === 'essential');
+  const importantGoals = wealthResult.goalResults.filter((g) => g.goal.priority === 'important');
+  const aspirationalGoals = wealthResult.goalResults.filter((g) => g.goal.priority === 'aspirational');
+
+  return (
+    <div className="space-y-6">
+      <SectionTitle
+        title="Plan Reports"
+        subtitle="A consolidated view of your financial plan: net worth, allocation, goals, Monte Carlo outcomes, tax, and currency exposure."
+        badge="Comprehensive"
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <MetricCard label="Net Worth" value={formatCurrency(wealthResult.netWorth)} subtext="Current assets" variant="navy" />
+        <MetricCard label="Annual Savings" value={formatCurrency(wealthResult.annualSavings)} subtext={`Rate ${formatPercent(wealthResult.savingsRate)}`} variant="gold" />
+        <MetricCard label="Terminal Corpus" value={formatCurrency(wealthResult.terminalValue)} subtext={`At age ${inputs.retirementAge}`} />
+        <MetricCard label="Plan Success Rate" value={formatPercent(wealthResult.monteCarlo.successRate * 100)} subtext="All goals + SWP sustainable" variant={wealthResult.monteCarlo.successRate * 100 >= riskProfile.goalSuccessThreshold ? 'success' : 'danger'} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><FileText size={18} className="text-gold" /> Plan Summary</h3>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Client age</span><span className="font-medium text-navy">{inputs.currentAge}</span></div>
+            <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Retirement age</span><span className="font-medium text-navy">{inputs.retirementAge}</span></div>
+            <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Life expectancy</span><span className="font-medium text-navy">{inputs.lifeExpectancy}</span></div>
+            <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Annual income</span><span className="font-medium text-navy">{formatCurrency(wealthResult.annualIncome)}</span></div>
+            <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Annual expenses (today)</span><span className="font-medium text-navy">{formatCurrency(wealthResult.annualExpenses)}</span></div>
+            <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Monthly SIP</span><span className="font-medium text-navy">{formatCurrency(wealthResult.monthlySIP)}</span></div>
+            <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Total invested (projected)</span><span className="font-medium text-navy">{formatCurrency(wealthResult.totalInvested)}</span></div>
+            <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">CAGR nominal</span><span className="font-medium text-navy">{formatPercent(wealthResult.cagrNominal)}</span></div>
+            <div className="flex justify-between py-2"><span className="text-stone-500">CAGR real</span><span className="font-medium text-navy">{formatPercent(wealthResult.cagrReal)}</span></div>
+          </div>
+        </Card>
+
+        <Card>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><ShieldCheck size={18} className="text-gold" /> Risk Profile</h3>
+          <div className="p-4 bg-navy text-white rounded-xl mb-4">
+            <div className="text-2xl font-serif">{riskProfile.label}</div>
+            <p className="text-sm text-stone-200 mt-1">{riskProfile.description}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="p-3 bg-stone-50 rounded-xl"><div className="text-xs text-stone-500">Max drawdown</div><div className="font-medium text-navy">{formatPercent(riskProfile.maxDrawdown)}</div></div>
+            <div className="p-3 bg-stone-50 rounded-xl"><div className="text-xs text-stone-500">Volatility target</div><div className="font-medium text-navy">{formatPercent(riskProfile.targetVolatility)}</div></div>
+            <div className="p-3 bg-stone-50 rounded-xl"><div className="text-xs text-stone-500">Goal threshold</div><div className="font-medium text-navy">{formatPercent(riskProfile.goalSuccessThreshold)}</div></div>
+            <div className="p-3 bg-stone-50 rounded-xl"><div className="text-xs text-stone-500">Max drawdown prob</div><div className="font-medium text-navy">{formatPercent(wealthResult.maxDrawdownProbability * 100)}</div></div>
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><PieChart size={18} className="text-gold" /> Current vs Target Allocation</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="text-xs text-stone-500 mb-2 text-center">Current</div>
+              <DonutChart data={currentAllocationData} innerRadius={40} outerRadius={70} />
+            </div>
+            <div>
+              <div className="text-xs text-stone-500 mb-2 text-center">Target</div>
+              <DonutChart data={targetAllocationData} innerRadius={40} outerRadius={70} />
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-gold" /> Monte Carlo Fan Chart</h3>
+          <MonteCarloFanChart data={wealthResult.monteCarlo.yearlyPercentiles} />
+        </Card>
+      </div>
+
+      <Card>
+        <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><Target size={18} className="text-gold" /> Goal Probability Summary</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="p-4 bg-stone-50 rounded-xl border border-stone-100">
+            <div className="text-xs text-stone-500">Essential goals</div>
+            <div className="text-xl font-serif text-navy mt-1">{formatPercent(wealthResult.essentialSuccessRate * 100)}</div>
+            <div className="text-xs text-stone-400 mt-1">{essentialGoals.length} goals</div>
+          </div>
+          <div className="p-4 bg-stone-50 rounded-xl border border-stone-100">
+            <div className="text-xs text-stone-500">Important goals</div>
+            <div className="text-xl font-serif text-navy mt-1">
+              {importantGoals.length > 0 ? formatPercent((importantGoals.reduce((s, g) => s + g.successRate, 0) / importantGoals.length) * 100) : '—'}
+            </div>
+            <div className="text-xs text-stone-400 mt-1">{importantGoals.length} goals</div>
+          </div>
+          <div className="p-4 bg-stone-50 rounded-xl border border-stone-100">
+            <div className="text-xs text-stone-500">Aspirational goals</div>
+            <div className="text-xl font-serif text-navy mt-1">
+              {aspirationalGoals.length > 0 ? formatPercent((aspirationalGoals.reduce((s, g) => s + g.successRate, 0) / aspirationalGoals.length) * 100) : '—'}
+            </div>
+            <div className="text-xs text-stone-400 mt-1">{aspirationalGoals.length} goals</div>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-500">
+                <th className="py-2 pr-4">Goal</th>
+                <th className="py-2 pr-4">Priority</th>
+                <th className="py-2 pr-4 text-right">Target</th>
+                <th className="py-2 pr-4 text-right">Future Value</th>
+                <th className="py-2 pr-4 text-right">Success</th>
+                <th className="py-2 pr-4 text-right">Required SIP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {wealthResult.goalResults.map((g) => (
+                <tr key={g.goal.id} className="border-b border-stone-100">
+                  <td className="py-2 pr-4 font-medium text-navy">{g.goal.name}</td>
+                  <td className="py-2 pr-4"><Badge variant={g.goal.priority === 'essential' ? 'danger' : g.goal.priority === 'important' ? 'default' : 'outline'}>{g.goal.priority}</Badge></td>
+                  <td className="py-2 pr-4 text-right">{formatCurrency(g.goal.targetAmount)}</td>
+                  <td className="py-2 pr-4 text-right">{formatCurrency(g.futureValue)}</td>
+                  <td className="py-2 pr-4 text-right">
+                    <span className={g.successRate >= riskProfile.goalSuccessThreshold / 100 ? 'text-green-600' : g.successRate >= (riskProfile.goalSuccessThreshold / 100) * 0.6 ? 'text-amber-600' : 'text-red-600'}>
+                      {formatPercent(g.successRate * 100)}
+                    </span>
+                  </td>
+                  <td className="py-2 pr-4 text-right">{formatCurrency(g.requiredSIP)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><Wallet size={18} className="text-gold" /> Tax Summary</h3>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Annual income</span><span className="font-medium text-navy">{formatCurrency(wealthResult.annualIncome)}</span></div>
+            <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Estimated tax</span><span className="font-medium text-navy">{formatCurrency(wealthResult.taxSummary.annualTax)}</span></div>
+            <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Effective tax rate</span><span className="font-medium text-navy">{formatPercent(wealthResult.taxSummary.effectiveRate * 100)}</span></div>
+            <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Post-tax income</span><span className="font-medium text-navy">{formatCurrency(wealthResult.taxSummary.postTaxIncome)}</span></div>
+            <div className="flex justify-between py-2"><span className="text-stone-500">Recommended tax saving</span><span className="font-medium text-navy">{formatCurrency(wealthResult.taxSummary.recommendedTaxSaving)}</span></div>
+          </div>
+        </Card>
+
+        <Card>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><Globe size={18} className="text-gold" /> Currency Exposure</h3>
+          <div className="space-y-3">
+            {wealthResult.currencyExposure.map((c) => (
+              <div key={c.currency} className="p-3 bg-stone-50 rounded-xl border border-stone-100">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-navy">{c.currency}</span>
+                  <Badge variant={c.currency === 'INR' ? 'outline' : 'gold'}>{formatPercent(c.percentage)}</Badge>
+                </div>
+                <div className="text-xs text-stone-500 mt-1">{formatCurrency(c.amount)}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      {wealthResult.goalsAtRisk.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 text-red-800">
+          <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <strong>Goals at risk:</strong>{' '}
+            {wealthResult.goalsAtRisk.map((g) => g.goal.name).join(', ')}.
+            Review the Goal Planner to increase SIPs or extend horizons.
+          </div>
+        </div>
+      )}
+
+      {wealthResult.sustainable ? (
+        <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3 text-green-800">
+          <CheckCircle2 size={20} className="shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <strong>Plan is sustainable.</strong> The projected corpus is expected to last through age {inputs.lifeExpectancy} under mean assumptions.
+          </div>
+        </div>
+      ) : (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 text-red-800">
+          <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <strong>Plan is not sustainable.</strong> Corpus may deplete at age {wealthResult.depletionAge}. Consider increasing savings, delaying retirement, or reducing withdrawals.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

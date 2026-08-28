@@ -15,7 +15,7 @@ import { Link } from 'react-router-dom';
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
 
 export const Allocation = () => {
-  const { inputs, result, assumptions, riskProfile } = useCalculator();
+  const { inputs, assumptions, riskProfile, wealthResult } = useCalculator();
   const [manualTargets, setManualTargets] = useState<Record<AssetCategory, number> | null>(null);
   const targets = manualTargets || riskProfile.targets;
 
@@ -27,22 +27,14 @@ export const Allocation = () => {
     }
   }, [inputs, assumptions, targets]);
 
-  const currentByCategory = useMemo(() => {
-    const totals: Record<AssetCategory, number> = { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
-    inputs.assets.forEach((a) => {
-      totals[a.category] += a.value;
-    });
-    return totals;
-  }, [inputs.assets]);
+  const totalValue = wealthResult.netWorth;
 
-  const totalValue = useMemo(() => Object.values(currentByCategory).reduce((a, b) => a + b, 0), [currentByCategory]);
-
-  const currentData = CATEGORIES.map((cat) => ({ name: ASSET_LABELS[cat], value: currentByCategory[cat], color: ASSET_COLORS[cat] })).filter((d) => d.value > 0);
+  const currentData = CATEGORIES.map((cat) => ({ name: ASSET_LABELS[cat], value: wealthResult.currentAllocation[cat] * totalValue, color: ASSET_COLORS[cat] })).filter((d) => d.value > 0);
 
   const targetData = CATEGORIES.map((cat) => ({ name: ASSET_LABELS[cat], value: totalValue * (targets[cat] / 100), color: ASSET_COLORS[cat] })).filter((d) => d.value > 0);
 
-  const projectedWeights = projection?.terminalWeights || getTargetGlideAllocation(inputs.retirementAge, inputs.retirementAge);
-  const projectedTotal = projection?.terminalValue || result.terminalCorpusNominal;
+  const projectedTotal = projection?.terminalValue || wealthResult.terminalValue;
+  const projectedWeights = projection?.terminalWeights || wealthResult.projectedAllocation;
   const projectedData = CATEGORIES.map((cat) => ({ name: ASSET_LABELS[cat], value: projectedTotal * (projectedWeights[cat] || 0), color: ASSET_COLORS[cat] })).filter((d) => d.value > 0);
 
   const updateTarget = (cat: AssetCategory, value: number) => {
@@ -62,17 +54,10 @@ export const Allocation = () => {
     }));
   }, [projection]);
 
-  const rebalanceRows = CATEGORIES.map((cat) => {
-    const current = currentByCategory[cat];
-    const currentPct = totalValue > 0 ? (current / totalValue) * 100 : 0;
-    const targetValue = totalValue * (targets[cat] / 100);
-    const gap = targetValue - current;
-    return { cat, current, currentPct, targetValue, gap };
-  });
-
-  const maxDrift = useMemo(() => {
-    return Math.max(...rebalanceRows.map((r) => Math.abs((r.currentPct || 0) - targets[r.cat])));
-  }, [rebalanceRows, targets]);
+  const maxDrift = useMemo(
+    () => Math.max(...wealthResult.rebalancingTrades.map((r) => Math.abs((wealthResult.currentAllocation[r.category] * 100) - targets[r.category]))),
+    [wealthResult, targets],
+  );
 
   return (
     <div className="space-y-6">
@@ -95,7 +80,7 @@ export const Allocation = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Current Equity</div>
-          <div className="text-2xl font-serif text-navy mt-1">{formatPercent(totalValue > 0 ? (currentByCategory.equity / totalValue) * 100 : 0)}</div>
+          <div className="text-2xl font-serif text-navy mt-1">{formatPercent(wealthResult.currentAllocation.equity * 100)}</div>
         </Card>
         <Card>
           <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Target Equity</div>
@@ -107,7 +92,7 @@ export const Allocation = () => {
         </Card>
         <Card>
           <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Plan Success Probability</div>
-          <div className={`text-2xl font-serif mt-1 ${projection && projection.probabilityOfSuccess >= 70 ? 'text-green-600' : projection && projection.probabilityOfSuccess >= 40 ? 'text-amber-600' : 'text-red-600'}`}>
+          <div className={`text-2xl font-serif mt-1 ${projection && projection.probabilityOfSuccess >= riskProfile.goalSuccessThreshold ? 'text-green-600' : projection && projection.probabilityOfSuccess >= riskProfile.goalSuccessThreshold * 0.6 ? 'text-amber-600' : 'text-red-600'}`}>
             {projection ? formatPercent(projection.probabilityOfSuccess) : '—'}
           </div>
         </Card>
@@ -169,23 +154,24 @@ export const Allocation = () => {
               </tr>
             </thead>
             <tbody>
-              {rebalanceRows.map((r) => {
-                const projectedPct = (projectedWeights[r.cat] || 0) * 100;
+              {wealthResult.rebalancingTrades.map((r) => {
+                const currentPct = wealthResult.currentAllocation[r.category] * 100;
+                const projectedPct = (projectedWeights[r.category] || 0) * 100;
                 return (
-                  <tr key={r.cat} className="border-b border-stone-100 hover:bg-stone-50">
+                  <tr key={r.category} className="border-b border-stone-100 hover:bg-stone-50">
                     <td className="py-2 pr-4 flex items-center">
-                      <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: ASSET_COLORS[r.cat] }} />
-                      {ASSET_LABELS[r.cat]}
+                      <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: ASSET_COLORS[r.category] }} />
+                      {ASSET_LABELS[r.category]}
                     </td>
                     <td className="py-2 pr-4 text-right">{formatCurrency(r.current)}</td>
-                    <td className="py-2 pr-4 text-right">{formatPercent(r.currentPct)}</td>
-                    <td className="py-2 pr-4 text-right">{formatPercent(targets[r.cat])}</td>
+                    <td className="py-2 pr-4 text-right">{formatPercent(currentPct)}</td>
+                    <td className="py-2 pr-4 text-right">{formatPercent(targets[r.category])}</td>
                     <td className="py-2 pr-4 text-right">{formatPercent(projectedPct)}</td>
-                    <td className="py-2 pr-4 text-right font-medium">{formatCurrency(r.gap)}</td>
+                    <td className="py-2 pr-4 text-right font-medium">{formatCurrency(r.trade)}</td>
                     <td className="py-2 pr-4 text-center">
-                      {Math.abs(r.gap) < totalValue * 0.02 ? (
+                      {Math.abs(r.trade) < totalValue * 0.02 ? (
                         <span className="inline-flex items-center text-stone-500 text-xs"><CheckCircle2 size={12} className="mr-1" /> Hold</span>
-                      ) : r.gap > 0 ? (
+                      ) : r.trade > 0 ? (
                         <span className="text-green-600 text-xs font-semibold">Buy</span>
                       ) : (
                         <span className="text-red-600 text-xs font-semibold">Sell</span>

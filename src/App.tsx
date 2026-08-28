@@ -24,6 +24,7 @@ import { Rebalancing } from './pages/Rebalancing';
 import { TaxLossHarvesting } from './pages/TaxLossHarvesting';
 import { IPSTemplate } from './pages/IPSTemplate';
 import { RiskQuestionnaire } from './pages/RiskQuestionnaire';
+import { Reports } from './pages/Reports';
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
             <Route path="/tax-loss-harvesting" element={<TaxLossHarvesting />} />
             <Route path="/ips" element={<IPSTemplate />} />
             <Route path="/risk" element={<RiskQuestionnaire />} />
+            <Route path="/reports" element={<Reports />} />
           </Routes>
         </Layout>
       </BrowserRouter>

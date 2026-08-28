@@ -3,6 +3,7 @@ import type { MasterPlanInputs, Scenario, Goal, RiskProfile, RiskAnswers } from 
 import { defaultClientInputs, defaultScenarios } from '../lib/scenarios';
 import { calculateMasterPlan } from '../lib/calculations';
 import { loadAssumptions, type AssumptionSet } from '../lib/assumptions';
+import { runWealthEngine, type WealthEngineResult } from '../lib/wealthEngine';
 import { calculateRiskScore, getRiskProfile, isComplete } from '../lib/riskQuestionnaire';
 
 interface CalculatorContextType {
@@ -19,6 +20,7 @@ interface CalculatorContextType {
   updateGoal: (id: string, patch: Partial<Goal>) => void;
   removeGoal: (id: string) => void;
   result: ReturnType<typeof calculateMasterPlan>;
+  wealthResult: WealthEngineResult;
   scenarios: Scenario[];
   loadScenario: (scenario: Scenario) => void;
   assumptions: AssumptionSet;
@@ -176,6 +178,10 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
   }, []);
 
   const result = useMemo(() => calculateMasterPlan(inputs), [inputs]);
+  const wealthResult = useMemo(
+    () => runWealthEngine(inputs, assumptions, { profile: riskProfile, score: calculateRiskScore(riskAnswers) }),
+    [inputs, assumptions, riskProfile, riskAnswers],
+  );
 
   return (
     <CalculatorContext.Provider
@@ -193,6 +199,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         updateGoal,
         removeGoal,
         result,
+        wealthResult,
         scenarios,
         loadScenario,
         assumptions,

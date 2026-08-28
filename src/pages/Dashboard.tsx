@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   XCircle,
   BarChart3,
+  FileText,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useCalculator } from '../context/CalculatorContext';
@@ -35,14 +36,15 @@ import { AssetEvolutionChart } from '../components/charts/AssetEvolutionChart';
 import { formatCurrency, formatPercent } from '../lib/formatters';
 import { cn } from '../lib/utils';
 import { ASSET_COLORS } from '../lib/constants';
-import { simulateAllGoals } from '../lib/goals';
-import { projectAssetAllocation } from '../lib/projections';
+import { MonteCarloFanChart } from '../components/charts/MonteCarloFanChart';
 
 const tools = [
+  { path: '/risk', label: 'Risk Profile', icon: ShieldCheck, desc: 'Behavioural questionnaire that drives the entire plan.' },
   { path: '/master-plan', label: 'Master Plan', icon: Activity, desc: 'Unified profile, assets, cashflows, goals & results.' },
   { path: '/goal', label: 'Goal Planner', icon: Target, desc: 'Probability-weighted goals, PV needed & required SIP.' },
   { path: '/allocation', label: 'Asset Allocation', icon: PieChart, desc: 'Current vs target, projections & MVO target.' },
   { path: '/mvo', label: 'MVO Optimizer', icon: BarChart2, desc: 'Mean-variance frontier with live Angel One data.' },
+  { path: '/reports', label: 'Plan Reports', icon: BarChart3, desc: 'Comprehensive plan summary, tax & currency.' },
   { path: '/advanced-allocation', label: 'Advanced Allocation', icon: BrainCircuit, desc: 'Black-Litterman, risk parity & glide path.' },
   { path: '/portfolio-analytics', label: 'Portfolio Analytics', icon: BarChart3, desc: 'Risk metrics, attribution & stress tests.' },
   { path: '/trade-analytics', label: 'Trade Analytics', icon: Zap, desc: 'Implementation shortfall & market impact.' },
@@ -54,6 +56,7 @@ const tools = [
   { path: '/stp', label: 'STP Deployment', icon: Wallet, desc: 'Deploy lumpsum via liquid-fund staging.' },
   { path: '/swp', label: 'SWP Engine', icon: Wallet, desc: 'Inflation-indexed withdrawal longevity.' },
   { path: '/retirement', label: 'Retirement Readiness', icon: Calculator, desc: 'FIRE-style readiness check.' },
+  { path: '/ips', label: 'IPS Template', icon: FileText, desc: 'Generate a CFA-aligned policy statement.' },
   { path: '/angel-connect', label: 'Angel One SmartAPI', icon: ShieldCheck, desc: 'Live broker sync, TOTP & holdings.' },
   { path: '/live-market', label: 'Live Market', icon: Radio, desc: 'Real-time streaming quotes and watchlists.' },
   { path: '/market-data', label: 'Market Data', icon: Database, desc: 'Explore and download price history.' },
@@ -65,77 +68,49 @@ const quickActions = [
   { path: '/goal', label: 'Check Goals', icon: Target },
   { path: '/allocation', label: 'Rebalance', icon: PieChart },
   { path: '/mvo', label: 'Run MVO', icon: BarChart2 },
+  { path: '/reports', label: 'Plan Report', icon: BarChart3 },
 ];
 
 export const Dashboard = () => {
-  const { result, inputs, assumptions, riskProfile } = useCalculator();
-
-  const netWorth = useMemo(() => inputs.assets.reduce((sum, a) => sum + a.value, 0), [inputs.assets]);
-  const annualSavings = inputs.sip.amount * 12 + (inputs.stp.active ? inputs.stp.monthlyTransfer * 12 : 0);
-  const savingsRate = inputs.annualIncome > 0 ? (annualSavings / inputs.annualIncome) * 100 : 0;
+  const { inputs, riskProfile, wealthResult } = useCalculator();
 
   const allocationData = useMemo(() => {
-    const byCat: Record<string, number> = {};
-    inputs.assets.forEach((a) => {
-      byCat[a.category] = (byCat[a.category] || 0) + a.value;
-    });
-    return Object.entries(byCat)
+    return Object.entries(wealthResult.currentAllocation)
       .filter(([, v]) => v > 0)
-      .map(([name, value]) => ({ name, value, color: ASSET_COLORS[name as keyof typeof ASSET_COLORS] || '#94a3b8' }));
-  }, [inputs.assets]);
+      .map(([name, value]) => ({ name, value: value * wealthResult.netWorth, color: ASSET_COLORS[name as keyof typeof ASSET_COLORS] || '#94a3b8' }));
+  }, [wealthResult]);
 
-  const goalResults = useMemo(() => {
-    const weights = { equity: inputs.sip.equitySplit / 100, debt: inputs.sip.debtSplit / 100, gold: 0, realestate: 0, liquid: 0, other: 0 };
-    return simulateAllGoals(inputs.goals, assumptions, netWorth, inputs.sip.amount, weights);
-  }, [inputs.goals, assumptions, netWorth, inputs.sip.amount, inputs.sip.equitySplit, inputs.sip.debtSplit]);
-
-  const projection = useMemo(() => {
-    try {
-      return projectAssetAllocation(inputs, assumptions, undefined, 800);
-    } catch {
-      return null;
-    }
-  }, [inputs, assumptions]);
-
-  const essentialSuccess = useMemo(
-    () => goalResults.filter((g) => g.goal.priority === 'essential').every((g) => g.successRate >= riskProfile.goalSuccessThreshold / 100),
-    [goalResults, riskProfile.goalSuccessThreshold],
+  const essentialSuccess = wealthResult.goalResults.filter((g) => g.goal.priority === 'essential').every(
+    (g) => g.successRate >= riskProfile.goalSuccessThreshold / 100,
   );
 
-  const chartData = result.snapshots
+  const chartData = wealthResult.snapshots
     .filter((s) => s.phase === 'accumulation')
-    .map((s) => ({
-      label: `Y${s.year}`,
-      nominal: s.nominal,
-      real: s.real,
-    }));
+    .map((s) => ({ label: `Y${s.year}`, nominal: s.total, real: s.realTotal }));
 
-  const assetEvolutionData = result.snapshots
+  const assetEvolutionData = wealthResult.snapshots
     .filter((s) => s.phase === 'accumulation')
     .map((s) => ({
       label: `Age ${s.age}`,
-      equity: s.equity,
-      debt: s.debt,
-      gold: s.gold,
-      realestate: s.realEstate,
-      liquid: s.liquid,
-      other: s.other,
+      equity: s.values.equity,
+      debt: s.values.debt,
+      gold: s.values.gold,
+      realestate: s.values.realestate,
+      liquid: s.values.liquid,
+      other: s.values.other,
     }));
-
-  const currentEquity = inputs.assets.filter((a) => a.category === 'equity').reduce((sum, a) => sum + a.value, 0);
-  const equityDrift = netWorth > 0 ? (currentEquity / netWorth) * 100 - 55 : 0;
 
   return (
     <div className="space-y-8">
       <SectionTitle
         title="Executive Dashboard"
-        subtitle="Comprehensive individual wealth planner — goals, allocation, projections, and execution quality in one command center."
-        badge="Wealth OS v2"
+        subtitle="Comprehensive individual wealth planner — goals, allocation, projections, tax, currency and execution quality in one command center."
+        badge="Wealth OS v3"
       />
 
-      {!result.sustainable && (
+      {!wealthResult.sustainable && (
         <Alert variant="danger" icon={AlertTriangle}>
-          Your current plan is not sustainable — corpus is projected to deplete at age {result.depletionAge}. Increase SIPs, extend retirement age, or reduce withdrawal needs.
+          Your current plan is not sustainable — corpus is projected to deplete at age {wealthResult.depletionAge}. Increase SIPs, extend retirement age, or reduce withdrawal needs.
         </Alert>
       )}
 
@@ -145,32 +120,28 @@ export const Dashboard = () => {
         </Alert>
       )}
 
-      {Math.abs(equityDrift) > 10 && (
-        <Alert variant="warning" icon={AlertTriangle}>
-          Equity allocation is {equityDrift > 0 ? 'overweight' : 'underweight'} by {formatPercent(Math.abs(equityDrift))}. Review allocation or run the rebalancing optimizer.
-        </Alert>
-      )}
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <MetricCard label="Net Worth" value={formatCurrency(netWorth)} subtext="Current assets" variant="navy" />
-        <MetricCard label="Annual Income" value={formatCurrency(inputs.annualIncome)} subtext={`Savings rate ${formatPercent(savingsRate)}`} variant="gold" />
+        <MetricCard label="Net Worth" value={formatCurrency(wealthResult.netWorth)} subtext="Current assets" variant="navy" />
+        <MetricCard label="Annual Income" value={formatCurrency(wealthResult.annualIncome)} subtext={`Savings rate ${formatPercent(wealthResult.savingsRate)}`} variant="gold" />
         <Link to="/risk" className="block">
           <MetricCard label="Risk Profile" value={riskProfile.label} subtext={`Max drawdown ${formatPercent(riskProfile.maxDrawdown)}`} />
         </Link>
-        <MetricCard
-          label="Terminal Corpus"
-          value={formatCurrency(result.terminalCorpusNominal)}
-          subtext={`At age ${inputs.retirementAge}`}
-        />
+        <MetricCard label="Terminal Corpus" value={formatCurrency(wealthResult.terminalValue)} subtext={`At age ${inputs.retirementAge}`} />
         <MetricCard
           label="Plan Probability"
-          value={projection ? formatPercent(projection.probabilityOfSuccess) : '—'}
+          value={formatPercent(wealthResult.monteCarlo.successRate * 100)}
           subtext="Of meeting all goals + SWP"
-          variant={projection && projection.probabilityOfSuccess >= riskProfile.goalSuccessThreshold ? 'success' : projection && projection.probabilityOfSuccess >= riskProfile.goalSuccessThreshold * 0.6 ? 'default' : 'danger'}
+          variant={
+            wealthResult.monteCarlo.successRate * 100 >= riskProfile.goalSuccessThreshold
+              ? 'success'
+              : wealthResult.monteCarlo.successRate * 100 >= riskProfile.goalSuccessThreshold * 0.6
+                ? 'default'
+                : 'danger'
+          }
         />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         {quickActions.map((action) => {
           const Icon = action.icon;
           return (
@@ -200,17 +171,6 @@ export const Dashboard = () => {
             <Badge variant="outline">Today</Badge>
           </div>
           <DonutChart data={allocationData} />
-          <div className="mt-4 space-y-2">
-            {allocationData.map((item) => (
-              <div key={item.name} className="flex items-center justify-between text-sm">
-                <span className="flex items-center text-stone-600">
-                  <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: item.color }} />
-                  {item.name}
-                </span>
-                <span className="font-medium text-navy">{formatCurrency(item.value)}</span>
-              </div>
-            ))}
-          </div>
         </Card>
       </div>
 
@@ -231,14 +191,28 @@ export const Dashboard = () => {
             </Link>
           </div>
           <div className="space-y-3">
-            {goalResults.map((g) => (
+            {wealthResult.goalResults.map((g) => (
               <div key={g.goal.id} className="p-3 bg-stone-50 rounded-xl border border-stone-100">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    {g.successRate >= 0.7 ? <CheckCircle2 size={16} className="text-green-600 mr-2" /> : <XCircle size={16} className="text-red-500 mr-2" />}
+                    {g.successRate >= riskProfile.goalSuccessThreshold / 100 ? (
+                      <CheckCircle2 size={16} className="text-green-600 mr-2" />
+                    ) : (
+                      <XCircle size={16} className="text-red-500 mr-2" />
+                    )}
                     <span className="text-sm font-medium text-navy">{g.goal.name}</span>
                   </div>
-                  <Badge variant={g.successRate >= 0.7 ? 'success' : g.successRate >= 0.4 ? 'default' : 'danger'}>{formatPercent(g.successRate * 100)}</Badge>
+                  <Badge
+                    variant={
+                      g.successRate >= riskProfile.goalSuccessThreshold / 100
+                        ? 'success'
+                        : g.successRate >= (riskProfile.goalSuccessThreshold / 100) * 0.6
+                          ? 'default'
+                          : 'danger'
+                    }
+                  >
+                    {formatPercent(g.successRate * 100)}
+                  </Badge>
                 </div>
                 <div className="mt-2 flex items-center justify-between text-xs text-stone-500">
                   <span>Future need {formatCurrency(g.futureValue)}</span>
@@ -249,6 +223,14 @@ export const Dashboard = () => {
           </div>
         </Card>
       </div>
+
+      <Card>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-serif text-navy">Monte Carlo Fan Chart</h3>
+          <Badge variant="gold">{wealthResult.monteCarlo.outcomes.length.toLocaleString()} paths</Badge>
+        </div>
+        <MonteCarloFanChart data={wealthResult.monteCarlo.yearlyPercentiles} />
+      </Card>
 
       <Card>
         <h3 className="text-lg font-serif text-navy mb-4">Platform Modules</h3>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Target, TrendingUp, PieChart, Plus, AlertTriangle, CheckCircle2, BarChart3 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
 import { Card } from '../components/ui/Card';
@@ -10,9 +10,8 @@ import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
 import { formatCurrency, formatPercent } from '../lib/formatters';
 import { useCalculator } from '../context/CalculatorContext';
-import { simulateGoal, calculateGoalPV, requiredMonthlySIPForGoal } from '../lib/goals';
-import type { AssetCategory, GoalPriority } from '../types';
 import { ASSET_COLORS } from '../lib/constants';
+import type { GoalPriority } from '../types';
 
 const priorityOptions: { value: GoalPriority; label: string }[] = [
   { value: 'essential', label: 'Essential' },
@@ -21,7 +20,7 @@ const priorityOptions: { value: GoalPriority; label: string }[] = [
 ];
 
 export const GoalPlanner = () => {
-  const { inputs, assumptions, updateGoal, addGoal, riskProfile } = useCalculator();
+  const { inputs, riskProfile, wealthResult, updateGoal, addGoal } = useCalculator();
   const [selectedGoalId, setSelectedGoalId] = useState<string>(inputs.goals[0]?.id || '');
 
   const selectedGoal = useMemo(
@@ -29,39 +28,10 @@ export const GoalPlanner = () => {
     [inputs.goals, selectedGoalId],
   );
 
-  const portfolioWeights: Record<AssetCategory, number> = useMemo(
-    () => ({
-      equity: inputs.sip.equitySplit / 100,
-      debt: inputs.sip.debtSplit / 100,
-      gold: 0,
-      realestate: 0,
-      liquid: 0,
-      other: 0,
-    }),
-    [inputs.sip.equitySplit, inputs.sip.debtSplit],
+  const simulation = useMemo(
+    () => wealthResult.goalResults.find((g) => g.goal.id === selectedGoal?.id) || wealthResult.goalResults[0],
+    [wealthResult.goalResults, selectedGoal],
   );
-
-  const netWorth = useMemo(() => inputs.assets.reduce((sum, a) => sum + a.value, 0), [inputs.assets]);
-
-  const simulation = useMemo(() => {
-    if (!selectedGoal) return null;
-    return simulateGoal(selectedGoal, assumptions, netWorth, inputs.sip.amount, portfolioWeights, riskProfile.monteCarloSimulations);
-  }, [selectedGoal, assumptions, netWorth, inputs.sip.amount, portfolioWeights, riskProfile.monteCarloSimulations]);
-
-  const allGoalSimulations = useMemo(() => {
-    return inputs.goals.map((g) => simulateGoal(g, assumptions, netWorth, inputs.sip.amount, portfolioWeights, Math.max(1000, Math.floor(riskProfile.monteCarloSimulations / 2))));
-  }, [inputs.goals, assumptions, netWorth, inputs.sip.amount, portfolioWeights, riskProfile.monteCarloSimulations]);
-
-  const standaloneRequiredSIP = useMemo(() => {
-    if (!selectedGoal) return 0;
-    const portfolioMean = assumptions.categories.equity.mean * portfolioWeights.equity + assumptions.categories.debt.mean * portfolioWeights.debt;
-    return requiredMonthlySIPForGoal(simulation?.futureValue || selectedGoal.targetAmount, selectedGoal.yearsToGoal, portfolioMean * 100, selectedGoal.inflation);
-  }, [selectedGoal, assumptions, portfolioWeights, simulation]);
-
-  const standalonePV = useMemo(() => {
-    if (!selectedGoal) return 0;
-    return calculateGoalPV(selectedGoal, (assumptions.categories.equity.mean * portfolioWeights.equity + assumptions.categories.debt.mean * portfolioWeights.debt) * 100);
-  }, [selectedGoal, assumptions, portfolioWeights]);
 
   const histogramData = useMemo(() => {
     if (!simulation) return [];
@@ -74,7 +44,7 @@ export const GoalPlanner = () => {
     }));
   }, [simulation]);
 
-  if (!selectedGoal) {
+  if (!selectedGoal || !simulation) {
     return (
       <div className="space-y-6">
         <SectionTitle title="Goal Planner" subtitle="Probability-based goal planning with PV, success rate, and distribution analysis." badge="Monte Carlo" />
@@ -104,28 +74,28 @@ export const GoalPlanner = () => {
             </Button>
           </div>
           <div className="space-y-2">
-            {inputs.goals.map((goal) => {
-              const sim = allGoalSimulations.find((s) => s.goal.id === goal.id);
-              return (
-                <button
-                  key={goal.id}
-                  onClick={() => setSelectedGoalId(goal.id)}
-                  className={`w-full text-left p-3 rounded-xl border transition-colors ${
-                    selectedGoalId === goal.id ? 'bg-navy text-white border-navy' : 'bg-white border-stone-200 hover:bg-stone-50'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium truncate pr-2">{goal.name}</span>
-                    <Badge variant={goal.priority === 'essential' ? 'danger' : goal.priority === 'important' ? 'default' : 'outline'} className={selectedGoalId === goal.id ? 'border-white/30 text-white' : ''}>
-                      {goal.priority}
-                    </Badge>
-                  </div>
-                  <div className={`text-xs mt-1 ${selectedGoalId === goal.id ? 'text-white/70' : 'text-stone-500'}`}>
-                    {sim ? formatPercent(sim.successRate * 100) : '—'} success · {formatCurrency(goal.targetAmount)}
-                  </div>
-                </button>
-              );
-            })}
+            {wealthResult.goalResults.map((g) => (
+              <button
+                key={g.goal.id}
+                onClick={() => setSelectedGoalId(g.goal.id)}
+                className={`w-full text-left p-3 rounded-xl border transition-colors ${
+                  selectedGoalId === g.goal.id ? 'bg-navy text-white border-navy' : 'bg-white border-stone-200 hover:bg-stone-50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium truncate pr-2">{g.goal.name}</span>
+                  <Badge
+                    variant={g.goal.priority === 'essential' ? 'danger' : g.goal.priority === 'important' ? 'default' : 'outline'}
+                    className={selectedGoalId === g.goal.id ? 'border-white/30 text-white' : ''}
+                  >
+                    {g.goal.priority}
+                  </Badge>
+                </div>
+                <div className={`text-xs mt-1 ${selectedGoalId === g.goal.id ? 'text-white/70' : 'text-stone-500'}`}>
+                  {formatPercent(g.successRate * 100)} success · {formatCurrency(g.goal.targetAmount)}
+                </div>
+              </button>
+            ))}
           </div>
         </Card>
 
@@ -137,7 +107,9 @@ export const GoalPlanner = () => {
                   <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Selected Goal</div>
                   <div className="text-xl font-serif text-navy mt-1">{selectedGoal.name}</div>
                 </div>
-                <Badge variant={selectedGoal.priority === 'essential' ? 'danger' : selectedGoal.priority === 'important' ? 'default' : 'outline'}>{selectedGoal.priority}</Badge>
+                <Badge variant={selectedGoal.priority === 'essential' ? 'danger' : selectedGoal.priority === 'important' ? 'default' : 'outline'}>
+                  {selectedGoal.priority}
+                </Badge>
               </div>
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <NumberInput label="Target Amount" value={selectedGoal.targetAmount} onChange={(v) => updateGoal(selectedGoal.id, { targetAmount: v })} />
@@ -150,13 +122,19 @@ export const GoalPlanner = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <MetricCard
                 label="Probability of Success"
-                value={simulation ? formatPercent(simulation.successRate * 100) : '—'}
+                value={formatPercent(simulation.successRate * 100)}
                 subtext="Monte Carlo simulation"
-                variant={simulation && simulation.successRate >= riskProfile.goalSuccessThreshold / 100 ? 'success' : simulation && simulation.successRate >= (riskProfile.goalSuccessThreshold / 100) * 0.6 ? 'default' : 'danger'}
+                variant={
+                  simulation.successRate >= riskProfile.goalSuccessThreshold / 100
+                    ? 'success'
+                    : simulation.successRate >= (riskProfile.goalSuccessThreshold / 100) * 0.6
+                      ? 'default'
+                      : 'danger'
+                }
               />
-              <MetricCard label="Future Value Needed" value={formatCurrency(simulation?.futureValue || 0)} subtext={`In ${selectedGoal.yearsToGoal} years`} variant="navy" />
-              <MetricCard label="PV Needed Today" value={formatCurrency(standalonePV)} subtext="Discounted at portfolio mean" variant="gold" />
-              <MetricCard label="Required SIP" value={formatCurrency(standaloneRequiredSIP)} subtext="Per month, real terms" />
+              <MetricCard label="Future Value Needed" value={formatCurrency(simulation.futureValue)} subtext={`In ${selectedGoal.yearsToGoal} years`} variant="navy" />
+              <MetricCard label="PV Needed Today" value={formatCurrency(simulation.pvNeeded)} subtext="Discounted at portfolio mean" variant="gold" />
+              <MetricCard label="Required SIP" value={formatCurrency(simulation.requiredSIP)} subtext="Per month, real terms" />
             </div>
           </div>
 
@@ -166,7 +144,7 @@ export const GoalPlanner = () => {
                 <h3 className="text-lg font-serif text-navy flex items-center gap-2">
                   <BarChart3 size={18} className="text-gold" /> Outcome Distribution
                 </h3>
-                <div className="text-xs text-stone-500">{simulation?.outcomes.length.toLocaleString()} simulations</div>
+                <div className="text-xs text-stone-500">{wealthResult.monteCarlo.outcomes.length.toLocaleString()} paths</div>
               </div>
               <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -189,7 +167,7 @@ export const GoalPlanner = () => {
                       }}
                       contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                     />
-                    <ReferenceLine x={simulation?.futureValue} stroke="#B68B40" strokeDasharray="4 4" label={{ value: 'Target', position: 'top', fill: '#B68B40', fontSize: 10 }} />
+                    <ReferenceLine x={simulation.futureValue} stroke="#B68B40" strokeDasharray="4 4" label={{ value: 'Target', position: 'top', fill: '#B68B40', fontSize: 10 }} />
                     <Bar dataKey="probability" name="Probability">
                       {histogramData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.isSuccess ? ASSET_COLORS.equity : '#94a3b8'} />
@@ -211,49 +189,33 @@ export const GoalPlanner = () => {
               <div className="space-y-4">
                 <div className="p-4 bg-stone-50 rounded-xl border border-stone-100">
                   <div className="flex items-start gap-3">
-                    {simulation && simulation.successRate >= riskProfile.goalSuccessThreshold / 100 ? <CheckCircle2 size={20} className="text-green-600 shrink-0" /> : <AlertTriangle size={20} className="text-amber-500 shrink-0" />}
+                    {simulation.successRate >= riskProfile.goalSuccessThreshold / 100 ? (
+                      <CheckCircle2 size={20} className="text-green-600 shrink-0" />
+                    ) : (
+                      <AlertTriangle size={20} className="text-amber-500 shrink-0" />
+                    )}
                     <div>
                       <div className="text-sm font-medium text-navy">
-                        {simulation && simulation.successRate >= riskProfile.goalSuccessThreshold / 100
+                        {simulation.successRate >= riskProfile.goalSuccessThreshold / 100
                           ? 'On track to meet this goal'
-                          : simulation && simulation.successRate >= (riskProfile.goalSuccessThreshold / 100) * 0.6
+                          : simulation.successRate >= (riskProfile.goalSuccessThreshold / 100) * 0.6
                             ? 'Needs attention — consider increasing SIP or extending horizon'
                             : 'Significant shortfall risk — revise plan'}
                       </div>
                       <p className="text-xs text-stone-500 mt-1">
-                        With the current portfolio and SIP, the model estimates a {simulation ? formatPercent(simulation.successRate * 100) : '—'} probability of fully funding this goal.
+                        With the current portfolio and SIP, the model estimates a {formatPercent(simulation.successRate * 100)} probability of fully funding this goal.
                       </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-stone-500">Goal target (today's ₹)</span>
-                    <span className="font-medium text-navy">{formatCurrency(selectedGoal.targetAmount)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-stone-500">Inflation-adjusted target</span>
-                    <span className="font-medium text-navy">{formatCurrency(simulation?.futureValue || 0)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-stone-500">PV needed today</span>
-                    <span className="font-medium text-navy">{formatCurrency(standalonePV)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-stone-500">Required monthly SIP</span>
-                    <span className="font-medium text-navy">{formatCurrency(standaloneRequiredSIP)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-stone-500">Current monthly SIP</span>
-                    <span className="font-medium text-navy">{formatCurrency(inputs.sip.amount)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-stone-500">SIP gap / surplus</span>
-                    <span className={`font-medium ${standaloneRequiredSIP > inputs.sip.amount ? 'text-red-600' : 'text-green-600'}`}>
-                      {formatCurrency(standaloneRequiredSIP - inputs.sip.amount)}
-                    </span>
-                  </div>
+                  <div className="flex justify-between"><span className="text-stone-500">Goal target (today's ₹)</span><span className="font-medium text-navy">{formatCurrency(selectedGoal.targetAmount)}</span></div>
+                  <div className="flex justify-between"><span className="text-stone-500">Inflation-adjusted target</span><span className="font-medium text-navy">{formatCurrency(simulation.futureValue)}</span></div>
+                  <div className="flex justify-between"><span className="text-stone-500">PV needed today</span><span className="font-medium text-navy">{formatCurrency(simulation.pvNeeded)}</span></div>
+                  <div className="flex justify-between"><span className="text-stone-500">Required monthly SIP</span><span className="font-medium text-navy">{formatCurrency(simulation.requiredSIP)}</span></div>
+                  <div className="flex justify-between"><span className="text-stone-500">Current monthly SIP</span><span className="font-medium text-navy">{formatCurrency(wealthResult.monthlySIP)}</span></div>
+                  <div className="flex justify-between"><span className="text-stone-500">SIP gap / surplus</span><span className={`font-medium ${simulation.requiredSIP > wealthResult.monthlySIP ? 'text-red-600' : 'text-green-600'}`}>{formatCurrency(simulation.requiredSIP - wealthResult.monthlySIP)}</span></div>
                 </div>
               </div>
             </Card>
@@ -273,10 +235,11 @@ export const GoalPlanner = () => {
                     <th className="py-2 pr-4 text-right">PV Needed</th>
                     <th className="py-2 pr-4 text-right">Success Rate</th>
                     <th className="py-2 pr-4 text-right">Required SIP</th>
+                    <th className="py-2 pr-4 text-right">Shortfall Prob</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {allGoalSimulations.map((g) => (
+                  {wealthResult.goalResults.map((g) => (
                     <tr key={g.goal.id} className="border-b border-stone-100 hover:bg-stone-50">
                       <td className="py-2 pr-4 font-medium text-navy">{g.goal.name}</td>
                       <td className="py-2 pr-4">
@@ -290,6 +253,7 @@ export const GoalPlanner = () => {
                         </span>
                       </td>
                       <td className="py-2 pr-4 text-right">{formatCurrency(g.requiredSIP)}</td>
+                      <td className="py-2 pr-4 text-right">{formatPercent(g.shortfallProbability * 100)}</td>
                     </tr>
                   ))}
                 </tbody>
