@@ -45,7 +45,7 @@ const categoryMap: Record<string, AssetCategory> = {
 };
 
 export const MVO = () => {
-  const { addAsset, updateAsset, inputs, assumptions } = useCalculator();
+  const { addAsset, updateAsset, inputs, assumptions, riskProfile } = useCalculator();
   const { data, loading, progress, error, fetchData } = useMarketData();
 
   const defaultRange = useMemo(() => getDefaultDateRange(3), []);
@@ -55,15 +55,16 @@ export const MVO = () => {
   const [appliedStrategy, setAppliedStrategy] = useState<string | null>(null);
 
   const mvoResult: MVOResult | null = useMemo(() => {
+    const options = { samples: 10000, riskFreeRate: riskProfile.riskFreeRate / 100 };
     if (data) {
-      return runMVO(data.symbols, data.stats.map((s) => s.annualizedReturn), data.covariance, { samples: 10000 });
+      return runMVO(data.symbols, data.stats.map((s) => s.annualizedReturn), data.covariance, options);
     }
     // Fallback to assumption-driven MVO across broad asset categories
     const cats: AssetCategory[] = ['equity', 'debt', 'gold', 'liquid', 'other'];
     const means = cats.map((c) => assumptions.categories[c].mean);
     const cov = cats.map((i) => cats.map((j) => assumptions.covariance[i][j]));
-    return runMVO(cats, means, cov, { samples: 8000 });
-  }, [data, assumptions]);
+    return runMVO(cats, means, cov, { ...options, samples: 8000 });
+  }, [data, assumptions, riskProfile.riskFreeRate]);
 
   const symbolsForDisplay = useMemo(() => {
     if (data) return data.symbols;
@@ -80,8 +81,22 @@ export const MVO = () => {
   }, [data, symbolsForDisplay]);
 
   const frontierData = useMemo(() => {
-    return mvoResult?.frontier.map((p) => ({ risk: p.volatility * 100, return: p.expectedReturn * 100, sharpe: p.sharpe })) || [];
-  }, [mvoResult]);
+    if (!mvoResult) return [];
+    return mvoResult.frontier
+      .filter((p) => p.volatility * 100 <= riskProfile.targetVolatility * 1.2)
+      .map((p) => ({ risk: p.volatility * 100, return: p.expectedReturn * 100, sharpe: p.sharpe }));
+  }, [mvoResult, riskProfile.targetVolatility]);
+
+  const maxSharpeEquityPct = useMemo(() => {
+    if (!mvoResult) return 0;
+    return mvoResult.maxSharpe.weights.reduce((sum, w, i) => {
+      const symbol = mvoResult.symbols[i];
+      const isEquity = data
+        ? data.instruments[i]?.category === 'index' || data.instruments[i]?.category === 'equity'
+        : symbol === 'equity';
+      return sum + (isEquity ? w : 0);
+    }, 0) * 100;
+  }, [mvoResult, data]);
 
   const highlightedPortfolios = useMemo(() => {
     if (!mvoResult) return [];
@@ -171,6 +186,30 @@ export const MVO = () => {
       {!data && (
         <Alert variant="warning" icon={Globe}>
           Running in assumption mode. Connect Angel One SmartAPI and fetch live data for instrument-level MVO.
+        </Alert>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Risk Profile</div>
+          <div className="text-xl font-serif text-navy mt-1">{riskProfile.label}</div>
+          <div className="text-xs text-stone-500 mt-1">Max equity {formatPercent(riskProfile.maxEquity)} · Vol target {formatPercent(riskProfile.targetVolatility)}</div>
+        </Card>
+        <Card>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Risk-Free Rate</div>
+          <div className="text-xl font-serif text-navy mt-1">{formatPercent(riskProfile.riskFreeRate)}</div>
+          <div className="text-xs text-stone-500 mt-1">Used for Sharpe ratio calculation</div>
+        </Card>
+        <Card>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Frontier Filter</div>
+          <div className="text-xl font-serif text-navy mt-1">≤ {formatPercent(riskProfile.targetVolatility * 1.2)}</div>
+          <div className="text-xs text-stone-500 mt-1">Volatility cap for displayed frontier</div>
+        </Card>
+      </div>
+
+      {mvoResult && maxSharpeEquityPct > riskProfile.maxEquity && (
+        <Alert variant="warning" icon={AlertCircle}>
+          The max-Sharpe portfolio exceeds your risk profile's equity limit ({formatPercent(riskProfile.maxEquity)}). Consider the Min-Variance portfolio or adjust your risk profile.
         </Alert>
       )}
 

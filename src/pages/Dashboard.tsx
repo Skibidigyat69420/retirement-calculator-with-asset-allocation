@@ -60,15 +60,15 @@ const tools = [
 ];
 
 const quickActions = [
+  { path: '/risk', label: 'Risk Profile', icon: ShieldCheck },
   { path: '/master-plan', label: 'Update Plan', icon: Activity },
   { path: '/goal', label: 'Check Goals', icon: Target },
   { path: '/allocation', label: 'Rebalance', icon: PieChart },
   { path: '/mvo', label: 'Run MVO', icon: BarChart2 },
-  { path: '/trade-analytics', label: 'Trade IS', icon: Zap },
 ];
 
 export const Dashboard = () => {
-  const { result, inputs, assumptions } = useCalculator();
+  const { result, inputs, assumptions, riskProfile } = useCalculator();
 
   const netWorth = useMemo(() => inputs.assets.reduce((sum, a) => sum + a.value, 0), [inputs.assets]);
   const annualSavings = inputs.sip.amount * 12 + (inputs.stp.active ? inputs.stp.monthlyTransfer * 12 : 0);
@@ -98,8 +98,8 @@ export const Dashboard = () => {
   }, [inputs, assumptions]);
 
   const essentialSuccess = useMemo(
-    () => goalResults.filter((g) => g.goal.priority === 'essential').every((g) => g.successRate >= 0.7),
-    [goalResults],
+    () => goalResults.filter((g) => g.goal.priority === 'essential').every((g) => g.successRate >= riskProfile.goalSuccessThreshold / 100),
+    [goalResults, riskProfile.goalSuccessThreshold],
   );
 
   const chartData = result.snapshots
@@ -141,7 +141,7 @@ export const Dashboard = () => {
 
       {!essentialSuccess && (
         <Alert variant="warning" icon={AlertTriangle}>
-          One or more essential goals have a success probability below 70%. Visit the Goal Planner to review required SIPs.
+          One or more essential goals have a success probability below {formatPercent(riskProfile.goalSuccessThreshold)}. Visit the Goal Planner to review required SIPs.
         </Alert>
       )}
 
@@ -151,9 +151,12 @@ export const Dashboard = () => {
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <MetricCard label="Net Worth" value={formatCurrency(netWorth)} subtext="Current assets" variant="navy" />
         <MetricCard label="Annual Income" value={formatCurrency(inputs.annualIncome)} subtext={`Savings rate ${formatPercent(savingsRate)}`} variant="gold" />
+        <Link to="/risk" className="block">
+          <MetricCard label="Risk Profile" value={riskProfile.label} subtext={`Max drawdown ${formatPercent(riskProfile.maxDrawdown)}`} />
+        </Link>
         <MetricCard
           label="Terminal Corpus"
           value={formatCurrency(result.terminalCorpusNominal)}
@@ -163,7 +166,7 @@ export const Dashboard = () => {
           label="Plan Probability"
           value={projection ? formatPercent(projection.probabilityOfSuccess) : '—'}
           subtext="Of meeting all goals + SWP"
-          variant={projection && projection.probabilityOfSuccess >= 70 ? 'success' : projection && projection.probabilityOfSuccess >= 40 ? 'default' : 'danger'}
+          variant={projection && projection.probabilityOfSuccess >= riskProfile.goalSuccessThreshold ? 'success' : projection && projection.probabilityOfSuccess >= riskProfile.goalSuccessThreshold * 0.6 ? 'default' : 'danger'}
         />
       </div>
 

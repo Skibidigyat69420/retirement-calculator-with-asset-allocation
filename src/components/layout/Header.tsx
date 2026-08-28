@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Activity, PieChart, TrendingUp, TrendingDown, Wallet, Target, Calculator, Percent, ShieldCheck, BarChart2, Database, Radio, BrainCircuit, Scissors, RefreshCcw, Grid3X3, FileText } from 'lucide-react';
+import { Menu, X, Activity, PieChart, TrendingUp, TrendingDown, Wallet, Target, Calculator, Percent, ShieldCheck, BarChart2, Database, Radio, BrainCircuit, Scissors, RefreshCcw, Grid3X3, FileText, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../../lib/utils';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: Activity },
+  { path: '/risk', label: 'Risk Profile', icon: Shield },
   { path: '/master-plan', label: 'Master Plan', icon: PieChart },
   { path: '/goal', label: 'Goal Planner', icon: Target },
   { path: '/allocation', label: 'Allocation', icon: PieChart },

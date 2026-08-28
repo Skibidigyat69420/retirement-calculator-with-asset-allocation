@@ -38,6 +38,37 @@ export interface SWPConfig {
 }
 
 export type GoalPriority = 'essential' | 'important' | 'aspirational';
+export type RiskProfileName = 'conservative' | 'moderate' | 'balanced' | 'growth' | 'aggressive';
+
+export interface RiskProfile {
+  id: RiskProfileName;
+  label: string;
+  description: string;
+  scoreMin: number;
+  scoreMax: number;
+  targets: Record<AssetCategory, number>;
+  maxEquity: number;
+  minEquity: number;
+  maxDrawdown: number;
+  targetVolatility: number;
+  riskFreeRate: number;
+  monteCarloSimulations: number;
+  goalSuccessThreshold: number;
+  equityAtRetirement: number;
+  persona: string;
+  recommendedApproach: string;
+}
+
+export interface RiskQuestion {
+  id: string;
+  category: 'time' | 'capacity' | 'attitude' | 'experience' | 'liquidity' | 'goals';
+  text: string;
+  options: { label: string; score: number; description?: string }[];
+}
+
+export interface RiskAnswers {
+  [questionId: string]: number;
+}
 
 export interface GoalProbabilityBin {
   binStart: number;

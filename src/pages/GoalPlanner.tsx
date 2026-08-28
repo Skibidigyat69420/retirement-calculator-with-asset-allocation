@@ -21,7 +21,7 @@ const priorityOptions: { value: GoalPriority; label: string }[] = [
 ];
 
 export const GoalPlanner = () => {
-  const { inputs, assumptions, updateGoal, addGoal } = useCalculator();
+  const { inputs, assumptions, updateGoal, addGoal, riskProfile } = useCalculator();
   const [selectedGoalId, setSelectedGoalId] = useState<string>(inputs.goals[0]?.id || '');
 
   const selectedGoal = useMemo(
@@ -45,12 +45,12 @@ export const GoalPlanner = () => {
 
   const simulation = useMemo(() => {
     if (!selectedGoal) return null;
-    return simulateGoal(selectedGoal, assumptions, netWorth, inputs.sip.amount, portfolioWeights, 2000);
-  }, [selectedGoal, assumptions, netWorth, inputs.sip.amount, portfolioWeights]);
+    return simulateGoal(selectedGoal, assumptions, netWorth, inputs.sip.amount, portfolioWeights, riskProfile.monteCarloSimulations);
+  }, [selectedGoal, assumptions, netWorth, inputs.sip.amount, portfolioWeights, riskProfile.monteCarloSimulations]);
 
   const allGoalSimulations = useMemo(() => {
-    return inputs.goals.map((g) => simulateGoal(g, assumptions, netWorth, inputs.sip.amount, portfolioWeights, 1000));
-  }, [inputs.goals, assumptions, netWorth, inputs.sip.amount, portfolioWeights]);
+    return inputs.goals.map((g) => simulateGoal(g, assumptions, netWorth, inputs.sip.amount, portfolioWeights, Math.max(1000, Math.floor(riskProfile.monteCarloSimulations / 2))));
+  }, [inputs.goals, assumptions, netWorth, inputs.sip.amount, portfolioWeights, riskProfile.monteCarloSimulations]);
 
   const standaloneRequiredSIP = useMemo(() => {
     if (!selectedGoal) return 0;
@@ -152,7 +152,7 @@ export const GoalPlanner = () => {
                 label="Probability of Success"
                 value={simulation ? formatPercent(simulation.successRate * 100) : '—'}
                 subtext="Monte Carlo simulation"
-                variant={simulation && simulation.successRate >= 0.7 ? 'success' : simulation && simulation.successRate >= 0.4 ? 'default' : 'danger'}
+                variant={simulation && simulation.successRate >= riskProfile.goalSuccessThreshold / 100 ? 'success' : simulation && simulation.successRate >= (riskProfile.goalSuccessThreshold / 100) * 0.6 ? 'default' : 'danger'}
               />
               <MetricCard label="Future Value Needed" value={formatCurrency(simulation?.futureValue || 0)} subtext={`In ${selectedGoal.yearsToGoal} years`} variant="navy" />
               <MetricCard label="PV Needed Today" value={formatCurrency(standalonePV)} subtext="Discounted at portfolio mean" variant="gold" />
@@ -211,12 +211,12 @@ export const GoalPlanner = () => {
               <div className="space-y-4">
                 <div className="p-4 bg-stone-50 rounded-xl border border-stone-100">
                   <div className="flex items-start gap-3">
-                    {simulation && simulation.successRate >= 0.7 ? <CheckCircle2 size={20} className="text-green-600 shrink-0" /> : <AlertTriangle size={20} className="text-amber-500 shrink-0" />}
+                    {simulation && simulation.successRate >= riskProfile.goalSuccessThreshold / 100 ? <CheckCircle2 size={20} className="text-green-600 shrink-0" /> : <AlertTriangle size={20} className="text-amber-500 shrink-0" />}
                     <div>
                       <div className="text-sm font-medium text-navy">
-                        {simulation && simulation.successRate >= 0.7
+                        {simulation && simulation.successRate >= riskProfile.goalSuccessThreshold / 100
                           ? 'On track to meet this goal'
-                          : simulation && simulation.successRate >= 0.4
+                          : simulation && simulation.successRate >= (riskProfile.goalSuccessThreshold / 100) * 0.6
                             ? 'Needs attention — consider increasing SIP or extending horizon'
                             : 'Significant shortfall risk — revise plan'}
                       </div>
@@ -285,7 +285,7 @@ export const GoalPlanner = () => {
                       <td className="py-2 pr-4 text-right">{formatCurrency(g.futureValue)}</td>
                       <td className="py-2 pr-4 text-right">{formatCurrency(g.pvNeeded)}</td>
                       <td className="py-2 pr-4 text-right">
-                        <span className={g.successRate >= 0.7 ? 'text-green-600' : g.successRate >= 0.4 ? 'text-amber-600' : 'text-red-600'}>
+                        <span className={g.successRate >= riskProfile.goalSuccessThreshold / 100 ? 'text-green-600' : g.successRate >= (riskProfile.goalSuccessThreshold / 100) * 0.6 ? 'text-amber-600' : 'text-red-600'}>
                           {formatPercent(g.successRate * 100)}
                         </span>
                       </td>

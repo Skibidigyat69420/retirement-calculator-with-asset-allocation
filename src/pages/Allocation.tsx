@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { PieChart, TrendingUp, Target, ArrowRight, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { PieChart, TrendingUp, Target, ArrowRight, AlertTriangle, CheckCircle2, Shield, RotateCcw } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Slider } from '../components/ui/Slider';
 import { SectionTitle } from '../components/ui/SectionTitle';
@@ -15,15 +15,9 @@ import { Link } from 'react-router-dom';
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
 
 export const Allocation = () => {
-  const { inputs, result, assumptions } = useCalculator();
-  const [targets, setTargets] = useState<Record<AssetCategory, number>>({
-    equity: 55,
-    debt: 15,
-    gold: 15,
-    realestate: 10,
-    liquid: 4,
-    other: 1,
-  });
+  const { inputs, result, assumptions, riskProfile } = useCalculator();
+  const [manualTargets, setManualTargets] = useState<Record<AssetCategory, number> | null>(null);
+  const targets = manualTargets || riskProfile.targets;
 
   const projection = useMemo(() => {
     try {
@@ -52,7 +46,7 @@ export const Allocation = () => {
   const projectedData = CATEGORIES.map((cat) => ({ name: ASSET_LABELS[cat], value: projectedTotal * (projectedWeights[cat] || 0), color: ASSET_COLORS[cat] })).filter((d) => d.value > 0);
 
   const updateTarget = (cat: AssetCategory, value: number) => {
-    setTargets((prev) => ({ ...prev, [cat]: value }));
+    setManualTargets((prev) => ({ ...(prev || riskProfile.targets), [cat]: value }));
   };
 
   const assetEvolutionData = useMemo(() => {
@@ -136,14 +130,20 @@ export const Allocation = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1">
-          <h3 className="text-lg font-serif text-navy mb-4">Strategic Target</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-serif text-navy flex items-center gap-2"><Shield size={18} className="text-gold" /> Strategic Target</h3>
+            <Link to="/risk" className="text-xs text-gold hover:underline">{riskProfile.label}</Link>
+          </div>
           <div className="space-y-5">
             {CATEGORIES.map((cat) => (
               <Slider key={cat} label={ASSET_LABELS[cat]} value={targets[cat]} onChange={(v) => updateTarget(cat, v)} suffix="%" />
             ))}
           </div>
-          <div className="mt-4 text-xs text-stone-500">
-            Total: {formatPercent(Object.values(targets).reduce((a, b) => a + b, 0))}
+          <div className="mt-4 flex items-center justify-between">
+            <span className="text-xs text-stone-500">Total: {formatPercent(Object.values(targets).reduce((a, b) => a + b, 0))}</span>
+            <button onClick={() => setManualTargets(null)} className="text-xs flex items-center text-gold hover:underline">
+              <RotateCcw size={12} className="mr-1" /> Reset to {riskProfile.label}
+            </button>
           </div>
         </Card>
 

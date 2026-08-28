@@ -1,8 +1,9 @@
-import { createContext, useContext, useState, useMemo, useCallback } from 'react';
-import type { MasterPlanInputs, Scenario, Goal } from '../types';
+import { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
+import type { MasterPlanInputs, Scenario, Goal, RiskProfile, RiskAnswers } from '../types';
 import { defaultClientInputs, defaultScenarios } from '../lib/scenarios';
 import { calculateMasterPlan } from '../lib/calculations';
 import { loadAssumptions, type AssumptionSet } from '../lib/assumptions';
+import { calculateRiskScore, getRiskProfile, isComplete } from '../lib/riskQuestionnaire';
 
 interface CalculatorContextType {
   inputs: MasterPlanInputs;
@@ -22,14 +23,63 @@ interface CalculatorContextType {
   loadScenario: (scenario: Scenario) => void;
   assumptions: AssumptionSet;
   setAssumptions: React.Dispatch<React.SetStateAction<AssumptionSet>>;
+  riskAnswers: RiskAnswers;
+  setRiskAnswers: React.Dispatch<React.SetStateAction<RiskAnswers>>;
+  riskProfile: RiskProfile;
+  applyRiskProfileToPlan: () => void;
 }
 
 const CalculatorContext = createContext<CalculatorContextType | undefined>(undefined);
+
+const RISK_ANSWERS_KEY = 'soundthesis_risk_answers';
+
+function loadRiskAnswers(): RiskAnswers {
+  try {
+    const raw = localStorage.getItem(RISK_ANSWERS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // ignore
+  }
+  return {};
+}
+
+function saveRiskAnswers(answers: RiskAnswers): void {
+  localStorage.setItem(RISK_ANSWERS_KEY, JSON.stringify(answers));
+}
 
 export const CalculatorProvider = ({ children }: { children: React.ReactNode }) => {
   const [inputs, setInputs] = useState<MasterPlanInputs>(defaultClientInputs());
   const [scenarios] = useState<Scenario[]>(defaultScenarios());
   const [assumptions, setAssumptions] = useState<AssumptionSet>(() => loadAssumptions());
+  const [riskAnswers, setRiskAnswersState] = useState<RiskAnswers>(() => loadRiskAnswers());
+
+  const setRiskAnswers = useCallback((value: React.SetStateAction<RiskAnswers>) => {
+    setRiskAnswersState((prev) => {
+      const next = typeof value === 'function' ? (value as (prev: RiskAnswers) => RiskAnswers)(prev) : value;
+      saveRiskAnswers(next);
+      return next;
+    });
+  }, []);
+
+  const riskProfile = useMemo(() => {
+    const score = isComplete(riskAnswers) ? calculateRiskScore(riskAnswers) : 50;
+    return getRiskProfile(score);
+  }, [riskAnswers]);
+
+  const applyRiskProfileToPlan = useCallback(() => {
+    const targets = riskProfile.targets;
+    const total = targets.equity + targets.debt;
+    const equitySplit = total > 0 ? Math.round((targets.equity / total) * 100) : 50;
+    setInputs((prev) => ({
+      ...prev,
+      sip: { ...prev.sip, equitySplit, debtSplit: 100 - equitySplit },
+      stp: { ...prev.stp, equitySplit, debtSplit: 100 - equitySplit },
+    }));
+  }, [riskProfile]);
+
+  useEffect(() => {
+    saveRiskAnswers(riskAnswers);
+  }, [riskAnswers]);
 
   const updateInputs = useCallback((patch: Partial<MasterPlanInputs>) => {
     setInputs((prev) => ({ ...prev, ...patch }));
@@ -107,7 +157,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     }));
   }, []);
 
-  const updateGoal = useCallback((id: string, patch: Partial<Goal>) => {
+  const updateGoal = useCallback((id:string, patch: Partial<Goal>) => {
     setInputs((prev) => ({
       ...prev,
       goals: prev.goals.map((g) => (g.id === id ? { ...g, ...patch } : g)),
@@ -147,6 +197,10 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         loadScenario,
         assumptions,
         setAssumptions,
+        riskAnswers,
+        setRiskAnswers,
+        riskProfile,
+        applyRiskProfileToPlan,
       }}
     >
       {children}
