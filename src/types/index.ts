@@ -37,15 +37,42 @@ export interface SWPConfig {
   endAge: number;
 }
 
+export type GoalPriority = 'essential' | 'important' | 'aspirational';
+
+export interface GoalProbabilityBin {
+  binStart: number;
+  binEnd: number;
+  count: number;
+  probability: number;
+}
+
+export interface Goal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  yearsToGoal: number;
+  priority: GoalPriority;
+  inflation: number;
+  recurring: boolean;
+  // Computed fields
+  futureValue?: number;
+  pvNeeded?: number;
+  successRate?: number;
+  requiredSIP?: number;
+  probabilityDistribution?: GoalProbabilityBin[];
+}
+
 export interface MasterPlanInputs {
   currentAge: number;
   retirementAge: number;
   lifeExpectancy: number;
   inflation: number;
+  annualIncome: number;
   assets: Asset[];
   sip: SIPConfig;
   stp: STPConfig;
   swp: SWPConfig;
+  goals: Goal[];
 }
 
 export interface YearlySnapshot {

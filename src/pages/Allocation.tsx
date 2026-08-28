@@ -1,17 +1,21 @@
 import { useMemo, useState } from 'react';
+import { PieChart, TrendingUp, Target, ArrowRight, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Slider } from '../components/ui/Slider';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { DonutChart } from '../components/charts/DonutChart';
+import { AssetEvolutionChart } from '../components/charts/AssetEvolutionChart';
 import { useCalculator } from '../context/CalculatorContext';
 import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
 import { formatCurrency, formatPercent } from '../lib/formatters';
+import { projectAssetAllocation, getTargetGlideAllocation } from '../lib/projections';
 import type { AssetCategory } from '../types';
+import { Link } from 'react-router-dom';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
 
 export const Allocation = () => {
-  const { inputs } = useCalculator();
+  const { inputs, result, assumptions } = useCalculator();
   const [targets, setTargets] = useState<Record<AssetCategory, number>>({
     equity: 55,
     debt: 15,
@@ -21,81 +25,131 @@ export const Allocation = () => {
     other: 1,
   });
 
+  const projection = useMemo(() => {
+    try {
+      return projectAssetAllocation(inputs, assumptions, targets, 600);
+    } catch {
+      return null;
+    }
+  }, [inputs, assumptions, targets]);
+
   const currentByCategory = useMemo(() => {
-    const totals: Record<AssetCategory, number> = {
-      equity: 0,
-      debt: 0,
-      gold: 0,
-      realestate: 0,
-      liquid: 0,
-      other: 0,
-    };
+    const totals: Record<AssetCategory, number> = { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
     inputs.assets.forEach((a) => {
       totals[a.category] += a.value;
     });
     return totals;
   }, [inputs.assets]);
 
-  const totalValue = useMemo(
-    () => Object.values(currentByCategory).reduce((a, b) => a + b, 0),
-    [currentByCategory],
-  );
+  const totalValue = useMemo(() => Object.values(currentByCategory).reduce((a, b) => a + b, 0), [currentByCategory]);
 
-  const currentData = CATEGORIES.map((cat) => ({
-    name: ASSET_LABELS[cat],
-    value: currentByCategory[cat],
-    color: ASSET_COLORS[cat],
-  })).filter((d) => d.value > 0);
+  const currentData = CATEGORIES.map((cat) => ({ name: ASSET_LABELS[cat], value: currentByCategory[cat], color: ASSET_COLORS[cat] })).filter((d) => d.value > 0);
+
+  const targetData = CATEGORIES.map((cat) => ({ name: ASSET_LABELS[cat], value: totalValue * (targets[cat] / 100), color: ASSET_COLORS[cat] })).filter((d) => d.value > 0);
+
+  const projectedWeights = projection?.terminalWeights || getTargetGlideAllocation(inputs.retirementAge, inputs.retirementAge);
+  const projectedTotal = projection?.terminalValue || result.terminalCorpusNominal;
+  const projectedData = CATEGORIES.map((cat) => ({ name: ASSET_LABELS[cat], value: projectedTotal * (projectedWeights[cat] || 0), color: ASSET_COLORS[cat] })).filter((d) => d.value > 0);
 
   const updateTarget = (cat: AssetCategory, value: number) => {
     setTargets((prev) => ({ ...prev, [cat]: value }));
   };
 
+  const assetEvolutionData = useMemo(() => {
+    if (!projection) return [];
+    return projection.years.filter((_, i) => i % Math.max(1, Math.floor(projection.years.length / 12)) === 0).map((y) => ({
+      label: `Age ${y.age}`,
+      equity: y.equity,
+      debt: y.debt,
+      gold: y.gold,
+      realestate: y.realestate,
+      liquid: y.liquid,
+      other: y.other,
+    }));
+  }, [projection]);
+
+  const rebalanceRows = CATEGORIES.map((cat) => {
+    const current = currentByCategory[cat];
+    const currentPct = totalValue > 0 ? (current / totalValue) * 100 : 0;
+    const targetValue = totalValue * (targets[cat] / 100);
+    const gap = targetValue - current;
+    return { cat, current, currentPct, targetValue, gap };
+  });
+
+  const maxDrift = useMemo(() => {
+    return Math.max(...rebalanceRows.map((r) => Math.abs((r.currentPct || 0) - targets[r.cat])));
+  }, [rebalanceRows, targets]);
+
   return (
     <div className="space-y-6">
       <SectionTitle
         title="Asset Allocation"
-        subtitle="Compare your current allocation against a strategic target and identify rebalancing gaps."
-        badge="Standalone"
+        subtitle="Current allocation versus strategic target, projected glide path, and probability of success under the target mix."
+        badge="Strategic + Tactical"
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {maxDrift > 10 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-amber-800">
+          <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <strong>Rebalancing recommended.</strong> One or more asset classes are more than 10% away from target. Review the rebalancing table below or run the{' '}
+            <Link to="/mvo" className="underline hover:text-amber-900">MVO optimizer</Link>.
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <h3 className="text-lg font-serif text-navy mb-4">Current Allocation</h3>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Current Equity</div>
+          <div className="text-2xl font-serif text-navy mt-1">{formatPercent(totalValue > 0 ? (currentByCategory.equity / totalValue) * 100 : 0)}</div>
+        </Card>
+        <Card>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Target Equity</div>
+          <div className="text-2xl font-serif text-navy mt-1">{formatPercent(targets.equity)}</div>
+        </Card>
+        <Card>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Projected Terminal Value</div>
+          <div className="text-2xl font-serif text-navy mt-1">{formatCurrency(projectedTotal)}</div>
+        </Card>
+        <Card>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Plan Success Probability</div>
+          <div className={`text-2xl font-serif mt-1 ${projection && projection.probabilityOfSuccess >= 70 ? 'text-green-600' : projection && projection.probabilityOfSuccess >= 40 ? 'text-amber-600' : 'text-red-600'}`}>
+            {projection ? formatPercent(projection.probabilityOfSuccess) : '—'}
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><PieChart size={18} className="text-gold" /> Current</h3>
           <DonutChart data={currentData} />
-          <div className="mt-4 space-y-2">
-            {CATEGORIES.map((cat) => {
-              const value = currentByCategory[cat];
-              const percent = totalValue > 0 ? (value / totalValue) * 100 : 0;
-              if (value <= 0) return null;
-              return (
-                <div key={cat} className="flex justify-between text-sm">
-                  <span className="flex items-center">
-                    <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: ASSET_COLORS[cat] }} />
-                    {ASSET_LABELS[cat]}
-                  </span>
-                  <span className="font-medium">
-                    {formatCurrency(value)} ({formatPercent(percent)})
-                  </span>
-                </div>
-              );
-            })}
+        </Card>
+        <Card>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><Target size={18} className="text-gold" /> Target</h3>
+          <DonutChart data={targetData} />
+        </Card>
+        <Card>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-gold" /> Projected (Terminal)</h3>
+          <DonutChart data={projectedData} />
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-1">
+          <h3 className="text-lg font-serif text-navy mb-4">Strategic Target</h3>
+          <div className="space-y-5">
+            {CATEGORIES.map((cat) => (
+              <Slider key={cat} label={ASSET_LABELS[cat]} value={targets[cat]} onChange={(v) => updateTarget(cat, v)} suffix="%" />
+            ))}
+          </div>
+          <div className="mt-4 text-xs text-stone-500">
+            Total: {formatPercent(Object.values(targets).reduce((a, b) => a + b, 0))}
           </div>
         </Card>
 
-        <Card>
-          <h3 className="text-lg font-serif text-navy mb-4">Target Allocation</h3>
-          <div className="space-y-5">
-            {CATEGORIES.map((cat) => (
-              <Slider
-                key={cat}
-                label={ASSET_LABELS[cat]}
-                value={targets[cat]}
-                onChange={(v) => updateTarget(cat, v)}
-                suffix="%"
-              />
-            ))}
-          </div>
+        <Card className="lg:col-span-2">
+          <h3 className="text-lg font-serif text-navy mb-4">Projected Asset-Class Evolution</h3>
+          <AssetEvolutionChart data={assetEvolutionData} xKey="label" />
         </Card>
       </div>
 
@@ -109,30 +163,29 @@ export const Allocation = () => {
                 <th className="py-2 pr-4 text-right">Current</th>
                 <th className="py-2 pr-4 text-right">Current %</th>
                 <th className="py-2 pr-4 text-right">Target %</th>
+                <th className="py-2 pr-4 text-right">Projected Terminal %</th>
                 <th className="py-2 pr-4 text-right">Gap (₹)</th>
                 <th className="py-2 pr-4 text-center">Action</th>
               </tr>
             </thead>
             <tbody>
-              {CATEGORIES.map((cat) => {
-                const current = currentByCategory[cat];
-                const currentPct = totalValue > 0 ? (current / totalValue) * 100 : 0;
-                const targetValue = totalValue * (targets[cat] / 100);
-                const gap = targetValue - current;
+              {rebalanceRows.map((r) => {
+                const projectedPct = (projectedWeights[r.cat] || 0) * 100;
                 return (
-                  <tr key={cat} className="border-b border-stone-100">
+                  <tr key={r.cat} className="border-b border-stone-100 hover:bg-stone-50">
                     <td className="py-2 pr-4 flex items-center">
-                      <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: ASSET_COLORS[cat] }} />
-                      {ASSET_LABELS[cat]}
+                      <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: ASSET_COLORS[r.cat] }} />
+                      {ASSET_LABELS[r.cat]}
                     </td>
-                    <td className="py-2 pr-4 text-right">{formatCurrency(current)}</td>
-                    <td className="py-2 pr-4 text-right">{formatPercent(currentPct)}</td>
-                    <td className="py-2 pr-4 text-right">{formatPercent(targets[cat])}</td>
-                    <td className="py-2 pr-4 text-right font-medium">{formatCurrency(gap)}</td>
+                    <td className="py-2 pr-4 text-right">{formatCurrency(r.current)}</td>
+                    <td className="py-2 pr-4 text-right">{formatPercent(r.currentPct)}</td>
+                    <td className="py-2 pr-4 text-right">{formatPercent(targets[r.cat])}</td>
+                    <td className="py-2 pr-4 text-right">{formatPercent(projectedPct)}</td>
+                    <td className="py-2 pr-4 text-right font-medium">{formatCurrency(r.gap)}</td>
                     <td className="py-2 pr-4 text-center">
-                      {Math.abs(gap) < totalValue * 0.02 ? (
-                        <span className="text-stone-500 text-xs">Hold</span>
-                      ) : gap > 0 ? (
+                      {Math.abs(r.gap) < totalValue * 0.02 ? (
+                        <span className="inline-flex items-center text-stone-500 text-xs"><CheckCircle2 size={12} className="mr-1" /> Hold</span>
+                      ) : r.gap > 0 ? (
                         <span className="text-green-600 text-xs font-semibold">Buy</span>
                       ) : (
                         <span className="text-red-600 text-xs font-semibold">Sell</span>
@@ -143,6 +196,38 @@ export const Allocation = () => {
               })}
             </tbody>
           </table>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-serif text-navy">Glide Path Reference</h3>
+          <Link to="/advanced-allocation" className="text-xs text-gold hover:underline flex items-center">
+            Advanced models <ArrowRight size={12} className="ml-1" />
+          </Link>
+        </div>
+        <p className="text-sm text-stone-600 mb-4">
+          The default glide path reduces equity as you approach retirement, shifting to capital preservation. Use the Advanced Allocation page for Black-Litterman, risk parity, and tactical overlays.
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { age: inputs.currentAge, label: 'Today' },
+            { age: Math.round(inputs.currentAge + (inputs.retirementAge - inputs.currentAge) * 0.5), label: 'Midway' },
+            { age: inputs.retirementAge, label: 'Retirement' },
+            { age: inputs.lifeExpectancy, label: 'Late Life' },
+          ].map((point) => {
+            const glide = getTargetGlideAllocation(point.age, inputs.retirementAge);
+            return (
+              <div key={point.label} className="p-4 bg-stone-50 rounded-xl border border-stone-100">
+                <div className="text-xs font-bold uppercase tracking-wider text-stone-500">{point.label} (Age {point.age})</div>
+                <div className="mt-2 space-y-1 text-sm">
+                  <div className="flex justify-between"><span>Equity</span><span className="font-medium">{formatPercent(glide.equity * 100)}</span></div>
+                  <div className="flex justify-between"><span>Debt</span><span className="font-medium">{formatPercent(glide.debt * 100)}</span></div>
+                  <div className="flex justify-between"><span>Liquid</span><span className="font-medium">{formatPercent(glide.liquid * 100)}</span></div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </Card>
     </div>

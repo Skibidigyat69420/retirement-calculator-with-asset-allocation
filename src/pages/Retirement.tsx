@@ -22,10 +22,12 @@ export const Retirement = () => {
       retirementAge,
       lifeExpectancy: 90,
       inflation,
+      annualIncome: monthlySIP * 12,
       assets: [{ id: 'corpus', name: 'Current Corpus', value: currentCorpus, returnRate, category: 'equity', liquidateAtRetirement: true }],
       sip: { amount: monthlySIP, equitySplit: 100, debtSplit: 0, stepUp: 0, equityReturn: returnRate, debtReturn: returnRate },
       stp: { active: false, source: 'custom', lumpsum: 0, monthlyTransfer: 0, liquidReturn: 7, equitySplit: 100, debtSplit: 0, liquidCap: 0 },
       swp: { monthlyNeedToday: monthlyExpense, postRetirementReturn: returnRate - 1, taxRate: 10, startAge: retirementAge, endAge: 90 },
+      goals: [],
     });
   }, [currentAge, retirementAge, monthlyExpense, currentCorpus, monthlySIP, returnRate, inflation]);
 

@@ -9,6 +9,7 @@ import {
   Check,
   Layers,
   ArrowRight,
+  Globe,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -24,6 +25,7 @@ import { SectionTitle } from '../components/ui/SectionTitle';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { Alert } from '../components/ui/Alert';
 import { useMarketData } from '../hooks/useMarketData';
 import { INSTRUMENTS, DEFAULT_ALLOCATION_SYMBOLS } from '../lib/instruments';
 import { runMVO, type Portfolio, type MVOResult } from '../lib/mvo';
@@ -43,7 +45,7 @@ const categoryMap: Record<string, AssetCategory> = {
 };
 
 export const MVO = () => {
-  const { addAsset, updateAsset, inputs } = useCalculator();
+  const { addAsset, updateAsset, inputs, assumptions } = useCalculator();
   const { data, loading, progress, error, fetchData } = useMarketData();
 
   const defaultRange = useMemo(() => getDefaultDateRange(3), []);
@@ -53,20 +55,32 @@ export const MVO = () => {
   const [appliedStrategy, setAppliedStrategy] = useState<string | null>(null);
 
   const mvoResult: MVOResult | null = useMemo(() => {
-    if (!data) return null;
-    return runMVO(data.symbols, data.stats.map((s) => s.annualizedReturn), data.covariance, {
-      samples: 10000,
-    });
+    if (data) {
+      return runMVO(data.symbols, data.stats.map((s) => s.annualizedReturn), data.covariance, { samples: 10000 });
+    }
+    // Fallback to assumption-driven MVO across broad asset categories
+    const cats: AssetCategory[] = ['equity', 'debt', 'gold', 'liquid', 'other'];
+    const means = cats.map((c) => assumptions.categories[c].mean);
+    const cov = cats.map((i) => cats.map((j) => assumptions.covariance[i][j]));
+    return runMVO(cats, means, cov, { samples: 8000 });
+  }, [data, assumptions]);
+
+  const symbolsForDisplay = useMemo(() => {
+    if (data) return data.symbols;
+    return ['equity', 'debt', 'gold', 'liquid', 'other'];
   }, [data]);
 
+  const instrumentsForDisplay = useMemo(() => {
+    if (data) return data.instruments;
+    return symbolsForDisplay.map((s) => ({
+      symbol: s,
+      name: s.charAt(0).toUpperCase() + s.slice(1),
+      category: s === 'gold' ? 'gold' : s === 'debt' || s === 'liquid' ? 'debt' : s === 'other' ? 'commodity' : 'index',
+    })) as typeof INSTRUMENTS;
+  }, [data, symbolsForDisplay]);
+
   const frontierData = useMemo(() => {
-    return (
-      mvoResult?.frontier.map((p) => ({
-        risk: p.volatility * 100,
-        return: p.expectedReturn * 100,
-        sharpe: p.sharpe,
-      })) || []
-    );
+    return mvoResult?.frontier.map((p) => ({ risk: p.volatility * 100, return: p.expectedReturn * 100, sharpe: p.sharpe })) || [];
   }, [mvoResult]);
 
   const highlightedPortfolios = useMemo(() => {
@@ -77,10 +91,22 @@ export const MVO = () => {
       { key: 'equalWeight', label: 'Equal Weight', portfolio: mvoResult.equalWeight, color: '#2E7D32' },
       { key: 'riskParity', label: 'Risk Parity', portfolio: mvoResult.riskParity, color: '#8D6E63' },
     ];
-    return strategies.map((s) => ({
-      ...s,
-      risk: s.portfolio.volatility * 100,
-      return: s.portfolio.expectedReturn * 100,
+    return strategies.map((s) => ({ ...s, risk: s.portfolio.volatility * 100, return: s.portfolio.expectedReturn * 100 }));
+  }, [mvoResult]);
+
+  const correlationMatrix = useMemo(() => {
+    if (!mvoResult) return [];
+    const corr = mvoResult.symbols.map((_, i) =>
+      mvoResult.symbols.map((__, j) => {
+        const cov = mvoResult.covariance[i][j];
+        const stdI = Math.sqrt(mvoResult.covariance[i][i]);
+        const stdJ = Math.sqrt(mvoResult.covariance[j][j]);
+        return stdI > 0 && stdJ > 0 ? cov / (stdI * stdJ) : 0;
+      }),
+    );
+    return mvoResult.symbols.map((sym, i) => ({
+      symbol: sym,
+      values: corr[i].map((v, j) => ({ symbol: mvoResult.symbols[j], value: v })),
     }));
   }, [mvoResult]);
 
@@ -95,13 +121,24 @@ export const MVO = () => {
   };
 
   const applyWeights = (portfolio: Portfolio, strategyName: string) => {
-    if (!data) return;
-    // Remove existing MVO assets of the same symbols to avoid duplication
+    if (!data) {
+      // When using fallback assumptions, apply category weights to SIP split instead of adding assets
+      const cats = ['equity', 'debt', 'gold', 'liquid', 'other'] as AssetCategory[];
+      const eqWeight = portfolio.weights[cats.indexOf('equity')] || 0;
+      const debtWeight = portfolio.weights[cats.indexOf('debt')] || 0;
+      const total = eqWeight + debtWeight;
+      if (total > 0) {
+        // Update SIP split proportionally
+        // We can't directly update SIP here without context helper, so we just alert
+        alert(`${strategyName} weights: Equity ${(eqWeight * 100).toFixed(1)}%, Debt ${(debtWeight * 100).toFixed(1)}%. Apply this in Master Plan > Cashflows.`);
+      }
+      setAppliedStrategy(strategyName);
+      setTimeout(() => setAppliedStrategy(null), 3000);
+      return;
+    }
+
     const existingIds = new Set(inputs.assets.filter((a) => selectedSymbols.includes(a.name)).map((a) => a.id));
-    existingIds.forEach((id) => {
-      // We cannot remove from context easily; update them to zero instead and they will be hidden
-      updateAsset(id as string, { value: 0 });
-    });
+    existingIds.forEach((id) => updateAsset(id as string, { value: 0 }));
 
     portfolio.weights.forEach((w, idx) => {
       const symbol = data.symbols[idx];
@@ -110,7 +147,7 @@ export const MVO = () => {
       const returnPct = (data.stats[idx]?.annualizedReturn || 0.08) * 100;
       addAsset({
         name: `${instrument?.name || symbol} (${strategyName})`,
-        value: Math.round(w * 10000000), // Use 1 Cr notional for visualization
+        value: Math.round(w * 10000000),
         returnRate: Math.max(0, Math.min(30, returnPct)),
         category,
       });
@@ -120,18 +157,22 @@ export const MVO = () => {
   };
 
   const toggleSymbol = (symbol: string) => {
-    setSelectedSymbols((prev) =>
-      prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol],
-    );
+    setSelectedSymbols((prev) => (prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol]));
   };
 
   return (
     <div className="space-y-8">
       <SectionTitle
         title="Asset Allocation Optimizer"
-        subtitle="Use live Angel One daily price history to compute risk, return, and the efficient frontier. Build institutional-grade strategic allocations."
+        subtitle="Mean-variance optimization using Angel One daily history. When live data is unavailable, the engine falls back to the category assumption set."
         badge="Quant Lab"
       />
+
+      {!data && (
+        <Alert variant="warning" icon={Globe}>
+          Running in assumption mode. Connect Angel One SmartAPI and fetch live data for instrument-level MVO.
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 space-y-5">
@@ -145,47 +186,29 @@ export const MVO = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">From</label>
-              <input
-                type="date"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:border-navy"
-              />
+              <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:border-navy" />
             </div>
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">To</label>
-              <input
-                type="date"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:border-navy"
-              />
+              <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:border-navy" />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
-              Select Benchmarks / ETFs
-            </label>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">Select Benchmarks / ETFs</label>
             <div className="flex flex-wrap gap-2">
-              {INSTRUMENTS.filter((i) => i.benchmark || ['NIFTYBEES', 'GOLDBEES', 'LIQUIDBEES'].includes(i.symbol)).map(
-                (inst) => {
-                  const selected = selectedSymbols.includes(inst.symbol);
-                  return (
-                    <button
-                      key={inst.symbol}
-                      onClick={() => toggleSymbol(inst.symbol)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                        selected
-                          ? 'bg-navy text-white border-navy'
-                          : 'bg-white text-stone-600 border-stone-200 hover:border-navy'
-                      }`}
-                    >
-                      {inst.name}
-                    </button>
-                  );
-                },
-              )}
+              {INSTRUMENTS.filter((i) => i.benchmark || ['NIFTYBEES', 'GOLDBEES', 'LIQUIDBEES'].includes(i.symbol)).map((inst) => {
+                const selected = selectedSymbols.includes(inst.symbol);
+                return (
+                  <button
+                    key={inst.symbol}
+                    onClick={() => toggleSymbol(inst.symbol)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${selected ? 'bg-navy text-white border-navy' : 'bg-white text-stone-600 border-stone-200 hover:border-navy'}`}
+                  >
+                    {inst.name}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -199,8 +222,7 @@ export const MVO = () => {
           <Button onClick={handleFetch} disabled={loading || selectedSymbols.length < 2} className="w-full py-3">
             {loading ? (
               <span className="flex items-center justify-center gap-2">
-                <RefreshCw size={16} className="animate-spin" />
-                Fetching {progress.currentSymbol} ({progress.completed}/{progress.total})
+                <RefreshCw size={16} className="animate-spin" /> Fetching {progress.currentSymbol} ({progress.completed}/{progress.total})
               </span>
             ) : (
               <span className="flex items-center justify-center gap-2">
@@ -216,23 +238,15 @@ export const MVO = () => {
           </div>
           <h3 className="text-lg font-serif text-gold mb-4">Why MVO?</h3>
           <ul className="space-y-3 text-sm text-stone-200">
-            <li className="flex gap-2">
-              <Check size={16} className="text-gold shrink-0 mt-0.5" />
-              Quantify risk/return trade-offs using real historical daily data.
-            </li>
-            <li className="flex gap-2">
-              <Check size={16} className="text-gold shrink-0 mt-0.5" />
-              Identify the maximum-Sharpe and minimum-variance strategic portfolios.
-            </li>
-            <li className="flex gap-2">
-              <Check size={16} className="text-gold shrink-0 mt-0.5" />
-              Export optimized weights directly into the Master Plan.
-            </li>
+            <li className="flex gap-2"><Check size={16} className="text-gold shrink-0 mt-0.5" /> Quantify risk/return trade-offs using real historical daily data.</li>
+            <li className="flex gap-2"><Check size={16} className="text-gold shrink-0 mt-0.5" /> Identify the maximum-Sharpe and minimum-variance strategic portfolios.</li>
+            <li className="flex gap-2"><Check size={16} className="text-gold shrink-0 mt-0.5" /> Export optimized weights directly into the Master Plan.</li>
+            <li className="flex gap-2"><Check size={16} className="text-gold shrink-0 mt-0.5" /> Assumption mode works offline using category mean/variance/correlation.</li>
           </ul>
         </Card>
       </div>
 
-      {mvoResult && data && (
+      {mvoResult && (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
@@ -241,44 +255,12 @@ export const MVO = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <ScatterChart margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                    <XAxis
-                      type="number"
-                      dataKey="risk"
-                      name="Risk"
-                      unit="%"
-                      tickFormatter={(v) => `${v.toFixed(1)}%`}
-                      tick={{ fontSize: 12, fill: '#78716c' }}
-                      axisLine={false}
-                      tickLine={false}
-                      label={{ value: 'Annualized Volatility', position: 'insideBottom', offset: -5, fill: '#78716c', fontSize: 12 }}
-                    />
-                    <YAxis
-                      type="number"
-                      dataKey="return"
-                      name="Return"
-                      unit="%"
-                      tickFormatter={(v) => `${v.toFixed(1)}%`}
-                      tick={{ fontSize: 12, fill: '#78716c' }}
-                      axisLine={false}
-                      tickLine={false}
-                      label={{ value: 'Expected Return', angle: -90, position: 'insideLeft', fill: '#78716c', fontSize: 12 }}
-                    />
-                    <Tooltip
-                      cursor={{ strokeDasharray: '3 3' }}
-                      formatter={((value: number) => `${value.toFixed(2)}%`) as any}
-                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                    />
+                    <XAxis type="number" dataKey="risk" name="Risk" unit="%" tickFormatter={(v) => `${v.toFixed(1)}%`} tick={{ fontSize: 12, fill: '#78716c' }} axisLine={false} tickLine={false} label={{ value: 'Annualized Volatility', position: 'insideBottom', offset: -5, fill: '#78716c', fontSize: 12 }} />
+                    <YAxis type="number" dataKey="return" name="Return" unit="%" tickFormatter={(v) => `${v.toFixed(1)}%`} tick={{ fontSize: 12, fill: '#78716c' }} axisLine={false} tickLine={false} label={{ value: 'Expected Return', angle: -90, position: 'insideLeft', fill: '#78716c', fontSize: 12 }} />
+                    <Tooltip cursor={{ strokeDasharray: '3 3' }} formatter={((value: number) => `${value.toFixed(2)}%`) as any} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
                     <Scatter data={frontierData} fill="#1A233A" opacity={0.4} />
                     {highlightedPortfolios.map((p) => (
-                      <ReferenceDot
-                        key={p.key}
-                        x={p.risk}
-                        y={p.return}
-                        r={6}
-                        fill={p.color}
-                        stroke="none"
-                        label={{ value: p.label, position: 'top', fill: p.color, fontSize: 11, fontWeight: 700 }}
-                      />
+                      <ReferenceDot key={p.key} x={p.risk} y={p.return} r={6} fill={p.color} stroke="none" label={{ value: p.label, position: 'top', fill: p.color, fontSize: 11, fontWeight: 700 }} />
                     ))}
                   </ScatterChart>
                 </ResponsiveContainer>
@@ -286,38 +268,77 @@ export const MVO = () => {
             </Card>
 
             <Card>
-              <h3 className="text-lg font-serif text-navy mb-4">Historical Risk/Return Profile</h3>
+              <h3 className="text-lg font-serif text-navy mb-4">Correlation Matrix</h3>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-500">
-                      <th className="py-2 pr-4">Asset</th>
-                      <th className="py-2 pr-4 text-right">Ann. Return</th>
-                      <th className="py-2 pr-4 text-right">Ann. Vol</th>
-                      <th className="py-2 pr-4 text-right">Sharpe</th>
-                      <th className="py-2 pr-4 text-right">Max DD</th>
+                      <th className="py-2 pr-2">Asset</th>
+                      {correlationMatrix.map((row) => (
+                        <th key={row.symbol} className="py-2 pr-2 text-right">{row.symbol.slice(0, 6)}</th>
+                      ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-stone-100">
-                    {data.stats.map((s, idx) => {
-                      const inst = data.instruments[idx];
-                      return (
-                        <tr key={s.symbol}>
-                          <td className="py-2 pr-4 font-medium text-navy">{inst?.name || s.symbol}</td>
-                          <td className="py-2 pr-4 text-right font-mono">{formatPercent(s.annualizedReturn * 100)}</td>
-                          <td className="py-2 pr-4 text-right font-mono">{formatPercent(s.annualizedVolatility * 100)}</td>
-                          <td className="py-2 pr-4 text-right font-mono">{s.sharpeRatio.toFixed(2)}</td>
-                          <td className="py-2 pr-4 text-right font-mono text-rose-600">
-                            {formatPercent(s.maxDrawdown * 100)}
+                  <tbody>
+                    {correlationMatrix.map((row, i) => (
+                      <tr key={row.symbol} className="border-b border-stone-100">
+                        <td className="py-2 pr-2 font-medium text-navy">{row.symbol.slice(0, 8)}</td>
+                        {row.values.map((cell, j) => (
+                          <td key={j} className="py-2 pr-2 text-right font-mono" style={{ color: i === j ? '#1A233A' : cell.value > 0.5 ? '#B68B40' : '#78716c' }}>
+                            {cell.value.toFixed(2)}
                           </td>
-                        </tr>
-                      );
-                    })}
+                        ))}
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
             </Card>
           </div>
+
+          <Card>
+            <h3 className="text-lg font-serif text-navy mb-4">Risk / Return Profile</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-500">
+                    <th className="py-2 pr-4">Asset</th>
+                    <th className="py-2 pr-4 text-right">Ann. Return</th>
+                    <th className="py-2 pr-4 text-right">Ann. Vol</th>
+                    <th className="py-2 pr-4 text-right">Sharpe</th>
+                    <th className="py-2 pr-4 text-right">Max DD</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-100">
+                  {data?.stats.map((s, idx) => {
+                    const inst = data.instruments[idx];
+                    return (
+                      <tr key={s.symbol}>
+                        <td className="py-2 pr-4 font-medium text-navy">{inst?.name || s.symbol}</td>
+                        <td className="py-2 pr-4 text-right font-mono">{formatPercent(s.annualizedReturn * 100)}</td>
+                        <td className="py-2 pr-4 text-right font-mono">{formatPercent(s.annualizedVolatility * 100)}</td>
+                        <td className="py-2 pr-4 text-right font-mono">{s.sharpeRatio.toFixed(2)}</td>
+                        <td className="py-2 pr-4 text-right font-mono text-rose-600">{formatPercent(s.maxDrawdown * 100)}</td>
+                      </tr>
+                    );
+                  })}
+                  {!data && assumptions && (
+                    <>
+                      {(['equity', 'debt', 'gold', 'liquid', 'other'] as AssetCategory[]).map((cat) => (
+                        <tr key={cat}>
+                          <td className="py-2 pr-4 font-medium text-navy capitalize">{cat}</td>
+                          <td className="py-2 pr-4 text-right font-mono">{formatPercent(assumptions.categories[cat].mean * 100)}</td>
+                          <td className="py-2 pr-4 text-right font-mono">{formatPercent(assumptions.categories[cat].std * 100)}</td>
+                          <td className="py-2 pr-4 text-right font-mono">{((assumptions.categories[cat].mean - 0.06) / assumptions.categories[cat].std).toFixed(2)}</td>
+                          <td className="py-2 pr-4 text-right font-mono text-rose-600">—</td>
+                        </tr>
+                      ))}
+                    </>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             {[
@@ -351,33 +372,24 @@ export const MVO = () => {
                   </div>
                   <div className="space-y-1">
                     {strategy.portfolio.weights.map((w, idx) => {
-                      const inst = data.instruments[idx];
+                      const inst = instrumentsForDisplay[idx];
                       const color = ASSET_COLORS[(categoryMap[inst?.category || ''] || 'other') as keyof typeof ASSET_COLORS];
                       return (
                         <div key={idx} className="flex items-center justify-between text-xs">
                           <span className="flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-                            {inst?.name || data.symbols[idx]}
+                            {inst?.name || symbolsForDisplay[idx]}
                           </span>
                           <span className="font-mono font-medium">{(w * 100).toFixed(1)}%</span>
                         </div>
                       );
                     })}
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => applyWeights(strategy.portfolio, strategy.label)}
-                  >
+                  <Button size="sm" variant="outline" className="w-full" onClick={() => applyWeights(strategy.portfolio, strategy.label)}>
                     {appliedStrategy === strategy.label ? (
-                      <>
-                        <Check size={14} className="mr-1" /> Applied
-                      </>
+                      <><Check size={14} className="mr-1" /> Applied</>
                     ) : (
-                      <>
-                        Apply to Plan <ArrowRight size={14} className="ml-1" />
-                      </>
+                      <>Apply to Plan <ArrowRight size={14} className="ml-1" /></>
                     )}
                   </Button>
                 </Card>

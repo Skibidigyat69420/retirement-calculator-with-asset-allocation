@@ -1,30 +1,29 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Activity, PieChart, BarChart3, TrendingUp, TrendingDown, Wallet, Target, Calculator, Percent, ShieldCheck, BarChart2, Database, Radio, LineChart, BrainCircuit, Scissors, RefreshCcw, Grid3X3 } from 'lucide-react';
+import { Menu, X, Activity, PieChart, TrendingUp, TrendingDown, Wallet, Target, Calculator, Percent, ShieldCheck, BarChart2, Database, Radio, BrainCircuit, Scissors, RefreshCcw, Grid3X3, FileText } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../../lib/utils';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: Activity },
   { path: '/master-plan', label: 'Master Plan', icon: PieChart },
-  { path: '/scenarios', label: 'Scenarios', icon: BarChart3 },
+  { path: '/goal', label: 'Goal Planner', icon: Target },
+  { path: '/allocation', label: 'Allocation', icon: PieChart },
   { path: '/sip', label: 'SIP', icon: TrendingUp },
   { path: '/stp', label: 'STP', icon: Wallet },
   { path: '/swp', label: 'SWP', icon: Wallet },
-  { path: '/allocation', label: 'Allocation', icon: PieChart },
-  { path: '/goal', label: 'Goal', icon: Target },
   { path: '/retirement', label: 'Retirement', icon: Calculator },
-  { path: '/inflation', label: 'Inflation', icon: Percent },
-  { path: '/angel-connect', label: 'Angel SmartAPI', icon: ShieldCheck },
-  { path: '/live-market', label: 'Live Market', icon: Radio },
   { path: '/mvo', label: 'MVO', icon: BarChart2 },
-  { path: '/market-data', label: 'Market Data', icon: Database },
-  { path: '/portfolio-analytics', label: 'Portfolio Analytics', icon: LineChart },
   { path: '/advanced-allocation', label: 'Advanced Allocation', icon: BrainCircuit },
   { path: '/trade-analytics', label: 'Trade Analytics', icon: Activity },
   { path: '/sequence-risk', label: 'Sequence Risk', icon: TrendingDown },
   { path: '/swr', label: 'SWR', icon: Grid3X3 },
   { path: '/rebalancing', label: 'Rebalancing', icon: RefreshCcw },
   { path: '/tax-loss-harvesting', label: 'Tax Loss', icon: Scissors },
+  { path: '/ips', label: 'IPS Template', icon: FileText },
+  { path: '/angel-connect', label: 'Angel SmartAPI', icon: ShieldCheck },
+  { path: '/live-market', label: 'Live Market', icon: Radio },
+  { path: '/market-data', label: 'Market Data', icon: Database },
+  { path: '/inflation', label: 'Inflation', icon: Percent },
 ];
 
 export const Header = () => {

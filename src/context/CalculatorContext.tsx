@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useMemo, useCallback } from 'react';
-import type { MasterPlanInputs, Scenario } from '../types';
+import type { MasterPlanInputs, Scenario, Goal } from '../types';
 import { defaultClientInputs, defaultScenarios } from '../lib/scenarios';
 import { calculateMasterPlan } from '../lib/calculations';
+import { loadAssumptions, type AssumptionSet } from '../lib/assumptions';
 
 interface CalculatorContextType {
   inputs: MasterPlanInputs;
@@ -13,9 +14,14 @@ interface CalculatorContextType {
   updateSIP: (patch: Partial<MasterPlanInputs['sip']>) => void;
   updateSTP: (patch: Partial<MasterPlanInputs['stp']>) => void;
   updateSWP: (patch: Partial<MasterPlanInputs['swp']>) => void;
+  addGoal: (goal?: Partial<Goal>) => void;
+  updateGoal: (id: string, patch: Partial<Goal>) => void;
+  removeGoal: (id: string) => void;
   result: ReturnType<typeof calculateMasterPlan>;
   scenarios: Scenario[];
   loadScenario: (scenario: Scenario) => void;
+  assumptions: AssumptionSet;
+  setAssumptions: React.Dispatch<React.SetStateAction<AssumptionSet>>;
 }
 
 const CalculatorContext = createContext<CalculatorContextType | undefined>(undefined);
@@ -23,6 +29,7 @@ const CalculatorContext = createContext<CalculatorContextType | undefined>(undef
 export const CalculatorProvider = ({ children }: { children: React.ReactNode }) => {
   const [inputs, setInputs] = useState<MasterPlanInputs>(defaultClientInputs());
   const [scenarios] = useState<Scenario[]>(defaultScenarios());
+  const [assumptions, setAssumptions] = useState<AssumptionSet>(() => loadAssumptions());
 
   const updateInputs = useCallback((patch: Partial<MasterPlanInputs>) => {
     setInputs((prev) => ({ ...prev, ...patch }));
@@ -81,6 +88,39 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     }));
   }, []);
 
+  const addGoal = useCallback((goal?: Partial<Goal>) => {
+    setInputs((prev) => ({
+      ...prev,
+      goals: [
+        ...prev.goals,
+        {
+          id: `goal-${Date.now()}`,
+          name: 'New Goal',
+          targetAmount: 1000000,
+          yearsToGoal: 5,
+          priority: 'important',
+          inflation: prev.inflation,
+          recurring: false,
+          ...goal,
+        },
+      ],
+    }));
+  }, []);
+
+  const updateGoal = useCallback((id: string, patch: Partial<Goal>) => {
+    setInputs((prev) => ({
+      ...prev,
+      goals: prev.goals.map((g) => (g.id === id ? { ...g, ...patch } : g)),
+    }));
+  }, []);
+
+  const removeGoal = useCallback((id: string) => {
+    setInputs((prev) => ({
+      ...prev,
+      goals: prev.goals.filter((g) => g.id !== id),
+    }));
+  }, []);
+
   const loadScenario = useCallback((scenario: Scenario) => {
     setInputs(scenario.inputs);
   }, []);
@@ -99,9 +139,14 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         updateSIP,
         updateSTP,
         updateSWP,
+        addGoal,
+        updateGoal,
+        removeGoal,
         result,
         scenarios,
         loadScenario,
+        assumptions,
+        setAssumptions,
       }}
     >
       {children}

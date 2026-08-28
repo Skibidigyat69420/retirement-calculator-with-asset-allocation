@@ -3,7 +3,7 @@ import { CalculatorProvider } from './context/CalculatorContext';
 import { Layout } from './components/layout/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { MasterPlan } from './pages/MasterPlan';
-import { Scenarios } from './pages/Scenarios';
+
 import { SIP } from './pages/SIP';
 import { STP } from './pages/STP';
 import { SWP } from './pages/SWP';
@@ -22,6 +22,7 @@ import { SequenceRisk } from './pages/SequenceRisk';
 import { SWR } from './pages/SWR';
 import { Rebalancing } from './pages/Rebalancing';
 import { TaxLossHarvesting } from './pages/TaxLossHarvesting';
+import { IPSTemplate } from './pages/IPSTemplate';
 
 function App() {
   return (
@@ -31,7 +32,6 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/master-plan" element={<MasterPlan />} />
-            <Route path="/scenarios" element={<Scenarios />} />
             <Route path="/sip" element={<SIP />} />
             <Route path="/stp" element={<STP />} />
             <Route path="/swp" element={<SWP />} />
@@ -50,6 +50,7 @@ function App() {
             <Route path="/swr" element={<SWR />} />
             <Route path="/rebalancing" element={<Rebalancing />} />
             <Route path="/tax-loss-harvesting" element={<TaxLossHarvesting />} />
+            <Route path="/ips" element={<IPSTemplate />} />
           </Routes>
         </Layout>
       </BrowserRouter>

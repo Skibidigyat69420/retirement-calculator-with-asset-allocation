@@ -6,6 +6,7 @@ export const defaultClientInputs = (): MasterPlanInputs => ({
   retirementAge: 45,
   lifeExpectancy: 80,
   inflation: DEFAULT_RATES.inflation,
+  annualIncome: 2500000,
   assets: [
     {
       id: 're-plots',
@@ -89,6 +90,35 @@ export const defaultClientInputs = (): MasterPlanInputs => ({
     startAge: 45,
     endAge: 80,
   },
+  goals: [
+    {
+      id: 'goal-education',
+      name: "Child's Higher Education",
+      targetAmount: 5000000,
+      yearsToGoal: 8,
+      priority: 'essential',
+      inflation: 8,
+      recurring: false,
+    },
+    {
+      id: 'goal-retirement',
+      name: 'Retirement Corpus',
+      targetAmount: 15000000,
+      yearsToGoal: 11,
+      priority: 'essential',
+      inflation: 5,
+      recurring: false,
+    },
+    {
+      id: 'goal-vacation',
+      name: 'International Vacation',
+      targetAmount: 1500000,
+      yearsToGoal: 3,
+      priority: 'aspirational',
+      inflation: 5,
+      recurring: false,
+    },
+  ],
 });
 
 export const scenarioA = (): Scenario => {
