@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Activity, PieChart, BarChart3, TrendingUp, Wallet, Target, Calculator, Percent, ShieldCheck, BarChart2, Database } from 'lucide-react';
+import { Menu, X, Activity, PieChart, BarChart3, TrendingUp, TrendingDown, Wallet, Target, Calculator, Percent, ShieldCheck, BarChart2, Database, Radio, LineChart, BrainCircuit, Scissors, RefreshCcw, Grid3X3 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../../lib/utils';
 
@@ -15,8 +15,16 @@ const navItems = [
   { path: '/retirement', label: 'Retirement', icon: Calculator },
   { path: '/inflation', label: 'Inflation', icon: Percent },
   { path: '/angel-connect', label: 'Angel SmartAPI', icon: ShieldCheck },
+  { path: '/live-market', label: 'Live Market', icon: Radio },
   { path: '/mvo', label: 'MVO', icon: BarChart2 },
   { path: '/market-data', label: 'Market Data', icon: Database },
+  { path: '/portfolio-analytics', label: 'Portfolio Analytics', icon: LineChart },
+  { path: '/advanced-allocation', label: 'Advanced Allocation', icon: BrainCircuit },
+  { path: '/trade-analytics', label: 'Trade Analytics', icon: Activity },
+  { path: '/sequence-risk', label: 'Sequence Risk', icon: TrendingDown },
+  { path: '/swr', label: 'SWR', icon: Grid3X3 },
+  { path: '/rebalancing', label: 'Rebalancing', icon: RefreshCcw },
+  { path: '/tax-loss-harvesting', label: 'Tax Loss', icon: Scissors },
 ];
 
 export const Header = () => {

@@ -14,6 +14,14 @@ import { Inflation } from './pages/Inflation';
 import { AngelConnect } from './pages/AngelConnect';
 import { MVO } from './pages/MVO';
 import { MarketData } from './pages/MarketData';
+import { LiveMarket } from './pages/LiveMarket';
+import { PortfolioAnalytics } from './pages/PortfolioAnalytics';
+import { AdvancedAllocation } from './pages/AdvancedAllocation';
+import { TradeAnalytics } from './pages/TradeAnalytics';
+import { SequenceRisk } from './pages/SequenceRisk';
+import { SWR } from './pages/SWR';
+import { Rebalancing } from './pages/Rebalancing';
+import { TaxLossHarvesting } from './pages/TaxLossHarvesting';
 
 function App() {
   return (
@@ -34,6 +42,14 @@ function App() {
             <Route path="/angel-connect" element={<AngelConnect />} />
             <Route path="/mvo" element={<MVO />} />
             <Route path="/market-data" element={<MarketData />} />
+            <Route path="/live-market" element={<LiveMarket />} />
+            <Route path="/portfolio-analytics" element={<PortfolioAnalytics />} />
+            <Route path="/advanced-allocation" element={<AdvancedAllocation />} />
+            <Route path="/trade-analytics" element={<TradeAnalytics />} />
+            <Route path="/sequence-risk" element={<SequenceRisk />} />
+            <Route path="/swr" element={<SWR />} />
+            <Route path="/rebalancing" element={<Rebalancing />} />
+            <Route path="/tax-loss-harvesting" element={<TaxLossHarvesting />} />
           </Routes>
         </Layout>
       </BrowserRouter>

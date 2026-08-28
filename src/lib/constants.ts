@@ -44,3 +44,35 @@ export const DEFAULT_ALLOCATION = {
   equitySplit: 85,
   debtSplit: 15,
 };
+
+export const RISK_FREE_RATE = 0.06;
+
+export const CATEGORY_SIGMAS: Record<AssetCategory, number> = {
+  equity: 0.15,
+  debt: 0.05,
+  gold: 0.18,
+  realestate: 0.12,
+  liquid: 0.01,
+  other: 0.2,
+};
+
+export const GLIDE_PATH_PRESETS = {
+  aggressive: [
+    { age: 25, equity: 80, debt: 20 },
+    { age: 40, equity: 70, debt: 30 },
+    { age: 55, equity: 55, debt: 45 },
+    { age: 65, equity: 40, debt: 60 },
+  ],
+  moderate: [
+    { age: 25, equity: 70, debt: 30 },
+    { age: 40, equity: 60, debt: 40 },
+    { age: 55, equity: 45, debt: 55 },
+    { age: 65, equity: 35, debt: 65 },
+  ],
+  conservative: [
+    { age: 25, equity: 55, debt: 45 },
+    { age: 40, equity: 50, debt: 50 },
+    { age: 55, equity: 40, debt: 60 },
+    { age: 65, equity: 30, debt: 70 },
+  ],
+};

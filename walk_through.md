@@ -22,11 +22,23 @@ Everything feeds into a single unified timeline:
 - **Monte Carlo Retirement Simulator:** Run 1,000 correlated multi-asset paths with annual rebalancing and inflation-indexed withdrawals. View percentile fan charts on the Master Plan.
 - **Market Data Explorer:** Inspect normalized price history and download raw CSV.
 
-### 4. Beautiful UI & Visualizations 🎨
-- **Tailwind CSS & Lucide Icons:** Styled identically to your deck using cream backgrounds (`#F4F1EA`), strong navy text (`#1A233A`), and elegant gold accents (`#B68B40`).
-- **Recharts Integration:** Responsive, interactive charts including accumulation trajectories, asset-class evolution, SWP drawdown, MVO efficient frontier and Monte Carlo fan charts.
+### 4. Full Institutional Expansion 🏦
+- **Live Market Stream:** WebSocket watchlist for real-time LTP quotes with sparklines.
+- **Portfolio Analytics:** Risk metrics (Sharpe, Sortino, beta, alpha, VaR, CVaR), stress tests, and attribution.
+- **Advanced Allocation Models:** Black-Litterman with investor views, equal-risk-contribution risk parity, age-based glide paths, and tactical momentum overlays.
+- **Trade Analytics & Implementation Shortfall:** Pre-trade market-impact estimates, post-trade arrival/VWAP/TWAP slippage, and rebalancing impact simulator.
+- **Retirement Risk Calculators:** Sequence-of-returns stress test and Trinity-style Safe Withdrawal Rate matrix.
+- **Rebalancing Optimizer:** Drift-band rebalancing with trade recommendations and one-click plan updates.
+- **Tax-Loss Harvesting:** Identify unrealized losses and estimate tax alpha.
 
-### 5. Running Locally
+### 5. Executive Dashboard 🎯
+- Central command center with net worth, sustainability alerts, allocation drift warnings, quick-action calculator grid, and accumulation trajectory chart.
+
+### 6. Beautiful UI & Visualizations 🎨
+- **Tailwind CSS & Lucide Icons:** Styled identically to your deck using cream backgrounds (`#F4F1EA`), strong navy text (`#1A233A`), and elegant gold accents (`#B68B40`).
+- **Recharts Integration:** Responsive, interactive charts including accumulation trajectories, asset-class evolution, SWP drawdown, MVO efficient frontier, Monte Carlo fan charts, allocation bars and pie charts.
+
+### 7. Running Locally
 Set your Angel One API key as an environment variable (optional — the UI also accepts manual entry):
 ```bash
 # Vite will expose VITE_ANGEL_API_KEY to the client bundle
