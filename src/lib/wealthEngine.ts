@@ -8,12 +8,6 @@ export interface CurrencyExposure {
   percentage: number;
 }
 
-export interface TaxBracket {
-  min: number;
-  max: number | null;
-  rate: number;
-}
-
 export interface TaxSummary {
   effectiveRate: number;
   annualTax: number;
@@ -63,7 +57,6 @@ export interface MonteCarloOutcome {
 }
 
 export interface WealthEngineResult {
-  // Core metrics
   netWorth: number;
   totalInvested: number;
   annualIncome: number;
@@ -71,8 +64,6 @@ export interface WealthEngineResult {
   savingsRate: number;
   monthlySIP: number;
   annualExpenses: number;
-
-  // Projections
   snapshots: WealthSnapshot[];
   terminalValue: number;
   terminalRealValue: number;
@@ -80,14 +71,10 @@ export interface WealthEngineResult {
   sustainable: boolean;
   cagrNominal: number;
   cagrReal: number;
-
-  // Goals
   goalResults: GoalResult[];
   essentialSuccessRate: number;
   overallGoalSuccessRate: number;
   goalsAtRisk: GoalResult[];
-
-  // Monte Carlo
   monteCarlo: {
     successRate: number;
     medianTerminal: number;
@@ -108,20 +95,12 @@ export interface WealthEngineResult {
       p95: number;
     }[];
   };
-
-  // Allocation
   currentAllocation: Record<AssetCategory, number>;
   targetAllocation: Record<AssetCategory, number>;
   projectedAllocation: Record<AssetCategory, number>;
   rebalancingTrades: { category: AssetCategory; current: number; target: number; trade: number }[];
-
-  // Tax
   taxSummary: TaxSummary;
-
-  // Currency
   currencyExposure: CurrencyExposure[];
-
-  // Risk
   riskProfile?: RiskProfile;
   riskScore: number;
   maxDrawdownProbability: number;
@@ -171,15 +150,14 @@ function round2(n: number): number {
 }
 
 function calculateTax(income: number): TaxSummary {
-  // Simplified Indian tax slabs for FY 2025-26 (new regime approx)
-  const slabs: TaxBracket[] = [
+  const slabs = [
     { min: 0, max: 400000, rate: 0 },
     { min: 400000, max: 800000, rate: 0.05 },
     { min: 800000, max: 1200000, rate: 0.10 },
     { min: 1200000, max: 1600000, rate: 0.15 },
     { min: 1600000, max: 2000000, rate: 0.20 },
     { min: 2000000, max: 2400000, rate: 0.25 },
-    { min: 2400000, max: null, rate: 0.30 },
+    { min: 2400000, max: null as number | null, rate: 0.30 },
   ];
 
   let tax = 0;
@@ -189,7 +167,6 @@ function calculateTax(income: number): TaxSummary {
       if (taxableInSlab > 0) tax += taxableInSlab * slab.rate;
     }
   }
-  // Add 4% cess
   tax = tax * 1.04;
   const effectiveRate = income > 0 ? tax / income : 0;
 
@@ -202,7 +179,6 @@ function calculateTax(income: number): TaxSummary {
 }
 
 function calculateCurrencyExposure(assets: Asset[], baseCurrency = 'INR'): CurrencyExposure[] {
-  // Simplified: assume all assets are INR unless category or name suggests foreign
   const total = assets.reduce((sum, a) => sum + a.value, 0);
   if (total <= 0) return [{ currency: baseCurrency, amount: 0, percentage: 100 }];
 
@@ -221,32 +197,216 @@ function calculateCurrencyExposure(assets: Asset[], baseCurrency = 'INR'): Curre
   }));
 }
 
-function buildGoalResult(goal: Goal, assumptions: AssumptionSet, currentPortfolio: number, monthlySIP: number, weights: Record<AssetCategory, number>, simulations: number): GoalResult {
-  const futureValue = goal.targetAmount * Math.pow(1 + goal.inflation / 100, goal.yearsToGoal);
+function buildSipWeights(sip: MasterPlanInputs['sip']): number[] {
+  const arr = CATEGORIES.map((c) => {
+    if (c === 'equity') return sip.equitySplit / 100;
+    if (c === 'debt') return sip.debtSplit / 100;
+    return 0;
+  });
+  const total = arr.reduce((a, b) => a + b, 0);
+  return total > 0 ? arr.map((w) => w / total) : arr.map(() => 1 / CATEGORIES.length);
+}
+
+function buildStpWeights(stp: MasterPlanInputs['stp']): { equity: number; debt: number } {
+  const total = (stp.equitySplit + stp.debtSplit) / 100;
+  return total > 0
+    ? { equity: stp.equitySplit / 100 / total, debt: stp.debtSplit / 100 / total }
+    : { equity: 0.5, debt: 0.5 };
+}
+
+interface SimulationState {
+  values: Record<AssetCategory, number>;
+  monthlySip: number;
+  stpLiquid: number;
+  totalInvested: number;
+  totalWithdrawn: number;
+  totalGoalsFunded: number;
+  totalTaxes: number;
+  goalSuccess: boolean[];
+  cashFlows: CashFlowEvent[];
+  yearlyValues: number[];
+  depletionAge: number | null;
+}
+
+function simulateOnePath(
+  inputs: MasterPlanInputs,
+  L: number[][],
+  means: number[],
+  useMeanReturns: boolean,
+): SimulationState {
+  const { currentAge, retirementAge, lifeExpectancy, inflation, assets, sip, stp, swp, goals, annualIncome } = inputs;
+  const accYears = Math.max(0, retirementAge - currentAge);
+  const distYears = Math.max(0, lifeExpectancy - retirementAge);
+  const infl = inflation / 100;
+
+  const state: SimulationState = {
+    values: { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 },
+    monthlySip: sip.amount,
+    stpLiquid: stp.active ? stp.lumpsum : 0,
+    totalInvested: 0,
+    totalWithdrawn: 0,
+    totalGoalsFunded: 0,
+    totalTaxes: 0,
+    goalSuccess: new Array(goals.length).fill(false),
+    cashFlows: [],
+    yearlyValues: [],
+    depletionAge: null,
+  };
+
+  assets.forEach((a) => (state.values[a.category] += a.value));
+  const sipWeights = buildSipWeights(sip);
+  const stpWeights = buildStpWeights(stp);
+
+  const sortedGoals = goals
+    .map((g, idx) => ({ goal: g, idx, futureValue: g.targetAmount * Math.pow(1 + g.inflation / 100, g.yearsToGoal) }))
+    .sort((a, b) => a.goal.yearsToGoal - b.goal.yearsToGoal);
+
+  for (let y = 1; y <= accYears + distYears; y++) {
+    const phase: 'accumulation' | 'distribution' = y <= accYears ? 'accumulation' : 'distribution';
+
+    const returns = useMeanReturns
+      ? means
+      : correlatedReturns(L, means);
+    CATEGORIES.forEach((c, i) => {
+      state.values[c] = state.values[c] * (1 + returns[i]);
+    });
+
+    if (phase === 'accumulation') {
+      let annualSip = 0;
+      for (let m = 0; m < 12; m++) {
+        CATEGORIES.forEach((c, i) => {
+          state.values[c] += state.monthlySip * sipWeights[i];
+        });
+        annualSip += state.monthlySip;
+      }
+      state.totalInvested += annualSip;
+      state.cashFlows.push({ year: y, age: currentAge + y, type: 'sip', amount: annualSip, description: 'Annual SIP contributions' });
+      state.monthlySip = state.monthlySip * (1 + sip.stepUp / 100);
+
+      if (stp.active && state.stpLiquid > 0) {
+        let annualStp = 0;
+        for (let m = 0; m < 12; m++) {
+          state.stpLiquid = state.stpLiquid * (1 + stp.liquidReturn / 100 / 12);
+          const transfer = Math.min(state.stpLiquid, stp.monthlyTransfer);
+          state.values.equity += transfer * stpWeights.equity;
+          state.values.debt += transfer * stpWeights.debt;
+          state.stpLiquid -= transfer;
+          annualStp += transfer;
+        }
+        state.totalInvested += annualStp;
+        state.cashFlows.push({ year: y, age: currentAge + y, type: 'stp', amount: annualStp, description: 'STP deployment' });
+      }
+
+      sortedGoals.forEach(({ goal, idx, futureValue }) => {
+        if (goal.yearsToGoal === y) {
+          const total = Object.values(state.values).reduce((a, b) => a + b, 0);
+          if (total >= futureValue) {
+            const ratio = futureValue / total;
+            CATEGORIES.forEach((c) => (state.values[c] *= 1 - ratio));
+            state.totalGoalsFunded += futureValue;
+            state.goalSuccess[idx] = true;
+            state.cashFlows.push({ year: y, age: currentAge + y, type: 'goal', amount: futureValue, description: `Goal: ${goal.name}` });
+          } else {
+            CATEGORIES.forEach((c) => (state.values[c] = 0));
+            state.cashFlows.push({ year: y, age: currentAge + y, type: 'goal', amount: total, description: `Goal shortfall: ${goal.name}` });
+          }
+        }
+      });
+
+      const tax = annualIncome * calculateTax(annualIncome).effectiveRate;
+      state.totalTaxes += tax;
+      state.cashFlows.push({ year: y, age: currentAge + y, type: 'tax', amount: tax, description: 'Estimated income tax' });
+    } else {
+      const yearsSinceRetirement = y - accYears;
+      const monthlyNeed = swp.monthlyNeedToday * Math.pow(1 + infl, accYears + yearsSinceRetirement - 1);
+      const grossAnnual = (monthlyNeed * 12) / (1 - swp.taxRate / 100);
+      const total = Object.values(state.values).reduce((a, b) => a + b, 0);
+      if (total >= grossAnnual) {
+        const ratio = grossAnnual / total;
+        CATEGORIES.forEach((c) => (state.values[c] *= 1 - ratio));
+        state.totalWithdrawn += grossAnnual;
+        state.cashFlows.push({ year: y, age: currentAge + y, type: 'withdrawal', amount: grossAnnual, description: 'Annual SWP withdrawal' });
+      } else {
+        if (state.depletionAge === null) state.depletionAge = currentAge + y - 1;
+        CATEGORIES.forEach((c) => (state.values[c] = 0));
+        state.cashFlows.push({ year: y, age: currentAge + y, type: 'withdrawal', amount: total, description: 'SWP shortfall' });
+      }
+    }
+
+    state.yearlyValues.push(Object.values(state.values).reduce((a, b) => a + b, 0));
+  }
+
+  return state;
+}
+
+function buildSnapshots(inputs: MasterPlanInputs, assumptions: AssumptionSet): WealthSnapshot[] {
+  const { currentAge } = inputs;
   const means = CATEGORIES.map((c) => assumptions.categories[c].mean);
+  const state = simulateOnePath(inputs, [], means, true);
+  const snapshots: WealthSnapshot[] = [];
+  const infl = inputs.inflation / 100;
+
+  const initialValues = sumByCategory(inputs.assets);
+  snapshots.push({
+    year: 0,
+    age: currentAge,
+    values: initialValues,
+    total: Object.values(initialValues).reduce((a, b) => a + b, 0),
+    realTotal: Object.values(initialValues).reduce((a, b) => a + b, 0),
+    invested: 0,
+    withdrawn: 0,
+    goalsFunded: 0,
+    taxesPaid: 0,
+    phase: 'accumulation',
+    cashFlows: [],
+  });
+
+  const accYears = Math.max(0, inputs.retirementAge - inputs.currentAge);
+
+  for (let y = 1; y <= state.yearlyValues.length; y++) {
+    const phase: 'accumulation' | 'distribution' = y <= accYears ? 'accumulation' : 'distribution';
+    const yearCashFlows = state.cashFlows.filter((cf) => cf.year === y);
+    snapshots.push({
+      year: y,
+      age: currentAge + y,
+      values: { ...state.values },
+      total: round2(state.yearlyValues[y - 1]),
+      realTotal: round2(state.yearlyValues[y - 1] / Math.pow(1 + infl, y)),
+      invested: round2(state.totalInvested),
+      withdrawn: round2(state.totalWithdrawn),
+      goalsFunded: round2(state.totalGoalsFunded),
+      taxesPaid: round2(state.totalTaxes),
+      phase,
+      cashFlows: yearCashFlows,
+    });
+  }
+
+  return snapshots;
+}
+
+function buildGoalDistribution(
+  goal: Goal,
+  inputs: MasterPlanInputs,
+  assumptions: AssumptionSet,
+  simulations: number,
+): GoalResult {
+  const futureValue = goal.targetAmount * Math.pow(1 + goal.inflation / 100, goal.yearsToGoal);
   const cov = CATEGORIES.map((i) => CATEGORIES.map((j) => assumptions.covariance[i][j]));
   const L = choleskyL(cov);
-  const weightArr = CATEGORIES.map((c) => weights[c] || 0);
-  const totalWeight = weightArr.reduce((a, b) => a + b, 0);
-  const normalized = totalWeight > 0 ? weightArr.map((w) => w / totalWeight) : weightArr.map(() => 1 / CATEGORIES.length);
-  const portfolioMean = normalized.reduce((sum, w, i) => sum + w * means[i], 0);
-
+  const means = CATEGORIES.map((c) => assumptions.categories[c].mean);
   const outcomes: number[] = [];
+
   for (let s = 0; s < simulations; s++) {
-    let corpus = currentPortfolio;
-    for (let y = 0; y < goal.yearsToGoal; y++) {
-      const returns = correlatedReturns(L, means);
-      const weightedReturn = normalized.reduce((sum, w, i) => sum + w * returns[i], 0);
-      corpus = (corpus + monthlySIP * 12) * (1 + weightedReturn);
-    }
-    outcomes.push(corpus);
+    const state = simulateOnePath(inputs, L, means, false);
+    outcomes.push(state.yearlyValues[goal.yearsToGoal - 1] || 0);
   }
 
   const successCount = outcomes.filter((o) => o >= futureValue).length;
   const successRate = successCount / simulations;
+
   const sorted = [...outcomes].sort((a, b) => a - b);
-  const min = sorted[0];
-  const max = sorted[sorted.length - 1];
+  const min = sorted[0] || 0;
+  const max = sorted[sorted.length - 1] || 0;
   const bins = 20;
   const binWidth = (max - min) / bins || 1;
   const distribution = [];
@@ -260,18 +420,12 @@ function buildGoalResult(goal: Goal, assumptions: AssumptionSet, currentPortfoli
   const shortfalls = outcomes.filter((o) => o < futureValue).map((o) => futureValue - o);
   const expectedShortfall = shortfalls.length > 0 ? shortfalls.reduce((a, b) => a + b, 0) / shortfalls.length : 0;
 
-  // Required SIP for goal using real return
+  const sipWeights = buildSipWeights(inputs.sip);
+  const portfolioMean = sipWeights.reduce((sum, w, i) => sum + w * means[i], 0);
   const realReturn = (1 + portfolioMean) / (1 + goal.inflation / 100) - 1;
   const r = realReturn / 12;
   const n = goal.yearsToGoal * 12;
-  let requiredSIP = 0;
-  if (r === 0) {
-    requiredSIP = futureValue / n;
-  } else {
-    requiredSIP = (futureValue * r) / (Math.pow(1 + r, n) - 1);
-  }
-
-  // PV needed
+  const requiredSIP = r === 0 ? futureValue / n : (futureValue * r) / (Math.pow(1 + r, n) - 1);
   const pvNeeded = futureValue / Math.pow(1 + portfolioMean, goal.yearsToGoal);
 
   return {
@@ -286,119 +440,37 @@ function buildGoalResult(goal: Goal, assumptions: AssumptionSet, currentPortfoli
   };
 }
 
-function runWealthMonteCarlo(
+function buildMonteCarlo(
   inputs: MasterPlanInputs,
   assumptions: AssumptionSet,
   simulations: number,
-): MonteCarloOutcome[] {
-  const { currentAge, retirementAge, lifeExpectancy, inflation, assets, sip, stp, swp, goals } = inputs;
-  const accYears = Math.max(0, retirementAge - currentAge);
-  const distYears = Math.max(0, lifeExpectancy - retirementAge);
-  const infl = inflation / 100;
-
-  const means = CATEGORIES.map((c) => assumptions.categories[c].mean);
+): WealthEngineResult['monteCarlo'] {
+  const { currentAge, lifeExpectancy } = inputs;
   const cov = CATEGORIES.map((i) => CATEGORIES.map((j) => assumptions.covariance[i][j]));
   const L = choleskyL(cov);
-
-  const sipWeightArr = CATEGORIES.map((c) => {
-    if (c === 'equity') return sip.equitySplit / 100;
-    if (c === 'debt') return sip.debtSplit / 100;
-    return 0;
-  });
-  const sipTotal = sipWeightArr.reduce((a, b) => a + b, 0);
-  const sipWeights = sipTotal > 0 ? sipWeightArr.map((w) => w / sipTotal) : sipWeightArr.map(() => 1 / CATEGORIES.length);
+  const means = CATEGORIES.map((c) => assumptions.categories[c].mean);
 
   const outcomes: MonteCarloOutcome[] = [];
-
   for (let s = 0; s < simulations; s++) {
-    let values: Record<AssetCategory, number> = { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
-    assets.forEach((a) => (values[a.category] += a.value));
-
-    let monthlySip = sip.amount;
-    let stpLiquid = stp.active ? stp.lumpsum : 0;
-    const goalTargets = goals.map((g) => ({
-      ...g,
-      futureValue: g.targetAmount * Math.pow(1 + g.inflation / 100, g.yearsToGoal),
-      dueYear: g.yearsToGoal,
-    }));
-    const goalSuccess = new Array(goals.length).fill(false);
-    const yearlyValues: number[] = [];
-    let depletionAge: number | null = null;
-
-    for (let y = 1; y <= accYears + distYears; y++) {
-      const returns = correlatedReturns(L, means);
-      CATEGORIES.forEach((c, i) => {
-        values[c] = values[c] * (1 + returns[i]);
-      });
-
-      if (y <= accYears) {
-        for (let m = 0; m < 12; m++) {
-          CATEGORIES.forEach((c, i) => {
-            values[c] += monthlySip * sipWeights[i];
-          });
-        }
-        monthlySip = monthlySip * (1 + sip.stepUp / 100);
-
-        if (stp.active && stpLiquid > 0) {
-          for (let m = 0; m < 12; m++) {
-            stpLiquid = stpLiquid * (1 + stp.liquidReturn / 100 / 12);
-            const transfer = Math.min(stpLiquid, stp.monthlyTransfer);
-            values.equity += transfer * (stp.equitySplit / 100);
-            values.debt += transfer * (stp.debtSplit / 100);
-            stpLiquid -= transfer;
-          }
-        }
-
-        goalTargets.forEach((g, idx) => {
-          if (g.dueYear === y) {
-            const total = Object.values(values).reduce((a, b) => a + b, 0);
-            if (total >= g.futureValue) {
-              const ratio = g.futureValue / total;
-              CATEGORIES.forEach((c) => (values[c] *= 1 - ratio));
-              goalSuccess[idx] = true;
-            } else {
-              CATEGORIES.forEach((c) => (values[c] = 0));
-            }
-          }
-        });
-      } else {
-        const yearsSinceRetirement = y - accYears;
-        const monthlyNeed = swp.monthlyNeedToday * Math.pow(1 + infl, accYears + yearsSinceRetirement - 1);
-        const grossAnnual = (monthlyNeed * 12) / (1 - swp.taxRate / 100);
-        const total = Object.values(values).reduce((a, b) => a + b, 0);
-        if (total >= grossAnnual) {
-          const ratio = grossAnnual / total;
-          CATEGORIES.forEach((c) => (values[c] *= 1 - ratio));
-        } else {
-          if (depletionAge === null) depletionAge = currentAge + y - 1;
-          CATEGORIES.forEach((c) => (values[c] = 0));
-        }
-      }
-
-      yearlyValues.push(Object.values(values).reduce((a, b) => a + b, 0));
-    }
-
-    const terminalValue = Object.values(values).reduce((a, b) => a + b, 0);
+    const state = simulateOnePath(inputs, L, means, false);
     outcomes.push({
-      terminalValue,
-      depletionAge,
-      sustainable: depletionAge === null || (depletionAge !== null && depletionAge > lifeExpectancy),
-      goalSuccess,
-      yearlyValues,
+      terminalValue: state.yearlyValues[state.yearlyValues.length - 1] || 0,
+      depletionAge: state.depletionAge,
+      sustainable: state.depletionAge === null || (state.depletionAge !== null && state.depletionAge > lifeExpectancy),
+      goalSuccess: state.goalSuccess,
+      yearlyValues: state.yearlyValues,
     });
   }
 
-  return outcomes;
-}
+  const successful = outcomes.filter((o) => o.sustainable && o.goalSuccess.every(Boolean));
+  const terminalValues = outcomes.map((o) => o.terminalValue).sort((a, b) => a - b);
+  const depletionAges = outcomes.map((o) => o.depletionAge).filter((a): a is number => a !== null).sort((a, b) => a - b);
 
-function buildYearlyPercentiles(outcomes: MonteCarloOutcome[], currentAge: number, retirementAge: number, lifeExpectancy: number) {
-  const accYears = Math.max(0, retirementAge - currentAge);
-  const distYears = Math.max(0, lifeExpectancy - retirementAge);
-  const totalYears = accYears + distYears;
-  const percentiles = [];
+  const totalYears = Math.max(0, lifeExpectancy - currentAge);
+  const yearlyPercentiles = [];
   for (let y = 0; y < totalYears; y++) {
     const values = outcomes.map((o) => o.yearlyValues[y] || 0).sort((a, b) => a - b);
-    percentiles.push({
+    yearlyPercentiles.push({
       year: y + 1,
       age: currentAge + y + 1,
       p5: values[Math.floor(values.length * 0.05)] || 0,
@@ -408,134 +480,27 @@ function buildYearlyPercentiles(outcomes: MonteCarloOutcome[], currentAge: numbe
       p95: values[Math.floor(values.length * 0.95)] || 0,
     });
   }
-  return percentiles;
+
+  return {
+    successRate: round2(successful.length / outcomes.length),
+    medianTerminal: round2(terminalValues[Math.floor(terminalValues.length / 2)] || 0),
+    meanTerminal: round2(terminalValues.reduce((a, b) => a + b, 0) / terminalValues.length || 0),
+    percentile5: round2(terminalValues[Math.floor(terminalValues.length * 0.05)] || 0),
+    percentile25: round2(terminalValues[Math.floor(terminalValues.length * 0.25)] || 0),
+    percentile75: round2(terminalValues[Math.floor(terminalValues.length * 0.75)] || 0),
+    percentile95: round2(terminalValues[Math.floor(terminalValues.length * 0.95)] || 0),
+    medianDepletionAge: depletionAges.length > 0 ? depletionAges[Math.floor(depletionAges.length / 2)] : null,
+    outcomes,
+    yearlyPercentiles,
+  };
 }
 
-function buildDeterministicSnapshots(
+export function runWealthEngine(
   inputs: MasterPlanInputs,
   assumptions: AssumptionSet,
-): WealthSnapshot[] {
-  const { currentAge, retirementAge, lifeExpectancy, inflation, assets, sip, stp, swp, goals, annualIncome } = inputs;
-  const accYears = Math.max(0, retirementAge - currentAge);
-  const distYears = Math.max(0, lifeExpectancy - retirementAge);
-  const infl = inflation / 100;
-
-  const means = CATEGORIES.map((c) => assumptions.categories[c].mean);
-  const sipWeightArr = CATEGORIES.map((c) => {
-    if (c === 'equity') return sip.equitySplit / 100;
-    if (c === 'debt') return sip.debtSplit / 100;
-    return 0;
-  });
-  const sipTotal = sipWeightArr.reduce((a, b) => a + b, 0);
-  const sipWeights = sipTotal > 0 ? sipWeightArr.map((w) => w / sipTotal) : sipWeightArr.map(() => 1 / CATEGORIES.length);
-
-  const snapshots: WealthSnapshot[] = [];
-  let values: Record<AssetCategory, number> = { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
-  assets.forEach((a) => (values[a.category] += a.value));
-
-  let monthlySip = sip.amount;
-  let stpLiquid = stp.active ? stp.lumpsum : 0;
-  let totalInvested = 0;
-  let totalWithdrawn = 0;
-  let totalGoalsFunded = 0;
-  let totalTaxes = 0;
-
-  snapshots.push({
-    year: 0,
-    age: currentAge,
-    values: { ...values },
-    total: Object.values(values).reduce((a, b) => a + b, 0),
-    realTotal: Object.values(values).reduce((a, b) => a + b, 0),
-    invested: 0,
-    withdrawn: 0,
-    goalsFunded: 0,
-    taxesPaid: 0,
-    phase: 'accumulation',
-    cashFlows: [],
-  });
-
-  for (let y = 1; y <= accYears + distYears; y++) {
-    const phase: 'accumulation' | 'distribution' = y <= accYears ? 'accumulation' : 'distribution';
-    const cashFlows: CashFlowEvent[] = [];
-
-    CATEGORIES.forEach((c, i) => {
-      values[c] = values[c] * (1 + means[i]);
-    });
-
-    if (phase === 'accumulation') {
-      let annualSip = 0;
-      for (let m = 0; m < 12; m++) {
-        CATEGORIES.forEach((c, i) => {
-          values[c] += monthlySip * sipWeights[i];
-        });
-        annualSip += monthlySip;
-      }
-      totalInvested += annualSip;
-      cashFlows.push({ year: y, age: currentAge + y, type: 'sip', amount: annualSip, description: 'Annual SIP contributions' });
-      monthlySip = monthlySip * (1 + sip.stepUp / 100);
-
-      if (stp.active && stpLiquid > 0) {
-        let annualStp = 0;
-        for (let m = 0; m < 12; m++) {
-          stpLiquid = stpLiquid * (1 + stp.liquidReturn / 100 / 12);
-          const transfer = Math.min(stpLiquid, stp.monthlyTransfer);
-          values.equity += transfer * (stp.equitySplit / 100);
-          values.debt += transfer * (stp.debtSplit / 100);
-          stpLiquid -= transfer;
-          annualStp += transfer;
-        }
-        totalInvested += annualStp;
-        cashFlows.push({ year: y, age: currentAge + y, type: 'stp', amount: annualStp, description: 'STP deployment' });
-      }
-
-      goals.forEach((g) => {
-        if (g.yearsToGoal === y) {
-          const futureValue = g.targetAmount * Math.pow(1 + g.inflation / 100, g.yearsToGoal);
-          const total = Object.values(values).reduce((a, b) => a + b, 0);
-          const draw = Math.min(total, futureValue);
-          const ratio = total > 0 ? draw / total : 0;
-          CATEGORIES.forEach((c) => (values[c] *= 1 - ratio));
-          totalGoalsFunded += draw;
-          cashFlows.push({ year: y, age: currentAge + y, type: 'goal', amount: draw, description: `Goal: ${g.name}` });
-        }
-      });
-
-      const tax = annualIncome * calculateTax(annualIncome).effectiveRate;
-      totalTaxes += tax;
-      cashFlows.push({ year: y, age: currentAge + y, type: 'tax', amount: tax, description: 'Estimated income tax' });
-    } else {
-      const yearsSinceRetirement = y - accYears;
-      const monthlyNeed = swp.monthlyNeedToday * Math.pow(1 + infl, accYears + yearsSinceRetirement - 1);
-      const grossAnnual = (monthlyNeed * 12) / (1 - swp.taxRate / 100);
-      const total = Object.values(values).reduce((a, b) => a + b, 0);
-      const draw = Math.min(total, grossAnnual);
-      const ratio = total > 0 ? draw / total : 0;
-      CATEGORIES.forEach((c) => (values[c] *= 1 - ratio));
-      totalWithdrawn += draw;
-      cashFlows.push({ year: y, age: currentAge + y, type: 'withdrawal', amount: draw, description: 'Annual SWP withdrawal' });
-    }
-
-    const total = Object.values(values).reduce((a, b) => a + b, 0);
-    snapshots.push({
-      year: y,
-      age: currentAge + y,
-      values: { ...values },
-      total: round2(total),
-      realTotal: round2(total / Math.pow(1 + infl, y)),
-      invested: round2(totalInvested),
-      withdrawn: round2(totalWithdrawn),
-      goalsFunded: round2(totalGoalsFunded),
-      taxesPaid: round2(totalTaxes),
-      phase,
-      cashFlows,
-    });
-  }
-
-  return snapshots;
-}
-
-export function runWealthEngine(inputs: MasterPlanInputs, assumptions: AssumptionSet, riskProfile?: { profile?: RiskProfile; score?: number }): WealthEngineResult {
-  const { currentAge, retirementAge, lifeExpectancy, assets, sip, stp, swp, goals, annualIncome } = inputs;
+  riskProfile?: { profile?: RiskProfile; score?: number },
+): WealthEngineResult {
+  const { lifeExpectancy, assets, sip, stp, swp, goals, annualIncome } = inputs;
   const netWorth = assets.reduce((sum, a) => sum + a.value, 0);
   const annualSavings = sip.amount * 12 + (stp.active ? stp.monthlyTransfer * 12 : 0);
   const savingsRate = annualIncome > 0 ? (annualSavings / annualIncome) * 100 : 0;
@@ -570,7 +535,7 @@ export function runWealthEngine(inputs: MasterPlanInputs, assumptions: Assumptio
     trade: totalValue * targetAllocation[c] - currentAllocation[c],
   }));
 
-  const snapshots = buildDeterministicSnapshots(inputs, assumptions);
+  const snapshots = buildSnapshots(inputs, assumptions);
   const terminalSnapshot = snapshots[snapshots.length - 1];
   const terminalValue = terminalSnapshot?.total || 0;
   const terminalRealValue = terminalSnapshot?.realTotal || 0;
@@ -579,7 +544,6 @@ export function runWealthEngine(inputs: MasterPlanInputs, assumptions: Assumptio
   const cagrNominal = years > 0 ? (Math.pow(terminalValue / initialValue, 1 / years) - 1) * 100 : 0;
   const cagrReal = years > 0 ? (Math.pow(terminalRealValue / initialValue, 1 / years) - 1) * 100 : 0;
 
-  // Find depletion age from deterministic path
   let depletionAge: number | null = null;
   for (let i = snapshots.length - 1; i >= 0; i--) {
     if (snapshots[i].phase === 'distribution' && snapshots[i].total <= 0 && depletionAge === null) {
@@ -588,17 +552,8 @@ export function runWealthEngine(inputs: MasterPlanInputs, assumptions: Assumptio
   }
   const sustainable = depletionAge === null || (depletionAge !== null && depletionAge > lifeExpectancy);
 
-  // Goal results
-  const weights: Record<AssetCategory, number> = {
-    equity: sip.equitySplit / 100,
-    debt: sip.debtSplit / 100,
-    gold: 0,
-    realestate: 0,
-    liquid: 0,
-    other: 0,
-  };
   const simCount = riskProfile?.profile?.monteCarloSimulations || 2000;
-  const goalResults = goals.map((g) => buildGoalResult(g, assumptions, netWorth, sip.amount, weights, simCount));
+  const goalResults = goals.map((g) => buildGoalDistribution(g, inputs, assumptions, Math.max(500, Math.floor(simCount / 4))));
 
   const essentialGoals = goalResults.filter((g) => g.goal.priority === 'essential');
   const essentialSuccessRate = essentialGoals.length > 0
@@ -609,17 +564,10 @@ export function runWealthEngine(inputs: MasterPlanInputs, assumptions: Assumptio
     : 1;
   const goalsAtRisk = goalResults.filter((g) => g.successRate < (riskProfile?.profile?.goalSuccessThreshold || 70) / 100);
 
-  // Monte Carlo for overall plan
-  const mcOutcomes = runWealthMonteCarlo(inputs, assumptions, simCount);
-  const successfulOutcomes = mcOutcomes.filter((o) => o.sustainable && o.goalSuccess.every(Boolean));
-  const terminalValues = mcOutcomes.map((o) => o.terminalValue).sort((a, b) => a - b);
-  const depletionAges = mcOutcomes.map((o) => o.depletionAge).filter((a): a is number => a !== null).sort((a, b) => a - b);
+  const monteCarlo = buildMonteCarlo(inputs, assumptions, simCount);
 
-  const yearlyPercentiles = buildYearlyPercentiles(mcOutcomes, currentAge, retirementAge, lifeExpectancy);
-
-  // Max drawdown probability
   let maxDrawdownCount = 0;
-  mcOutcomes.forEach((o) => {
+  monteCarlo.outcomes.forEach((o) => {
     let peak = 0;
     let maxDD = 0;
     o.yearlyValues.forEach((v) => {
@@ -649,18 +597,7 @@ export function runWealthEngine(inputs: MasterPlanInputs, assumptions: Assumptio
     essentialSuccessRate: round2(essentialSuccessRate),
     overallGoalSuccessRate: round2(overallGoalSuccessRate),
     goalsAtRisk,
-    monteCarlo: {
-      successRate: round2(successfulOutcomes.length / mcOutcomes.length),
-      medianTerminal: round2(terminalValues[Math.floor(terminalValues.length / 2)] || 0),
-      meanTerminal: round2(terminalValues.reduce((a, b) => a + b, 0) / terminalValues.length || 0),
-      percentile5: round2(terminalValues[Math.floor(terminalValues.length * 0.05)] || 0),
-      percentile25: round2(terminalValues[Math.floor(terminalValues.length * 0.25)] || 0),
-      percentile75: round2(terminalValues[Math.floor(terminalValues.length * 0.75)] || 0),
-      percentile95: round2(terminalValues[Math.floor(terminalValues.length * 0.95)] || 0),
-      medianDepletionAge: depletionAges.length > 0 ? depletionAges[Math.floor(depletionAges.length / 2)] : null,
-      outcomes: mcOutcomes,
-      yearlyPercentiles,
-    },
+    monteCarlo,
     currentAllocation: currentAllocationPct,
     targetAllocation,
     projectedAllocation: {
@@ -676,6 +613,6 @@ export function runWealthEngine(inputs: MasterPlanInputs, assumptions: Assumptio
     currencyExposure: calculateCurrencyExposure(assets),
     riskProfile: riskProfile?.profile,
     riskScore: riskProfile?.score || 50,
-    maxDrawdownProbability: round2(maxDrawdownCount / mcOutcomes.length),
+    maxDrawdownProbability: round2(maxDrawdownCount / monteCarlo.outcomes.length),
   };
 }

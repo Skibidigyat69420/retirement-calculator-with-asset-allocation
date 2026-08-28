@@ -1,4 +1,19 @@
-import { Plus, Trash2, Building2, Landmark, PieChart, Wallet, BarChart2, RefreshCw, User, Target, TrendingUp } from 'lucide-react';
+import {
+  Plus,
+  Trash2,
+  Building2,
+  Landmark,
+  PieChart,
+  Wallet,
+  BarChart2,
+  User,
+  Target,
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle2,
+  Globe,
+  WalletMinimal,
+} from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useCalculator } from '../context/CalculatorContext';
 import { Card } from '../components/ui/Card';
@@ -14,12 +29,10 @@ import { NominalRealChart } from '../components/charts/NominalRealChart';
 import { AssetEvolutionChart } from '../components/charts/AssetEvolutionChart';
 import { SWPDrawdownChart } from '../components/charts/SWPDrawdownChart';
 import { DonutChart } from '../components/charts/DonutChart';
-import { ASSET_COLORS } from '../lib/constants';
+import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
-import { runRetirementMonteCarlo, type RetirementSimParams } from '../lib/monteCarlo';
 import { MonteCarloFanChart } from '../components/charts/MonteCarloFanChart';
-import { useMarketData } from '../hooks/useMarketData';
-import type { AssetCategory, MonteCarloRun, GoalPriority } from '../types';
+import type { AssetCategory, GoalPriority } from '../types';
 
 const categoryOptions: { value: AssetCategory; label: string }[] = [
   { value: 'equity', label: 'Equity' },
@@ -54,13 +67,11 @@ export const MasterPlan = () => {
     addGoal,
     updateGoal,
     removeGoal,
-    result,
+    wealthResult,
+    riskProfile,
   } = useCalculator();
 
-  const { data: marketData } = useMarketData();
   const [activeTab, setActiveTab] = useState('profile');
-  const [mcResult, setMcResult] = useState<MonteCarloRun | null>(null);
-  const [mcLoading, setMcLoading] = useState(false);
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: <User size={16} /> },
@@ -70,124 +81,62 @@ export const MasterPlan = () => {
     { id: 'results', label: 'Results', icon: <BarChart2 size={16} /> },
   ];
 
-  const runMonteCarlo = () => {
-    setMcLoading(true);
-    setTimeout(() => {
-      const sumByCategory: Record<AssetCategory, number> = {
-        equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0,
-      };
-      inputs.assets.forEach((a) => {
-        sumByCategory[a.category] += a.value;
-      });
-      const total = Object.values(sumByCategory).reduce((a, b) => a + b, 0);
-      const weights: Record<AssetCategory, number> = {
-        equity: total > 0 ? sumByCategory.equity / total : inputs.sip.equitySplit / 100,
-        debt: total > 0 ? sumByCategory.debt / total : inputs.sip.debtSplit / 100,
-        gold: total > 0 ? sumByCategory.gold / total : 0.05,
-        realestate: total > 0 ? sumByCategory.realestate / total : 0,
-        liquid: total > 0 ? sumByCategory.liquid / total : 0.05,
-        other: total > 0 ? sumByCategory.other / total : 0,
-      };
+  const accData = useMemo(
+    () =>
+      wealthResult.snapshots
+        .filter((s) => s.phase === 'accumulation')
+        .map((s) => ({ label: `Age ${s.age}`, nominal: s.total, real: s.realTotal })),
+    [wealthResult.snapshots],
+  );
 
-      const means: Record<AssetCategory, number> = marketData
-        ? {
-            equity: marketData.stats.find((s) => marketData.instruments.find((i) => i.symbol === s.symbol)?.category === 'index')?.annualizedReturn || inputs.sip.equityReturn / 100,
-            debt: marketData.stats.find((s) => marketData.instruments.find((i) => i.symbol === s.symbol)?.category === 'debt')?.annualizedReturn || inputs.sip.debtReturn / 100,
-            gold: marketData.stats.find((s) => marketData.instruments.find((i) => i.symbol === s.symbol)?.category === 'gold')?.annualizedReturn || 0.08,
-            realestate: 0.03,
-            liquid: inputs.stp.liquidReturn / 100,
-            other: 0.06,
-          }
-        : {
-            equity: inputs.sip.equityReturn / 100,
-            debt: inputs.sip.debtReturn / 100,
-            gold: 0.08,
-            realestate: 0.03,
-            liquid: inputs.stp.liquidReturn / 100,
-            other: 0.06,
-          };
+  const assetEvolutionData = useMemo(
+    () =>
+      wealthResult.snapshots
+        .filter((s) => s.phase === 'accumulation')
+        .map((s) => ({
+          label: `Age ${s.age}`,
+          equity: s.values.equity,
+          debt: s.values.debt,
+          gold: s.values.gold,
+          realestate: s.values.realestate,
+          liquid: s.values.liquid,
+          other: s.values.other,
+        })),
+    [wealthResult.snapshots],
+  );
 
-      const cov: Record<AssetCategory, Record<AssetCategory, number>> = {
-        equity: { equity: 0.0225, debt: 0.001, gold: 0.002, realestate: 0.005, liquid: 0.0001, other: 0.003 },
-        debt: { equity: 0.001, debt: 0.0025, gold: 0.0005, realestate: 0.001, liquid: 0.0001, other: 0.0005 },
-        gold: { equity: 0.002, debt: 0.0005, gold: 0.04, realestate: 0.001, liquid: 0.0001, other: 0.001 },
-        realestate: { equity: 0.005, debt: 0.001, gold: 0.001, realestate: 0.01, liquid: 0.0001, other: 0.002 },
-        liquid: { equity: 0.0001, debt: 0.0001, gold: 0.0001, realestate: 0.0001, liquid: 0.0001, other: 0.0001 },
-        other: { equity: 0.003, debt: 0.0005, gold: 0.001, realestate: 0.002, liquid: 0.0001, other: 0.02 },
-      };
+  const swpData = useMemo(
+    () =>
+      wealthResult.snapshots
+        .filter((s) => s.phase === 'distribution')
+        .map((s) => ({ label: `Age ${s.age}`, corpus: s.total })),
+    [wealthResult.snapshots],
+  );
 
-      if (marketData) {
-        marketData.symbols.forEach((_, i) => {
-          const inst = marketData.instruments[i];
-          const cat: AssetCategory = inst?.category === 'index' ? 'equity' : inst?.category === 'debt' ? 'debt' : inst?.category === 'gold' ? 'gold' : 'other';
-          cov[cat][cat] = marketData.covariance[i][i];
-          marketData.symbols.forEach((__, j) => {
-            const inst2 = marketData.instruments[j];
-            const cat2: AssetCategory = inst2?.category === 'index' ? 'equity' : inst2?.category === 'debt' ? 'debt' : inst2?.category === 'gold' ? 'gold' : 'other';
-            cov[cat][cat2] = marketData.covariance[i][j];
-          });
-        });
-      }
+  const terminalSnapshot = wealthResult.snapshots[wealthResult.snapshots.length - 1];
+  const allocationData = useMemo(() => {
+    if (!terminalSnapshot) return [];
+    return [
+      { name: 'Equity', value: terminalSnapshot.values.equity, color: ASSET_COLORS.equity },
+      { name: 'Debt', value: terminalSnapshot.values.debt, color: ASSET_COLORS.debt },
+      { name: 'Gold', value: terminalSnapshot.values.gold, color: ASSET_COLORS.gold },
+      { name: 'Real Estate', value: terminalSnapshot.values.realestate, color: ASSET_COLORS.realestate },
+      { name: 'Liquid', value: terminalSnapshot.values.liquid, color: ASSET_COLORS.liquid },
+      { name: 'Other', value: terminalSnapshot.values.other, color: ASSET_COLORS.other },
+    ].filter((d) => d.value > 0);
+  }, [terminalSnapshot]);
 
-      const params: RetirementSimParams = {
-        currentAge: inputs.currentAge,
-        retirementAge: inputs.retirementAge,
-        lifeExpectancy: inputs.lifeExpectancy,
-        initialValues: sumByCategory,
-        weights,
-        monthlySIP: inputs.sip.amount,
-        sipStepUp: inputs.sip.stepUp,
-        monthlyNeedAtRetirement: result.monthlyNeedAtRetirement,
-        inflation: inputs.inflation,
-        taxRate: inputs.swp.taxRate,
-        simulations: 1000,
-        means,
-        covariance: cov,
-      };
+  const monthlyNeedAtRetirement = useMemo(() => {
+    const years = Math.max(0, inputs.retirementAge - inputs.currentAge);
+    return inputs.swp.monthlyNeedToday * Math.pow(1 + inputs.inflation / 100, years);
+  }, [inputs.swp.monthlyNeedToday, inputs.inflation, inputs.retirementAge, inputs.currentAge]);
 
-      setMcResult(runRetirementMonteCarlo(params));
-      setMcLoading(false);
-    }, 100);
+  const distributionMonthlyNeed = (year: number) => {
+    const accYears = Math.max(0, inputs.retirementAge - inputs.currentAge);
+    return inputs.swp.monthlyNeedToday * Math.pow(1 + inputs.inflation / 100, accYears + year);
   };
 
-  const accData = result.snapshots
-    .filter((s) => s.phase === 'accumulation')
-    .map((s) => ({
-      label: `Y${s.year}`,
-      nominal: s.nominal,
-      real: s.real,
-    }));
-
-  const assetEvolutionData = result.snapshots
-    .filter((s) => s.phase === 'accumulation')
-    .map((s) => ({
-      label: `Y${s.year}`,
-      equity: s.equity,
-      debt: s.debt,
-      gold: s.gold,
-      realestate: s.realEstate,
-      liquid: s.liquid,
-      other: s.other,
-    }));
-
-  const swpData = result.snapshots
-    .filter((s) => s.phase === 'distribution')
-    .map((s) => ({
-      label: `Age ${s.age}`,
-      corpus: s.corpusLeft || 0,
-    }));
-
-  const terminalAllocation = result.snapshots[result.snapshots.length - 1];
-  const allocationData = [
-    { name: 'Equity', value: terminalAllocation.equity, color: ASSET_COLORS.equity },
-    { name: 'Debt', value: terminalAllocation.debt, color: ASSET_COLORS.debt },
-    { name: 'Gold', value: terminalAllocation.gold, color: ASSET_COLORS.gold },
-    { name: 'Real Estate', value: terminalAllocation.realEstate, color: ASSET_COLORS.realestate },
-    { name: 'Liquid', value: terminalAllocation.liquid, color: ASSET_COLORS.liquid },
-    { name: 'Other', value: terminalAllocation.other, color: ASSET_COLORS.other },
-  ].filter((d) => d.value > 0);
-
-  const netWorth = useMemo(() => inputs.assets.reduce((sum, a) => sum + a.value, 0), [inputs.assets]);
+  const netWorth = wealthResult.netWorth;
 
   return (
     <div className="space-y-6">
@@ -231,7 +180,11 @@ export const MasterPlan = () => {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-stone-500">Annual savings</span>
-                <span className="font-medium text-navy">{formatCurrency(inputs.sip.amount * 12 + (inputs.stp.active ? inputs.stp.monthlyTransfer * 12 : 0))}</span>
+                <span className="font-medium text-navy">{formatCurrency(wealthResult.annualSavings)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-stone-500">Savings rate</span>
+                <span className="font-medium text-navy">{formatPercent(wealthResult.savingsRate)}</span>
               </div>
             </div>
           </Card>
@@ -401,17 +354,37 @@ export const MasterPlan = () => {
 
       {activeTab === 'results' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <MetricCard label="Liquid SWP Corpus (Nominal)" value={formatCurrency(result.terminalCorpusNominal)} subtext={`At Age ${inputs.retirementAge}`} variant="navy" />
-            <MetricCard label="Liquid SWP Corpus (Real)" value={formatCurrency(result.terminalCorpusReal)} subtext="Inflation-adjusted" variant="gold" />
-            <MetricCard label="CAGR Nominal" value={formatPercent(result.cagrNominal)} subtext="Annual portfolio growth" />
-            <MetricCard label="Monthly Need at Retirement" value={formatCurrency(result.monthlyNeedAtRetirement)} subtext={`From ${formatCurrency(inputs.swp.monthlyNeedToday)} today`} />
+          {!wealthResult.sustainable && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 text-red-800">
+              <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <strong>Plan is not sustainable.</strong> Corpus is projected to deplete at age {wealthResult.depletionAge}. Increase savings, delay retirement, or reduce withdrawal needs.
+              </div>
+            </div>
+          )}
+
+          {wealthResult.goalsAtRisk.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-amber-800">
+              <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <strong>Goals at risk:</strong>{' '}
+                {wealthResult.goalsAtRisk.map((g) => g.goal.name).join(', ')}. Review required SIPs in the Goal Planner.
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <MetricCard label="Terminal Corpus (Nominal)" value={formatCurrency(wealthResult.terminalValue)} subtext={`At Age ${inputs.lifeExpectancy}`} variant="navy" />
+            <MetricCard label="Terminal Corpus (Real)" value={formatCurrency(wealthResult.terminalRealValue)} subtext="Inflation-adjusted" variant="gold" />
+            <MetricCard label="CAGR Nominal" value={formatPercent(wealthResult.cagrNominal)} subtext="Annual portfolio growth" />
+            <MetricCard label="Monthly Need at Retirement" value={formatCurrency(monthlyNeedAtRetirement)} subtext={`From ${formatCurrency(inputs.swp.monthlyNeedToday)} today`} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <MetricCard label="Depletion Age" value={result.sustainable ? 'Sustainable' : `${result.depletionAge}`} subtext={result.sustainable ? 'Outlasts life expectancy' : 'Corpus runs out early'} variant={result.sustainable ? 'success' : 'danger'} />
-            <MetricCard label="CAGR Real" value={formatPercent(result.cagrReal)} subtext="After inflation" />
-            <MetricCard label="Total Invested" value={formatCurrency(result.totalInvested)} subtext="Over accumulation phase" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <MetricCard label="Plan Success Rate" value={formatPercent(wealthResult.monteCarlo.successRate * 100)} subtext="All goals + SWP sustainable" variant={wealthResult.monteCarlo.successRate * 100 >= riskProfile.goalSuccessThreshold ? 'success' : 'danger'} />
+            <MetricCard label="Essential Goal Success" value={formatPercent(wealthResult.essentialSuccessRate * 100)} subtext="Must-have goals" />
+            <MetricCard label="CAGR Real" value={formatPercent(wealthResult.cagrReal)} subtext="After inflation" />
+            <MetricCard label="Total Invested" value={formatCurrency(wealthResult.totalInvested)} subtext="Over accumulation phase" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -442,34 +415,81 @@ export const MasterPlan = () => {
                 <h3 className="text-lg font-serif text-navy flex items-center gap-2">
                   <BarChart2 size={18} className="text-gold" /> Monte Carlo Simulation
                 </h3>
-                <p className="text-sm text-stone-500 mt-1">1,000 correlated market paths using current assumptions.</p>
+                <p className="text-sm text-stone-500 mt-1">
+                  {wealthResult.monteCarlo.outcomes.length.toLocaleString()} correlated market paths using current assumptions.
+                </p>
               </div>
-              <Button onClick={runMonteCarlo} disabled={mcLoading} variant="outline">
-                {mcLoading ? (
-                  <span className="flex items-center gap-2"><RefreshCw size={14} className="animate-spin" /> Running...</span>
-                ) : (
-                  <span className="flex items-center gap-2"><BarChart2 size={14} /> Run Simulation</span>
-                )}
-              </Button>
+              <Badge variant="navy">Auto-run</Badge>
             </div>
 
-            {mcResult ? (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <MetricCard label="Success Rate" value={formatPercent(mcResult.successRate * 100)} subtext="Sustainable through life expectancy" variant={mcResult.successRate >= 0.8 ? 'success' : mcResult.successRate >= 0.5 ? 'default' : 'danger'} />
-                  <MetricCard label="Median Terminal" value={formatCurrencyCompact(mcResult.medianTerminalCorpus)} subtext="50th percentile" />
-                  <MetricCard label="P5 Terminal" value={formatCurrencyCompact(mcResult.percentile5)} subtext="Stress case" variant="danger" />
-                  <MetricCard label="P95 Terminal" value={formatCurrencyCompact(mcResult.percentile95)} subtext="Bull case" variant="success" />
-                </div>
-                <MonteCarloFanChart data={mcResult.yearlyPercentiles} />
-              </>
-            ) : (
-              <div className="text-center py-12 text-stone-400 bg-stone-50 rounded-xl border border-stone-100">
-                <BarChart2 size={40} className="mx-auto mb-2 opacity-30" />
-                <p className="text-sm">Run the simulation to see percentile bands.</p>
-              </div>
-            )}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <MetricCard label="Success Rate" value={formatPercent(wealthResult.monteCarlo.successRate * 100)} subtext="Sustainable through life expectancy" variant={wealthResult.monteCarlo.successRate >= 0.8 ? 'success' : wealthResult.monteCarlo.successRate >= 0.5 ? 'default' : 'danger'} />
+              <MetricCard label="Median Terminal" value={formatCurrencyCompact(wealthResult.monteCarlo.medianTerminal)} subtext="50th percentile" />
+              <MetricCard label="P5 Terminal" value={formatCurrencyCompact(wealthResult.monteCarlo.percentile5)} subtext="Stress case" variant="danger" />
+              <MetricCard label="P95 Terminal" value={formatCurrencyCompact(wealthResult.monteCarlo.percentile95)} subtext="Bull case" variant="success" />
+            </div>
+            <MonteCarloFanChart data={wealthResult.monteCarlo.yearlyPercentiles} />
           </Card>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2">
+                <WalletMinimal size={18} className="text-gold" /> Rebalancing & Implementation
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-500">
+                      <th className="py-2 pr-4">Asset</th>
+                      <th className="py-2 pr-4 text-right">Current</th>
+                      <th className="py-2 pr-4 text-right">Target</th>
+                      <th className="py-2 pr-4 text-right">Trade</th>
+                      <th className="py-2 pr-4 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {wealthResult.rebalancingTrades.map((r) => (
+                      <tr key={r.category} className="border-b border-stone-100 hover:bg-stone-50">
+                        <td className="py-2 pr-4 flex items-center">
+                          <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: ASSET_COLORS[r.category] }} />
+                          {ASSET_LABELS[r.category]}
+                        </td>
+                        <td className="py-2 pr-4 text-right">{formatCurrency(r.current)}</td>
+                        <td className="py-2 pr-4 text-right">{formatCurrency(r.target)}</td>
+                        <td className="py-2 pr-4 text-right font-medium">{formatCurrency(r.trade)}</td>
+                        <td className="py-2 pr-4 text-center">
+                          {Math.abs(r.trade) < netWorth * 0.02 ? (
+                            <span className="inline-flex items-center text-stone-500 text-xs"><CheckCircle2 size={12} className="mr-1" /> Hold</span>
+                          ) : r.trade > 0 ? (
+                            <span className="text-green-600 text-xs font-semibold">Buy</span>
+                          ) : (
+                            <span className="text-red-600 text-xs font-semibold">Sell</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+
+            <Card>
+              <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2">
+                <Globe size={18} className="text-gold" /> Currency Exposure
+              </h3>
+              <div className="space-y-3">
+                {wealthResult.currencyExposure.map((c) => (
+                  <div key={c.currency} className="p-3 bg-stone-50 rounded-xl border border-stone-100">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-navy">{c.currency}</span>
+                      <Badge variant={c.currency === 'INR' ? 'outline' : 'gold'}>{formatPercent(c.percentage)}</Badge>
+                    </div>
+                    <div className="text-xs text-stone-500 mt-1">{formatCurrency(c.amount)}</div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
 
           <Card>
             <h3 className="text-lg font-serif text-navy mb-4">Year-by-Year Projection</h3>
@@ -483,23 +503,28 @@ export const MasterPlan = () => {
                     <th className="py-2 pr-4 text-right">Nominal</th>
                     <th className="py-2 pr-4 text-right">Real</th>
                     <th className="py-2 pr-4 text-right">Monthly Need</th>
-                    <th className="py-2 pr-4 text-right">Corpus Left</th>
+                    <th className="py-2 pr-4 text-right">Invested</th>
+                    <th className="py-2 pr-4 text-right">Withdrawn</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {result.snapshots.map((s) => (
-                    <tr key={s.year} className="border-b border-stone-100 hover:bg-stone-50">
-                      <td className="py-2 pr-4">Y{s.year}</td>
-                      <td className="py-2 pr-4">{s.age}</td>
-                      <td className="py-2 pr-4">
-                        <Badge variant={s.phase === 'accumulation' ? 'navy' : 'gold'}>{s.phase === 'accumulation' ? 'Accumulation' : 'Distribution'}</Badge>
-                      </td>
-                      <td className="py-2 pr-4 text-right font-medium">{formatCurrencyCompact(s.nominal)}</td>
-                      <td className="py-2 pr-4 text-right text-stone-500">{formatCurrencyCompact(s.real)}</td>
-                      <td className="py-2 pr-4 text-right">{s.monthlyNeed ? formatCurrencyCompact(s.monthlyNeed) : '-'}</td>
-                      <td className="py-2 pr-4 text-right">{s.corpusLeft !== undefined ? formatCurrencyCompact(s.corpusLeft) : '-'}</td>
-                    </tr>
-                  ))}
+                  {wealthResult.snapshots.map((s) => {
+                    const monthlyNeed = s.phase === 'distribution' ? distributionMonthlyNeed(s.year - Math.max(0, inputs.retirementAge - inputs.currentAge)) : undefined;
+                    return (
+                      <tr key={s.year} className="border-b border-stone-100 hover:bg-stone-50">
+                        <td className="py-2 pr-4">Y{s.year}</td>
+                        <td className="py-2 pr-4">{s.age}</td>
+                        <td className="py-2 pr-4">
+                          <Badge variant={s.phase === 'accumulation' ? 'navy' : 'gold'}>{s.phase === 'accumulation' ? 'Accumulation' : 'Distribution'}</Badge>
+                        </td>
+                        <td className="py-2 pr-4 text-right font-medium">{formatCurrencyCompact(s.total)}</td>
+                        <td className="py-2 pr-4 text-right text-stone-500">{formatCurrencyCompact(s.realTotal)}</td>
+                        <td className="py-2 pr-4 text-right">{monthlyNeed ? formatCurrencyCompact(monthlyNeed) : '-'}</td>
+                        <td className="py-2 pr-4 text-right">{formatCurrencyCompact(s.invested)}</td>
+                        <td className="py-2 pr-4 text-right">{formatCurrencyCompact(s.withdrawn)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

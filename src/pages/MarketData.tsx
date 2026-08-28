@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Database, RefreshCw, AlertCircle, Download } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Database, RefreshCw, AlertCircle, Download, Globe } from 'lucide-react';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -20,11 +20,17 @@ import {
 } from 'recharts';
 
 export const MarketData = () => {
-  const { data, loading, progress, error, fetchData } = useMarketData();
+  const { data, loading, progress, error, fetchData, loadBackendData } = useMarketData();
   const defaultRange = useMemo(() => getDefaultDateRange(2), []);
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>(['NIFTY50', 'GOLDBEES']);
   const [from, setFrom] = useState(defaultRange.from);
   const [to, setTo] = useState(defaultRange.to);
+
+  const selectedSymbolsKey = selectedSymbols.join(',');
+  useEffect(() => {
+    const symbols = selectedSymbolsKey.split(',').filter(Boolean);
+    loadBackendData(symbols, from, to);
+  }, [loadBackendData, selectedSymbolsKey, from, to]);
 
   const chartData = useMemo(() => {
     if (!data) return [];
@@ -38,7 +44,11 @@ export const MarketData = () => {
     });
   }, [data]);
 
-  const handleFetch = async () => {
+  const handleBackendFetch = async () => {
+    await loadBackendData(selectedSymbols, from, to);
+  };
+
+  const handleAngelFetch = async () => {
     const session = loadSession();
     if (!session) {
       alert('Please connect to Angel One SmartAPI first via the Angel Connect page.');
@@ -116,16 +126,19 @@ export const MarketData = () => {
         )}
 
         <div className="flex gap-3">
-          <Button onClick={handleFetch} disabled={loading || selectedSymbols.length === 0}>
+          <Button onClick={handleBackendFetch} disabled={loading || selectedSymbols.length === 0}>
             {loading ? (
               <span className="flex items-center gap-2">
                 <RefreshCw size={16} className="animate-spin" /> Fetching {progress.currentSymbol}
               </span>
             ) : (
               <span className="flex items-center gap-2">
-                <Database size={16} /> Load Data
+                <Database size={16} /> Reload Backend
               </span>
             )}
+          </Button>
+          <Button onClick={handleAngelFetch} variant="outline" disabled={loading || selectedSymbols.length === 0}>
+            <Globe size={16} className="mr-1.5" /> Live Angel One
           </Button>
           {data && (
             <Button variant="outline" onClick={downloadCSV}>

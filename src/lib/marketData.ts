@@ -78,6 +78,44 @@ export async function fetchSymbolHistory(
   return candles;
 }
 
+/**
+ * Load the pre-built market-data bundle from the backend /api/market-data endpoint.
+ * This does not require an Angel One login and is the default data source.
+ */
+export async function fetchMarketDataFromBackend(
+  symbols?: string[],
+  from?: string,
+  to?: string,
+): Promise<MarketDataSet> {
+  const params = new URLSearchParams();
+  if (symbols && symbols.length > 0) params.set('symbols', symbols.join(','));
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  const query = params.toString();
+
+  // Try the Vercel serverless endpoint first, then fall back to the static bundle.
+  const urls = [
+    `/api/market-data${query ? `?${query}` : ''}`,
+    `/data/market-data.json`,
+  ];
+
+  let lastError = 'Market data request failed';
+  for (const url of urls) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        lastError = err.error || `Market data request failed: ${response.status}`;
+        continue;
+      }
+      return response.json();
+    } catch (err: any) {
+      lastError = err?.message || lastError;
+    }
+  }
+  throw new Error(lastError);
+}
+
 export async function fetchMarketData(
   symbols: string[],
   from: string,

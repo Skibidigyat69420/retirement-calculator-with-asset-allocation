@@ -9,6 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test:angel": "node scripts/test-smartapi.js",
+    "fetch:data": ".venv/bin/python scripts/fetch_historical.py",
     "deploy:vercel": "npx vercel --prod"
   },
   "dependencies": {

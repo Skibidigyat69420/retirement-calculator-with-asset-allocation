@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   BarChart3,
   RefreshCw,
@@ -46,13 +46,19 @@ const categoryMap: Record<string, AssetCategory> = {
 
 export const MVO = () => {
   const { addAsset, updateAsset, inputs, assumptions, riskProfile } = useCalculator();
-  const { data, loading, progress, error, fetchData } = useMarketData();
+  const { data, loading, progress, error, fetchData, loadBackendData } = useMarketData();
 
   const defaultRange = useMemo(() => getDefaultDateRange(3), []);
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>(DEFAULT_ALLOCATION_SYMBOLS);
   const [from, setFrom] = useState(defaultRange.from);
   const [to, setTo] = useState(defaultRange.to);
   const [appliedStrategy, setAppliedStrategy] = useState<string | null>(null);
+
+  const selectedSymbolsKey = selectedSymbols.join(',');
+  useEffect(() => {
+    const symbols = selectedSymbolsKey.split(',').filter(Boolean);
+    loadBackendData(symbols, from, to);
+  }, [loadBackendData, selectedSymbolsKey, from, to]);
 
   const mvoResult: MVOResult | null = useMemo(() => {
     const options = { samples: 10000, riskFreeRate: riskProfile.riskFreeRate / 100 };
@@ -125,7 +131,11 @@ export const MVO = () => {
     }));
   }, [mvoResult]);
 
-  const handleFetch = async () => {
+  const handleBackendFetch = async () => {
+    await loadBackendData(selectedSymbols, from, to);
+  };
+
+  const handleAngelFetch = async () => {
     const session = loadSession();
     if (!session) {
       alert('Please connect to Angel One SmartAPI first via the Angel Connect page.');
@@ -183,9 +193,9 @@ export const MVO = () => {
         badge="Quant Lab"
       />
 
-      {!data && (
+      {!data && !loading && (
         <Alert variant="warning" icon={Globe}>
-          Running in assumption mode. Connect Angel One SmartAPI and fetch live data for instrument-level MVO.
+          Backend market-data bundle not loaded. The optimizer is running in assumption mode. Connect Angel One SmartAPI for live instrument-level data.
         </Alert>
       )}
 
@@ -258,17 +268,22 @@ export const MVO = () => {
             </div>
           )}
 
-          <Button onClick={handleFetch} disabled={loading || selectedSymbols.length < 2} className="w-full py-3">
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <RefreshCw size={16} className="animate-spin" /> Fetching {progress.currentSymbol} ({progress.completed}/{progress.total})
-              </span>
-            ) : (
-              <span className="flex items-center justify-center gap-2">
-                <BarChart3 size={18} /> Run MVO Analysis
-              </span>
-            )}
-          </Button>
+          <div className="flex flex-col gap-3">
+            <Button onClick={handleBackendFetch} disabled={loading || selectedSymbols.length < 2} className="w-full py-3">
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <RefreshCw size={16} className="animate-spin" /> Fetching {progress.currentSymbol} ({progress.completed}/{progress.total})
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <BarChart3 size={18} /> Reload Backend Data
+                </span>
+              )}
+            </Button>
+            <Button onClick={handleAngelFetch} variant="outline" disabled={loading || selectedSymbols.length < 2} className="w-full py-3">
+              <Globe size={16} className="mr-2" /> Fetch Live from Angel One
+            </Button>
+          </div>
         </Card>
 
         <Card className="bg-navy text-white relative overflow-hidden">

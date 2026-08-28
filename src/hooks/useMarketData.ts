@@ -1,5 +1,10 @@
 import { useState, useCallback } from 'react';
-import { fetchMarketData, type MarketDataSet, type FetchProgress } from '../lib/marketData';
+import {
+  fetchMarketData,
+  fetchMarketDataFromBackend,
+  type MarketDataSet,
+  type FetchProgress,
+} from '../lib/marketData';
 import type { SmartApiCredentials, SmartApiSession } from '../lib/smartapi';
 
 interface UseMarketDataReturn {
@@ -8,6 +13,7 @@ interface UseMarketDataReturn {
   progress: FetchProgress;
   error: string | null;
   fetchData: (symbols: string[], from: string, to: string, creds: SmartApiCredentials, session: SmartApiSession) => Promise<void>;
+  loadBackendData: (symbols?: string[], from?: string, to?: string) => Promise<void>;
   clear: () => void;
 }
 
@@ -38,11 +44,26 @@ export function useMarketData(): UseMarketDataReturn {
     }
   }, []);
 
+  const loadBackendData = useCallback(async (symbols?: string[], from?: string, to?: string) => {
+    setLoading(true);
+    setError(null);
+    setProgress({ completed: 0, total: 1, currentSymbol: 'backend-bundle' });
+    try {
+      const result = await fetchMarketDataFromBackend(symbols, from, to);
+      setData(result);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to load backend market data');
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const clear = useCallback(() => {
     setData(null);
     setError(null);
     setProgress({ completed: 0, total: 0, currentSymbol: '' });
   }, []);
 
-  return { data, loading, progress, error, fetchData, clear };
+  return { data, loading, progress, error, fetchData, loadBackendData, clear };
 }

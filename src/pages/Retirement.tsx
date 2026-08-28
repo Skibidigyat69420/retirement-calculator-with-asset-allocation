@@ -1,53 +1,60 @@
-import { useMemo, useState } from 'react';
-import { Calculator } from 'lucide-react';
+import { useMemo } from 'react';
+import { Calculator, TrendingUp, AlertTriangle, CheckCircle2, Target } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { NumberInput } from '../components/ui/NumberInput';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { MetricCard } from '../components/ui/MetricCard';
-import { calculateMasterPlan } from '../lib/calculations';
-import { formatCurrency } from '../lib/formatters';
+import { Badge } from '../components/ui/Badge';
+import { NominalRealChart } from '../components/charts/NominalRealChart';
+import { useCalculator } from '../context/CalculatorContext';
+import { formatCurrency, formatPercent } from '../lib/formatters';
 
 export const Retirement = () => {
-  const [currentAge, setCurrentAge] = useState(34);
-  const [retirementAge, setRetirementAge] = useState(45);
-  const [monthlyExpense, setMonthlyExpense] = useState(150000);
-  const [currentCorpus, setCurrentCorpus] = useState(23300000);
-  const [monthlySIP, setMonthlySIP] = useState(90000);
-  const [returnRate, setReturnRate] = useState(10);
-  const [inflation, setInflation] = useState(5);
+  const { inputs, wealthResult, riskProfile, updateInputs, updateSIP, updateSWP } = useCalculator();
 
-  const result = useMemo(() => {
-    return calculateMasterPlan({
-      currentAge,
-      retirementAge,
-      lifeExpectancy: 90,
-      inflation,
-      annualIncome: monthlySIP * 12,
-      assets: [{ id: 'corpus', name: 'Current Corpus', value: currentCorpus, returnRate, category: 'equity', liquidateAtRetirement: true }],
-      sip: { amount: monthlySIP, equitySplit: 100, debtSplit: 0, stepUp: 0, equityReturn: returnRate, debtReturn: returnRate },
-      stp: { active: false, source: 'custom', lumpsum: 0, monthlyTransfer: 0, liquidReturn: 7, equitySplit: 100, debtSplit: 0, liquidCap: 0 },
-      swp: { monthlyNeedToday: monthlyExpense, postRetirementReturn: returnRate - 1, taxRate: 10, startAge: retirementAge, endAge: 90 },
-      goals: [],
-    });
-  }, [currentAge, retirementAge, monthlyExpense, currentCorpus, monthlySIP, returnRate, inflation]);
+  const yearsToRetirement = Math.max(0, inputs.retirementAge - inputs.currentAge);
+
+  const monthlyNeedAtRetirement = useMemo(
+    () => inputs.swp.monthlyNeedToday * Math.pow(1 + inputs.inflation / 100, yearsToRetirement),
+    [inputs.swp.monthlyNeedToday, inputs.inflation, yearsToRetirement],
+  );
 
   const requiredCorpus = useMemo(() => {
-    const monthlyNeedAtRetirement = monthlyExpense * Math.pow(1 + inflation / 100, retirementAge - currentAge);
     const annualNeed = monthlyNeedAtRetirement * 12;
-    const realReturn = (returnRate - 1 - inflation) / 100;
+    const postRetReturn = inputs.swp.postRetirementReturn / 100;
+    const infl = inputs.inflation / 100;
+    const realReturn = (1 + postRetReturn) / (1 + infl) - 1;
     if (realReturn <= 0) return annualNeed * 30;
     return annualNeed / realReturn;
-  }, [monthlyExpense, inflation, retirementAge, currentAge, returnRate]);
+  }, [monthlyNeedAtRetirement, inputs.swp.postRetirementReturn, inputs.inflation]);
 
-  const gap = result.terminalCorpusNominal - requiredCorpus;
+  const gap = wealthResult.terminalValue - requiredCorpus;
+  const successRate = wealthResult.monteCarlo.successRate * 100;
+
+  const chartData = useMemo(
+    () =>
+      wealthResult.snapshots
+        .filter((s) => s.phase === 'accumulation')
+        .map((s) => ({ label: `Age ${s.age}`, nominal: s.total, real: s.realTotal })),
+    [wealthResult.snapshots],
+  );
 
   return (
     <div className="space-y-6">
       <SectionTitle
         title="Retirement Readiness"
-        subtitle="A simplified FIRE-style check: how does your projected corpus compare to what you actually need?"
+        subtitle="A unified FIRE-style check powered by the master wealth engine: projected corpus vs. what you actually need."
         badge="Standalone"
       />
+
+      {!wealthResult.sustainable && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 text-red-800">
+          <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <strong>Plan is not sustainable.</strong> Corpus is projected to deplete at age {wealthResult.depletionAge}. Increase SIP, delay retirement, or reduce monthly needs.
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
@@ -56,19 +63,18 @@ export const Retirement = () => {
             <h3 className="text-lg font-serif text-navy">Inputs</h3>
           </div>
           <div className="space-y-4">
-            <NumberInput label="Current Age" value={currentAge} onChange={setCurrentAge} />
-            <NumberInput label="Retirement Age" value={retirementAge} onChange={setRetirementAge} />
-            <NumberInput label="Monthly Expense Today" value={monthlyExpense} onChange={setMonthlyExpense} />
-            <NumberInput label="Current Corpus" value={currentCorpus} onChange={setCurrentCorpus} />
-            <NumberInput label="Monthly SIP" value={monthlySIP} onChange={setMonthlySIP} />
-            <NumberInput label="Expected Return" value={returnRate} onChange={setReturnRate} suffix="%" />
-            <NumberInput label="Inflation" value={inflation} onChange={setInflation} suffix="%" />
+            <NumberInput label="Current Age" value={inputs.currentAge} onChange={(v) => updateInputs({ currentAge: v })} />
+            <NumberInput label="Retirement Age" value={inputs.retirementAge} onChange={(v) => updateInputs({ retirementAge: v })} />
+            <NumberInput label="Monthly Expense Today" value={inputs.swp.monthlyNeedToday} onChange={(v) => updateSWP({ monthlyNeedToday: v })} />
+            <NumberInput label="Monthly SIP" value={inputs.sip.amount} onChange={(v) => updateSIP({ amount: v })} />
+            <NumberInput label="Inflation" value={inputs.inflation} onChange={(v) => updateInputs({ inflation: v })} suffix="%" />
+            <NumberInput label="Post-Retirement Return" value={inputs.swp.postRetirementReturn} onChange={(v) => updateSWP({ postRetirementReturn: v })} suffix="%" />
           </div>
         </Card>
 
         <div className="lg:col-span-2 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <MetricCard label="Projected Corpus" value={formatCurrency(result.terminalCorpusNominal)} variant="navy" />
+            <MetricCard label="Projected Corpus" value={formatCurrency(wealthResult.terminalValue)} variant="navy" />
             <MetricCard label="Required Corpus" value={formatCurrency(requiredCorpus)} variant="gold" />
             <MetricCard
               label="Gap"
@@ -78,20 +84,71 @@ export const Retirement = () => {
             />
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <MetricCard label="Monthly Need at Retirement" value={formatCurrency(monthlyNeedAtRetirement)} subtext="Inflation-adjusted" />
+            <MetricCard
+              label="Plan Success Rate"
+              value={formatPercent(successRate)}
+              subtext="Monte Carlo"
+              variant={successRate >= riskProfile.goalSuccessThreshold ? 'success' : successRate >= riskProfile.goalSuccessThreshold * 0.6 ? 'default' : 'danger'}
+            />
+            <MetricCard
+              label="Depletion Age"
+              value={wealthResult.sustainable ? 'Sustainable' : `${wealthResult.depletionAge}`}
+              subtext={wealthResult.sustainable ? 'Outlasts life expectancy' : 'Corpus runs out early'}
+              variant={wealthResult.sustainable ? 'success' : 'danger'}
+            />
+          </div>
+
+          <Card>
+            <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2">
+              <TrendingUp size={18} className="text-gold" /> Accumulation Trajectory
+            </h3>
+            <NominalRealChart data={chartData} xKey="label" />
+          </Card>
+
           <Card>
             <h3 className="text-lg font-serif text-navy mb-4">Readiness Verdict</h3>
-            <p className="text-stone-600 leading-relaxed">
-              By age <strong>{retirementAge}</strong>, your monthly expense of{' '}
-              <strong>{formatCurrency(monthlyExpense)}</strong> today will inflate to{' '}
-              <strong>{formatCurrency(result.monthlyNeedAtRetirement)}</strong>. Your projected corpus is{' '}
-              <strong className={gap >= 0 ? 'text-green-600' : 'text-red-600'}>
-                {formatCurrency(result.terminalCorpusNominal)}
-              </strong>{' '}
-              against a rule-of-thumb required corpus of <strong>{formatCurrency(requiredCorpus)}</strong>.
-            </p>
-            <div className="mt-4 p-4 bg-stone-50 rounded-xl text-sm text-stone-600">
-              <strong>Note:</strong> The "required corpus" uses a perpetual real-return approximation. For precise
-              drawdown modelling, use the Master Plan or SWP calculators.
+            <div className="flex items-start gap-3 mb-4">
+              {gap >= 0 && successRate >= riskProfile.goalSuccessThreshold ? (
+                <>
+                  <CheckCircle2 size={20} className="text-green-600 shrink-0 mt-0.5" />
+                  <p className="text-stone-600 leading-relaxed">
+                    By age <strong>{inputs.retirementAge}</strong>, your monthly expense of{' '}
+                    <strong>{formatCurrency(inputs.swp.monthlyNeedToday)}</strong> today will inflate to{' '}
+                    <strong>{formatCurrency(monthlyNeedAtRetirement)}</strong>. Your projected corpus of{' '}
+                    <strong className="text-green-600">{formatCurrency(wealthResult.terminalValue)}</strong>{' '}
+                    exceeds the required corpus of <strong>{formatCurrency(requiredCorpus)}</strong>.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Target size={20} className="text-amber-500 shrink-0 mt-0.5" />
+                  <p className="text-stone-600 leading-relaxed">
+                    By age <strong>{inputs.retirementAge}</strong>, your monthly expense of{' '}
+                    <strong>{formatCurrency(inputs.swp.monthlyNeedToday)}</strong> today will inflate to{' '}
+                    <strong>{formatCurrency(monthlyNeedAtRetirement)}</strong>. Your projected corpus is{' '}
+                    <strong className={gap >= 0 ? 'text-green-600' : 'text-red-600'}>
+                      {formatCurrency(wealthResult.terminalValue)}
+                    </strong>{' '}
+                    against a required corpus of <strong>{formatCurrency(requiredCorpus)}</strong>.
+                  </p>
+                </>
+              )}
+            </div>
+            <div className="p-4 bg-stone-50 rounded-xl text-sm text-stone-600 space-y-2">
+              <div className="flex justify-between">
+                <span>Success threshold</span>
+                <Badge variant="outline">{formatPercent(riskProfile.goalSuccessThreshold)}</Badge>
+              </div>
+              <div className="flex justify-between">
+                <span>Current savings rate</span>
+                <span className="font-medium">{formatPercent(wealthResult.savingsRate)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Annual savings</span>
+                <span className="font-medium">{formatCurrency(wealthResult.annualSavings)}</span>
+              </div>
             </div>
           </Card>
         </div>

@@ -12,7 +12,7 @@ A comprehensive, institutional-grade individual wealth planning suite built with
 - **Retirement Readiness** — FIRE-style corpus gap analysis.
 
 ### Quantitative Tools
-- **MVO Optimizer** — Efficient frontier, max-Sharpe, min-variance, equal-weight, and risk-parity portfolios using live Angel One daily data; falls back to category assumptions offline.
+- **MVO Optimizer** — Efficient frontier, max-Sharpe, min-variance, equal-weight, and risk-parity portfolios using the historical data backend; falls back to category assumptions offline.
 - **Advanced Allocation** — Black-Litterman, risk parity, glide path, and tactical models.
 - **Portfolio Analytics** — Risk metrics, attribution, and stress tests.
 - **Trade Analytics** — Pre-trade cost estimates, post-trade implementation shortfall, rebalancing impact simulator, and FX/currency contribution.
@@ -21,7 +21,8 @@ A comprehensive, institutional-grade individual wealth planning suite built with
 - **Tax Loss Harvesting** — Identify harvestable losses and estimate tax alpha.
 
 ### Data & Connectivity
-- **Angel One SmartAPI** — Authenticate, fetch historical daily candles, and compute returns, volatility, covariance, and correlations.
+- **Historical Data Backend** — Real daily prices for Indian indices and ETFs are fetched from Yahoo Finance, stored as CSV/JSON, and served by a Vercel serverless function at `/api/market-data`.
+- **Angel One SmartAPI** — Optional live refresh for instrument-level candles, holdings, funds, and streaming quotes when you authenticate.
 - **Live Market** — Streaming quote watchlists (when connected).
 - **Market Data** — Browse and download price history.
 
@@ -37,6 +38,8 @@ A comprehensive, institutional-grade individual wealth planning suite built with
 - Framer Motion
 - Oxlint
 - Angel One SmartAPI
+- Python + yfinance (historical data fetcher)
+- Vercel serverless functions (`api/`) for backend data serving
 
 ## Getting Started
 
@@ -44,12 +47,16 @@ A comprehensive, institutional-grade individual wealth planning suite built with
 
 - Node.js 20+
 - npm
-- Angel One trading account + SmartAPI credentials
+- Python 3.10+ and `venv`
+- Angel One trading account + SmartAPI credentials (only for live broker refresh)
 
 ### Installation
 
 ```bash
 npm install
+python3 -m venv .venv
+source .venv/bin/activate
+pip install yfinance pandas numpy
 ```
 
 ### Environment Variables
@@ -61,13 +68,26 @@ cp .env.example .env
 ```
 
 ```env
-VITE_ANGEL_API_KEY=mnk8SRp
+VITE_ANGEL_API_KEY=your_api_key_here
 ANGEL_CLIENT_CODE=YOUR_CLIENT_CODE
 ANGEL_PIN=YOUR_PIN
 ANGEL_TOTP_SECRET=YOUR_TOTP_SECRET
 ```
 
-> **Note:** The API key `mnk8SRp` is pre-configured as the default. Replace the client ID, PIN, and TOTP secret with your own Angel One credentials.
+> **Note:** The historical data backend does **not** require Angel One credentials. Add them only if you want live broker refresh.
+
+### Fetch Historical Data
+
+Download real daily prices and rebuild the market-data bundle:
+
+```bash
+npm run fetch:data
+```
+
+This populates:
+- `data/prices/{symbol}.csv` — one CSV per instrument
+- `public/data/market-data.json` — aligned prices, returns, covariance, correlation, and statistics
+- Vercel function `api/market-data.js` reads from `public/data/market-data.json` at runtime
 
 ### Development
 
@@ -90,7 +110,11 @@ npm run lint
 ## Project Structure
 
 ```
-├── public/              # Static assets
+├── api/                 # Vercel serverless functions
+├── data/                # Generated price CSVs
+├── public/              # Static assets and bundled market data
+│   └── data/
+│       └── market-data.json
 ├── src/
 │   ├── components/      # Reusable UI components and charts
 │   ├── context/         # CalculatorContext for global state
@@ -128,12 +152,13 @@ Post-trade implementation shortfall, pre-trade square-root market impact model, 
 
 ## Angel One SmartAPI
 
-The app is designed to use Angel One SmartAPI for historical daily price data.
+The app uses the **historical data backend by default**, so no broker login is required for MVO, Market Data, or allocation analytics.
 
-1. Go to **Angel Connect** in the app.
-2. Enter your client ID, password, and TOTP secret (or generate TOTP from the secret).
-3. Authenticate to obtain a JWT session.
-4. Use the MVO, Market Data, or Live Market pages with live data.
+To refresh data live from Angel One SmartAPI:
+
+1. Add your credentials to `.env`.
+2. Go to **Angel Connect** in the app and authenticate.
+3. Click **Fetch Live from Angel One** on the MVO or Market Data pages.
 
 A Python reference connector is included at `smartapi_connector.py` for server-side or standalone use.
 
