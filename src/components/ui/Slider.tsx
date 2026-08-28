@@ -17,16 +17,24 @@ export const Slider = ({
   step = 1,
   suffix = '%',
 }: SliderProps) => {
+  const percentage = ((value - min) / (max - min)) * 100;
+
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center">
         <label className="text-[11px] font-semibold uppercase tracking-wider text-stone-500">
           {label}
         </label>
-        <span className="text-sm font-semibold text-navy">
+        <span className="text-sm font-semibold text-navy bg-stone-100 px-2 py-0.5 rounded-md">
           {value}
           {suffix}
         </span>
+      </div>
+      <div className="relative h-1.5 rounded-full bg-stone-200 overflow-hidden">
+        <div
+          className="absolute left-0 top-0 h-full bg-gold rounded-full"
+          style={{ width: `${percentage}%` }}
+        />
       </div>
       <input
         type="range"
@@ -35,7 +43,7 @@ export const Slider = ({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.currentTarget.value))}
-        className="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-gold"
+        className="w-full -mt-2.5 relative z-10 bg-transparent"
       />
     </div>
   );

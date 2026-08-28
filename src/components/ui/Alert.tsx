@@ -23,9 +23,15 @@ export const Alert = ({ children, variant = 'info', icon: Icon, className }: Ale
   };
 
   return (
-    <div className={cn('p-3.5 rounded-xl border text-sm flex items-start gap-2.5', variants[variant], className)}>
+    <div
+      className={cn(
+        'p-4 rounded-2xl border text-sm flex items-start gap-3 shadow-sm',
+        variants[variant],
+        className,
+      )}
+    >
       {Icon && <Icon size={18} className={cn('shrink-0 mt-0.5', iconColors[variant])} />}
-      <div className="flex-1">{children}</div>
+      <div className="flex-1 leading-relaxed">{children}</div>
     </div>
   );
 };

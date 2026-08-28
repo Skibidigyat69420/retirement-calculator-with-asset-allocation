@@ -2,7 +2,7 @@ import { cn } from '../../lib/utils';
 
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'default' | 'gold' | 'navy' | 'outline' | 'success' | 'danger';
+  variant?: 'default' | 'gold' | 'navy' | 'outline' | 'success' | 'danger' | 'warning';
   className?: string;
 }
 
@@ -11,9 +11,10 @@ export const Badge = ({ children, variant = 'default', className }: BadgeProps) 
     default: 'bg-stone-100 text-stone-600',
     gold: 'bg-gold/10 text-gold border border-gold/20',
     navy: 'bg-navy text-white',
-    outline: 'border border-stone-300 text-stone-600',
-    success: 'bg-green-100 text-green-700',
-    danger: 'bg-red-100 text-red-700',
+    outline: 'border border-stone-300 text-stone-600 bg-white',
+    success: 'bg-emerald-50 text-emerald-700 border border-emerald-100',
+    danger: 'bg-rose-50 text-rose-700 border border-rose-100',
+    warning: 'bg-amber-50 text-amber-700 border border-amber-100',
   };
 
   return (

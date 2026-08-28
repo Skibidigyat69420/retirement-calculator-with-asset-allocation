@@ -18,12 +18,16 @@ export const Input = ({ label, suffix, helper, className, ...props }: InputProps
         <input
           {...props}
           className={cn(
-            'w-full bg-transparent border-b border-stone-300 py-2 text-sm font-medium text-navy transition-colors focus:border-gold focus:outline-none',
-            suffix && 'pr-8',
+            'w-full bg-white border border-stone-200 rounded-xl px-3 py-2.5 text-sm font-medium text-navy placeholder:text-stone-400 transition-all',
+            'focus:border-gold focus:ring-2 focus:ring-gold/10 focus:outline-none',
+            'hover:border-stone-300',
+            suffix && 'pr-10',
           )}
         />
         {suffix && (
-          <span className="absolute right-0 top-2 text-xs text-stone-400">{suffix}</span>
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-stone-400">
+            {suffix}
+          </span>
         )}
       </div>
       {helper && <p className="text-[10px] text-stone-400">{helper}</p>}

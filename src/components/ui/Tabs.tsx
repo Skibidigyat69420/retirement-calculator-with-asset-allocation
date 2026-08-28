@@ -14,19 +14,23 @@ interface TabsProps {
 
 export const Tabs = ({ tabs, active, onChange }: TabsProps) => {
   return (
-    <div className="flex space-x-1 border border-stone-200 rounded-xl p-1 bg-stone-50/50 overflow-x-auto">
+    <div className="inline-flex p-1.5 bg-white border border-stone-200/70 rounded-2xl shadow-sm overflow-x-auto max-w-full">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => onChange(tab.id)}
           className={cn(
-            'flex items-center px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all',
+            'flex items-center px-4 py-2 text-sm font-semibold rounded-xl whitespace-nowrap transition-all duration-150',
             active === tab.id
-              ? 'bg-white text-navy shadow-sm'
-              : 'text-stone-500 hover:text-navy hover:bg-stone-100/50',
+              ? 'bg-navy text-white shadow-sm'
+              : 'text-stone-500 hover:text-navy hover:bg-stone-100/60',
           )}
         >
-          {tab.icon && <span className={cn('mr-2', active === tab.id ? 'text-gold' : 'text-stone-400')}>{tab.icon}</span>}
+          {tab.icon && (
+            <span className={cn('mr-2', active === tab.id ? 'text-gold' : 'text-stone-400')}>
+              {tab.icon}
+            </span>
+          )}
           {tab.label}
         </button>
       ))}
