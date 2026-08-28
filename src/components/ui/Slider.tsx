@@ -32,7 +32,7 @@ export const Slider = ({
       </div>
       <div className="relative h-1.5 rounded-full bg-stone-200 overflow-hidden">
         <div
-          className="absolute left-0 top-0 h-full bg-gold rounded-full"
+          className="absolute left-0 top-0 h-full bg-ink rounded-full"
           style={{ width: `${percentage}%` }}
         />
       </div>

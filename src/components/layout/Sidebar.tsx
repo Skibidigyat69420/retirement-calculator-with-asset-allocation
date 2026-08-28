@@ -23,7 +23,7 @@ const NavLink = ({ item, onClick }: NavLinkProps) => {
           : 'text-stone-500 hover:bg-white hover:text-navy hover:shadow-sm',
       )}
     >
-      <Icon size={18} className={cn('transition-colors', active ? 'text-gold' : 'text-stone-400 group-hover:text-gold')} />
+      <Icon size={18} className={cn('transition-colors', active ? 'text-white' : 'text-stone-400 group-hover:text-ink')} />
       <span>{item.label}</span>
     </Link>
   );

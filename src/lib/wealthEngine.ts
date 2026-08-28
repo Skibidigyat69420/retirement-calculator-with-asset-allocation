@@ -62,6 +62,8 @@ export interface WealthEngineResult {
   annualIncome: number;
   annualSavings: number;
   savingsRate: number;
+  annualInvested: number;
+  investmentRate: number;
   monthlySIP: number;
   annualExpenses: number;
   snapshots: WealthSnapshot[];
@@ -500,11 +502,12 @@ export function runWealthEngine(
   assumptions: AssumptionSet,
   riskProfile?: { profile?: RiskProfile; score?: number },
 ): WealthEngineResult {
-  const { lifeExpectancy, assets, sip, stp, swp, goals, annualIncome } = inputs;
+  const { lifeExpectancy, assets, sip, stp, goals, annualIncome, monthlyExpenditure } = inputs;
   const netWorth = assets.reduce((sum, a) => sum + a.value, 0);
-  const annualSavings = sip.amount * 12 + (stp.active ? stp.monthlyTransfer * 12 : 0);
+  const annualExpenses = monthlyExpenditure * 12;
+  const annualSavings = Math.max(0, annualIncome - annualExpenses);
   const savingsRate = annualIncome > 0 ? (annualSavings / annualIncome) * 100 : 0;
-  const annualExpenses = swp.monthlyNeedToday * 12;
+  const annualInvested = sip.amount * 12 + (stp.active ? stp.monthlyTransfer * 12 : 0);
 
   const currentAllocation = sumByCategory(assets);
   const totalValue = Object.values(currentAllocation).reduce((a, b) => a + b, 0);
@@ -584,6 +587,8 @@ export function runWealthEngine(
     annualIncome: round2(annualIncome),
     annualSavings: round2(annualSavings),
     savingsRate: round2(savingsRate),
+    annualInvested: round2(annualInvested),
+    investmentRate: round2(annualIncome > 0 ? (annualInvested / annualIncome) * 100 : 0),
     monthlySIP: sip.amount,
     annualExpenses: round2(annualExpenses),
     snapshots,

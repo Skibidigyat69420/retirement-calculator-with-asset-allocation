@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Globe,
   WalletMinimal,
+  Banknote,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useCalculator } from '../context/CalculatorContext';
@@ -179,11 +180,11 @@ export const MasterPlan = () => {
                 <span className="font-medium text-navy">{formatCurrency(netWorth)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Annual savings</span>
+                <span className="text-stone-500">Net annual savings</span>
                 <span className="font-medium text-navy">{formatCurrency(wealthResult.annualSavings)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Savings rate</span>
+                <span className="text-stone-500">Net savings rate</span>
                 <span className="font-medium text-navy">{formatPercent(wealthResult.savingsRate)}</span>
               </div>
             </div>
@@ -241,61 +242,107 @@ export const MasterPlan = () => {
       )}
 
       {activeTab === 'cashflows' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="space-y-6">
           <Card>
-            <div className="flex items-center space-x-2 mb-4">
-              <PieChart size={18} className="text-gold" />
-              <h3 className="text-lg font-serif text-navy">SIP Injection</h3>
-            </div>
-            <div className="space-y-4">
-              <NumberInput label="Monthly SIP" value={inputs.sip.amount} onChange={(v) => updateSIP({ amount: v })} />
-              <Slider label="Equity Split" value={inputs.sip.equitySplit} onChange={(v) => updateSIP({ equitySplit: v, debtSplit: 100 - v })} />
-              <Slider label="Debt Split" value={inputs.sip.debtSplit} onChange={(v) => updateSIP({ debtSplit: v, equitySplit: 100 - v })} />
-              <NumberInput label="Annual Step-up" value={inputs.sip.stepUp} onChange={(v) => updateSIP({ stepUp: v })} suffix="%" />
-              <div className="grid grid-cols-2 gap-3">
-                <NumberInput label="Equity Return" value={inputs.sip.equityReturn} onChange={(v) => updateSIP({ equityReturn: v })} suffix="%" />
-                <NumberInput label="Debt Return" value={inputs.sip.debtReturn} onChange={(v) => updateSIP({ debtReturn: v })} suffix="%" />
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-2">
+                <Banknote size={18} className="text-gold" />
+                <h3 className="text-lg font-serif text-navy">Household Cashflow</h3>
               </div>
+              <Badge variant="outline">{formatPercent(wealthResult.savingsRate)} savings rate</Badge>
             </div>
-          </Card>
 
-          <Card className="border-l-4 border-l-navy">
-            <div className="flex items-center space-x-2 mb-4">
-              <Landmark size={18} className="text-gold" />
-              <h3 className="text-lg font-serif text-navy">STP Deployment</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+              <NumberInput label="Annual Income" value={inputs.annualIncome} onChange={(v) => updateInputs({ annualIncome: v })} helper="Pre-tax household income" />
+              <NumberInput label="Monthly Expenditure" value={inputs.monthlyExpenditure} onChange={(v) => updateInputs({ monthlyExpenditure: v })} helper="Current lifestyle spend" />
+              <NumberInput label="Monthly SIP" value={inputs.sip.amount} onChange={(v) => updateSIP({ amount: v })} helper="Systematic investment" />
+              <NumberInput label={inputs.stp.active ? 'Monthly STP' : 'STP Monthly Transfer'} value={inputs.stp.monthlyTransfer} onChange={(v) => updateSTP({ monthlyTransfer: v })} helper={inputs.stp.active ? 'From liquid corpus' : 'Enable STP to use'} />
             </div>
-            <label className="flex items-center space-x-2 text-sm text-navy mb-4">
-              <input
-                type="checkbox"
-                checked={inputs.stp.active}
-                onChange={(e) => updateSTP({ active: e.currentTarget.checked })}
-                className="accent-navy w-4 h-4"
-              />
-              <span>Activate Systematic Transfer Plan</span>
-            </label>
-            {inputs.stp.active && (
-              <div className="space-y-4">
-                <NumberInput label="STP Lumpsum" value={inputs.stp.lumpsum} onChange={(v) => updateSTP({ lumpsum: v })} />
-                <NumberInput label="Monthly Transfer" value={inputs.stp.monthlyTransfer} onChange={(v) => updateSTP({ monthlyTransfer: v })} />
-                <NumberInput label="Liquid Return" value={inputs.stp.liquidReturn} onChange={(v) => updateSTP({ liquidReturn: v })} suffix="%" />
-                <NumberInput label="Liquid Cap" value={inputs.stp.liquidCap} onChange={(v) => updateSTP({ liquidCap: v })} />
-                <Slider label="Equity Split" value={inputs.stp.equitySplit} onChange={(v) => updateSTP({ equitySplit: v, debtSplit: 100 - v })} />
-                <Slider label="Debt Split" value={inputs.stp.debtSplit} onChange={(v) => updateSTP({ debtSplit: v, equitySplit: 100 - v })} />
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <MetricCard label="Annual Income" value={formatCurrency(wealthResult.annualIncome)} />
+              <MetricCard label="Annual Expenses" value={formatCurrency(wealthResult.annualExpenses)} />
+              <MetricCard label="Net Savings" value={formatCurrency(wealthResult.annualSavings)} subtext={`${formatPercent(wealthResult.savingsRate)} of income`} variant="navy" />
+              <MetricCard label="Invested / Deployed" value={formatCurrency(wealthResult.annualInvested)} subtext={`${formatPercent(wealthResult.investmentRate)} of income`} variant="gold" />
+            </div>
+
+            {wealthResult.annualSavings > 0 && (
+              <div className="mt-6 p-4 bg-paper rounded-xl border border-warm/30">
+                <div className="flex items-center justify-between text-sm mb-2">
+                  <span className="text-textMuted">Net savings deployment</span>
+                  <span className="font-medium text-ink">
+                    {formatPercent((wealthResult.annualInvested / Math.max(wealthResult.annualSavings, 1)) * 100)} deployed
+                  </span>
+                </div>
+                <div className="h-2 bg-warm/30 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-navy rounded-full"
+                    style={{ width: `${Math.min(100, (wealthResult.annualInvested / Math.max(wealthResult.annualSavings, 1)) * 100)}%` }}
+                  />
+                </div>
+                <div className="mt-2 text-xs text-textMuted">
+                  Unallocated cashflow: <span className="font-medium text-ink">{formatCurrency(Math.max(0, wealthResult.annualSavings - wealthResult.annualInvested))}</span> / year
+                </div>
               </div>
             )}
           </Card>
 
-          <Card className="border-l-4 border-l-gold">
-            <div className="flex items-center space-x-2 mb-4">
-              <Wallet size={18} className="text-gold" />
-              <h3 className="text-lg font-serif text-navy">Distribution (SWP)</h3>
-            </div>
-            <div className="space-y-4">
-              <NumberInput label="Target Monthly Income (Today's ₹)" value={inputs.swp.monthlyNeedToday} onChange={(v) => updateSWP({ monthlyNeedToday: v })} />
-              <NumberInput label="Post-Retirement Return" value={inputs.swp.postRetirementReturn} onChange={(v) => updateSWP({ postRetirementReturn: v })} suffix="%" />
-              <NumberInput label="SWP Tax Rate" value={inputs.swp.taxRate} onChange={(v) => updateSWP({ taxRate: v })} suffix="%" />
-            </div>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card>
+              <div className="flex items-center space-x-2 mb-4">
+                <PieChart size={18} className="text-gold" />
+                <h3 className="text-lg font-serif text-navy">SIP Injection</h3>
+              </div>
+              <div className="space-y-4">
+                <NumberInput label="Monthly SIP" value={inputs.sip.amount} onChange={(v) => updateSIP({ amount: v })} />
+                <Slider label="Equity Split" value={inputs.sip.equitySplit} onChange={(v) => updateSIP({ equitySplit: v, debtSplit: 100 - v })} />
+                <Slider label="Debt Split" value={inputs.sip.debtSplit} onChange={(v) => updateSIP({ debtSplit: v, equitySplit: 100 - v })} />
+                <NumberInput label="Annual Step-up" value={inputs.sip.stepUp} onChange={(v) => updateSIP({ stepUp: v })} suffix="%" />
+                <div className="grid grid-cols-2 gap-3">
+                  <NumberInput label="Equity Return" value={inputs.sip.equityReturn} onChange={(v) => updateSIP({ equityReturn: v })} suffix="%" />
+                  <NumberInput label="Debt Return" value={inputs.sip.debtReturn} onChange={(v) => updateSIP({ debtReturn: v })} suffix="%" />
+                </div>
+              </div>
+            </Card>
+
+            <Card className="border-l-4 border-l-navy">
+              <div className="flex items-center space-x-2 mb-4">
+                <Landmark size={18} className="text-gold" />
+                <h3 className="text-lg font-serif text-navy">STP Deployment</h3>
+              </div>
+              <label className="flex items-center space-x-2 text-sm text-navy mb-4">
+                <input
+                  type="checkbox"
+                  checked={inputs.stp.active}
+                  onChange={(e) => updateSTP({ active: e.currentTarget.checked })}
+                  className="accent-navy w-4 h-4"
+                />
+                <span>Activate Systematic Transfer Plan</span>
+              </label>
+              {inputs.stp.active && (
+                <div className="space-y-4">
+                  <NumberInput label="STP Lumpsum" value={inputs.stp.lumpsum} onChange={(v) => updateSTP({ lumpsum: v })} />
+                  <NumberInput label="Monthly Transfer" value={inputs.stp.monthlyTransfer} onChange={(v) => updateSTP({ monthlyTransfer: v })} />
+                  <NumberInput label="Liquid Return" value={inputs.stp.liquidReturn} onChange={(v) => updateSTP({ liquidReturn: v })} suffix="%" />
+                  <NumberInput label="Liquid Cap" value={inputs.stp.liquidCap} onChange={(v) => updateSTP({ liquidCap: v })} />
+                  <Slider label="Equity Split" value={inputs.stp.equitySplit} onChange={(v) => updateSTP({ equitySplit: v, debtSplit: 100 - v })} />
+                  <Slider label="Debt Split" value={inputs.stp.debtSplit} onChange={(v) => updateSTP({ debtSplit: v, equitySplit: 100 - v })} />
+                </div>
+              )}
+            </Card>
+
+            <Card className="border-l-4 border-l-gold">
+              <div className="flex items-center space-x-2 mb-4">
+                <Wallet size={18} className="text-gold" />
+                <h3 className="text-lg font-serif text-navy">Distribution (SWP)</h3>
+              </div>
+              <div className="space-y-4">
+                <NumberInput label="Target Monthly Income (Today's ₹)" value={inputs.swp.monthlyNeedToday} onChange={(v) => updateSWP({ monthlyNeedToday: v })} />
+                <NumberInput label="Post-Retirement Return" value={inputs.swp.postRetirementReturn} onChange={(v) => updateSWP({ postRetirementReturn: v })} suffix="%" />
+                <NumberInput label="SWP Tax Rate" value={inputs.swp.taxRate} onChange={(v) => updateSWP({ taxRate: v })} suffix="%" />
+              </div>
+            </Card>
+          </div>
         </div>
       )}
 

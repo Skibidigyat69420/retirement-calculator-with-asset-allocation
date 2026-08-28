@@ -1,24 +1,29 @@
 import type { AssetCategory } from '../types';
 
 export const COLORS = {
-  cream: '#F4F1EA',
-  navy: '#1A233A',
-  gold: '#B68B40',
-  accent: '#E6DCC3',
-  textMain: '#333333',
+  cream: '#FDFBF7',
+  paper: '#F6F4F0',
+  warm: '#D1CDC3',
+  warmDark: '#B0AAA0',
+  navy: '#111111',
+  ink: '#111111',
+  gold: '#D1CDC3',
+  red: '#A31621',
+  accent: '#E7E2DD',
+  textMain: '#1a1a1a',
   white: '#FFFFFF',
-  success: '#2E7D32',
-  danger: '#C62828',
-  warning: '#F9A825',
+  success: '#1F5E22',
+  danger: '#A31621',
+  warning: '#B45F06',
 };
 
 export const ASSET_COLORS: Record<AssetCategory, string> = {
-  equity: '#1A233A',
-  debt: '#B68B40',
-  gold: '#D4AF37',
-  realestate: '#8D6E63',
-  liquid: '#90A4AE',
-  other: '#78909C',
+  equity: '#111111',
+  debt: '#A31621',
+  gold: '#D1CDC3',
+  realestate: '#8C867E',
+  liquid: '#B0AAA0',
+  other: '#5C5C5C',
 };
 
 export const ASSET_LABELS: Record<AssetCategory, string> = {

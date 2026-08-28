@@ -65,7 +65,8 @@ export const Retirement = () => {
           <div className="space-y-4">
             <NumberInput label="Current Age" value={inputs.currentAge} onChange={(v) => updateInputs({ currentAge: v })} />
             <NumberInput label="Retirement Age" value={inputs.retirementAge} onChange={(v) => updateInputs({ retirementAge: v })} />
-            <NumberInput label="Monthly Expense Today" value={inputs.swp.monthlyNeedToday} onChange={(v) => updateSWP({ monthlyNeedToday: v })} />
+            <NumberInput label="Monthly Expenditure" value={inputs.monthlyExpenditure} onChange={(v) => updateInputs({ monthlyExpenditure: v })} helper="Current lifestyle spend" />
+            <NumberInput label="Monthly Need at Retirement" value={inputs.swp.monthlyNeedToday} onChange={(v) => updateSWP({ monthlyNeedToday: v })} helper="Target retirement drawdown" />
             <NumberInput label="Monthly SIP" value={inputs.sip.amount} onChange={(v) => updateSIP({ amount: v })} />
             <NumberInput label="Inflation" value={inputs.inflation} onChange={(v) => updateInputs({ inflation: v })} suffix="%" />
             <NumberInput label="Post-Retirement Return" value={inputs.swp.postRetirementReturn} onChange={(v) => updateSWP({ postRetirementReturn: v })} suffix="%" />
@@ -142,12 +143,20 @@ export const Retirement = () => {
                 <Badge variant="outline">{formatPercent(riskProfile.goalSuccessThreshold)}</Badge>
               </div>
               <div className="flex justify-between">
-                <span>Current savings rate</span>
+                <span>Monthly expenditure</span>
+                <span className="font-medium">{formatCurrency(inputs.monthlyExpenditure)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Net savings rate</span>
                 <span className="font-medium">{formatPercent(wealthResult.savingsRate)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Annual savings</span>
                 <span className="font-medium">{formatCurrency(wealthResult.annualSavings)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Annual invested</span>
+                <span className="font-medium">{formatCurrency(wealthResult.annualInvested)}</span>
               </div>
             </div>
           </Card>

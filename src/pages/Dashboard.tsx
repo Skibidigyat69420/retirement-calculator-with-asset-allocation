@@ -145,7 +145,7 @@ export const Dashboard = () => {
         <MetricCard
           label="Annual Income"
           value={formatCurrency(wealthResult.annualIncome)}
-          subtext={`Savings rate ${formatPercent(wealthResult.savingsRate)}`}
+          subtext={`Net savings ${formatPercent(wealthResult.savingsRate)}`}
           variant="gold"
           icon={<TrendingUp size={20} />}
         />

@@ -16,7 +16,7 @@ export const Button = ({
     primary:
       'bg-navy text-white hover:bg-navy/90 hover:shadow-md active:scale-[0.98] focus:ring-2 focus:ring-navy/20',
     secondary:
-      'bg-gold text-white hover:bg-gold/90 hover:shadow-md active:scale-[0.98] focus:ring-2 focus:ring-gold/20',
+      'bg-gold text-ink hover:bg-gold/80 hover:shadow-md active:scale-[0.98] focus:ring-2 focus:ring-gold/20',
     outline:
       'border border-stone-300 bg-white text-navy hover:border-gold hover:text-gold hover:bg-gold/5 active:scale-[0.98]',
     ghost:

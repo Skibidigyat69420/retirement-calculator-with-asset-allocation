@@ -41,7 +41,7 @@ export const Reports = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <MetricCard label="Net Worth" value={formatCurrency(wealthResult.netWorth)} subtext="Current assets" variant="navy" />
-        <MetricCard label="Annual Savings" value={formatCurrency(wealthResult.annualSavings)} subtext={`Rate ${formatPercent(wealthResult.savingsRate)}`} variant="gold" />
+        <MetricCard label="Net Annual Savings" value={formatCurrency(wealthResult.annualSavings)} subtext={`${formatPercent(wealthResult.savingsRate)} of income`} variant="gold" />
         <MetricCard label="Terminal Corpus" value={formatCurrency(wealthResult.terminalValue)} subtext={`At age ${inputs.retirementAge}`} />
         <MetricCard label="Plan Success Rate" value={formatPercent(wealthResult.monteCarlo.successRate * 100)} subtext="All goals + SWP sustainable" variant={wealthResult.monteCarlo.successRate * 100 >= riskProfile.goalSuccessThreshold ? 'success' : 'danger'} />
       </div>
@@ -54,7 +54,10 @@ export const Reports = () => {
             <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Retirement age</span><span className="font-medium text-navy">{inputs.retirementAge}</span></div>
             <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Life expectancy</span><span className="font-medium text-navy">{inputs.lifeExpectancy}</span></div>
             <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Annual income</span><span className="font-medium text-navy">{formatCurrency(wealthResult.annualIncome)}</span></div>
+            <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Monthly expenditure</span><span className="font-medium text-navy">{formatCurrency(inputs.monthlyExpenditure)}</span></div>
             <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Annual expenses (today)</span><span className="font-medium text-navy">{formatCurrency(wealthResult.annualExpenses)}</span></div>
+            <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Net annual savings</span><span className="font-medium text-navy">{formatCurrency(wealthResult.annualSavings)} ({formatPercent(wealthResult.savingsRate)})</span></div>
+            <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Invested / deployed</span><span className="font-medium text-navy">{formatCurrency(wealthResult.annualInvested)} ({formatPercent(wealthResult.investmentRate)})</span></div>
             <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Monthly SIP</span><span className="font-medium text-navy">{formatCurrency(wealthResult.monthlySIP)}</span></div>
             <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">Total invested (projected)</span><span className="font-medium text-navy">{formatCurrency(wealthResult.totalInvested)}</span></div>
             <div className="flex justify-between py-2 border-b border-stone-100"><span className="text-stone-500">CAGR nominal</span><span className="font-medium text-navy">{formatPercent(wealthResult.cagrNominal)}</span></div>

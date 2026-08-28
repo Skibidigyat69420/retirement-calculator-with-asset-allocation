@@ -99,6 +99,7 @@ export interface MasterPlanInputs {
   lifeExpectancy: number;
   inflation: number;
   annualIncome: number;
+  monthlyExpenditure: number;
   assets: Asset[];
   sip: SIPConfig;
   stp: STPConfig;
