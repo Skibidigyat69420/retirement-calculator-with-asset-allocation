@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculators</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 font-sans text-gray-900">
+    <div class="max-w-6xl mx-auto space-y-8">
+        
+        <!-- Header -->
+        <div class="text-center">
+            <h1 class="text-3xl font-extrabold text-gray-900">Calculators</h1>
+            <p class="mt-2 text-sm text-gray-600">A unified suite for your financial independence journey.</p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex justify-center border-b border-gray-200 overflow-x-auto">
+            <nav class="-mb-px flex space-x-8 px-2" aria-label="Tabs">
+                <button onclick="switchTab('retirement')" id="tab-retirement" class="border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Retirement & SWP</button>
+                <button onclick="switchTab('goal')" id="tab-goal" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Target Corpus Calculator</button>
+                <button onclick="switchTab('allocation')" id="tab-allocation" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Asset Allocation</button>
+                <button onclick="switchTab('sip')" id="tab-sip" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">SIP Calculator</button>
+                <button onclick="switchTab('lumpsum')" id="tab-lumpsum" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Lumpsum Calculator</button>
+            </nav>
+        </div>
+
+
+        <!-- Retirement & SWP View -->
+        <div id="view-retirement" class="calculator-view">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            
+            <!-- Inputs Section -->
+            <div class="lg:col-span-1 bg-white shadow rounded-lg p-6 space-y-6 border-t-4 border-blue-500">
+                <h2 class="text-xl font-bold text-gray-800 border-b pb-2">Assumptions</h2>
+                
+                <form id="calculator-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Current Age</label>
+                        <input type="number" id="currentAge" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" value="30">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Retirement Age</label>
+                        <input type="number" id="retirementAge" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" value="60">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Life Expectancy</label>
+                        <input type="number" id="lifeExpectancy" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" value="85">
+                    </div>
+
+                    <div class="pt-4 border-t">
+                        <label class="block text-sm font-medium text-gray-700">Current Corpus (Savings)</label>
+                        <input type="number" id="currentCorpus" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" value="1000000">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Monthly Investment (SIP)</label>
+                        <input type="number" id="monthlyInvestment" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" value="20000">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Pre-Retirement Return (%)</label>
+                        <input type="number" id="expectedReturnPreRetirementPct" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" value="12" step="0.1">
+                    </div>
+
+                    <div class="pt-4 border-t">
+                        <label class="block text-sm font-medium text-gray-700">Current Monthly Expenses</label>
+                        <input type="number" id="currentMonthlyExpenses" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" value="50000">
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="w-1/2">
+                            <label class="block text-sm font-medium text-gray-700">Inflation (%)</label>
+                            <input type="number" id="inflationPct" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" value="6" step="0.1">
+                        </div>
+                        <div class="w-1/2">
+                            <label class="block text-sm font-medium text-gray-700">Currency Dep. (%)</label>
+                            <input type="number" id="currencyDepreciationPct" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" value="0" step="0.1">
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t">
+                        <label class="block text-sm font-medium text-gray-700">Post-Retirement Return (%)</label>
+                        <input type="number" id="expectedReturnPostRetirementPct" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" value="9" step="0.1">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">SWP / Gains Tax Rate (%)</label>
+                        <input type="number" id="swpTaxRatePct" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" value="10" step="0.1">
+                    </div>
+                </form>
+            </div>
+
+            <!-- Results Section -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-white p-6 rounded-lg shadow border-l-4 border-indigo-500">
+                        <div class="text-sm font-medium text-gray-500 uppercase tracking-wide">Projected Corpus at Age <span id="lblRetirementAge"></span></div>
+                        <div id="projectedCorpus" class="mt-2 text-3xl font-extrabold text-gray-900">₹0</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow border-l-4 border-purple-500">
+                        <div class="text-sm font-medium text-gray-500 uppercase tracking-wide">Required Corpus at Age <span id="lblRetirementAge2"></span></div>
+                        <div id="requiredCorpus" class="mt-2 text-3xl font-extrabold text-gray-900">₹0</div>
+                    </div>
+                </div>
+
+                <div id="verdictBanner" class="p-6 rounded-lg shadow flex items-center justify-between bg-green-50 border border-green-200">
+                    <div>
+                        <h3 id="verdictTitle" class="text-xl font-bold text-green-800">You are on track!</h3>
+                        <p id="verdictSubtitle" class="mt-1 text-sm text-green-700">Your corpus will last beyond age 85.</p>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="bg-white p-6 rounded-lg shadow h-96 relative">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Corpus Trajectory</h3>
+                    <canvas id="corpusChart"></canvas>
+                </div>
+
+                <!-- Simple Ledger -->
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-bold text-gray-800">Key Milestones Overview</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Corpus Start</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Expenses (Annual)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledgerBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            
+            </div>
+        </div>
+
+
+                </div>
+<!-- SIP Calculator View -->
+        <div id="view-sip" class="calculator-view hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Inputs -->
+                <div class="lg:col-span-1 bg-white shadow rounded-lg p-6 space-y-4 border-t-4 border-indigo-500">
+                    <h2 class="text-xl font-bold text-gray-800 border-b pb-2">SIP Assumptions</h2>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Monthly Investment (₹)</label>
+                        <input type="number" id="sipAmount" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border" value="10000" oninput="calculateSIP()">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Expected Annual Return (%)</label>
+                        <input type="number" id="sipReturn" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border" value="12" step="0.1" oninput="calculateSIP()">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Time Period (Years)</label>
+                        <input type="number" id="sipYears" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border" value="10" oninput="calculateSIP()">
+                    </div>
+                </div>
+                <!-- Results -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <div class="text-xs font-medium text-gray-500 uppercase">Invested Amount</div>
+                            <div id="sipInvested" class="mt-2 text-2xl font-bold text-gray-900">₹0</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <div class="text-xs font-medium text-gray-500 uppercase">Est. Returns</div>
+                            <div id="sipEstReturns" class="mt-2 text-2xl font-bold text-green-600">₹0</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow border-l-4 border-indigo-500">
+                            <div class="text-xs font-medium text-gray-500 uppercase">Total Value</div>
+                            <div id="sipTotal" class="mt-2 text-2xl font-bold text-indigo-700">₹0</div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow h-80 relative">
+                        <canvas id="sipChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lumpsum Calculator View -->
+        <div id="view-lumpsum" class="calculator-view hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Inputs -->
+                <div class="lg:col-span-1 bg-white shadow rounded-lg p-6 space-y-4 border-t-4 border-emerald-500">
+                    <h2 class="text-xl font-bold text-gray-800 border-b pb-2">Lumpsum Assumptions</h2>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Total Investment (₹)</label>
+                        <input type="number" id="lumpsumAmount" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 p-2 border" value="500000" oninput="calculateLumpsum()">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Expected Annual Return (%)</label>
+                        <input type="number" id="lumpsumReturn" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 p-2 border" value="12" step="0.1" oninput="calculateLumpsum()">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Time Period (Years)</label>
+                        <input type="number" id="lumpsumYears" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 p-2 border" value="10" oninput="calculateLumpsum()">
+                    </div>
+                </div>
+                <!-- Results -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <div class="text-xs font-medium text-gray-500 uppercase">Invested Amount</div>
+                            <div id="lumpsumInvested" class="mt-2 text-2xl font-bold text-gray-900">₹0</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <div class="text-xs font-medium text-gray-500 uppercase">Est. Returns</div>
+                            <div id="lumpsumEstReturns" class="mt-2 text-2xl font-bold text-green-600">₹0</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow border-l-4 border-emerald-500">
+                            <div class="text-xs font-medium text-gray-500 uppercase">Total Value</div>
+                            <div id="lumpsumTotal" class="mt-2 text-2xl font-bold text-emerald-700">₹0</div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow h-80 relative">
+                        <canvas id="lumpsumChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+        <!-- Goal Calculator View -->
+        <div id="view-goal" class="calculator-view hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Inputs -->
+                <div class="lg:col-span-1 bg-white shadow rounded-lg p-6 space-y-4 border-t-4 border-rose-500">
+                    <h2 class="text-xl font-bold text-gray-800 border-b pb-2">Target Corpus Assumptions</h2>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Pre-retirement Target Corpus (₹)</label>
+                        <input type="number" id="goalTarget" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 p-2 border" value="50000000" oninput="calculateGoal()">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Expected Annual Return (%)</label>
+                        <input type="number" id="goalReturn" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 p-2 border" value="12" step="0.1" oninput="calculateGoal()">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Time Period (Years)</label>
+                        <input type="number" id="goalYears" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 p-2 border" value="15" oninput="calculateGoal()">
+                    </div>
+                    <div class="pt-4 border-t">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Calculate Required Strategy:</label>
+                        <div class="flex items-center space-x-4">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="radio" name="goalType" value="sip" class="text-rose-600 focus:ring-rose-500 h-4 w-4" checked onchange="calculateGoal()">
+                                <span class="ml-2 text-sm text-gray-700">Monthly SIP</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="radio" name="goalType" value="lumpsum" class="text-rose-600 focus:ring-rose-500 h-4 w-4" onchange="calculateGoal()">
+                                <span class="ml-2 text-sm text-gray-700">One-time Lumpsum</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <!-- Results -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-white p-6 rounded-lg shadow border-l-4 border-rose-500">
+                            <div id="goalResultLabel" class="text-sm font-medium text-gray-500 uppercase tracking-wide">Required Monthly SIP</div>
+                            <div id="goalResultValue" class="mt-2 text-3xl font-extrabold text-rose-700">₹0</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <div class="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Invested Amount</div>
+                            <div id="goalInvested" class="mt-2 text-3xl font-extrabold text-gray-900">₹0</div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow h-80 relative">
+                        <canvas id="goalChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Asset Allocation View -->
+        <div id="view-allocation" class="calculator-view hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Inputs -->
+                <div class="lg:col-span-1 bg-white shadow rounded-lg p-6 space-y-6 border-t-4 border-orange-500">
+                    <h2 class="text-xl font-bold text-gray-800 border-b pb-2">Portfolio Assumptions</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Initial Corpus (₹)</label>
+                            <input type="number" id="aaInitial" class="mt-1 block w-full rounded-md border-gray-300 p-2 border" value="1000000" oninput="calculateAllocation()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Monthly SIP (₹)</label>
+                            <input type="number" id="aaSIP" class="mt-1 block w-full rounded-md border-gray-300 p-2 border" value="20000" oninput="calculateAllocation()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Time Period (Years)</label>
+                            <input type="number" id="aaYears" class="mt-1 block w-full rounded-md border-gray-300 p-2 border" value="15" oninput="calculateAllocation()">
+                        </div>
+                    </div>
+
+                    <div class="border-t pt-4">
+                        <h3 class="text-md font-bold text-gray-700 mb-3">Asset Classes</h3>
+                        
+                        <!-- Equity -->
+                        <div class="bg-gray-50 p-3 rounded border mb-3">
+                            <div class="font-medium text-sm text-gray-800 mb-2">Equity (Stocks/MFs)</div>
+                            <div class="flex gap-2">
+                                <div class="w-1/2">
+                                    <label class="block text-xs text-gray-500">Allocation %</label>
+                                    <input type="number" id="aaEqAlloc" class="mt-1 block w-full rounded border-gray-300 p-1 text-sm border" value="60" oninput="calculateAllocation()">
+                                </div>
+                                <div class="w-1/2">
+                                    <label class="block text-xs text-gray-500">Exp. Return %</label>
+                                    <input type="number" id="aaEqRet" class="mt-1 block w-full rounded border-gray-300 p-1 text-sm border" value="12" step="0.1" oninput="calculateAllocation()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Debt -->
+                        <div class="bg-gray-50 p-3 rounded border mb-3">
+                            <div class="font-medium text-sm text-gray-800 mb-2">Debt (Bonds/FDs)</div>
+                            <div class="flex gap-2">
+                                <div class="w-1/2">
+                                    <label class="block text-xs text-gray-500">Allocation %</label>
+                                    <input type="number" id="aaDebtAlloc" class="mt-1 block w-full rounded border-gray-300 p-1 text-sm border" value="30" oninput="calculateAllocation()">
+                                </div>
+                                <div class="w-1/2">
+                                    <label class="block text-xs text-gray-500">Exp. Return %</label>
+                                    <input type="number" id="aaDebtRet" class="mt-1 block w-full rounded border-gray-300 p-1 text-sm border" value="7" step="0.1" oninput="calculateAllocation()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gold/Alternative -->
+                        <div class="bg-gray-50 p-3 rounded border">
+                            <div class="font-medium text-sm text-gray-800 mb-2">Gold / Alternatives</div>
+                            <div class="flex gap-2">
+                                <div class="w-1/2">
+                                    <label class="block text-xs text-gray-500">Allocation %</label>
+                                    <input type="number" id="aaGoldAlloc" class="mt-1 block w-full rounded border-gray-300 p-1 text-sm border" value="10" oninput="calculateAllocation()">
+                                </div>
+                                <div class="w-1/2">
+                                    <label class="block text-xs text-gray-500">Exp. Return %</label>
+                                    <input type="number" id="aaGoldRet" class="mt-1 block w-full rounded border-gray-300 p-1 text-sm border" value="8" step="0.1" oninput="calculateAllocation()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="aaAllocWarning" class="text-xs text-red-600 mt-2 hidden font-medium">Total allocation must equal 100%</div>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <div class="text-xs font-medium text-gray-500 uppercase">Weighted Portfolio Return</div>
+                            <div id="aaWeightedReturn" class="mt-2 text-2xl font-bold text-gray-900">0%</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <div class="text-xs font-medium text-gray-500 uppercase">Total Invested</div>
+                            <div id="aaInvested" class="mt-2 text-2xl font-bold text-gray-900">₹0</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow border-l-4 border-orange-500">
+                            <div class="text-xs font-medium text-gray-500 uppercase">Projected Wealth</div>
+                            <div id="aaTotal" class="mt-2 text-2xl font-bold text-orange-600">₹0</div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow h-96 relative">
+                        <h3 class="text-md font-bold text-gray-800 mb-2">Asset Class Growth Projection</h3>
+                        <canvas id="allocationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    
+
+    </div>
+
+    <script>
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                maximumFractionDigits: 0,
+            }).format(amount);
+        }
+
+let chartInstance = null;
+
+        function calculateRetirement() {
+            // Retrieve values
+            const currentAge = Number(document.getElementById('currentAge').value);
+            const retirementAge = Number(document.getElementById('retirementAge').value);
+            const lifeExpectancy = Number(document.getElementById('lifeExpectancy').value);
+            const currentCorpus = Number(document.getElementById('currentCorpus').value);
+            const monthlyInvestment = Number(document.getElementById('monthlyInvestment').value);
+            const expectedReturnPreRetirementPct = Number(document.getElementById('expectedReturnPreRetirementPct').value);
+            const currentMonthlyExpenses = Number(document.getElementById('currentMonthlyExpenses').value);
+            const inflationPct = Number(document.getElementById('inflationPct').value);
+            const currencyDepreciationPct = Number(document.getElementById('currencyDepreciationPct').value);
+            const expectedReturnPostRetirementPct = Number(document.getElementById('expectedReturnPostRetirementPct').value);
+            const swpTaxRatePct = Number(document.getElementById('swpTaxRatePct').value);
+
+            const projections = [];
+            
+            const effectiveInflationRate = (1 + inflationPct / 100) * (1 + currencyDepreciationPct / 100) - 1;
+            const preRetirementReturnRate = expectedReturnPreRetirementPct / 100;
+            const postRetirementReturnRate = expectedReturnPostRetirementPct / 100;
+            
+            let currentCorpusBalance = currentCorpus;
+            let currentAnnualExpenses = currentMonthlyExpenses * 12;
+            
+            let corpusAtRetirement = 0;
+            let requiredCorpusAtRetirement = 0;
+            let sustainableUntilAge = lifeExpectancy;
+            let isSustainable = true;
+
+            for (let age = currentAge; age <= lifeExpectancy; age++) {
+                const isRetired = age >= retirementAge;
+                const corpusStart = currentCorpusBalance;
+                
+                let annualInvestment = 0;
+                let annualExpensesThisYear = 0;
+                let annualReturns = 0;
+                let annualTaxes = 0;
+
+                if (!isRetired) {
+                    annualInvestment = monthlyInvestment * 12;
+                    annualReturns = (corpusStart + annualInvestment / 2) * preRetirementReturnRate;
+                    currentCorpusBalance = corpusStart + annualInvestment + annualReturns;
+                } else {
+                    if (age === retirementAge) {
+                        corpusAtRetirement = corpusStart;
+                        const effectiveRealReturn = (1 + postRetirementReturnRate * (1 - swpTaxRatePct / 100)) / (1 + effectiveInflationRate) - 1;
+                        const yearsInRetirement = lifeExpectancy - retirementAge + 1;
+                        
+                        if (Math.abs(effectiveRealReturn) < 0.0001) {
+                            requiredCorpusAtRetirement = currentAnnualExpenses * yearsInRetirement;
+                        } else {
+                            requiredCorpusAtRetirement = currentAnnualExpenses * (1 - Math.pow(1 + effectiveRealReturn, -yearsInRetirement)) / effectiveRealReturn;
+                        }
+                    }
+
+                    annualExpensesThisYear = currentAnnualExpenses;
+                    annualTaxes = annualExpensesThisYear * (swpTaxRatePct / 100); 
+                    const totalWithdrawal = annualExpensesThisYear + annualTaxes;
+
+                    if (corpusStart > 0) {
+                        annualReturns = (corpusStart - totalWithdrawal / 2) * postRetirementReturnRate;
+                        currentCorpusBalance = corpusStart - totalWithdrawal + annualReturns;
+                    } else {
+                        annualReturns = 0;
+                        currentCorpusBalance = corpusStart - totalWithdrawal;
+                    }
+
+                    if (currentCorpusBalance < 0 && isSustainable) {
+                        isSustainable = false;
+                        sustainableUntilAge = age;
+                    }
+                }
+
+                projections.push({
+                    age,
+                    isRetired,
+                    corpusStart,
+                    annualInvestment,
+                    annualExpenses: annualExpensesThisYear,
+                    annualReturns,
+                    annualTaxes,
+                    corpusEnd: Math.max(0, currentCorpusBalance)
+                });
+
+                currentAnnualExpenses = currentAnnualExpenses * (1 + effectiveInflationRate);
+            }
+
+            return {
+                projections,
+                corpusAtRetirement,
+                requiredCorpusAtRetirement,
+                shortfallOrSurplus: corpusAtRetirement - requiredCorpusAtRetirement,
+                isSustainable,
+                sustainableUntilAge,
+                currentAge,
+                retirementAge,
+                lifeExpectancy
+            };
+        }
+
+        function updateUI() {
+            const res = calculateRetirement();
+
+            // Update Labels
+            document.getElementById('lblRetirementAge').innerText = res.retirementAge;
+            document.getElementById('lblRetirementAge2').innerText = res.retirementAge;
+            document.getElementById('projectedCorpus').innerText = formatCurrency(res.corpusAtRetirement);
+            document.getElementById('requiredCorpus').innerText = formatCurrency(res.requiredCorpusAtRetirement);
+
+            // Update Verdict
+            const banner = document.getElementById('verdictBanner');
+            const title = document.getElementById('verdictTitle');
+            const subtitle = document.getElementById('verdictSubtitle');
+
+            if (res.isSustainable) {
+                banner.className = "p-6 rounded-lg shadow flex items-center justify-between bg-green-50 border border-green-200";
+                title.className = "text-xl font-bold text-green-800";
+                title.innerText = "You are on track!";
+                subtitle.className = "mt-1 text-sm text-green-700";
+                subtitle.innerText = `Your corpus will last beyond age ${res.lifeExpectancy}. Surplus: ${formatCurrency(res.shortfallOrSurplus)}`;
+            } else {
+                banner.className = "p-6 rounded-lg shadow flex items-center justify-between bg-red-50 border border-red-200";
+                title.className = "text-xl font-bold text-red-800";
+                title.innerText = "Shortfall Detected";
+                subtitle.className = "mt-1 text-sm text-red-700";
+                subtitle.innerText = `Your corpus will run out at age ${res.sustainableUntilAge}. Shortfall: ${formatCurrency(Math.abs(res.shortfallOrSurplus))}`;
+            }
+
+            // Update Ledger
+            const tbody = document.getElementById('ledgerBody');
+            tbody.innerHTML = '';
+            
+            const milestones = res.projections.filter(p => 
+                p.age === res.currentAge || 
+                p.age === res.retirementAge || 
+                p.age === res.lifeExpectancy || 
+                (p.age === res.sustainableUntilAge && !res.isSustainable)
+            );
+
+            milestones.forEach(p => {
+                const tr = document.createElement('tr');
+                if (p.age === res.retirementAge) tr.className = 'bg-indigo-50';
+                
+                let status = 'End of Plan';
+                if (p.age === res.currentAge) status = 'Today';
+                else if (p.age === res.retirementAge) status = 'Retirement';
+                else if (p.age === res.sustainableUntilAge && !res.isSustainable) status = 'Funds Depleted';
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${p.age}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${status}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">${formatCurrency(p.corpusStart)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">${formatCurrency(p.annualExpenses)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Update Chart
+            const labels = res.projections.map(p => p.age);
+            const corpusData = res.projections.map(p => p.corpusEnd);
+
+            if (chartInstance) {
+                chartInstance.data.labels = labels;
+                chartInstance.data.datasets[0].data = corpusData;
+                chartInstance.update();
+            } else {
+                const ctx = document.getElementById('corpusChart').getContext('2d');
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Corpus Balance',
+                            data: corpusData,
+                            borderColor: '#4f46e5',
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            pointRadius: 0,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '₹' + (value / 10000000).toFixed(1) + 'Cr';
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            label += formatCurrency(context.parsed.y);
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Add event listeners to all inputs
+        // Initialize Retirement listeners manually here
+        document.querySelectorAll('#calculator-form input').forEach(input => {
+            input.addEventListener('input', updateUI);
+        });
+
+
+
+        // --- Global Charts ---
+        let sipChartObj = null;
+        let lumpsumChartObj = null;
+        let allocationChartObj = null;
+
+        // --- SIP Calculator ---
+        function calculateSIP() {
+            const P = Number(document.getElementById('sipAmount').value);
+            const r = Number(document.getElementById('sipReturn').value) / 100 / 12;
+            const years = Number(document.getElementById('sipYears').value);
+            const n = years * 12;
+
+            let invested = P * n;
+            let maturity = 0;
+            if(r === 0) maturity = invested;
+            else maturity = P * ((Math.pow(1 + r, n) - 1) / r) * (1 + r);
+            
+            document.getElementById('sipInvested').innerText = formatCurrency(invested);
+            document.getElementById('sipEstReturns').innerText = formatCurrency(maturity - invested);
+            document.getElementById('sipTotal').innerText = formatCurrency(maturity);
+
+            // Chart Data
+            const labels = [];
+            const investedData = [];
+            const maturityData = [];
+            
+            for(let y = 0; y <= years; y++) {
+                labels.push('Year ' + y);
+                const m = y * 12;
+                investedData.push(P * m);
+                if(r === 0) maturityData.push(P * m);
+                else maturityData.push(P * ((Math.pow(1 + r, m) - 1) / r) * (1 + r) || 0);
+            }
+
+            renderChart('sipChart', labels, [
+                { label: 'Invested Amount', data: investedData, borderColor: '#9ca3af', backgroundColor: 'rgba(156, 163, 175, 0.2)', fill: true },
+                { label: 'Total Value', data: maturityData, borderColor: '#4f46e5', backgroundColor: 'rgba(79, 70, 229, 0.1)', fill: true }
+            ], sipChartObj, (newChart) => sipChartObj = newChart);
+        }
+
+        // --- Lumpsum Calculator ---
+        function calculateLumpsum() {
+            const P = Number(document.getElementById('lumpsumAmount').value);
+            const r = Number(document.getElementById('lumpsumReturn').value) / 100;
+            const years = Number(document.getElementById('lumpsumYears').value);
+
+            let maturity = P * Math.pow(1 + r, years);
+            
+            document.getElementById('lumpsumInvested').innerText = formatCurrency(P);
+            document.getElementById('lumpsumEstReturns').innerText = formatCurrency(maturity - P);
+            document.getElementById('lumpsumTotal').innerText = formatCurrency(maturity);
+
+            // Chart Data
+            const labels = [];
+            const investedData = [];
+            const maturityData = [];
+            
+            for(let y = 0; y <= years; y++) {
+                labels.push('Year ' + y);
+                investedData.push(P);
+                maturityData.push(P * Math.pow(1 + r, y));
+            }
+
+            renderChart('lumpsumChart', labels, [
+                { label: 'Invested Amount', data: investedData, borderColor: '#9ca3af', backgroundColor: 'rgba(156, 163, 175, 0.2)', fill: true },
+                { label: 'Total Value', data: maturityData, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true }
+            ], lumpsumChartObj, (newChart) => lumpsumChartObj = newChart);
+        }
+
+        
+        let goalChartObj = null;
+
+        function calculateGoal() {
+            const FV = Number(document.getElementById('goalTarget').value);
+            const rAnnual = Number(document.getElementById('goalReturn').value) / 100;
+            const years = Number(document.getElementById('goalYears').value);
+            const goalType = document.querySelector('input[name="goalType"]:checked').value;
+
+            let requiredValue = 0;
+            let totalInvested = 0;
+
+            const labels = [];
+            const investedData = [];
+            const corpusData = [];
+
+            if (goalType === 'lumpsum') {
+                document.getElementById('goalResultLabel').innerText = 'Required Lumpsum Today';
+                
+                requiredValue = FV / Math.pow(1 + rAnnual, years);
+                totalInvested = requiredValue;
+
+                for(let y = 0; y <= years; y++) {
+                    labels.push('Year ' + y);
+                    investedData.push(totalInvested);
+                    corpusData.push(requiredValue * Math.pow(1 + rAnnual, y));
+                }
+            } else {
+                document.getElementById('goalResultLabel').innerText = 'Required Monthly SIP';
+                
+                const rMonthly = rAnnual / 12;
+                const n = years * 12;
+
+                if (rMonthly === 0) {
+                    requiredValue = FV / n;
+                } else {
+                    requiredValue = FV * rMonthly / ( (Math.pow(1 + rMonthly, n) - 1) * (1 + rMonthly) );
+                }
+                
+                totalInvested = requiredValue * n;
+
+                for(let y = 0; y <= years; y++) {
+                    labels.push('Year ' + y);
+                    const m = y * 12;
+                    investedData.push(requiredValue * m);
+                    if (rMonthly === 0) {
+                        corpusData.push(requiredValue * m);
+                    } else {
+                        corpusData.push(requiredValue * ((Math.pow(1 + rMonthly, m) - 1) / rMonthly) * (1 + rMonthly));
+                    }
+                }
+            }
+
+            document.getElementById('goalResultValue').innerText = formatCurrency(requiredValue);
+            document.getElementById('goalInvested').innerText = formatCurrency(totalInvested);
+
+            renderChart('goalChart', labels, [
+                { label: 'Invested Amount', data: investedData, borderColor: '#9ca3af', backgroundColor: 'rgba(156, 163, 175, 0.2)', fill: true },
+                { label: 'Corpus Trajectory', data: corpusData, borderColor: '#f43f5e', backgroundColor: 'rgba(244, 63, 94, 0.1)', fill: true }
+            ], goalChartObj, (newChart) => goalChartObj = newChart);
+        }
+
+        // --- Asset Allocation Calculator ---
+        function calculateAllocation() {
+            const initial = Number(document.getElementById('aaInitial').value);
+            const sip = Number(document.getElementById('aaSIP').value);
+            const years = Number(document.getElementById('aaYears').value);
+
+            const eqAlloc = Number(document.getElementById('aaEqAlloc').value);
+            const eqRet = Number(document.getElementById('aaEqRet').value);
+            
+            const debtAlloc = Number(document.getElementById('aaDebtAlloc').value);
+            const debtRet = Number(document.getElementById('aaDebtRet').value);
+            
+            const goldAlloc = Number(document.getElementById('aaGoldAlloc').value);
+            const goldRet = Number(document.getElementById('aaGoldRet').value);
+
+            const totalAlloc = eqAlloc + debtAlloc + goldAlloc;
+            const warning = document.getElementById('aaAllocWarning');
+            if (totalAlloc !== 100) {
+                warning.classList.remove('hidden');
+                warning.innerText = `Total allocation is ${totalAlloc}%. Must equal 100%.`;
+            } else {
+                warning.classList.add('hidden');
+            }
+
+            const weightedReturn = (eqAlloc * eqRet + debtAlloc * debtRet + goldAlloc * goldRet) / 100;
+            document.getElementById('aaWeightedReturn').innerText = weightedReturn.toFixed(2) + '%';
+
+            const totalInvested = initial + (sip * 12 * years);
+            document.getElementById('aaInvested').innerText = formatCurrency(totalInvested);
+
+            // We project individually assuming annual rebalancing
+            const labels = [];
+            const eqData = [];
+            const debtData = [];
+            const goldData = [];
+
+            let currentEq = initial * (eqAlloc / 100);
+            let currentDebt = initial * (debtAlloc / 100);
+            let currentGold = initial * (goldAlloc / 100);
+
+            for (let y = 0; y <= years; y++) {
+                labels.push('Year ' + y);
+                eqData.push(currentEq);
+                debtData.push(currentDebt);
+                goldData.push(currentGold);
+
+                if (y < years) {
+                    // Growth
+                    currentEq *= (1 + eqRet / 100);
+                    currentDebt *= (1 + debtRet / 100);
+                    currentGold *= (1 + goldRet / 100);
+                    
+                    // Add SIP
+                    const annualSip = sip * 12;
+                    currentEq += annualSip * (eqAlloc / 100);
+                    currentDebt += annualSip * (debtAlloc / 100);
+                    currentGold += annualSip * (goldAlloc / 100);
+
+                    // Rebalance (Simplified: assuming they grow and we reset back to target alloc at end of year)
+                    const totalEoy = currentEq + currentDebt + currentGold;
+                    currentEq = totalEoy * (eqAlloc / 100);
+                    currentDebt = totalEoy * (debtAlloc / 100);
+                    currentGold = totalEoy * (goldAlloc / 100);
+                }
+            }
+
+            const finalValue = eqData[years] + debtData[years] + goldData[years];
+            document.getElementById('aaTotal').innerText = formatCurrency(finalValue);
+
+            renderChart('allocationChart', labels, [
+                { label: 'Equity Value', data: eqData, backgroundColor: 'rgba(59, 130, 246, 0.7)', borderColor: 'rgb(59, 130, 246)', fill: true, stack: 'Stack 0' },
+                { label: 'Debt Value', data: debtData, backgroundColor: 'rgba(16, 185, 129, 0.7)', borderColor: 'rgb(16, 185, 129)', fill: true, stack: 'Stack 0' },
+                { label: 'Gold Value', data: goldData, backgroundColor: 'rgba(245, 158, 11, 0.7)', borderColor: 'rgb(245, 158, 11)', fill: true, stack: 'Stack 0' }
+            ], allocationChartObj, (newChart) => allocationChartObj = newChart, true);
+        }
+
+        // --- Chart Renderer Helper ---
+        function renderChart(canvasId, labels, datasets, chartInstance, setChartInstance, stacked = false) {
+            if (chartInstance) {
+                chartInstance.data.labels = labels;
+                chartInstance.data.datasets = datasets;
+                chartInstance.update();
+            } else {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                const newChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels, datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        scales: {
+                            y: {
+                                stacked: stacked,
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        if (value >= 10000000) return '₹' + (value / 10000000).toFixed(1) + 'Cr';
+                                        if (value >= 100000) return '₹' + (value / 100000).toFixed(1) + 'L';
+                                        return '₹' + value;
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) label += ': ';
+                                        if (context.parsed.y !== null) label += formatCurrency(context.parsed.y);
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                setChartInstance(newChart);
+            }
+        }
+
+        // Initialize first view
+    
+
+        // Override switchTab to include retirement
+        function switchTab(tabId) {
+            document.querySelectorAll('.calculator-view').forEach(el => el.classList.add('hidden'));
+            const view = document.getElementById('view-' + tabId);
+            if(view) view.classList.remove('hidden');
+
+            document.querySelectorAll('nav button').forEach(el => {
+                el.classList.remove('border-indigo-500', 'text-indigo-600');
+                el.classList.add('border-transparent', 'text-gray-500');
+            });
+            const activeBtn = document.getElementById('tab-' + tabId);
+            if(activeBtn) {
+                activeBtn.classList.remove('border-transparent', 'text-gray-500');
+                activeBtn.classList.add('border-indigo-500', 'text-indigo-600');
+            }
+
+            if(tabId === 'retirement') updateUI();
+            if(tabId === 'sip') calculateSIP();
+            if(tabId === 'lumpsum') calculateLumpsum();
+            if(tabId === 'goal') calculateGoal();
+            if(tabId === 'allocation') calculateAllocation();
+        }
+
+        // Initialize first view
+        switchTab('retirement');
+    </script>
+</body>
+</html>

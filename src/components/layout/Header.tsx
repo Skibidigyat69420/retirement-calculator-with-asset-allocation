@@ -1,0 +1,97 @@
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, X, Activity, PieChart, BarChart3, TrendingUp, Wallet, Target, Calculator, Percent, ShieldCheck } from 'lucide-react';
+import { useState } from 'react';
+import { cn } from '../../lib/utils';
+
+const navItems = [
+  { path: '/', label: 'Dashboard', icon: Activity },
+  { path: '/master-plan', label: 'Master Plan', icon: PieChart },
+  { path: '/scenarios', label: 'Scenarios', icon: BarChart3 },
+  { path: '/sip', label: 'SIP', icon: TrendingUp },
+  { path: '/stp', label: 'STP', icon: Wallet },
+  { path: '/swp', label: 'SWP', icon: Wallet },
+  { path: '/allocation', label: 'Allocation', icon: PieChart },
+  { path: '/goal', label: 'Goal', icon: Target },
+  { path: '/retirement', label: 'Retirement', icon: Calculator },
+  { path: '/inflation', label: 'Inflation', icon: Percent },
+  { path: '/angel-connect', label: 'Angel SmartAPI', icon: ShieldCheck },
+];
+
+export const Header = () => {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+
+  return (
+    <header className="sticky top-0 z-50 bg-cream/90 backdrop-blur-md border-b border-stone-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <Link to="/" className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-navy rounded-lg flex items-center justify-center">
+              <span className="text-gold font-serif font-bold text-lg">S</span>
+            </div>
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Sound Thesis</div>
+              <div className="text-sm font-serif text-navy leading-tight">Institutional Suite</div>
+            </div>
+          </Link>
+
+          <nav className="hidden lg:flex items-center space-x-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',
+                    active
+                      ? 'bg-white text-navy shadow-sm'
+                      : 'text-stone-500 hover:text-navy hover:bg-stone-100/50',
+                  )}
+                >
+                  <Icon size={16} className={cn('mr-1.5', active ? 'text-gold' : 'text-stone-400')} />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <button
+            className="lg:hidden p-2 text-stone-500 hover:text-navy"
+            onClick={() => setMobileOpen(!mobileOpen)}
+          >
+            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+      </div>
+
+      {mobileOpen && (
+        <div className="lg:hidden border-t border-stone-200 bg-cream">
+          <nav className="max-w-7xl mx-auto px-4 py-3 grid grid-cols-2 gap-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setMobileOpen(false)}
+                  className={cn(
+                    'flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors',
+                    active
+                      ? 'bg-white text-navy shadow-sm'
+                      : 'text-stone-500 hover:text-navy hover:bg-stone-100/50',
+                  )}
+                >
+                  <Icon size={16} className={cn('mr-2', active ? 'text-gold' : 'text-stone-400')} />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      )}
+    </header>
+  );
+};

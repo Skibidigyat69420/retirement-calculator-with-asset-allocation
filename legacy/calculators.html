@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategic Wealth Restructuring Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#F4F1EA',
+                        navy: '#1A233A',
+                        gold: '#B68B40',
+                        accent: '#E6DCC3',
+                        textMain: '#333333'
+                    },
+                    fontFamily: {
+                        serif: ['Georgia', 'ui-serif', 'serif'],
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .input-group { @apply flex flex-col gap-1; }
+        .label { @apply text-xs font-semibold text-gray-500 uppercase tracking-wider; }
+        .input { @apply border-b border-gray-300 bg-transparent py-1 text-gray-800 focus:border-gold focus:outline-none focus:ring-0; }
+        .card { @apply bg-white p-6 shadow-sm border border-gray-100 rounded-xl; }
+        .section-title { @apply text-2xl font-serif text-navy mb-4 pb-2 border-b border-gray-100; }
+        .tab-active { @apply text-navy border-b-2 border-gold font-bold; }
+        .tab-inactive { @apply text-gray-400 hover:text-gray-600 font-medium; }
+    </style>
+</head>
+<body class="bg-cream font-sans text-textMain min-h-screen">
+
+<div x-data="wealthCalculator()" x-init="initCharts(); $watch('master', value => updateCharts())" class="max-w-7xl mx-auto px-4 py-10" x-cloak>
+
+    <!-- Header -->
+    <header class="text-center mb-12">
+        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Sound Thesis Capital</h4>
+        <h1 class="text-4xl md:text-5xl font-serif text-navy mb-4">Strategic Wealth Restructuring</h1>
+        <p class="text-lg text-gray-600 font-serif italic">Comprehensive Suite for Financial Independence</p>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="flex justify-center space-x-8 mb-8 border-b border-gray-200 overflow-x-auto">
+        <button @click="activeTab = 'master'" :class="activeTab === 'master' ? 'tab-active' : 'tab-inactive'" class="pb-3 px-2 text-sm uppercase tracking-wide whitespace-nowrap">Master Plan Engine</button>
+        <button @click="activeTab = 'sip'" :class="activeTab === 'sip' ? 'tab-active' : 'tab-inactive'" class="pb-3 px-2 text-sm uppercase tracking-wide whitespace-nowrap">Standalone SIP</button>
+        <button @click="activeTab = 'stp'" :class="activeTab === 'stp' ? 'tab-active' : 'tab-inactive'" class="pb-3 px-2 text-sm uppercase tracking-wide whitespace-nowrap">Standalone STP</button>
+        <button @click="activeTab = 'swp'" :class="activeTab === 'swp' ? 'tab-active' : 'tab-inactive'" class="pb-3 px-2 text-sm uppercase tracking-wide whitespace-nowrap">Standalone SWP</button>
+        <button @click="activeTab = 'goal'" :class="activeTab === 'goal' ? 'tab-active' : 'tab-inactive'" class="pb-3 px-2 text-sm uppercase tracking-wide whitespace-nowrap">Target Goal</button>
+    </nav>
+
+    <!-- MASTER PLAN ENGINE -->
+    <div x-show="activeTab === 'master'" class="space-y-8">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Inputs Sidebar -->
+            <div class="lg:col-span-4 space-y-6">
+                
+                <!-- Structural Assumptions -->
+                <div class="card bg-accent/20">
+                    <h2 class="section-title">Structural Assumptions</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label class="label">Current Age</label>
+                            <input type="number" x-model.number="master.currentAge" class="input">
+                        </div>
+                        <div class="input-group">
+                            <label class="label">Retirement Age</label>
+                            <input type="number" x-model.number="master.retirementAge" class="input">
+                        </div>
+                        <div class="input-group">
+                            <label class="label">Life Expectancy</label>
+                            <input type="number" x-model.number="master.lifeExpectancy" class="input">
+                        </div>
+                        <div class="input-group">
+                            <label class="label">Inflation Rate (%)</label>
+                            <input type="number" step="0.1" x-model.number="master.inflation" class="input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Existing Capital Architecture -->
+                <div class="card">
+                    <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                        <h2 class="text-2xl font-serif text-navy">Existing Capital</h2>
+                        <button @click="addAsset()" class="text-xs bg-navy text-white px-2 py-1 rounded hover:bg-navy/80">+ Add</button>
+                    </div>
+                    
+                    <template x-for="(asset, index) in master.assets" :key="index">
+                        <div class="p-3 bg-gray-50 rounded-lg mb-3 relative border border-gray-100">
+                            <button @click="removeAsset(index)" class="absolute top-2 right-2 text-red-400 hover:text-red-600">&times;</button>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="input-group col-span-2">
+                                    <label class="label">Asset Name</label>
+                                    <input type="text" x-model="asset.name" class="input border-none bg-transparent font-medium">
+                                </div>
+                                <div class="input-group">
+                                    <label class="label">Value (₹)</label>
+                                    <input type="number" x-model.number="asset.value" class="input">
+                                </div>
+                                <div class="input-group">
+                                    <label class="label">Expected Return (%)</label>
+                                    <input type="number" step="0.1" x-model.number="asset.returnRate" class="input">
+                                </div>
+                                <div class="input-group col-span-2">
+                                    <label class="label">Keep After Retirement?</label>
+                                    <select x-model="asset.liquidateAtRetirement" class="input text-sm">
+                                        <option :value="false">Yes, let it grow (e.g. Real Estate)</option>
+                                        <option :value="true">No, liquidate to SWP Corpus</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Monthly Injections (SIP) -->
+                <div class="card">
+                    <h2 class="section-title">Monthly Injection (SIP)</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label class="label">Monthly Amount (₹)</label>
+                            <input type="number" x-model.number="master.sip.amount" class="input">
+                        </div>
+                        <div class="input-group">
+                            <label class="label">Annual Step-up (%)</label>
+                            <input type="number" step="0.1" x-model.number="master.sip.stepUp" class="input">
+                        </div>
+                        <div class="input-group col-span-2">
+                            <label class="label">Blended Portfolio Return (%)</label>
+                            <input type="number" step="0.1" x-model.number="master.sip.returnRate" class="input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Systematic Transfer Plan (STP) -->
+                <div class="card">
+                    <h2 class="section-title flex items-center justify-between">
+                        <span>STP Deployment</span>
+                        <input type="checkbox" x-model="master.stp.active" class="w-4 h-4 text-gold focus:ring-gold border-gray-300 rounded">
+                    </h2>
+                    <div x-show="master.stp.active" class="grid grid-cols-2 gap-4">
+                        <div class="input-group col-span-2">
+                            <label class="label">Initial Liquid Capital (₹)</label>
+                            <input type="number" x-model.number="master.stp.lumpsum" class="input">
+                        </div>
+                        <div class="input-group">
+                            <label class="label">Monthly Transfer (₹)</label>
+                            <input type="number" x-model.number="master.stp.monthlyTransfer" class="input">
+                        </div>
+                        <div class="input-group">
+                            <label class="label">Liquid Return (%)</label>
+                            <input type="number" step="0.1" x-model.number="master.stp.liquidReturn" class="input">
+                        </div>
+                        <div class="input-group col-span-2">
+                            <label class="label">Target Portfolio Return (%)</label>
+                            <input type="number" step="0.1" x-model.number="master.stp.targetReturn" class="input">
+                        </div>
+                    </div>
+                    <div x-show="!master.stp.active" class="text-sm text-gray-400 italic">STP Inactive. Toggle to model deploying a lumpsum into the market over time.</div>
+                </div>
+
+                <!-- Distribution Phase (SWP) -->
+                <div class="card border-l-4 border-gold">
+                    <h2 class="section-title">Distribution Phase (SWP)</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="input-group col-span-2">
+                            <label class="label">Target Monthly Income (Today's Value ₹)</label>
+                            <input type="number" x-model.number="master.swp.monthlyNeedToday" class="input text-gold font-bold">
+                        </div>
+                        <div class="input-group">
+                            <label class="label">Post-Ret. Return (%)</label>
+                            <input type="number" step="0.1" x-model.number="master.swp.postRetirementReturn" class="input">
+                        </div>
+                        <div class="input-group">
+                            <label class="label">Tax on SWP (%)</label>
+                            <input type="number" step="0.1" x-model.number="master.swp.taxRate" class="input">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Visualization -->
+            <div class="lg:col-span-8 space-y-6">
+                
+                <!-- Headline Metrics -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="card bg-navy text-white text-center">
+                        <div class="text-xs uppercase tracking-widest text-gray-400">Terminal Corpus (Nominal)</div>
+                        <div class="text-2xl lg:text-3xl font-serif mt-2" x-text="formatCurrency(metrics.terminalCorpusNominal)"></div>
+                        <div class="text-xs text-gray-400 mt-1">at Age <span x-text="master.retirementAge"></span></div>
+                    </div>
+                    <div class="card bg-white text-center border-t-4 border-gold">
+                        <div class="text-xs uppercase tracking-widest text-gray-500">Terminal Corpus (Real)</div>
+                        <div class="text-2xl lg:text-3xl font-serif mt-2 text-gold" x-text="formatCurrency(metrics.terminalCorpusReal)"></div>
+                        <div class="text-xs text-gray-500 mt-1">Purchasing Power</div>
+                    </div>
+                    <div class="card bg-white text-center border-t-4 border-navy">
+                        <div class="text-xs uppercase tracking-widest text-gray-500">Age of Depletion</div>
+                        <div class="text-2xl lg:text-3xl font-serif mt-2 text-navy" x-text="metrics.depletionAge > master.lifeExpectancy ? 'Sustainable' : metrics.depletionAge"></div>
+                        <div class="text-xs text-gray-500 mt-1" x-text="metrics.depletionAge > master.lifeExpectancy ? 'Outlasts Life Expectancy' : 'Funds run out early'"></div>
+                    </div>
+                </div>
+
+                <!-- Trajectory Chart -->
+                <div class="card">
+                    <h3 class="text-lg font-serif text-navy mb-4">Accumulation Trajectory (Nominal vs Real)</h3>
+                    <div class="h-80 relative">
+                        <canvas id="accumulationChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- SWP Phase Chart -->
+                <div class="card">
+                    <h3 class="text-lg font-serif text-navy mb-4">Distribution Phase (SWP) Trajectory</h3>
+                    <div class="h-80 relative">
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Breakdown Table -->
+                <div class="card overflow-x-auto">
+                    <h3 class="text-lg font-serif text-navy mb-4">Capital Evolution Ledger</h3>
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b">
+                            <tr>
+                                <th class="px-4 py-3">Age</th>
+                                <th class="px-4 py-3">Phase</th>
+                                <th class="px-4 py-3 text-right">Nominal Corpus</th>
+                                <th class="px-4 py-3 text-right">Real Corpus</th>
+                                <th class="px-4 py-3 text-right">Annual Withdrawal (Nominal)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="row in metrics.tableData" :key="row.age">
+                                <tr class="border-b" :class="row.phase === 'Distribution' ? 'bg-accent/10' : ''">
+                                    <td class="px-4 py-3 font-medium" x-text="row.age"></td>
+                                    <td class="px-4 py-3 text-gray-500" x-text="row.phase"></td>
+                                    <td class="px-4 py-3 text-right" x-text="formatCurrency(row.nominal)"></td>
+                                    <td class="px-4 py-3 text-right" x-text="formatCurrency(row.real)"></td>
+                                    <td class="px-4 py-3 text-right text-red-500" x-text="row.withdrawal > 0 ? formatCurrency(row.withdrawal) : '-'"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- STANDALONE: SIP -->
+    <div x-show="activeTab === 'sip'" class="max-w-3xl mx-auto card mt-8">
+        <h2 class="section-title">Standalone SIP Calculator</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="input-group">
+                <label class="label">Monthly Investment (₹)</label>
+                <input type="number" x-model.number="sipOnly.amount" class="input text-lg">
+            </div>
+            <div class="input-group">
+                <label class="label">Expected Return (%)</label>
+                <input type="number" step="0.1" x-model.number="sipOnly.return" class="input text-lg">
+            </div>
+            <div class="input-group">
+                <label class="label">Duration (Years)</label>
+                <input type="number" x-model.number="sipOnly.years" class="input text-lg">
+            </div>
+            <div class="input-group">
+                <label class="label">Annual Step-up (%)</label>
+                <input type="number" step="0.1" x-model.number="sipOnly.stepUp" class="input text-lg">
+            </div>
+        </div>
+        <div class="bg-navy text-white p-6 rounded-lg text-center grid grid-cols-3 divide-x divide-white/20">
+            <div>
+                <div class="text-xs uppercase tracking-wide text-gray-300">Total Invested</div>
+                <div class="text-xl md:text-2xl font-serif mt-1" x-text="formatCurrency(sipOnlyResult.invested)"></div>
+            </div>
+            <div>
+                <div class="text-xs uppercase tracking-wide text-gray-300">Wealth Gained</div>
+                <div class="text-xl md:text-2xl font-serif mt-1 text-gold" x-text="formatCurrency(sipOnlyResult.gained)"></div>
+            </div>
+            <div>
+                <div class="text-xs uppercase tracking-wide text-gray-300">Future Value</div>
+                <div class="text-xl md:text-2xl font-serif mt-1 text-accent" x-text="formatCurrency(sipOnlyResult.total)"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- STANDALONE: STP -->
+    <div x-show="activeTab === 'stp'" class="max-w-3xl mx-auto card mt-8">
+        <h2 class="section-title">Standalone STP Calculator</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="input-group col-span-2">
+                <label class="label">Lumpsum Capital (₹)</label>
+                <input type="number" x-model.number="stpOnly.lumpsum" class="input text-lg">
+            </div>
+            <div class="input-group">
+                <label class="label">Monthly Transfer (₹)</label>
+                <input type="number" x-model.number="stpOnly.monthlyTransfer" class="input text-lg">
+            </div>
+            <div class="input-group">
+                <label class="label">Duration (Months)</label>
+                <div class="text-lg py-1 text-gray-600 font-medium" x-text="stpOnlyResult.monthsToDeplete + ' months until liquid fund depletes'"></div>
+            </div>
+            <div class="input-group">
+                <label class="label">Liquid Fund Return (%)</label>
+                <input type="number" step="0.1" x-model.number="stpOnly.liquidReturn" class="input text-lg">
+            </div>
+            <div class="input-group">
+                <label class="label">Equity/Target Return (%)</label>
+                <input type="number" step="0.1" x-model.number="stpOnly.targetReturn" class="input text-lg">
+            </div>
+        </div>
+        <div class="bg-navy text-white p-6 rounded-lg text-center grid grid-cols-3 divide-x divide-white/20">
+            <div>
+                <div class="text-xs uppercase tracking-wide text-gray-300">Initial Capital</div>
+                <div class="text-xl md:text-2xl font-serif mt-1" x-text="formatCurrency(stpOnly.lumpsum)"></div>
+            </div>
+            <div>
+                <div class="text-xs uppercase tracking-wide text-gray-300">Wealth Gained</div>
+                <div class="text-xl md:text-2xl font-serif mt-1 text-gold" x-text="formatCurrency(stpOnlyResult.total - stpOnly.lumpsum)"></div>
+            </div>
+            <div>
+                <div class="text-xs uppercase tracking-wide text-gray-300">Total Final Value</div>
+                <div class="text-xl md:text-2xl font-serif mt-1 text-accent" x-text="formatCurrency(stpOnlyResult.total)"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- STANDALONE: SWP -->
+    <div x-show="activeTab === 'swp'" class="max-w-3xl mx-auto card mt-8">
+        <h2 class="section-title">Standalone SWP (Withdrawal) Calculator</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="input-group col-span-2">
+                <label class="label">Starting Corpus (₹)</label>
+                <input type="number" x-model.number="swpOnly.corpus" class="input text-lg">
+            </div>
+            <div class="input-group">
+                <label class="label">Monthly Withdrawal (₹)</label>
+                <input type="number" x-model.number="swpOnly.withdrawal" class="input text-lg">
+            </div>
+            <div class="input-group">
+                <label class="label">Expected Return (%)</label>
+                <input type="number" step="0.1" x-model.number="swpOnly.returnRate" class="input text-lg">
+            </div>
+            <div class="input-group">
+                <label class="label">Annual Inflation (%)</label>
+                <input type="number" step="0.1" x-model.number="swpOnly.inflation" class="input text-lg text-red-600">
+                <span class="text-[10px] text-gray-400">Withdrawal increases by this % every year</span>
+            </div>
+        </div>
+        <div class="bg-navy text-white p-6 rounded-lg text-center flex flex-col justify-center h-32">
+            <div class="text-xs uppercase tracking-wide text-gray-300">Longevity of Corpus</div>
+            <div class="text-3xl font-serif mt-2" :class="swpOnlyResult.sustainable ? 'text-green-400' : 'text-red-400'" x-text="swpOnlyResult.sustainable ? 'Sustainable > 50 Years' : 'Depletes in ' + swpOnlyResult.years + ' Years'"></div>
+        </div>
+    </div>
+
+    <!-- STANDALONE: TARGET GOAL -->
+    <div x-show="activeTab === 'goal'" class="max-w-3xl mx-auto card mt-8">
+        <h2 class="section-title">Target Corpus Calculator</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="input-group col-span-2">
+                <label class="label">Target Corpus Goal (₹)</label>
+                <input type="number" x-model.number="goalOnly.target" class="input text-lg text-gold font-bold">
+            </div>
+            <div class="input-group">
+                <label class="label">Time Horizon (Years)</label>
+                <input type="number" x-model.number="goalOnly.years" class="input text-lg">
+            </div>
+            <div class="input-group">
+                <label class="label">Expected Return (%)</label>
+                <input type="number" step="0.1" x-model.number="goalOnly.returnRate" class="input text-lg">
+            </div>
+        </div>
+        <div class="bg-navy text-white p-6 rounded-lg text-center grid grid-cols-2 divide-x divide-white/20">
+            <div>
+                <div class="text-xs uppercase tracking-wide text-gray-300">Required Lumpsum Today</div>
+                <div class="text-2xl font-serif mt-1" x-text="formatCurrency(goalOnlyResult.lumpsum)"></div>
+            </div>
+            <div>
+                <div class="text-xs uppercase tracking-wide text-gray-300">OR Required Monthly SIP</div>
+                <div class="text-2xl font-serif mt-1 text-gold" x-text="formatCurrency(goalOnlyResult.sip)"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function formatCurrency(val) {
+        if (isNaN(val) || val === null) return "₹0";
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 0
+        }).format(val);
+    }
+
+    function wealthCalculator() {
+        return {
+            activeTab: 'master',
+            
+            // State for Master Plan Engine
+            master: {
+                currentAge: 34,
+                retirementAge: 45,
+                lifeExpectancy: 80,
+                inflation: 5.0,
+                
+                assets: [
+                    { name: 'Real Estate - Plots', value: 11200000, returnRate: 3.0, liquidateAtRetirement: false },
+                    { name: 'Real Estate - Flat', value: 2500000, returnRate: 3.0, liquidateAtRetirement: false },
+                    { name: 'Gold - Physical', value: 5000000, returnRate: 10.0, liquidateAtRetirement: true },
+                    { name: 'Mutual Funds (Equity)', value: 630000, returnRate: 12.0, liquidateAtRetirement: true },
+                    { name: 'Liquid Cash/Funds', value: 3500000, returnRate: 7.0, liquidateAtRetirement: true }
+                ],
+                
+                sip: {
+                    amount: 90000,
+                    stepUp: 0.0,
+                    returnRate: 11.4 // 85% equity@12, 15% debt@8 = ~11.4
+                },
+                
+                stp: {
+                    active: false,
+                    lumpsum: 11200000, // E.g. selling the land
+                    monthlyTransfer: 200000,
+                    liquidReturn: 7.0,
+                    targetReturn: 11.4
+                },
+                
+                swp: {
+                    monthlyNeedToday: 150000,
+                    postRetirementReturn: 9.0,
+                    taxRate: 10.0
+                }
+            },
+
+            // Standalone SIP State
+            sipOnly: {
+                amount: 10000,
+                return: 12.0,
+                years: 15,
+                stepUp: 5.0
+            },
+            
+            // Standalone STP State
+            stpOnly: {
+                lumpsum: 5000000,
+                monthlyTransfer: 100000,
+                liquidReturn: 7.0,
+                targetReturn: 12.0
+            },
+            
+            // Standalone SWP State
+            swpOnly: {
+                corpus: 50000000,
+                withdrawal: 250000,
+                returnRate: 9.0,
+                inflation: 5.0
+            },
+            
+            // Standalone Goal State
+            goalOnly: {
+                target: 100000000, // 10 Cr
+                years: 15,
+                returnRate: 12.0
+            },
+
+            // Computed Metrics & Projections
+            metrics: {
+                terminalCorpusNominal: 0,
+                terminalCorpusReal: 0,
+                depletionAge: 0,
+                tableData: [],
+                accumChartData: { labels: [], nominal: [], real: [] },
+                distChartData: { labels: [], corpus: [] }
+            },
+
+            // Chart Instances
+            accChartObj: null,
+            distChartObj: null,
+
+            get sipOnlyResult() {
+                let invested = 0;
+                let futureValue = 0;
+                let currentSip = this.sipOnly.amount;
+                const r = this.sipOnly.return / 100 / 12;
+
+                for (let y = 1; y <= this.sipOnly.years; y++) {
+                    for(let m = 1; m <= 12; m++) {
+                        invested += currentSip;
+                        futureValue = (futureValue + currentSip) * (1 + r);
+                    }
+                    currentSip = currentSip * (1 + this.sipOnly.stepUp / 100);
+                }
+                return {
+                    invested: invested,
+                    gained: futureValue - invested,
+                    total: futureValue
+                };
+            },
+            
+            get stpOnlyResult() {
+                let liquid = this.stpOnly.lumpsum;
+                let target = 0;
+                let mCount = 0;
+                const liqR = this.stpOnly.liquidReturn / 100 / 12;
+                const tgtR = this.stpOnly.targetReturn / 100 / 12;
+                
+                // Simulate until liquid is depleted, up to a max of say 360 months (30 years)
+                while(liquid > 0 && mCount < 360) {
+                    mCount++;
+                    liquid = liquid * (1 + liqR);
+                    target = target * (1 + tgtR);
+                    
+                    let transferAmt = Math.min(liquid, this.stpOnly.monthlyTransfer);
+                    liquid -= transferAmt;
+                    target += transferAmt;
+                }
+                
+                return {
+                    monthsToDeplete: mCount,
+                    total: liquid + target
+                };
+            },
+            
+            get swpOnlyResult() {
+                let currentCorpus = this.swpOnly.corpus;
+                let currentAnnualWithdrawal = this.swpOnly.withdrawal * 12;
+                let sustainable = true;
+                let years = 0;
+                
+                for(let y = 1; y <= 50; y++) {
+                    years = y;
+                    currentCorpus -= currentAnnualWithdrawal;
+                    if(currentCorpus <= 0) {
+                        sustainable = false;
+                        break;
+                    }
+                    currentCorpus = currentCorpus * (1 + this.swpOnly.returnRate / 100);
+                    currentAnnualWithdrawal = currentAnnualWithdrawal * (1 + this.swpOnly.inflation / 100);
+                }
+                
+                return {
+                    sustainable,
+                    years
+                }
+            },
+            
+            get goalOnlyResult() {
+                const r = this.goalOnly.returnRate / 100;
+                const rMonthly = r / 12;
+                const n = this.goalOnly.years * 12;
+                const fv = this.goalOnly.target;
+                
+                let reqLumpsum = fv / Math.pow(1 + r, this.goalOnly.years);
+                let reqSip = 0;
+                
+                if (rMonthly === 0) {
+                    reqSip = fv / n;
+                } else {
+                    reqSip = fv * rMonthly / ((Math.pow(1 + rMonthly, n) - 1) * (1 + rMonthly));
+                }
+                
+                return {
+                    lumpsum: reqLumpsum,
+                    sip: reqSip
+                };
+            },
+
+            addAsset() {
+                this.master.assets.push({ name: 'New Asset', value: 0, returnRate: 8.0, liquidateAtRetirement: true });
+            },
+
+            removeAsset(index) {
+                this.master.assets.splice(index, 1);
+            },
+
+            calculateMasterPlan() {
+                const accYears = this.master.retirementAge - this.master.currentAge;
+                const distYears = this.master.lifeExpectancy - this.master.retirementAge;
+                const inflation = this.master.inflation / 100;
+                
+                let tableData = [];
+                let accLabels = [];
+                let accNominal = [];
+                let accReal = [];
+                let distLabels = [];
+                let distCorpus = [];
+
+                // 1. ACCUMULATION PHASE
+                let currentAssets = this.master.assets.map(a => ({ ...a, currentValue: a.value }));
+                
+                let stpLiquid = this.master.stp.active ? this.master.stp.lumpsum : 0;
+                let stpTarget = 0;
+                
+                let currentSipAmount = this.master.sip.amount;
+                let sipAccumulated = 0;
+
+                let nominalCorpus = 0;
+
+                for(let y = 0; y <= accYears; y++) {
+                    let yearAge = this.master.currentAge + y;
+                    let yearNominal = 0;
+
+                    // Assets growth
+                    currentAssets.forEach(a => {
+                        yearNominal += a.currentValue;
+                    });
+
+                    // STP Growth
+                    yearNominal += stpLiquid + stpTarget;
+
+                    // SIP Growth
+                    yearNominal += sipAccumulated;
+
+                    let yearReal = yearNominal / Math.pow(1 + inflation, y);
+
+                    // Record year start state
+                    tableData.push({
+                        age: yearAge,
+                        phase: y === accYears ? 'Retirement' : 'Accumulation',
+                        nominal: yearNominal,
+                        real: yearReal,
+                        withdrawal: 0
+                    });
+
+                    accLabels.push('Age ' + yearAge);
+                    accNominal.push(yearNominal);
+                    accReal.push(yearReal);
+
+                    if (y === accYears) {
+                        nominalCorpus = yearNominal;
+                        break; // End accumulation
+                    }
+
+                    // Evolve for next year
+                    // 1. Assets
+                    currentAssets.forEach(a => {
+                        a.currentValue = a.currentValue * (1 + a.returnRate / 100);
+                    });
+
+                    // 2. STP (Monthly)
+                    if (this.master.stp.active) {
+                        const liqR = this.master.stp.liquidReturn / 100 / 12;
+                        const tgtR = this.master.stp.targetReturn / 100 / 12;
+                        for(let m = 0; m < 12; m++) {
+                            // accrue interest
+                            stpLiquid = stpLiquid * (1 + liqR);
+                            stpTarget = stpTarget * (1 + tgtR);
+                            
+                            // transfer
+                            let transferAmt = Math.min(stpLiquid, this.master.stp.monthlyTransfer);
+                            stpLiquid -= transferAmt;
+                            stpTarget += transferAmt;
+                        }
+                    }
+
+                    // 3. SIP (Monthly)
+                    const sipR = this.master.sip.returnRate / 100 / 12;
+                    for(let m = 0; m < 12; m++) {
+                        sipAccumulated = (sipAccumulated + currentSipAmount) * (1 + sipR);
+                    }
+                    currentSipAmount = currentSipAmount * (1 + this.master.sip.stepUp / 100);
+                }
+
+                // Prepare Retirement Corpus
+                // Liquidate flagged assets
+                let swpCorpus = stpLiquid + stpTarget + sipAccumulated;
+                let nonLiquidatedAssets = [];
+
+                currentAssets.forEach(a => {
+                    if (a.liquidateAtRetirement) {
+                        swpCorpus += a.currentValue;
+                    } else {
+                        nonLiquidatedAssets.push(a);
+                    }
+                });
+
+                this.metrics.terminalCorpusNominal = swpCorpus;
+                this.metrics.terminalCorpusReal = swpCorpus / Math.pow(1 + inflation, accYears);
+
+                // 2. DISTRIBUTION PHASE (SWP)
+                let currentSwpCorpus = swpCorpus;
+                let targetAnnualNeedNominal = (this.master.swp.monthlyNeedToday * 12) * Math.pow(1 + inflation, accYears);
+                let depletionAge = 999;
+
+                for(let y = 1; y <= distYears; y++) {
+                    let yearAge = this.master.retirementAge + y;
+                    
+                    if (currentSwpCorpus <= 0 && depletionAge === 999) {
+                        depletionAge = yearAge - 1;
+                    }
+
+                    // Calculate taxes and gross withdrawal
+                    let grossWithdrawal = targetAnnualNeedNominal / (1 - this.master.swp.taxRate / 100);
+                    
+                    let actualWithdrawal = Math.min(currentSwpCorpus, grossWithdrawal);
+                    currentSwpCorpus -= actualWithdrawal;
+                    
+                    if (currentSwpCorpus > 0) {
+                        currentSwpCorpus = currentSwpCorpus * (1 + this.master.swp.postRetirementReturn / 100);
+                    } else {
+                        currentSwpCorpus = 0;
+                    }
+
+                    // Non-liquidated assets still grow
+                    let nonLiqValue = 0;
+                    nonLiquidatedAssets.forEach(a => {
+                        a.currentValue = a.currentValue * (1 + a.returnRate / 100);
+                        nonLiqValue += a.currentValue;
+                    });
+
+                    let totalNominal = currentSwpCorpus + nonLiqValue;
+                    let totalReal = totalNominal / Math.pow(1 + inflation, accYears + y);
+
+                    tableData.push({
+                        age: yearAge,
+                        phase: 'Distribution',
+                        nominal: totalNominal,
+                        real: totalReal,
+                        withdrawal: actualWithdrawal
+                    });
+
+                    distLabels.push('Age ' + yearAge);
+                    distCorpus.push(currentSwpCorpus); // Only graphing the liquid corpus for SWP
+
+                    targetAnnualNeedNominal = targetAnnualNeedNominal * (1 + inflation);
+                }
+
+                if (currentSwpCorpus > 0 && depletionAge === 999) {
+                    depletionAge = 999; // Sustainable
+                }
+
+                this.metrics.tableData = tableData;
+                this.metrics.depletionAge = depletionAge;
+                this.metrics.accumChartData = { labels: accLabels, nominal: accNominal, real: accReal };
+                this.metrics.distChartData = { labels: distLabels, corpus: distCorpus };
+            },
+
+            initCharts() {
+                const accCtx = document.getElementById('accumulationChart').getContext('2d');
+                this.accChartObj = new Chart(accCtx, {
+                    type: 'line',
+                    data: { labels: [], datasets: [] },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+
+                const distCtx = document.getElementById('distributionChart').getContext('2d');
+                this.distChartObj = new Chart(distCtx, {
+                    type: 'bar',
+                    data: { labels: [], datasets: [] },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+
+                this.updateCharts();
+            },
+
+            updateCharts() {
+                this.calculateMasterPlan();
+
+                if (this.accChartObj) {
+                    this.accChartObj.data = {
+                        labels: this.metrics.accumChartData.labels,
+                        datasets: [
+                            {
+                                label: 'Nominal Corpus',
+                                data: this.metrics.accumChartData.nominal,
+                                borderColor: '#1A233A',
+                                backgroundColor: 'rgba(26, 35, 58, 0.05)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Real Corpus (Inflation Adj.)',
+                                data: this.metrics.accumChartData.real,
+                                borderColor: '#B68B40',
+                                borderDash: [5, 5],
+                                borderWidth: 2,
+                                fill: false,
+                                tension: 0.4
+                            }
+                        ]
+                    };
+                    this.accChartObj.update();
+                }
+
+                if (this.distChartObj) {
+                    this.distChartObj.data = {
+                        labels: this.metrics.distChartData.labels,
+                        datasets: [
+                            {
+                                label: 'Liquid SWP Corpus Balance',
+                                data: this.metrics.distChartData.corpus,
+                                backgroundColor: '#B68B40',
+                                borderRadius: 4
+                            }
+                        ]
+                    };
+                    this.distChartObj.update();
+                }
+            }
+        }
+    }
+</script>
+</body>
+</html>

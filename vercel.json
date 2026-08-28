@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/angelone/:path*",
+      "destination": "https://apiconnect.angelone.in/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
