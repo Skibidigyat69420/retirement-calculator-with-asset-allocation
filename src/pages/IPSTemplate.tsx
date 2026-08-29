@@ -1,11 +1,16 @@
-import { useState } from 'react';
-import { FileText, Download, Printer, CheckCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FileText, Download, Printer, CheckCircle, Save, FolderOpen, RefreshCw, AlertCircle } from 'lucide-react';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { NumberInput } from '../components/ui/NumberInput';
 import { useCalculator } from '../context/CalculatorContext';
 import { formatCurrency } from '../lib/formatters';
+
+interface SavedIPS {
+  name: string;
+  updatedAt: string;
+}
 
 interface IPSForm {
   clientName: string;
@@ -46,7 +51,74 @@ export const IPSTemplate = () => {
   const totalAllocation = form.equityTarget + form.debtTarget + form.goldTarget + form.liquidTarget;
   const allocationOk = Math.abs(totalAllocation - 100) < 0.1;
 
+  const [savedFiles, setSavedFiles] = useState<SavedIPS[]>([]);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [loadStatus, setLoadStatus] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  const loadSavedFiles = async () => {
+    try {
+      const res = await fetch('/api/list-ips');
+      if (!res.ok) throw new Error('Failed to list saved IPS files');
+      const data = await res.json();
+      setSavedFiles(data.files || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    loadSavedFiles();
+  }, []);
+
   const handlePrint = () => window.print();
+
+  const handleSave = async () => {
+    setSaveStatus('saving');
+    setStatusMessage(null);
+    try {
+      const content = generateIPSMarkdown(form, inputs, netWorth);
+      const filename = `IPS-${form.clientName || 'client'}-${form.reviewDate}`;
+      const res = await fetch('/api/save-ips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename, content }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Save failed');
+      setSaveStatus('saved');
+      setStatusMessage(`Saved to ips/${data.filename}`);
+      await loadSavedFiles();
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (err: any) {
+      setSaveStatus('error');
+      setStatusMessage(err?.message || 'Save failed');
+    }
+  };
+
+  const handleLoad = async (filename: string) => {
+    setLoadStatus('loading');
+    setStatusMessage(null);
+    try {
+      const res = await fetch(`/api/load-ips?filename=${encodeURIComponent(filename)}`);
+      const data = await res.json();
+      if (!res.ok || !data.content) throw new Error(data.error || 'Load failed');
+      // For now we just offer the raw markdown; future enhancement could parse it back into the form.
+      const blob = new Blob([data.content], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      setLoadStatus('idle');
+      setStatusMessage(`Downloaded ${filename}`);
+    } catch (err: any) {
+      setLoadStatus('error');
+      setStatusMessage(err?.message || 'Load failed');
+    }
+  };
+
   const handleDownload = () => {
     const content = generateIPSMarkdown(form, inputs, netWorth);
     const blob = new Blob([content], { type: 'text/markdown' });
@@ -124,9 +196,46 @@ export const IPSTemplate = () => {
             <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="w-full bg-white border border-stone-200 rounded-xl p-3 text-sm text-navy focus:border-gold focus:outline-none" />
           </div>
 
-          <div className="flex gap-2 pt-2">
-            <Button variant="outline" className="flex-1" onClick={handlePrint}><Printer size={16} className="mr-2" /> Print</Button>
-            <Button className="flex-1" onClick={handleDownload}><Download size={16} className="mr-2" /> Export MD</Button>
+          <div className="space-y-2 pt-2">
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={handlePrint}><Printer size={16} className="mr-2" /> Print</Button>
+              <Button className="flex-1" onClick={handleDownload}><Download size={16} className="mr-2" /> Export MD</Button>
+            </div>
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={handleSave}
+              disabled={saveStatus === 'saving'}
+            >
+              {saveStatus === 'saving' ? <RefreshCw size={16} className="mr-2 animate-spin" /> : <Save size={16} className="mr-2" />}
+              Save to ips/ folder
+            </Button>
+            {statusMessage && (
+              <div className={`flex items-center gap-2 text-xs ${saveStatus === 'error' || loadStatus === 'error' ? 'text-red-600' : 'text-green-600'}`}>
+                {saveStatus === 'error' || loadStatus === 'error' ? <AlertCircle size={14} /> : <CheckCircle size={14} />}
+                {statusMessage}
+              </div>
+            )}
+          </div>
+
+          <div className="pt-4 border-t border-stone-200">
+            <h4 className="text-sm font-serif text-navy flex items-center gap-2 mb-3">
+              <FolderOpen size={16} className="text-gold" /> Saved IPS Documents
+            </h4>
+            {savedFiles.length === 0 ? (
+              <p className="text-xs text-stone-500">No saved IPS files yet.</p>
+            ) : (
+              <ul className="space-y-2 max-h-48 overflow-y-auto">
+                {savedFiles.map((file) => (
+                  <li key={file.name} className="flex items-center justify-between text-sm">
+                    <span className="truncate max-w-[140px] text-navy" title={file.name}>{file.name}</span>
+                    <Button variant="outline" size="sm" className="text-xs px-2 py-1" onClick={() => handleLoad(file.name)}>
+                      Load
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </Card>
 
