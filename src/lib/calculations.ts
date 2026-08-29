@@ -7,8 +7,14 @@ import type {
   STPConfig,
   YearlySnapshot,
 } from '../types';
+import { FX_ASSUMPTIONS } from './constants';
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
+
+function fxMultiplier(asset: Asset): number {
+  const fx = FX_ASSUMPTIONS[asset.currency || 'INR'];
+  return fx ? 1 + fx.mean : 1;
+}
 
 export const calculateSIPMonthly = (
   principal: number,
@@ -156,7 +162,7 @@ export const growAssetsAnnually = (
   };
 
   assets.forEach((asset) => {
-    grown[asset.category] += asset.value * (1 + asset.returnRate / 100);
+    grown[asset.category] += asset.value * (1 + asset.returnRate / 100) * fxMultiplier(asset);
   });
 
   return grown;
@@ -238,10 +244,10 @@ export const calculateMasterPlan = (
 
   // Accumulation phase
   for (let y = 1; y <= accYears; y++) {
-    // 1. Grow existing assets annually
+    // 1. Grow existing assets annually (including FX return for foreign-currency assets)
     currentAssets = currentAssets.map((a) => ({
       ...a,
-      value: a.value * (1 + a.returnRate / 100),
+      value: a.value * (1 + a.returnRate / 100) * fxMultiplier(a),
     }));
 
     // 2. STP deployment for one year

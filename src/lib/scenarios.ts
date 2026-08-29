@@ -15,6 +15,7 @@ export const defaultClientInputs = (): MasterPlanInputs => ({
       value: 11200000,
       returnRate: DEFAULT_RATES.realEstateReturn,
       category: 'realestate',
+      currency: 'INR',
       liquidateAtRetirement: false,
     },
     {
@@ -23,6 +24,7 @@ export const defaultClientInputs = (): MasterPlanInputs => ({
       value: 5000000,
       returnRate: DEFAULT_RATES.goldReturn,
       category: 'gold',
+      currency: 'INR',
       liquidateAtRetirement: false,
     },
     {
@@ -31,6 +33,7 @@ export const defaultClientInputs = (): MasterPlanInputs => ({
       value: 3500000,
       returnRate: DEFAULT_RATES.liquidReturn,
       category: 'liquid',
+      currency: 'INR',
       liquidateAtRetirement: true,
     },
     {
@@ -39,6 +42,7 @@ export const defaultClientInputs = (): MasterPlanInputs => ({
       value: 2500000,
       returnRate: DEFAULT_RATES.realEstateReturn,
       category: 'realestate',
+      currency: 'INR',
       liquidateAtRetirement: false,
     },
     {
@@ -47,6 +51,7 @@ export const defaultClientInputs = (): MasterPlanInputs => ({
       value: 630000,
       returnRate: DEFAULT_RATES.equityReturn,
       category: 'equity',
+      currency: 'INR',
       liquidateAtRetirement: true,
     },
     {
@@ -55,6 +60,7 @@ export const defaultClientInputs = (): MasterPlanInputs => ({
       value: 363000,
       returnRate: DEFAULT_RATES.liquidReturn,
       category: 'liquid',
+      currency: 'INR',
       liquidateAtRetirement: true,
     },
     {
@@ -63,6 +69,7 @@ export const defaultClientInputs = (): MasterPlanInputs => ({
       value: 133000,
       returnRate: DEFAULT_RATES.goldReturn,
       category: 'gold',
+      currency: 'INR',
       liquidateAtRetirement: true,
     },
   ],

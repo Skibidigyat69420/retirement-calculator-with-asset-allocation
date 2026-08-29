@@ -1,17 +1,23 @@
 import type { AssetCategory } from '../types';
 import type { MarketDataSet } from './marketData';
 import { alignMarketData } from './marketData';
-import { DEFAULT_RATES } from './constants';
+import { DEFAULT_RATES, FX_ASSUMPTIONS } from './constants';
 
 export interface CategoryAssumptions {
   mean: number; // annualized decimal return
   std: number; // annualized decimal volatility
 }
 
+export interface FXAssumption {
+  mean: number; // annualized decimal return vs base currency (INR)
+  std: number;  // annualized decimal volatility
+}
+
 export interface AssumptionSet {
   categories: Record<AssetCategory, CategoryAssumptions>;
   covariance: Record<AssetCategory, Record<AssetCategory, number>>;
   correlation: Record<AssetCategory, Record<AssetCategory, number>>;
+  fx: Record<string, FXAssumption>;
   fetchedAt: string;
   source: 'angel' | 'default';
 }
@@ -116,6 +122,7 @@ export function buildAssumptionsFromMarketData(marketData: MarketDataSet): Assum
     categories: result,
     covariance: cov,
     correlation,
+    fx: { ...FX_ASSUMPTIONS },
     fetchedAt: marketData.fetchedAt,
     source: 'angel',
   };
@@ -147,6 +154,7 @@ export function getDefaultAssumptions(): AssumptionSet {
       liquid: { equity: 0.05, debt: 0.1, gold: 0, realestate: 0.05, liquid: 1, other: 0.05 },
       other: { equity: 0.3, debt: 0.1, gold: 0.05, realestate: 0.2, liquid: 0.05, other: 1 },
     },
+    fx: { ...FX_ASSUMPTIONS },
     fetchedAt: new Date().toISOString(),
     source: 'default',
   };
@@ -161,7 +169,11 @@ export function saveAssumptions(assumptions: AssumptionSet): void {
 export function loadAssumptions(): AssumptionSet {
   try {
     const raw = localStorage.getItem(ASSUMPTIONS_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed: AssumptionSet = JSON.parse(raw);
+      if (!parsed.fx) parsed.fx = { ...FX_ASSUMPTIONS };
+      return parsed;
+    }
   } catch {
     // ignore
   }

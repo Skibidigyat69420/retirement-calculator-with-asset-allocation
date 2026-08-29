@@ -30,7 +30,7 @@ import { NominalRealChart } from '../components/charts/NominalRealChart';
 import { AssetEvolutionChart } from '../components/charts/AssetEvolutionChart';
 import { SWPDrawdownChart } from '../components/charts/SWPDrawdownChart';
 import { DonutChart } from '../components/charts/DonutChart';
-import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
+import { ASSET_COLORS, ASSET_LABELS, FX_ASSUMPTIONS } from '../lib/constants';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { MonteCarloFanChart } from '../components/charts/MonteCarloFanChart';
 import type { AssetCategory, GoalPriority } from '../types';
@@ -48,6 +48,11 @@ const strategyOptions = [
   { value: 'true', label: 'Liquidate to SWP Corpus' },
   { value: 'false', label: 'Retain & Let Grow' },
 ];
+
+const currencyOptions = Object.keys(FX_ASSUMPTIONS).map((currency) => ({
+  value: currency,
+  label: currency,
+}));
 
 const priorityOptions: { value: GoalPriority; label: string }[] = [
   { value: 'essential', label: 'Essential' },
@@ -229,10 +234,17 @@ export const MasterPlan = () => {
                     options={categoryOptions}
                   />
                   <Select
+                    label="Currency"
+                    value={asset.currency || 'INR'}
+                    onChange={(v) => updateAsset(asset.id, { currency: v })}
+                    options={currencyOptions}
+                  />
+                  <Select
                     label="At Retirement"
                     value={asset.liquidateAtRetirement ? 'true' : 'false'}
                     onChange={(v) => updateAsset(asset.id, { liquidateAtRetirement: v === 'true' })}
                     options={strategyOptions}
+                    className="col-span-2"
                   />
                 </div>
               </Card>

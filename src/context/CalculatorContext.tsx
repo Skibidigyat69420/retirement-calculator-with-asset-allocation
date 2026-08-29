@@ -105,6 +105,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
           value: 0,
           returnRate: 8,
           category: 'other',
+          currency: 'INR',
           liquidateAtRetirement: false,
           ...asset,
         },

@@ -15,6 +15,7 @@ import {
   Wallet,
   TrendingUp,
   Sparkles,
+  DollarSign,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useCalculator } from '../context/CalculatorContext';
@@ -175,6 +176,14 @@ export const Dashboard = () => {
                 : 'danger'
           }
           icon={<Target size={20} />}
+        />
+        <MetricCard
+          label="Currency Exposure"
+          value={wealthResult.currencyExposure.length > 1
+            ? `${formatPercent(wealthResult.currencyExposure.find((c) => c.currency !== 'INR')?.percentage || 0)} non-INR`
+            : '100% INR'}
+          subtext={wealthResult.currencyExposure.map((c) => `${c.currency} ${formatPercent(c.percentage)}`).join(' · ')}
+          icon={<DollarSign size={20} />}
         />
       </div>
 

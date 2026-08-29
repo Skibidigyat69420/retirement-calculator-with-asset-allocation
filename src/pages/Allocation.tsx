@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { PieChart, TrendingUp, Target, ArrowRight, AlertTriangle, CheckCircle2, Shield, RotateCcw, BarChart3, Zap } from 'lucide-react';
+import { PieChart, TrendingUp, Target, ArrowRight, AlertTriangle, CheckCircle2, Shield, RotateCcw, BarChart3, Zap, DollarSign } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Slider } from '../components/ui/Slider';
 import { SectionTitle } from '../components/ui/SectionTitle';
@@ -151,6 +151,27 @@ export const Allocation = () => {
           </div>
         </Card>
       </div>
+
+      {wealthResult.currencyExposure.length > 1 && (
+        <Card>
+          <div className="flex items-center gap-2 mb-4">
+            <DollarSign size={18} className="text-gold" />
+            <h3 className="text-lg font-serif text-navy">Currency Exposure</h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {wealthResult.currencyExposure.map((ce) => (
+              <div key={ce.currency} className="p-3 bg-stone-50 rounded-xl border border-stone-100">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-stone-500">{ce.currency}</div>
+                <div className="text-lg font-serif text-navy mt-1">{formatPercent(ce.percentage)}</div>
+                <div className="text-xs text-stone-500">{formatCurrency(ce.amount)}</div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-stone-500 mt-3">
+            Foreign-currency assets get an additional FX return drift ({wealthResult.currencyExposure.find((c) => c.currency !== 'INR')?.currency || 'USD'} ≈ 4% p.a. vs INR) and volatility in Monte Carlo projections.
+          </p>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>

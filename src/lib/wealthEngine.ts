@@ -186,9 +186,7 @@ function calculateCurrencyExposure(assets: Asset[], baseCurrency = 'INR'): Curre
 
   const byCurrency: Record<string, number> = { [baseCurrency]: 0 };
   assets.forEach((a) => {
-    const name = a.name.toLowerCase();
-    const isForeign = name.includes('us') || name.includes('global') || name.includes('international') || name.includes('nasdaq') || name.includes('sp500');
-    const currency = isForeign ? 'USD' : baseCurrency;
+    const currency = a.currency || baseCurrency;
     byCurrency[currency] = (byCurrency[currency] || 0) + a.value;
   });
 
@@ -197,6 +195,57 @@ function calculateCurrencyExposure(assets: Asset[], baseCurrency = 'INR'): Curre
     amount: round2(amount),
     percentage: round2((amount / total) * 100),
   }));
+}
+
+interface CategoryFXStats {
+  mean: number;
+  std: number;
+}
+
+function buildCategoryFXStats(assets: Asset[], fxAssumptions: Record<string, { mean: number; std: number }>): Record<AssetCategory, CategoryFXStats> {
+  const stats: Record<AssetCategory, CategoryFXStats> = {
+    equity: { mean: 0, std: 0 },
+    debt: { mean: 0, std: 0 },
+    gold: { mean: 0, std: 0 },
+    realestate: { mean: 0, std: 0 },
+    liquid: { mean: 0, std: 0 },
+    other: { mean: 0, std: 0 },
+  };
+
+  const byCat: Record<AssetCategory, { total: number; weightedMean: number; weightedVar: number }> = {
+    equity: { total: 0, weightedMean: 0, weightedVar: 0 },
+    debt: { total: 0, weightedMean: 0, weightedVar: 0 },
+    gold: { total: 0, weightedMean: 0, weightedVar: 0 },
+    realestate: { total: 0, weightedMean: 0, weightedVar: 0 },
+    liquid: { total: 0, weightedMean: 0, weightedVar: 0 },
+    other: { total: 0, weightedMean: 0, weightedVar: 0 },
+  };
+
+  assets.forEach((a) => {
+    const fx = fxAssumptions[a.currency || 'INR'] || { mean: 0, std: 0 };
+    const entry = byCat[a.category];
+    entry.total += a.value;
+    entry.weightedMean += a.value * fx.mean;
+    entry.weightedVar += a.value * fx.std * fx.std;
+  });
+
+  (Object.keys(byCat) as AssetCategory[]).forEach((cat) => {
+    const entry = byCat[cat];
+    if (entry.total > 0) {
+      stats[cat].mean = entry.weightedMean / entry.total;
+      stats[cat].std = Math.sqrt(entry.weightedVar / entry.total);
+    }
+  });
+
+  return stats;
+}
+
+function sampleFXReturn(stats: Record<AssetCategory, CategoryFXStats>): number[] {
+  return CATEGORIES.map((cat) => {
+    const s = stats[cat];
+    if (s.std <= 0) return s.mean;
+    return s.mean + s.std * boxMuller();
+  });
 }
 
 function buildSipWeights(sip: MasterPlanInputs['sip']): number[] {
@@ -234,6 +283,7 @@ function simulateOnePath(
   inputs: MasterPlanInputs,
   L: number[][],
   means: number[],
+  fxStats: Record<AssetCategory, CategoryFXStats>,
   useMeanReturns: boolean,
 ): SimulationState {
   const { currentAge, retirementAge, lifeExpectancy, inflation, assets, sip, stp, swp, goals, annualIncome } = inputs;
@@ -269,8 +319,11 @@ function simulateOnePath(
     const returns = useMeanReturns
       ? means
       : correlatedReturns(L, means);
+    const fxReturns = useMeanReturns
+      ? CATEGORIES.map((cat) => fxStats[cat].mean)
+      : sampleFXReturn(fxStats);
     CATEGORIES.forEach((c, i) => {
-      state.values[c] = state.values[c] * (1 + returns[i]);
+      state.values[c] = state.values[c] * (1 + returns[i]) * (1 + fxReturns[i]);
     });
 
     if (phase === 'accumulation') {
@@ -344,7 +397,8 @@ function simulateOnePath(
 function buildSnapshots(inputs: MasterPlanInputs, assumptions: AssumptionSet): WealthSnapshot[] {
   const { currentAge } = inputs;
   const means = CATEGORIES.map((c) => assumptions.categories[c].mean);
-  const state = simulateOnePath(inputs, [], means, true);
+  const fxStats = buildCategoryFXStats(inputs.assets, assumptions.fx);
+  const state = simulateOnePath(inputs, [], means, fxStats, true);
   const snapshots: WealthSnapshot[] = [];
   const infl = inputs.inflation / 100;
 
@@ -396,10 +450,11 @@ function buildGoalDistribution(
   const cov = CATEGORIES.map((i) => CATEGORIES.map((j) => assumptions.covariance[i][j]));
   const L = choleskyL(cov);
   const means = CATEGORIES.map((c) => assumptions.categories[c].mean);
+  const fxStats = buildCategoryFXStats(inputs.assets, assumptions.fx);
   const outcomes: number[] = [];
 
   for (let s = 0; s < simulations; s++) {
-    const state = simulateOnePath(inputs, L, means, false);
+    const state = simulateOnePath(inputs, L, means, fxStats, false);
     outcomes.push(state.yearlyValues[goal.yearsToGoal - 1] || 0);
   }
 
@@ -451,10 +506,11 @@ function buildMonteCarlo(
   const cov = CATEGORIES.map((i) => CATEGORIES.map((j) => assumptions.covariance[i][j]));
   const L = choleskyL(cov);
   const means = CATEGORIES.map((c) => assumptions.categories[c].mean);
+  const fxStats = buildCategoryFXStats(inputs.assets, assumptions.fx);
 
   const outcomes: MonteCarloOutcome[] = [];
   for (let s = 0; s < simulations; s++) {
-    const state = simulateOnePath(inputs, L, means, false);
+    const state = simulateOnePath(inputs, L, means, fxStats, false);
     outcomes.push({
       terminalValue: state.yearlyValues[state.yearlyValues.length - 1] || 0,
       depletionAge: state.depletionAge,

@@ -1,4 +1,4 @@
-import type { AssetCategory, MasterPlanInputs, YearlySnapshot } from '../types';
+import type { AssetCategory, Asset, MasterPlanInputs, YearlySnapshot } from '../types';
 import type { AssumptionSet } from './assumptions';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
@@ -67,6 +67,57 @@ function round2(n: number) {
   return Math.round(n * 100) / 100;
 }
 
+interface CategoryFXStats {
+  mean: number;
+  std: number;
+}
+
+function buildCategoryFXStats(assets: Asset[], fxAssumptions: Record<string, { mean: number; std: number }>): Record<AssetCategory, CategoryFXStats> {
+  const stats: Record<AssetCategory, CategoryFXStats> = {
+    equity: { mean: 0, std: 0 },
+    debt: { mean: 0, std: 0 },
+    gold: { mean: 0, std: 0 },
+    realestate: { mean: 0, std: 0 },
+    liquid: { mean: 0, std: 0 },
+    other: { mean: 0, std: 0 },
+  };
+
+  const byCat: Record<AssetCategory, { total: number; weightedMean: number; weightedVar: number }> = {
+    equity: { total: 0, weightedMean: 0, weightedVar: 0 },
+    debt: { total: 0, weightedMean: 0, weightedVar: 0 },
+    gold: { total: 0, weightedMean: 0, weightedVar: 0 },
+    realestate: { total: 0, weightedMean: 0, weightedVar: 0 },
+    liquid: { total: 0, weightedMean: 0, weightedVar: 0 },
+    other: { total: 0, weightedMean: 0, weightedVar: 0 },
+  };
+
+  assets.forEach((a) => {
+    const fx = fxAssumptions[a.currency || 'INR'] || { mean: 0, std: 0 };
+    const entry = byCat[a.category];
+    entry.total += a.value;
+    entry.weightedMean += a.value * fx.mean;
+    entry.weightedVar += a.value * fx.std * fx.std;
+  });
+
+  (Object.keys(byCat) as AssetCategory[]).forEach((cat) => {
+    const entry = byCat[cat];
+    if (entry.total > 0) {
+      stats[cat].mean = entry.weightedMean / entry.total;
+      stats[cat].std = Math.sqrt(entry.weightedVar / entry.total);
+    }
+  });
+
+  return stats;
+}
+
+function sampleFXReturn(stats: Record<AssetCategory, CategoryFXStats>): number[] {
+  return CATEGORIES.map((cat) => {
+    const s = stats[cat];
+    if (s.std <= 0) return s.mean;
+    return s.mean + s.std * boxMuller();
+  });
+}
+
 export function getTargetGlideAllocation(age: number, retirementAge: number): Record<AssetCategory, number> {
   // Aggressive glide path: equity tapers from ~75% at young age to 40% at retirement, then 30%
   const yearsToRetirement = Math.max(0, retirementAge - age);
@@ -102,6 +153,7 @@ export function projectAssetAllocation(
   const means = CATEGORIES.map((c) => assumptions.categories[c].mean);
   const covMatrix = CATEGORIES.map((i) => CATEGORIES.map((j) => assumptions.covariance[i][j]));
   const L = choleskyL(covMatrix);
+  const fxStats = buildCategoryFXStats(assets, assumptions.fx);
 
   const weights = CATEGORIES.map((c) => {
     if (c === 'equity') return sip.equitySplit / 100;
@@ -135,10 +187,11 @@ export function projectAssetAllocation(
     for (let y = 1; y <= accYears + distYears; y++) {
       const phase: 'accumulation' | 'distribution' = y <= accYears ? 'accumulation' : 'distribution';
 
-      // Apply annual correlated returns
+      // Apply annual correlated returns plus FX return for foreign-currency assets
       const returns = generateCorrelatedReturns(L, means);
+      const fxReturns = sampleFXReturn(fxStats);
       CATEGORIES.forEach((c, i) => {
-        values[c] = values[c] * (1 + returns[i]);
+        values[c] = values[c] * (1 + returns[i]) * (1 + fxReturns[i]);
       });
 
       if (phase === 'accumulation') {
@@ -234,9 +287,9 @@ export function projectAssetAllocation(
   for (let y = 1; y <= accYears + distYears; y++) {
     const phase: 'accumulation' | 'distribution' = y <= accYears ? 'accumulation' : 'distribution';
 
-    // Apply mean returns
+    // Apply mean returns plus mean FX return for foreign-currency assets
     CATEGORIES.forEach((c, i) => {
-      values[c] = values[c] * (1 + means[i]);
+      values[c] = values[c] * (1 + means[i]) * (1 + fxStats[c].mean);
     });
 
     let goalConsumption = 0;

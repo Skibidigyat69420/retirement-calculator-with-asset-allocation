@@ -6,6 +6,7 @@ export interface Asset {
   value: number;
   returnRate: number;
   category: AssetCategory;
+  currency: string; // e.g. INR, USD
   liquidateAtRetirement: boolean;
 }
 
