@@ -82,13 +82,14 @@ export const MVO = () => {
       maxWeight: alignedData.symbols.map(() => 1),
       maxEquity: maxEquity / 100,
       maxVolatility: riskProfile.targetVolatility / 100,
+      equityMask,
     };
     return runMVO(alignedData.symbols, means, alignedData.covariance, {
       samples: 30000,
       riskFreeRate: riskProfile.riskFreeRate / 100,
       constraints,
     });
-  }, [alignedData, maxEquity, riskProfile.riskFreeRate, riskProfile.targetVolatility]);
+  }, [alignedData, maxEquity, riskProfile.riskFreeRate, riskProfile.targetVolatility, equityMask]);
 
   const frontierData = useMemo(() => {
     if (!mvoResult) return [];

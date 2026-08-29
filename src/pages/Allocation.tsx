@@ -37,6 +37,12 @@ export const Allocation = () => {
     loadBackendData(DEFAULT_ALLOCATION_SYMBOLS);
   }, [loadBackendData]);
 
+  const equityMask = useMemo(() => {
+    return marketData?.instruments.map((inst) =>
+      inst?.category === 'index' || inst?.category === 'equity',
+    ) ?? [];
+  }, [marketData]);
+
   const mvoResult = useMemo(() => {
     if (!marketData || marketData.symbols.length < 2) return null;
     const means = marketData.stats.map((s) => s.annualizedReturn);
@@ -44,13 +50,14 @@ export const Allocation = () => {
       minWeight: marketData.symbols.map(() => 0),
       maxWeight: marketData.symbols.map(() => 1),
       maxEquity: riskProfile.maxEquity / 100,
+      equityMask,
     };
     return runMVO(marketData.symbols, means, marketData.covariance, {
       samples: 20000,
       riskFreeRate: riskProfile.riskFreeRate / 100,
       constraints,
     });
-  }, [marketData, riskProfile.maxEquity, riskProfile.riskFreeRate]);
+  }, [marketData, riskProfile.maxEquity, riskProfile.riskFreeRate, equityMask]);
 
   const mvoTargets = useMemo(() => {
     if (!mvoResult || !marketData) return null;

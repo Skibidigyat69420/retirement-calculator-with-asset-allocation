@@ -10,6 +10,7 @@ export interface ConstraintSet {
   maxWeight?: number[]; // per asset
   maxEquity?: number; // total equity weight cap (decimal)
   maxVolatility?: number; // optional volatility cap (decimal)
+  equityMask?: boolean[]; // true for equity-like assets; used with maxEquity
 }
 
 export interface MVOResult {
@@ -79,7 +80,7 @@ function generateRandomWeights(n: number, minW: number[], maxW: number[]): numbe
   for (let iter = 0; iter < 20; iter++) {
     w = clipWeights(w, minW, maxW);
     w = normalizeWeights(w);
-    if (isFeasible(w, { minWeight: minW, maxWeight: maxW, maxEquity: 1, maxVolatility: 1 })) break;
+    if (isFeasible(w, { minWeight: minW, maxWeight: maxW, maxEquity: 1, maxVolatility: 1, equityMask: Array(n).fill(true) })) break;
   }
   return w;
 }
@@ -106,7 +107,8 @@ function buildConstraints(
   const maxWeight = constraints.maxWeight ?? Array(n).fill(1);
   const maxEquity = constraints.maxEquity ?? 1;
   const maxVolatility = constraints.maxVolatility ?? 1;
-  return { minWeight, maxWeight, maxEquity, maxVolatility };
+  const equityMask = constraints.equityMask ?? Array(n).fill(true);
+  return { minWeight, maxWeight, maxEquity, maxVolatility, equityMask };
 }
 
 function findMaxSharpe(samples: Portfolio[]): Portfolio {
@@ -225,7 +227,7 @@ export function runMVO(
   const riskParityWeights = inverseVolatilityWeights(stdDevs);
 
   const constraintSet = buildConstraints(n, constraints);
-  const equityMask = symbols.map(() => true); // Per-asset equity classification handled at call site
+  const equityMask = constraints.equityMask ?? symbols.map(() => true);
 
 
   // Generate constrained random portfolios.
