@@ -13,6 +13,7 @@
     "fetch:yahoo": ".venv/bin/python scripts/fetch_historical.py",
     "fetch:angel": ".venv/bin/python scripts/fetch_angel_historical.py",
     "fetch:angel:all": ".venv/bin/python scripts/fetch_angel_all.py",
+    "build:market-db": ".venv/bin/python scripts/build_market_database.py",
     "deploy:vercel": "npx vercel --prod"
   },
   "dependencies": {

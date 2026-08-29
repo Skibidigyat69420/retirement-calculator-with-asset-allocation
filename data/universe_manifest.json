@@ -1,0 +1,3499 @@
+[
+  {
+    "symbol": "NIFTY50",
+    "name": "NIFTY",
+    "exchange": "NSE",
+    "token": "99926000",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYGROWSECT15",
+    "name": "NIFTY GROWSECT 15",
+    "exchange": "NSE",
+    "token": "99926001",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY50PR2XLEV",
+    "name": "NIFTY50 PR 2X LEV",
+    "exchange": "NSE",
+    "token": "99926002",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY500",
+    "name": "NIFTY 500",
+    "exchange": "NSE",
+    "token": "99926004",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYIT",
+    "name": "NIFTY IT",
+    "exchange": "NSE",
+    "token": "99926008",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "BANKNIFTY",
+    "name": "BANKNIFTY",
+    "exchange": "NSE",
+    "token": "99926009",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYMIDCAP100",
+    "name": "NIFTY MIDCAP 100",
+    "exchange": "NSE",
+    "token": "99926011",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY100",
+    "name": "NIFTY 100",
+    "exchange": "NSE",
+    "token": "99926012",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYNEXT50",
+    "name": "NIFTYNXT50",
+    "exchange": "NSE",
+    "token": "99926013",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYMIDCAP50",
+    "name": "NIFTY MIDCAP 50",
+    "exchange": "NSE",
+    "token": "99926014",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "HANGSENGBEESNAV",
+    "name": "HANGSENG BEES-NAV",
+    "exchange": "NSE",
+    "token": "99926016",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "INDIAVIX",
+    "name": "INDIA VIX",
+    "exchange": "NSE",
+    "token": "99926017",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYREALTY",
+    "name": "NIFTY REALTY",
+    "exchange": "NSE",
+    "token": "99926018",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYINFRA",
+    "name": "NIFTY INFRA",
+    "exchange": "NSE",
+    "token": "99926019",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYENERGY",
+    "name": "NIFTY ENERGY",
+    "exchange": "NSE",
+    "token": "99926020",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYFMCG",
+    "name": "NIFTY FMCG",
+    "exchange": "NSE",
+    "token": "99926021",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYMNC",
+    "name": "NIFTY MNC",
+    "exchange": "NSE",
+    "token": "99926022",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYPHARMA",
+    "name": "NIFTY PHARMA",
+    "exchange": "NSE",
+    "token": "99926023",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYPSE",
+    "name": "NIFTY PSE",
+    "exchange": "NSE",
+    "token": "99926024",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYPSUBANK",
+    "name": "NIFTY PSU BANK",
+    "exchange": "NSE",
+    "token": "99926025",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYSERVSECTOR",
+    "name": "NIFTY SERV SECTOR",
+    "exchange": "NSE",
+    "token": "99926026",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYAUTO",
+    "name": "NIFTY AUTO",
+    "exchange": "NSE",
+    "token": "99926029",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYMETAL",
+    "name": "NIFTY METAL",
+    "exchange": "NSE",
+    "token": "99926030",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYMEDIA",
+    "name": "NIFTY MEDIA",
+    "exchange": "NSE",
+    "token": "99926031",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYSMLCAP100",
+    "name": "NIFTY SMLCAP 100",
+    "exchange": "NSE",
+    "token": "99926032",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY200",
+    "name": "NIFTY 200",
+    "exchange": "NSE",
+    "token": "99926033",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYDIVOPPS50",
+    "name": "NIFTY DIV OPPS 50",
+    "exchange": "NSE",
+    "token": "99926034",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYCOMMODITIES",
+    "name": "NIFTY COMMODITIES",
+    "exchange": "NSE",
+    "token": "99926035",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYCONSUMPTION",
+    "name": "NIFTY CONSUMPTION",
+    "exchange": "NSE",
+    "token": "99926036",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYFINSERVICE",
+    "name": "FINNIFTY",
+    "exchange": "NSE",
+    "token": "99926037",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY50DIVPOINT",
+    "name": "NIFTY50 DIV POINT",
+    "exchange": "NSE",
+    "token": "99926038",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY100LIQ15",
+    "name": "NIFTY100 LIQ 15",
+    "exchange": "NSE",
+    "token": "99926040",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYCPSE",
+    "name": "NIFTY CPSE",
+    "exchange": "NSE",
+    "token": "99926041",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY50PR1XINV",
+    "name": "NIFTY50 PR 1X INV",
+    "exchange": "NSE",
+    "token": "99926042",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY50TR2XLEV",
+    "name": "NIFTY50 TR 2X LEV",
+    "exchange": "NSE",
+    "token": "99926043",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY50TR1XINV",
+    "name": "NIFTY50 TR 1X INV",
+    "exchange": "NSE",
+    "token": "99926044",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY50VALUE20",
+    "name": "NIFTY50 VALUE 20",
+    "exchange": "NSE",
+    "token": "99926045",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYMIDLIQ15",
+    "name": "NIFTY MID LIQ 15",
+    "exchange": "NSE",
+    "token": "99926046",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYPVTBANK",
+    "name": "NIFTY PVT BANK",
+    "exchange": "NSE",
+    "token": "99926047",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY100QUALTY30",
+    "name": "NIFTY100 QUALTY30",
+    "exchange": "NSE",
+    "token": "99926048",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYGS813YR",
+    "name": "NIFTY GS 8 13YR",
+    "exchange": "NSE",
+    "token": "99926049",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYGS10YR",
+    "name": "NIFTY GS 10YR",
+    "exchange": "NSE",
+    "token": "99926050",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYGS10YRCLN",
+    "name": "NIFTY GS 10YR CLN",
+    "exchange": "NSE",
+    "token": "99926051",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYGS48YR",
+    "name": "NIFTY GS 4 8YR",
+    "exchange": "NSE",
+    "token": "99926052",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYGS1115YR",
+    "name": "NIFTY GS 11 15YR",
+    "exchange": "NSE",
+    "token": "99926053",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYGS15YRPLUS",
+    "name": "NIFTY GS 15YRPLUS",
+    "exchange": "NSE",
+    "token": "99926054",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYGSCOMPSITE",
+    "name": "NIFTY GS COMPSITE",
+    "exchange": "NSE",
+    "token": "99926055",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY50EQLWGT",
+    "name": "NIFTY50 EQL WGT",
+    "exchange": "NSE",
+    "token": "99926056",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY100EQLWGT",
+    "name": "NIFTY100 EQL WGT",
+    "exchange": "NSE",
+    "token": "99926057",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY100LOWVOL30",
+    "name": "NIFTY100 LOWVOL30",
+    "exchange": "NSE",
+    "token": "99926058",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYALPHA50",
+    "name": "NIFTY ALPHA 50",
+    "exchange": "NSE",
+    "token": "99926059",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYMIDCAP150",
+    "name": "NIFTY MIDCAP 150",
+    "exchange": "NSE",
+    "token": "99926060",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYSMLCAP50",
+    "name": "NIFTY SMLCAP 50",
+    "exchange": "NSE",
+    "token": "99926061",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYSMLCAP250",
+    "name": "NIFTY SMLCAP 250",
+    "exchange": "NSE",
+    "token": "99926062",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYMIDSML400",
+    "name": "NIFTY MIDSML 400",
+    "exchange": "NSE",
+    "token": "99926063",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY200QUALTY30",
+    "name": "NIFTY200 QUALTY30",
+    "exchange": "NSE",
+    "token": "99926064",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYMIDSELECT",
+    "name": "MIDCPNIFTY",
+    "exchange": "NSE",
+    "token": "99926074",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "SENSEX",
+    "name": "SENSEX",
+    "exchange": "BSE",
+    "token": "99919000",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "BSEPSU",
+    "name": "S&P BSE PSU",
+    "exchange": "BSE",
+    "token": "99919001",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "BSE100",
+    "name": "S&P BSE 100",
+    "exchange": "BSE",
+    "token": "99919002",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "BSE200",
+    "name": "S&P BSE 200",
+    "exchange": "BSE",
+    "token": "99919003",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "BSE500",
+    "name": "S&P BSE 500",
+    "exchange": "BSE",
+    "token": "99919004",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "BSEIT",
+    "name": "S&P BSE INFORMATION TECHNOLOGY",
+    "exchange": "BSE",
+    "token": "99919005",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "BSEFMC",
+    "name": "S&P BSE FAST MOVING CONSUMER GOODS",
+    "exchange": "BSE",
+    "token": "99919006",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "BSECG",
+    "name": "S&P BSE CAPITAL GOODS",
+    "exchange": "BSE",
+    "token": "99919007",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "BSECD",
+    "name": "S&P BSE CONSUMER DURABLES",
+    "exchange": "BSE",
+    "token": "99919008",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "BSEHC",
+    "name": "S&P BSE HEALTHCARE",
+    "exchange": "BSE",
+    "token": "99919009",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "TECK",
+    "name": "S&P BSE TECK",
+    "exchange": "BSE",
+    "token": "99919011",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "BANKEX",
+    "name": "BANKEX",
+    "exchange": "BSE",
+    "token": "99919012",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "AUTO",
+    "name": "S&P BSE AUTO",
+    "exchange": "BSE",
+    "token": "99919013",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "METAL",
+    "name": "S&P BSE METAL",
+    "exchange": "BSE",
+    "token": "99919014",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "CPSE",
+    "name": "S&P BSE CPSE",
+    "exchange": "BSE",
+    "token": "99919015",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MIDCAP",
+    "name": "S&P BSE MIDCAP",
+    "exchange": "BSE",
+    "token": "99919016",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "SMLCAP",
+    "name": "S&P BSE SMALLCAP",
+    "exchange": "BSE",
+    "token": "99919017",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "DOL30",
+    "name": "S&P BSE DOLLEX 30",
+    "exchange": "BSE",
+    "token": "99919018",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "DOL100",
+    "name": "S&P BSE DOLLEX 100",
+    "exchange": "BSE",
+    "token": "99919019",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "DOL200",
+    "name": "S&P BSE DOLLEX 200",
+    "exchange": "BSE",
+    "token": "99919020",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "LRGCAP",
+    "name": "S&P BSE LARGECAP",
+    "exchange": "BSE",
+    "token": "99919042",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MIDSEL",
+    "name": "S&P BSE MIDCAP SELECT INDEX",
+    "exchange": "BSE",
+    "token": "99919043",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "SMLSEL",
+    "name": "S&P BSE SMALLCAP SELECT INDEX",
+    "exchange": "BSE",
+    "token": "99919044",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "OILGAS",
+    "name": "S&P BSE OIL & GAS",
+    "exchange": "BSE",
+    "token": "99919051",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "POWER",
+    "name": "S&P BSE POWER",
+    "exchange": "BSE",
+    "token": "99919052",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "REALTY",
+    "name": "S&P BSE REALTY",
+    "exchange": "BSE",
+    "token": "99919053",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "BSEIPO",
+    "name": "S&P BSE IPO",
+    "exchange": "BSE",
+    "token": "99919054",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "CARBON",
+    "name": "S&P BSE CARBONEX",
+    "exchange": "BSE",
+    "token": "99919058",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "SMEIPO",
+    "name": "S&P BSE SME IPO",
+    "exchange": "BSE",
+    "token": "99919059",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "INFRA",
+    "name": "S&P BSE INDIA INFRASTRUCTURE INDEX",
+    "exchange": "BSE",
+    "token": "99919060",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "GREENX",
+    "name": "S&P BSE GREENEX",
+    "exchange": "BSE",
+    "token": "99919081",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "SNSX50",
+    "name": "S&P BSE SENSEX 50",
+    "exchange": "BSE",
+    "token": "99919082",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "SNXT50",
+    "name": "S&P BSE SENSEX NEXT 50",
+    "exchange": "BSE",
+    "token": "99919083",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "ENERGY",
+    "name": "S&P BSE ENERGY",
+    "exchange": "BSE",
+    "token": "99919084",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "FINSER",
+    "name": "S&P BSE FINANCIAL SERVICES",
+    "exchange": "BSE",
+    "token": "99919085",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "INDSTR",
+    "name": "S&P BSE INDUSTRIALS",
+    "exchange": "BSE",
+    "token": "99919086",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "TELCOM",
+    "name": "S&P BSE TELECOM",
+    "exchange": "BSE",
+    "token": "99919087",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MID150",
+    "name": "S&P BSE 150 MIDCAP INDEX",
+    "exchange": "BSE",
+    "token": "99919088",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "LMI250",
+    "name": "S&P BSE 250 LARGEMIDCAP INDEX",
+    "exchange": "BSE",
+    "token": "99919089",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MSL400",
+    "name": "S&P BSE 400 MIDSMALLCAP INDEX",
+    "exchange": "BSE",
+    "token": "99919090",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MCXCRUDEX",
+    "name": "MCXCRUDEX",
+    "exchange": "MCX",
+    "token": "99920000",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MCXCOPRDEX",
+    "name": "MCXCOPRDEX",
+    "exchange": "MCX",
+    "token": "99920001",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MCXSILVDEX",
+    "name": "MCXSILVDEX",
+    "exchange": "MCX",
+    "token": "99920002",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MCXGOLDEX",
+    "name": "MCXGOLDEX",
+    "exchange": "MCX",
+    "token": "99920003",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MCXMETLDEX",
+    "name": "MCXMETLDEX",
+    "exchange": "MCX",
+    "token": "99920004",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MCXBULLDEX",
+    "name": "MCXBULLDEX",
+    "exchange": "MCX",
+    "token": "99920005",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MCXCOMPDEX",
+    "name": "MCXCOMPDEX",
+    "exchange": "MCX",
+    "token": "99920006",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MFGLOBALCI",
+    "name": "MFGLOBALCI",
+    "exchange": "MCX",
+    "token": "99920007",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MCXSAGRI",
+    "name": "MCXSAGRI",
+    "exchange": "MCX",
+    "token": "99920008",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MCXSENERGY",
+    "name": "MCXSENERGY",
+    "exchange": "MCX",
+    "token": "99920009",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MCXSMETAL",
+    "name": "MCXSMETAL",
+    "exchange": "MCX",
+    "token": "99920010",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MCXSCOMDEX",
+    "name": "MCXSCOMDEX",
+    "exchange": "MCX",
+    "token": "99920011",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MCXCOMPOSITE",
+    "name": "MCXCOMPOSITE",
+    "exchange": "MCX",
+    "token": "99920012",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MCXCOMDEX",
+    "name": "MCXCOMDEX",
+    "exchange": "MCX",
+    "token": "99920013",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MCXAGRI",
+    "name": "MCXAGRI",
+    "exchange": "MCX",
+    "token": "99920014",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MCXENERGY",
+    "name": "MCXENERGY",
+    "exchange": "MCX",
+    "token": "99920015",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "MCXMETAL",
+    "name": "MCXMETAL",
+    "exchange": "MCX",
+    "token": "99920016",
+    "category": "index",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYBETA",
+    "name": "NIFTYBETA",
+    "exchange": "NSE",
+    "token": "10511",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "UNIONBANK",
+    "name": "UNIONBANK",
+    "exchange": "NSE",
+    "token": "10753",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "YESBANK",
+    "name": "YESBANK",
+    "exchange": "NSE",
+    "token": "11915",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GSEC10IETF",
+    "name": "GSEC10IETF",
+    "exchange": "NSE",
+    "token": "13143",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "CSBBANK",
+    "name": "CSBBANK",
+    "exchange": "NSE",
+    "token": "14966",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "QGOLDHALF",
+    "name": "QGOLDHALF",
+    "exchange": "NSE",
+    "token": "15330",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "QNIFTY",
+    "name": "QNIFTY",
+    "exchange": "NSE",
+    "token": "16819",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SHARIABEES",
+    "name": "SHARIABEES",
+    "exchange": "NSE",
+    "token": "17044",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LTGILTBEES",
+    "name": "LTGILTBEES",
+    "exchange": "NSE",
+    "token": "17700",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BANKBETA",
+    "name": "BANKBETA",
+    "exchange": "NSE",
+    "token": "22440",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "CPSEETF",
+    "name": "CPSEETF",
+    "exchange": "NSE",
+    "token": "2328",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "PHARMABEES",
+    "name": "PHARMABEES",
+    "exchange": "NSE",
+    "token": "4973",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "TWCGOLDETF",
+    "name": "TWCGOLDETF",
+    "exchange": "NSE",
+    "token": "760482",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NEXT50ETF",
+    "name": "NEXT50ETF",
+    "exchange": "NSE",
+    "token": "760709",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCBANK",
+    "name": "HDFCBANK",
+    "exchange": "NSE",
+    "token": "1333",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GOLDSTAR-SM",
+    "name": "GOLDSTAR",
+    "exchange": "NSE",
+    "token": "1",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LICNETFN50",
+    "name": "LICNETFN50",
+    "exchange": "NSE",
+    "token": "11319",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MAHABANK",
+    "name": "MAHABANK",
+    "exchange": "NSE",
+    "token": "11377",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "FINIETF",
+    "name": "FINIETF",
+    "exchange": "NSE",
+    "token": "12578",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "PSUBANKADD",
+    "name": "PSUBANKADD",
+    "exchange": "NSE",
+    "token": "17616",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GOLDBETA",
+    "name": "GOLDBETA",
+    "exchange": "NSE",
+    "token": "14535",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "PSUBNKIETF",
+    "name": "PSUBNKIETF",
+    "exchange": "NSE",
+    "token": "14584",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LIQUID",
+    "name": "LIQUID",
+    "exchange": "NSE",
+    "token": "17572",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYBETF",
+    "name": "NIFTYBETF",
+    "exchange": "NSE",
+    "token": "21959",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GOLDIETF",
+    "name": "GOLDIETF",
+    "exchange": "NSE",
+    "token": "19679",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LIQUIDSBI",
+    "name": "LIQUIDSBI",
+    "exchange": "NSE",
+    "token": "19705",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "INFRABEES",
+    "name": "INFRABEES",
+    "exchange": "NSE",
+    "token": "20072",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LIQUIDSHRI",
+    "name": "LIQUIDSHRI",
+    "exchange": "NSE",
+    "token": "24374",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SBINEQWETF",
+    "name": "SBINEQWETF",
+    "exchange": "NSE",
+    "token": "24524",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "TATAGOLD",
+    "name": "TATAGOLD",
+    "exchange": "NSE",
+    "token": "21401",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "FINNIFTY",
+    "name": "FINNIFTY",
+    "exchange": "NSE",
+    "token": "26037",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "DIVOPPBEES",
+    "name": "DIVOPPBEES",
+    "exchange": "NSE",
+    "token": "2636",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LIQUIDPLUS",
+    "name": "LIQUIDPLUS",
+    "exchange": "NSE",
+    "token": "27075",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NATCAPSUQ",
+    "name": "NATCAPSUQ",
+    "exchange": "NSE",
+    "token": "29583",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BSLGOLDETF",
+    "name": "BSLGOLDETF",
+    "exchange": "NSE",
+    "token": "23804",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BANKINDIA",
+    "name": "BANKINDIA",
+    "exchange": "NSE",
+    "token": "4745",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ICICIBANK",
+    "name": "ICICIBANK",
+    "exchange": "NSE",
+    "token": "4963",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "VAL30IETF",
+    "name": "VAL30IETF",
+    "exchange": "NSE",
+    "token": "25851",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "FMCGIETF",
+    "name": "FMCGIETF",
+    "exchange": "NSE",
+    "token": "5306",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYNXT50",
+    "name": "NIFTYNXT50",
+    "exchange": "NSE",
+    "token": "26013",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "J&KBANK",
+    "name": "J&KBANK",
+    "exchange": "NSE",
+    "token": "5633",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BSLSENETFG",
+    "name": "BSLSENETFG",
+    "exchange": "NSE",
+    "token": "5957",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "UNIONGOLD",
+    "name": "UNIONGOLD",
+    "exchange": "NSE",
+    "token": "29687",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GILT5YBEES",
+    "name": "GILT5YBEES",
+    "exchange": "NSE",
+    "token": "3172",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MANUFGBEES",
+    "name": "MANUFGBEES",
+    "exchange": "NSE",
+    "token": "758667",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LIQUIDIETF",
+    "name": "LIQUIDIETF",
+    "exchange": "NSE",
+    "token": "4838",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "AONEGOLD",
+    "name": "AONEGOLD",
+    "exchange": "NSE",
+    "token": "758904",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "AXISBANK",
+    "name": "AXISBANK",
+    "exchange": "NSE",
+    "token": "5900",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ELIQUID",
+    "name": "ELIQUID",
+    "exchange": "NSE",
+    "token": "759466",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "CHOICEGOLD",
+    "name": "CHOICEGOLD",
+    "exchange": "NSE",
+    "token": "759610",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "CONSUMIETF",
+    "name": "CONSUMIETF",
+    "exchange": "NSE",
+    "token": "6446",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BBETF0432",
+    "name": "BBETF0432",
+    "exchange": "NSE",
+    "token": "7196",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SBIETFQLTY",
+    "name": "SBIETFQLTY",
+    "exchange": "NSE",
+    "token": "7218",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "EVIETF",
+    "name": "EVIETF",
+    "exchange": "NSE",
+    "token": "755881",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "TOP15IETF",
+    "name": "TOP15IETF",
+    "exchange": "NSE",
+    "token": "757781",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYCASE",
+    "name": "NIFTYCASE",
+    "exchange": "NSE",
+    "token": "759302",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GOLDBND",
+    "name": "GOLDBND",
+    "exchange": "NSE",
+    "token": "760325",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SILVERIETF",
+    "name": "SILVERIETF",
+    "exchange": "NSE",
+    "token": "7942",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SETFNIF50",
+    "name": "SETFNIF50",
+    "exchange": "NSE",
+    "token": "10176",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GOLDTECH-BE",
+    "name": "GOLDTECH",
+    "exchange": "NSE",
+    "token": "9878",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LIQUIDBEES",
+    "name": "LIQUIDBEES",
+    "exchange": "NSE",
+    "token": "11006",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "DHANBANK",
+    "name": "DHANBANK",
+    "exchange": "NSE",
+    "token": "11359",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BANKBEES",
+    "name": "BANKBEES",
+    "exchange": "NSE",
+    "token": "11439",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCNIFTY",
+    "name": "HDFCNIFTY",
+    "exchange": "NSE",
+    "token": "11591",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYBEES",
+    "name": "NIFTYBEES",
+    "exchange": "NSE",
+    "token": "10576",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LICNETFSEN",
+    "name": "LICNETFSEN",
+    "exchange": "NSE",
+    "token": "11441",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LIQUID1",
+    "name": "LIQUID1",
+    "exchange": "NSE",
+    "token": "13950",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "EBBETF0433",
+    "name": "EBBETF0433",
+    "exchange": "NSE",
+    "token": "13139",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "PSUBANK",
+    "name": "PSUBANK",
+    "exchange": "NSE",
+    "token": "15061",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GOLDKART-SM",
+    "name": "GOLDKART",
+    "exchange": "NSE",
+    "token": "13616",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MIDCAPIETF",
+    "name": "MIDCAPIETF",
+    "exchange": "NSE",
+    "token": "17152",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GOLD1",
+    "name": "GOLD1",
+    "exchange": "NSE",
+    "token": "14858",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NV20IETF",
+    "name": "NV20IETF",
+    "exchange": "NSE",
+    "token": "17475",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY1",
+    "name": "NIFTY1",
+    "exchange": "NSE",
+    "token": "18102",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SETFGOLD",
+    "name": "SETFGOLD",
+    "exchange": "NSE",
+    "token": "17272",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "KOTAKBANK",
+    "name": "KOTAKBANK",
+    "exchange": "NSE",
+    "token": "1922",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCLIQUID",
+    "name": "HDFCLIQUID",
+    "exchange": "NSE",
+    "token": "18279",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SENSEXETF",
+    "name": "SENSEXETF",
+    "exchange": "NSE",
+    "token": "19224",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BNKETFAXIS",
+    "name": "BNKETFAXIS",
+    "exchange": "NSE",
+    "token": "1044",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "INFRAIETF",
+    "name": "INFRAIETF",
+    "exchange": "NSE",
+    "token": "10723",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GOLDENTOBC-BZ",
+    "name": "GOLDENTOBC",
+    "exchange": "NSE",
+    "token": "11619",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ALPL30IETF",
+    "name": "ALPL30IETF",
+    "exchange": "NSE",
+    "token": "22344",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCPSUBK",
+    "name": "HDFCPSUBK",
+    "exchange": "NSE",
+    "token": "22595",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LIQUIDBETF",
+    "name": "LIQUIDBETF",
+    "exchange": "NSE",
+    "token": "23915",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "CONSUMBEES",
+    "name": "CONSUMBEES",
+    "exchange": "NSE",
+    "token": "2435",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "EGOLD",
+    "name": "EGOLD",
+    "exchange": "NSE",
+    "token": "19933",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GROWWGOLD",
+    "name": "GROWWGOLD",
+    "exchange": "NSE",
+    "token": "25872",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY",
+    "name": "NIFTY",
+    "exchange": "NSE",
+    "token": "26000",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYAXIS",
+    "name": "NIFTYAXIS",
+    "exchange": "NSE",
+    "token": "21252",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "EBBETF0431",
+    "name": "EBBETF0431",
+    "exchange": "NSE",
+    "token": "22239",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIF100IETF",
+    "name": "NIF100IETF",
+    "exchange": "NSE",
+    "token": "30392",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "AONELIQUID",
+    "name": "AONELIQUID",
+    "exchange": "NSE",
+    "token": "30472",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SENSEXIETF",
+    "name": "SENSEXIETF",
+    "exchange": "NSE",
+    "token": "4378",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BANKBARODA",
+    "name": "BANKBARODA",
+    "exchange": "NSE",
+    "token": "4668",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "EBANKNIFTY",
+    "name": "EBANKNIFTY",
+    "exchange": "NSE",
+    "token": "25258",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SBIETFIT",
+    "name": "SBIETFIT",
+    "exchange": "NSE",
+    "token": "740",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIF100BEES",
+    "name": "NIF100BEES",
+    "exchange": "NSE",
+    "token": "29577",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BSE500IETF",
+    "name": "BSE500IETF",
+    "exchange": "NSE",
+    "token": "3001",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BANK10ADD",
+    "name": "BANK10ADD",
+    "exchange": "NSE",
+    "token": "761364",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "PVTBANK",
+    "name": "PVTBANK",
+    "exchange": "NSE",
+    "token": "764195",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "JETFREIGHT",
+    "name": "JETFREIGHT",
+    "exchange": "NSE",
+    "token": "7211",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SILVERBEES",
+    "name": "SILVERBEES",
+    "exchange": "NSE",
+    "token": "8080",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LIQUIDBETA",
+    "name": "LIQUIDBETA",
+    "exchange": "NSE",
+    "token": "764180",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HYBRIDETF",
+    "name": "HYBRIDETF",
+    "exchange": "NSE",
+    "token": "764333",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MOGOLD",
+    "name": "MOGOLD",
+    "exchange": "NSE",
+    "token": "757791",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GSEC5IETF",
+    "name": "GSEC5IETF",
+    "exchange": "NSE",
+    "token": "8342",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MID150BEES",
+    "name": "MID150BEES",
+    "exchange": "NSE",
+    "token": "8506",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MONIFTY100",
+    "name": "MONIFTY100",
+    "exchange": "NSE",
+    "token": "759371",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NV20BEES",
+    "name": "NV20BEES",
+    "exchange": "NSE",
+    "token": "9847",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ABSL10BANK",
+    "name": "ABSL10BANK",
+    "exchange": "NSE",
+    "token": "760247",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SKYGOLD",
+    "name": "SKYGOLD",
+    "exchange": "NSE",
+    "token": "13631",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GOLDBEES",
+    "name": "GOLDBEES",
+    "exchange": "NSE",
+    "token": "14428",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ABSLLIQUID",
+    "name": "ABSLLIQUID",
+    "exchange": "NSE",
+    "token": "14518",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "EBBETF0430",
+    "name": "EBBETF0430",
+    "exchange": "NSE",
+    "token": "16253",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "PVTBANKADD",
+    "name": "PVTBANKADD",
+    "exchange": "NSE",
+    "token": "17576",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MIDSELIETF",
+    "name": "MIDSELIETF",
+    "exchange": "NSE",
+    "token": "17702",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LOWVOLIETF",
+    "name": "LOWVOLIETF",
+    "exchange": "NSE",
+    "token": "21254",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LIQUIDCASE",
+    "name": "LIQUIDCASE",
+    "exchange": "NSE",
+    "token": "21750",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BANKBETF",
+    "name": "BANKBETF",
+    "exchange": "NSE",
+    "token": "21986",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ITIETF",
+    "name": "ITIETF",
+    "exchange": "NSE",
+    "token": "22365",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LIQUIDADD",
+    "name": "LIQUIDADD",
+    "exchange": "NSE",
+    "token": "23407",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BBNPNBETF",
+    "name": "BBNPNBETF",
+    "exchange": "NSE",
+    "token": "24117",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BANKPSU",
+    "name": "BANKPSU",
+    "exchange": "NSE",
+    "token": "25725",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYIETF",
+    "name": "NIFTYIETF",
+    "exchange": "NSE",
+    "token": "29553",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTY100EW",
+    "name": "NIFTY100EW",
+    "exchange": "NSE",
+    "token": "29944",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "CASHIETF",
+    "name": "CASHIETF",
+    "exchange": "NSE",
+    "token": "30139",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SBIETFCON",
+    "name": "SBIETFCON",
+    "exchange": "NSE",
+    "token": "5168",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SMALLIETF",
+    "name": "SMALLIETF",
+    "exchange": "NSE",
+    "token": "754612",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LIQGRWBEES",
+    "name": "LIQGRWBEES",
+    "exchange": "NSE",
+    "token": "757725",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ENIFTY",
+    "name": "ENIFTY",
+    "exchange": "NSE",
+    "token": "759998",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "IVZBANKNF",
+    "name": "IVZBANKNF",
+    "exchange": "NSE",
+    "token": "765330",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "KCPSUGIND-BE",
+    "name": "KCPSUGIND",
+    "exchange": "NSE",
+    "token": "8849",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "TNIDETF",
+    "name": "TNIDETF",
+    "exchange": "NSE",
+    "token": "8882",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "INDBANK",
+    "name": "INDBANK",
+    "exchange": "NSE",
+    "token": "16933",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BANKETF",
+    "name": "BANKETF",
+    "exchange": "NSE",
+    "token": "17419",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "RBLBANK",
+    "name": "RBLBANK",
+    "exchange": "NSE",
+    "token": "18391",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LIQUIDETF",
+    "name": "LIQUIDETF",
+    "exchange": "NSE",
+    "token": "1927",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "AUBANK",
+    "name": "AUBANK",
+    "exchange": "NSE",
+    "token": "21238",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "OILIETF",
+    "name": "OILIETF",
+    "exchange": "NSE",
+    "token": "24533",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LICMFGOLD",
+    "name": "LICMFGOLD",
+    "exchange": "NSE",
+    "token": "25640",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GOLD360",
+    "name": "GOLD360",
+    "exchange": "NSE",
+    "token": "30105",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HEALTHIETF",
+    "name": "HEALTHIETF",
+    "exchange": "NSE",
+    "token": "3626",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NEXT50IETF",
+    "name": "NEXT50IETF",
+    "exchange": "NSE",
+    "token": "4529",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SOUTHBANK",
+    "name": "SOUTHBANK",
+    "exchange": "NSE",
+    "token": "5948",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SETFNN50",
+    "name": "SETFNN50",
+    "exchange": "NSE",
+    "token": "7353",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SNXT30BEES",
+    "name": "SNXT30BEES",
+    "exchange": "NSE",
+    "token": "757455",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SHANTIGOLD",
+    "name": "SHANTIGOLD",
+    "exchange": "NSE",
+    "token": "758002",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GROWWNIFTY",
+    "name": "GROWWNIFTY",
+    "exchange": "NSE",
+    "token": "758697",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GROWWPSUBK",
+    "name": "GROWWPSUBK",
+    "exchange": "NSE",
+    "token": "761514",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MOBANK10",
+    "name": "MOBANK10",
+    "exchange": "NSE",
+    "token": "761693",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "DECNGOLD",
+    "name": "DECNGOLD",
+    "exchange": "NSE",
+    "token": "762638",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BANKIETF",
+    "name": "BANKIETF",
+    "exchange": "NSE",
+    "token": "11037",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "PVTBANIETF",
+    "name": "PVTBANIETF",
+    "exchange": "NSE",
+    "token": "11386",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "DCBBANK",
+    "name": "DCBBANK",
+    "exchange": "NSE",
+    "token": "13725",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GOLDETF",
+    "name": "GOLDETF",
+    "exchange": "NSE",
+    "token": "14286",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "PSUBNKBEES",
+    "name": "PSUBNKBEES",
+    "exchange": "NSE",
+    "token": "15032",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SETF10GILT",
+    "name": "SETF10GILT",
+    "exchange": "NSE",
+    "token": "17395",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "QUAL30IETF",
+    "name": "QUAL30IETF",
+    "exchange": "NSE",
+    "token": "17808",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HNGSNGBEES",
+    "name": "HNGSNGBEES",
+    "exchange": "NSE",
+    "token": "18284",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "IDFNIFTYET",
+    "name": "IDFNIFTYET",
+    "exchange": "NSE",
+    "token": "18783",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCGOLD",
+    "name": "HDFCGOLD",
+    "exchange": "NSE",
+    "token": "19543",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ITETF",
+    "name": "ITETF",
+    "exchange": "NSE",
+    "token": "19633",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ALPHAETF",
+    "name": "ALPHAETF",
+    "exchange": "NSE",
+    "token": "19640",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GOLDCASE",
+    "name": "GOLDCASE",
+    "exchange": "NSE",
+    "token": "22901",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SBIETFPB",
+    "name": "SBIETFPB",
+    "exchange": "NSE",
+    "token": "722",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SETFNIFBK",
+    "name": "SETFNIFBK",
+    "exchange": "NSE",
+    "token": "7361",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYADD",
+    "name": "NIFTYADD",
+    "exchange": "NSE",
+    "token": "7451",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HSBCGOLD",
+    "name": "HSBCGOLD",
+    "exchange": "NSE",
+    "token": "761506",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MOM30IETF",
+    "name": "MOM30IETF",
+    "exchange": "NSE",
+    "token": "10585",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYQLITY",
+    "name": "NIFTYQLITY",
+    "exchange": "NSE",
+    "token": "10690",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "JUNIORBEES",
+    "name": "JUNIORBEES",
+    "exchange": "NSE",
+    "token": "10939",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "UCOBANK",
+    "name": "UCOBANK",
+    "exchange": "NSE",
+    "token": "11223",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GOLDIAM",
+    "name": "GOLDIAM",
+    "exchange": "NSE",
+    "token": "11971",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "COMMOIETF",
+    "name": "COMMOIETF",
+    "exchange": "NSE",
+    "token": "13198",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BANKADD",
+    "name": "BANKADD",
+    "exchange": "NSE",
+    "token": "13644",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ABSLBANETF",
+    "name": "ABSLBANETF",
+    "exchange": "NSE",
+    "token": "13987",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GOLDADD",
+    "name": "GOLDADD",
+    "exchange": "NSE",
+    "token": "15356",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "IVZINGOLD",
+    "name": "IVZINGOLD",
+    "exchange": "NSE",
+    "token": "18292",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ITBEES",
+    "name": "ITBEES",
+    "exchange": "NSE",
+    "token": "19084",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MONIFTY500",
+    "name": "MONIFTY500",
+    "exchange": "NSE",
+    "token": "19237",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GOLDAXIS",
+    "name": "GOLDAXIS",
+    "exchange": "NSE",
+    "token": "20532",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BBNPPGOLD",
+    "name": "BBNPPGOLD",
+    "exchange": "NSE",
+    "token": "20547",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "IVZINNIFTY",
+    "name": "IVZINNIFTY",
+    "exchange": "NSE",
+    "token": "24217",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BSLNIFTY",
+    "name": "BSLNIFTY",
+    "exchange": "NSE",
+    "token": "24781",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "METALIETF",
+    "name": "METALIETF",
+    "exchange": "NSE",
+    "token": "24861",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MIDCPNIFTY",
+    "name": "MIDCPNIFTY",
+    "exchange": "NSE",
+    "token": "26074",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BANKNIFTY1",
+    "name": "BANKNIFTY1",
+    "exchange": "NSE",
+    "token": "5851",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LICNETFGSC",
+    "name": "LICNETFGSC",
+    "exchange": "NSE",
+    "token": "6062",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYETF",
+    "name": "NIFTYETF",
+    "exchange": "NSE",
+    "token": "6353",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "AONENIFTY",
+    "name": "AONENIFTY",
+    "exchange": "NSE",
+    "token": "757096",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SBILIQETF",
+    "name": "SBILIQETF",
+    "exchange": "NSE",
+    "token": "758496",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NETF",
+    "name": "NETF",
+    "exchange": "NSE",
+    "token": "7838",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "AUTOIETF",
+    "name": "AUTOIETF",
+    "exchange": "NSE",
+    "token": "7844",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SBISMLETF",
+    "name": "SBISMLETF",
+    "exchange": "NSE",
+    "token": "763543",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "EBANK10",
+    "name": "EBANK10",
+    "exchange": "NSE",
+    "token": "764378",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "KTKBANK",
+    "name": "KTKBANK",
+    "exchange": "NSE",
+    "token": "8054",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SBIVALETF",
+    "name": "SBIVALETF",
+    "exchange": "NSE",
+    "token": "763546",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BANK10BETF",
+    "name": "BANK10BETF",
+    "exchange": "NSE",
+    "token": "764183",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "INSUREIETF",
+    "name": "INSUREIETF",
+    "exchange": "NSE",
+    "token": "764364",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MIDBANKADD",
+    "name": "MIDBANKADD",
+    "exchange": "NSE",
+    "token": "764428",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIFTYJBLK",
+    "name": "NIFTYJBLK",
+    "exchange": "NSE",
+    "token": "765307",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "AUTOBEES",
+    "name": "AUTOBEES",
+    "exchange": "NSE",
+    "token": "7880",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BANKA",
+    "name": "BANKA",
+    "exchange": "NSE",
+    "token": "822",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MIDCAPETF",
+    "name": "MIDCAPETF",
+    "exchange": "NSE",
+    "token": "8413",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "AHCL",
+    "name": "AHCL",
+    "exchange": "NSE",
+    "token": "758968",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ALEMBICLTD",
+    "name": "ALEMBICLTD",
+    "exchange": "NSE",
+    "token": "79",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ALLTIME",
+    "name": "ALLTIME",
+    "exchange": "NSE",
+    "token": "758448",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "APLLTD",
+    "name": "APLLTD",
+    "exchange": "NSE",
+    "token": "25328",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ASKAUTOLTD",
+    "name": "ASKAUTOLTD",
+    "exchange": "NSE",
+    "token": "20152",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "AWHCL",
+    "name": "AWHCL",
+    "exchange": "NSE",
+    "token": "1797",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "AXISCADES",
+    "name": "AXISCADES",
+    "exchange": "NSE",
+    "token": "9436",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BHARTIARTL",
+    "name": "BHARTIARTL",
+    "exchange": "NSE",
+    "token": "10604",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BHARTIHEXA",
+    "name": "BHARTIHEXA",
+    "exchange": "NSE",
+    "token": "23489",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BMWVENTLTD",
+    "name": "BMWVENTLTD",
+    "exchange": "NSE",
+    "token": "759256",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BOROLTD",
+    "name": "BOROLTD",
+    "exchange": "NSE",
+    "token": "19401",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "BOSCHLTD",
+    "name": "BOSCHLTD",
+    "exchange": "NSE",
+    "token": "2181",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "CEATLTD",
+    "name": "CEATLTD",
+    "exchange": "NSE",
+    "token": "15254",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "COALINDIA",
+    "name": "COALINDIA",
+    "exchange": "NSE",
+    "token": "20374",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "CONSUMAXIS",
+    "name": "CONSUMAXIS",
+    "exchange": "NSE",
+    "token": "5732",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "DBREALTY",
+    "name": "DBREALTY",
+    "exchange": "NSE",
+    "token": "18124",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "DELTACORP",
+    "name": "DELTACORP",
+    "exchange": "NSE",
+    "token": "15044",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "DELTAMAGNT",
+    "name": "DELTAMAGNT",
+    "exchange": "NSE",
+    "token": "1214",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ECOSMOBLTY",
+    "name": "ECOSMOBLTY",
+    "exchange": "NSE",
+    "token": "25060",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "EMAMILTD",
+    "name": "EMAMILTD",
+    "exchange": "NSE",
+    "token": "13517",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "EMULTIMQ",
+    "name": "EMULTIMQ",
+    "exchange": "NSE",
+    "token": "25996",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ETHOSLTD",
+    "name": "ETHOSLTD",
+    "exchange": "NSE",
+    "token": "9750",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GHCL",
+    "name": "GHCL",
+    "exchange": "NSE",
+    "token": "1127",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GHCLTEXTIL",
+    "name": "GHCLTEXTIL",
+    "exchange": "NSE",
+    "token": "16696",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GLOSTERLTD",
+    "name": "GLOSTERLTD",
+    "exchange": "NSE",
+    "token": "23590",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GMDCLTD",
+    "name": "GMDCLTD",
+    "exchange": "NSE",
+    "token": "5204",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GPTHEALTH",
+    "name": "GPTHEALTH",
+    "exchange": "NSE",
+    "token": "22846",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GROWWRLTY",
+    "name": "GROWWRLTY",
+    "exchange": "NSE",
+    "token": "759428",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "GRPLTD",
+    "name": "GRPLTD",
+    "exchange": "NSE",
+    "token": "6543",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HCLTECH",
+    "name": "HCLTECH",
+    "exchange": "NSE",
+    "token": "7229",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCAMC",
+    "name": "HDFCAMC",
+    "exchange": "NSE",
+    "token": "4244",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCGROWTH",
+    "name": "HDFCGROWTH",
+    "exchange": "NSE",
+    "token": "11241",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCLIFE",
+    "name": "HDFCLIFE",
+    "exchange": "NSE",
+    "token": "467",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCLOWVOL",
+    "name": "HDFCLOWVOL",
+    "exchange": "NSE",
+    "token": "11547",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCMOMENT",
+    "name": "HDFCMOMENT",
+    "exchange": "NSE",
+    "token": "11538",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCNIFBAN",
+    "name": "HDFCNIFBAN",
+    "exchange": "NSE",
+    "token": "22433",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCNIFIT",
+    "name": "HDFCNIFIT",
+    "exchange": "NSE",
+    "token": "12101",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCNIMEG",
+    "name": "HDFCNIMEG",
+    "exchange": "NSE",
+    "token": "764336",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCPVTBAN",
+    "name": "HDFCPVTBAN",
+    "exchange": "NSE",
+    "token": "12108",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCQUAL",
+    "name": "HDFCQUAL",
+    "exchange": "NSE",
+    "token": "11255",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCSENSEX",
+    "name": "HDFCSENSEX",
+    "exchange": "NSE",
+    "token": "11593",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCSILVER",
+    "name": "HDFCSILVER",
+    "exchange": "NSE",
+    "token": "10876",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HDFCVALUE",
+    "name": "HDFCVALUE",
+    "exchange": "NSE",
+    "token": "11260",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HEALTHADD",
+    "name": "HEALTHADD",
+    "exchange": "NSE",
+    "token": "22592",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HEALTHAXIS",
+    "name": "HEALTHAXIS",
+    "exchange": "NSE",
+    "token": "3608",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HEALTHCARE",
+    "name": "HEALTHCARE",
+    "exchange": "NSE",
+    "token": "760986",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HEALTHX",
+    "name": "HEALTHX",
+    "exchange": "NSE",
+    "token": "20063",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HEALTHY",
+    "name": "HEALTHY",
+    "exchange": "NSE",
+    "token": "6297",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HILTON",
+    "name": "HILTON",
+    "exchange": "NSE",
+    "token": "14627",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "HLVLTD",
+    "name": "HLVLTD",
+    "exchange": "NSE",
+    "token": "1448",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "IBULLSLTD",
+    "name": "IBULLSLTD",
+    "exchange": "NSE",
+    "token": "24999",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ICDSLTD",
+    "name": "ICDSLTD",
+    "exchange": "NSE",
+    "token": "6977",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ICICIAMC",
+    "name": "ICICIAMC",
+    "exchange": "NSE",
+    "token": "760407",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ICICIGI",
+    "name": "ICICIGI",
+    "exchange": "NSE",
+    "token": "21770",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ICICIPRULI",
+    "name": "ICICIPRULI",
+    "exchange": "NSE",
+    "token": "18652",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "INDIASHLTR",
+    "name": "INDIASHLTR",
+    "exchange": "NSE",
+    "token": "20556",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "INFY",
+    "name": "INFY",
+    "exchange": "NSE",
+    "token": "1594",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "IPRINGLTD",
+    "name": "IPRINGLTD",
+    "exchange": "NSE",
+    "token": "764713",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ISTLTD",
+    "name": "ISTLTD",
+    "exchange": "NSE",
+    "token": "764718",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ITAXIS",
+    "name": "ITAXIS",
+    "exchange": "NSE",
+    "token": "3010",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ITC",
+    "name": "ITC",
+    "exchange": "NSE",
+    "token": "1660",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ITCHOTELS",
+    "name": "ITCHOTELS",
+    "exchange": "NSE",
+    "token": "29251",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "JAICORPLTD",
+    "name": "JAICORPLTD",
+    "exchange": "NSE",
+    "token": "5143",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "KELLTONTEC",
+    "name": "KELLTONTEC",
+    "exchange": "NSE",
+    "token": "13430",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "KHAITANLTD",
+    "name": "KHAITANLTD",
+    "exchange": "NSE",
+    "token": "3912",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "KOLTEPATIL",
+    "name": "KOLTEPATIL",
+    "exchange": "NSE",
+    "token": "15124",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LGBBROSLTD",
+    "name": "LGBBROSLTD",
+    "exchange": "NSE",
+    "token": "18321",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LOYALTEX",
+    "name": "LOYALTEX",
+    "exchange": "NSE",
+    "token": "10590",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LT",
+    "name": "LT",
+    "exchange": "NSE",
+    "token": "11483",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LTF",
+    "name": "LTF",
+    "exchange": "NSE",
+    "token": "24948",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LTFOODS",
+    "name": "LTFOODS",
+    "exchange": "NSE",
+    "token": "13816",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LTGILTCASE",
+    "name": "LTGILTCASE",
+    "exchange": "NSE",
+    "token": "758705",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LTM",
+    "name": "LTM",
+    "exchange": "NSE",
+    "token": "17818",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "LTTS",
+    "name": "LTTS",
+    "exchange": "NSE",
+    "token": "18564",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MAHAPEXLTD",
+    "name": "MAHAPEXLTD",
+    "exchange": "NSE",
+    "token": "5239",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MARUTI",
+    "name": "MARUTI",
+    "exchange": "NSE",
+    "token": "10999",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MAXHEALTH",
+    "name": "MAXHEALTH",
+    "exchange": "NSE",
+    "token": "22377",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MIDWESTLTD",
+    "name": "MIDWESTLTD",
+    "exchange": "NSE",
+    "token": "759517",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MODISONLTD",
+    "name": "MODISONLTD",
+    "exchange": "NSE",
+    "token": "3316",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MOHEALTH",
+    "name": "MOHEALTH",
+    "exchange": "NSE",
+    "token": "10508",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MOREALTY",
+    "name": "MOREALTY",
+    "exchange": "NSE",
+    "token": "23184",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MPSLTD",
+    "name": "MPSLTD",
+    "exchange": "NSE",
+    "token": "10578",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MSTCLTD",
+    "name": "MSTCLTD",
+    "exchange": "NSE",
+    "token": "9356",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MUKANDLTD",
+    "name": "MUKANDLTD",
+    "exchange": "NSE",
+    "token": "11325",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "MULTICAP",
+    "name": "MULTICAP",
+    "exchange": "NSE",
+    "token": "25080",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NIITLTD",
+    "name": "NIITLTD",
+    "exchange": "NSE",
+    "token": "11522",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NITCO",
+    "name": "NITCO",
+    "exchange": "NSE",
+    "token": "13300",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NTPC",
+    "name": "NTPC",
+    "exchange": "NSE",
+    "token": "11630",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "NTPCGREEN",
+    "name": "NTPCGREEN",
+    "exchange": "NSE",
+    "token": "27176",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "OBEROIRLTY",
+    "name": "OBEROIRLTY",
+    "exchange": "NSE",
+    "token": "20242",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ONGC",
+    "name": "ONGC",
+    "exchange": "NSE",
+    "token": "2475",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "ORIENTALTL",
+    "name": "ORIENTALTL",
+    "exchange": "NSE",
+    "token": "14346",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "PAUSHAKLTD",
+    "name": "PAUSHAKLTD",
+    "exchange": "NSE",
+    "token": "759969",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "PHOENIXLTD",
+    "name": "PHOENIXLTD",
+    "exchange": "NSE",
+    "token": "14552",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "PNBGILTS",
+    "name": "PNBGILTS",
+    "exchange": "NSE",
+    "token": "8736",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "POWERGRID",
+    "name": "POWERGRID",
+    "exchange": "NSE",
+    "token": "14977",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "PRAXIS",
+    "name": "PRAXIS",
+    "exchange": "NSE",
+    "token": "1204",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "PRICOLLTD",
+    "name": "PRICOLLTD",
+    "exchange": "NSE",
+    "token": "19631",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "RAILTEL",
+    "name": "RAILTEL",
+    "exchange": "NSE",
+    "token": "2431",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "RECLTD",
+    "name": "RECLTD",
+    "exchange": "NSE",
+    "token": "15355",
+    "category": "equity",
+    "source": "angel"
+  },
+  {
+    "symbol": "SPY",
+    "name": "SPDR S&P 500 ETF Trust",
+    "exchange": "NYSE",
+    "token": "",
+    "category": "equity",
+    "source": "yahoo",
+    "yahoo": "SPY"
+  },
+  {
+    "symbol": "QQQ",
+    "name": "Invesco QQQ Trust",
+    "exchange": "NASDAQ",
+    "token": "",
+    "category": "equity",
+    "source": "yahoo",
+    "yahoo": "QQQ"
+  },
+  {
+    "symbol": "VTI",
+    "name": "Vanguard Total Stock Market ETF",
+    "exchange": "NYSE",
+    "token": "",
+    "category": "equity",
+    "source": "yahoo",
+    "yahoo": "VTI"
+  },
+  {
+    "symbol": "VT",
+    "name": "Vanguard Total World Stock ETF",
+    "exchange": "NYSE",
+    "token": "",
+    "category": "equity",
+    "source": "yahoo",
+    "yahoo": "VT"
+  },
+  {
+    "symbol": "VXUS",
+    "name": "Vanguard Total International Stock ETF",
+    "exchange": "NASDAQ",
+    "token": "",
+    "category": "equity",
+    "source": "yahoo",
+    "yahoo": "VXUS"
+  },
+  {
+    "symbol": "EEM",
+    "name": "iShares MSCI Emerging Markets ETF",
+    "exchange": "NYSE",
+    "token": "",
+    "category": "equity",
+    "source": "yahoo",
+    "yahoo": "EEM"
+  },
+  {
+    "symbol": "BND",
+    "name": "Vanguard Total Bond Market ETF",
+    "exchange": "NASDAQ",
+    "token": "",
+    "category": "debt",
+    "source": "yahoo",
+    "yahoo": "BND"
+  },
+  {
+    "symbol": "TLT",
+    "name": "iShares 20+ Year Treasury Bond ETF",
+    "exchange": "NASDAQ",
+    "token": "",
+    "category": "debt",
+    "source": "yahoo",
+    "yahoo": "TLT"
+  },
+  {
+    "symbol": "GLD",
+    "name": "SPDR Gold Shares",
+    "exchange": "NYSE",
+    "token": "",
+    "category": "gold",
+    "source": "yahoo",
+    "yahoo": "GLD"
+  },
+  {
+    "symbol": "AGG",
+    "name": "iShares Core U.S. Aggregate Bond ETF",
+    "exchange": "NYSE",
+    "token": "",
+    "category": "debt",
+    "source": "yahoo",
+    "yahoo": "AGG"
+  },
+  {
+    "symbol": "IEF",
+    "name": "iShares 7-10 Year Treasury Bond ETF",
+    "exchange": "NASDAQ",
+    "token": "",
+    "category": "debt",
+    "source": "yahoo",
+    "yahoo": "IEF"
+  },
+  {
+    "symbol": "VWO",
+    "name": "Vanguard FTSE Emerging Markets ETF",
+    "exchange": "NYSE",
+    "token": "",
+    "category": "equity",
+    "source": "yahoo",
+    "yahoo": "VWO"
+  },
+  {
+    "symbol": "VEA",
+    "name": "Vanguard FTSE Developed Markets ETF",
+    "exchange": "NYSE",
+    "token": "",
+    "category": "equity",
+    "source": "yahoo",
+    "yahoo": "VEA"
+  },
+  {
+    "symbol": "IJH",
+    "name": "iShares Core S&P Mid-Cap ETF",
+    "exchange": "NYSE",
+    "token": "",
+    "category": "equity",
+    "source": "yahoo",
+    "yahoo": "IJH"
+  },
+  {
+    "symbol": "IJR",
+    "name": "iShares Core S&P Small-Cap ETF",
+    "exchange": "NYSE",
+    "token": "",
+    "category": "equity",
+    "source": "yahoo",
+    "yahoo": "IJR"
+  },
+  {
+    "symbol": "VNQ",
+    "name": "Vanguard Real Estate ETF",
+    "exchange": "NYSE",
+    "token": "",
+    "category": "equity",
+    "source": "yahoo",
+    "yahoo": "VNQ"
+  },
+  {
+    "symbol": "DBC",
+    "name": "Invesco DB Commodity Index Tracking Fund",
+    "exchange": "NYSE",
+    "token": "",
+    "category": "commodity",
+    "source": "yahoo",
+    "yahoo": "DBC"
+  }
+]

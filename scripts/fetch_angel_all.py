@@ -104,11 +104,11 @@ INSTRUMENTS = [
 
 
 class AngelSmartAPI:
-    def __init__(self):
-        self.api_key = os.getenv("ANGEL_API_KEY", "")
-        self.client_code = os.getenv("ANGEL_CLIENT_CODE", "")
-        self.pin = os.getenv("ANGEL_PIN", "")
-        self.totp_secret = os.getenv("ANGEL_TOTP_SECRET", "")
+    def __init__(self, api_key=None, client_code=None, pin=None, totp_secret=None):
+        self.api_key = api_key if api_key is not None else os.getenv("ANGEL_API_KEY", "")
+        self.client_code = client_code if client_code is not None else os.getenv("ANGEL_CLIENT_CODE", "")
+        self.pin = pin if pin is not None else os.getenv("ANGEL_PIN", "")
+        self.totp_secret = totp_secret if totp_secret is not None else os.getenv("ANGEL_TOTP_SECRET", "")
         self.jwt_token = None
         self.refresh_token = None
         self.feed_token = None
@@ -161,10 +161,30 @@ class AngelSmartAPI:
         response = self._session.get(url, headers=self._headers(authenticated=True), timeout=30)
         return response.json()
 
-    def post(self, path: str, payload: dict):
+    def post(self, path: str, payload: dict, retries: int = 0):
         url = f"{BASE_URL}{path}"
         response = self._session.post(url, headers=self._headers(authenticated=True), json=payload, timeout=30)
         return response.json()
+
+    def post_with_retry(self, path: str, payload: dict, retries: int = 3, backoff: float = 1.5):
+        """POST with retries for empty/rate-limited responses."""
+        last_exc = None
+        for attempt in range(retries + 1):
+            try:
+                url = f"{BASE_URL}{path}"
+                response = self._session.post(url, headers=self._headers(authenticated=True), json=payload, timeout=30)
+                if response.status_code == 429 or response.status_code >= 500:
+                    raise RuntimeError(f"http {response.status_code}")
+                if not response.content:
+                    raise RuntimeError("empty response")
+                return response.json()
+            except Exception as e:
+                last_exc = e
+                if attempt < retries:
+                    wait = backoff * (2 ** attempt)
+                    print(f"      [retry {attempt+1}/{retries}] {path}: {e} (sleep {wait:.1f}s)")
+                    time.sleep(wait)
+        return {"status": False, "message": f"failed after retries: {last_exc}"}
 
     # User / Account
     def get_profile(self): return self.get("/rest/secure/angelbroking/user/v1/getProfile")
@@ -187,7 +207,7 @@ class AngelSmartAPI:
             "fromdate": fromdate,
             "todate": todate,
         }
-        return self.post("/rest/secure/angelbroking/historical/v1/getCandleData", payload)
+        return self.post_with_retry("/rest/secure/angelbroking/historical/v1/getCandleData", payload)
 
     # Market data
     def get_quotes(self, instruments: list):
