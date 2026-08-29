@@ -12,6 +12,7 @@
     "fetch:data": ".venv/bin/python scripts/fetch_angel_historical.py",
     "fetch:yahoo": ".venv/bin/python scripts/fetch_historical.py",
     "fetch:angel": ".venv/bin/python scripts/fetch_angel_historical.py",
+    "fetch:angel:all": ".venv/bin/python scripts/fetch_angel_all.py",
     "deploy:vercel": "npx vercel --prod"
   },
   "dependencies": {

@@ -9,6 +9,7 @@ import {
   BarChart3,
   FileText,
   ShieldCheck,
+  Database,
 } from 'lucide-react';
 
 export const navItems = [
@@ -19,6 +20,7 @@ export const navItems = [
   { path: '/retirement', label: 'Retirement', icon: Calculator },
   { path: '/allocation', label: 'Allocation', icon: TrendingUp },
   { path: '/mvo', label: 'MVO', icon: BarChart2 },
+  { path: '/angel-data', label: 'Angel Data', icon: Database },
   { path: '/reports', label: 'Reports', icon: BarChart3 },
   { path: '/ips', label: 'IPS', icon: FileText },
 ];

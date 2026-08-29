@@ -90,6 +90,22 @@ The bundle stores full per-symbol histories so the frontend can align any select
 - `public/data/market-data.json` — full histories, per-symbol statistics, and default-symbol covariance/correlation
 - Vercel function `api/market-data.js` reads from `public/data/market-data.json` at runtime
 
+### Extract Everything from Angel One
+
+Run a full `SELECT *`-style dump of your Angel One account:
+
+```bash
+npm run fetch:angel:all
+```
+
+This logs in once and downloads:
+- profile, RMS/funds, holdings, positions
+- order book, trade book
+- historical daily candles for all configured instruments
+- market quotes / LTPs for all configured instruments
+
+Output is saved to `data/angel_one/{timestamp}/` with a `snapshot.json` index.
+
 ### Development
 
 ```bash

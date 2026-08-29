@@ -291,6 +291,90 @@ export async function fetchPositions(creds: SmartApiCredentials, jwtToken: strin
 }
 
 /**
+ * Fetch Order Book
+ */
+export async function fetchOrderBook(creds: SmartApiCredentials, jwtToken: string) {
+  try {
+    const endpoint = '/api/angelone/rest/secure/angelbroking/order/v1/getOrderBook';
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: buildHeaders(creds, jwtToken),
+    });
+    return await response.json();
+  } catch (err: any) {
+    return { status: false, message: err?.message };
+  }
+}
+
+/**
+ * Fetch Trade Book
+ */
+export async function fetchTradeBook(creds: SmartApiCredentials, jwtToken: string) {
+  try {
+    const endpoint = '/api/angelone/rest/secure/angelbroking/order/v1/getTradeBook';
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: buildHeaders(creds, jwtToken),
+    });
+    return await response.json();
+  } catch (err: any) {
+    return { status: false, message: err?.message };
+  }
+}
+
+export interface QuoteInstrument {
+  exchange: string;
+  symboltoken: string;
+}
+
+export interface QuoteRequest {
+  mode?: 'FULL' | 'LTP' | 'OHLC';
+  exchangeTokens: Record<string, string[]>;
+}
+
+/**
+ * Fetch market quotes (full depth) for a batch of instruments.
+ */
+export async function fetchQuotes(
+  creds: SmartApiCredentials,
+  jwtToken: string,
+  request: QuoteRequest,
+) {
+  try {
+    const endpoint = '/api/angelone/rest/secure/angelbroking/market/v1/quote';
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: buildHeaders(creds, jwtToken),
+      body: JSON.stringify({ mode: request.mode || 'FULL', exchangeTokens: request.exchangeTokens }),
+    });
+    return await response.json();
+  } catch (err: any) {
+    return { status: false, message: err?.message };
+  }
+}
+
+/**
+ * Fetch last traded prices (LTP) for a batch of instruments.
+ */
+export async function fetchLTPs(
+  creds: SmartApiCredentials,
+  jwtToken: string,
+  exchangeTokens: Record<string, string[]>,
+) {
+  try {
+    const endpoint = '/api/angelone/rest/secure/angelbroking/market/v1/quoteLTP';
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: buildHeaders(creds, jwtToken),
+      body: JSON.stringify({ exchangeTokens }),
+    });
+    return await response.json();
+  } catch (err: any) {
+    return { status: false, message: err?.message };
+  }
+}
+
+/**
  * Storage Helpers
  */
 export function saveCredentials(creds: SmartApiCredentials) {
