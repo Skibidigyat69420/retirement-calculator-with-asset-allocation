@@ -4,9 +4,11 @@
  * GET /api/load-ips?filename=IPS-Client-Name.md
  */
 import { readFileSync, existsSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const IPS_DIR = resolve(process.cwd(), 'ips');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const IPS_DIR = resolve(__dirname, '..', 'ips');
 
 export default function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
