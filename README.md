@@ -85,7 +85,7 @@ This uses Angel One SmartAPI credentials from `.env` when available, otherwise f
 npm run fetch:yahoo
 ```
 
-The bundle stores full per-symbol histories so the frontend can align any selected subset to its longest common history. This populates:
+The bundle stores full per-symbol histories so the frontend can align any selected subset to its longest common history. The universe now includes both Indian indices/ETFs and international ETFs (S&P 500, Nasdaq-100, Total World, Emerging Markets, US Treasuries, Gold, etc.) via Yahoo Finance. This populates:
 - `data/prices/{symbol}.csv` — one CSV per instrument
 - `public/data/market-data.json` — full histories, per-symbol statistics, and default-symbol covariance/correlation
 - Vercel function `api/market-data.js` reads from `public/data/market-data.json` at runtime

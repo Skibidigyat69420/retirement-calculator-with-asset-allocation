@@ -1,7 +1,23 @@
+export type Exchange =
+  // Indian markets
+  | 'NSE'
+  | 'BSE'
+  | 'MCX'
+  // US / International markets (fetched via Yahoo Finance)
+  | 'NYSE'
+  | 'NASDAQ'
+  | 'AMEX'
+  | 'LSE'
+  | 'XETRA'
+  | 'TSE'
+  | 'HKEX'
+  | 'ASX'
+  | 'SGX';
+
 export interface Instrument {
   symbol: string;
   name: string;
-  exchange: 'NSE' | 'BSE' | 'MCX';
+  exchange: Exchange;
   token: string;
   category: 'equity' | 'debt' | 'gold' | 'commodity' | 'index';
   benchmark?: boolean;
@@ -34,6 +50,18 @@ export const INSTRUMENTS: Instrument[] = [
 
   // Gold proxy
   { symbol: 'GOLDCASE', name: 'Axis Gold ETF', exchange: 'NSE', token: '590081', category: 'gold' },
+
+  // US / International equity & bond ETFs
+  { symbol: 'SPY', name: 'SPDR S&P 500 ETF Trust', exchange: 'NYSE', token: '', category: 'equity' },
+  { symbol: 'QQQ', name: 'Invesco QQQ Trust', exchange: 'NASDAQ', token: '', category: 'equity' },
+  { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', exchange: 'NYSE', token: '', category: 'equity' },
+  { symbol: 'VT', name: 'Vanguard Total World Stock ETF', exchange: 'NYSE', token: '', category: 'equity' },
+  { symbol: 'VXUS', name: 'Vanguard Total International Stock ETF', exchange: 'NASDAQ', token: '', category: 'equity' },
+  { symbol: 'EEM', name: 'iShares MSCI Emerging Markets ETF', exchange: 'NYSE', token: '', category: 'equity' },
+  { symbol: 'BND', name: 'Vanguard Total Bond Market ETF', exchange: 'NASDAQ', token: '', category: 'debt' },
+  { symbol: 'TLT', name: 'iShares 20+ Year Treasury Bond ETF', exchange: 'NASDAQ', token: '', category: 'debt' },
+  { symbol: 'GLD', name: 'SPDR Gold Shares', exchange: 'NYSE', token: '', category: 'gold' },
+  { symbol: 'AGG', name: 'iShares Core U.S. Aggregate Bond ETF', exchange: 'NYSE', token: '', category: 'debt' },
 ];
 
 export const INSTRUMENT_MAP: Record<string, Instrument> = Object.fromEntries(

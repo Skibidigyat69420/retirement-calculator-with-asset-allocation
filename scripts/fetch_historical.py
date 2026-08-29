@@ -38,6 +38,18 @@ INSTRUMENTS = [
     {"symbol": "SETFNN50", "name": "SBI ETF Nifty Next 50", "exchange": "NSE", "token": "590111", "category": "equity", "yahoo": "SETFNN50.NS"},
     {"symbol": "LIQUIDCASE", "name": "DSP Liquidity ETF", "exchange": "NSE", "token": "541519", "category": "debt", "yahoo": "LIQUIDCASE.NS"},
     {"symbol": "GOLDCASE", "name": "Axis Gold ETF", "exchange": "NSE", "token": "590081", "category": "gold", "yahoo": "GOLDCASE.NS"},
+
+    # US / International equity & bond ETFs
+    {"symbol": "SPY", "name": "SPDR S&P 500 ETF Trust", "exchange": "NYSE", "token": "", "category": "equity", "yahoo": "SPY"},
+    {"symbol": "QQQ", "name": "Invesco QQQ Trust", "exchange": "NASDAQ", "token": "", "category": "equity", "yahoo": "QQQ"},
+    {"symbol": "VTI", "name": "Vanguard Total Stock Market ETF", "exchange": "NYSE", "token": "", "category": "equity", "yahoo": "VTI"},
+    {"symbol": "VT", "name": "Vanguard Total World Stock ETF", "exchange": "NYSE", "token": "", "category": "equity", "yahoo": "VT"},
+    {"symbol": "VXUS", "name": "Vanguard Total International Stock ETF", "exchange": "NASDAQ", "token": "", "category": "equity", "yahoo": "VXUS"},
+    {"symbol": "EEM", "name": "iShares MSCI Emerging Markets ETF", "exchange": "NYSE", "token": "", "category": "equity", "yahoo": "EEM"},
+    {"symbol": "BND", "name": "Vanguard Total Bond Market ETF", "exchange": "NASDAQ", "token": "", "category": "debt", "yahoo": "BND"},
+    {"symbol": "TLT", "name": "iShares 20+ Year Treasury Bond ETF", "exchange": "NASDAQ", "token": "", "category": "debt", "yahoo": "TLT"},
+    {"symbol": "GLD", "name": "SPDR Gold Shares", "exchange": "NYSE", "token": "", "category": "gold", "yahoo": "GLD"},
+    {"symbol": "AGG", "name": "iShares Core U.S. Aggregate Bond ETF", "exchange": "NYSE", "token": "", "category": "debt", "yahoo": "AGG"},
 ]
 
 # Default MVO basket optimized for the longest available common history.

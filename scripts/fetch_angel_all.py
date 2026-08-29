@@ -42,6 +42,7 @@ from pathlib import Path
 
 import pandas as pd
 import requests
+import yfinance as yf
 
 try:
     import pyotp
@@ -49,6 +50,21 @@ except ImportError:
     pyotp = None
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+def fetch_series_yahoo(ticker: str, period: str = "max"):
+    """Download daily close prices for a Yahoo ticker."""
+    try:
+        df = yf.Ticker(ticker).history(period=period, auto_adjust=True)
+        if df.empty:
+            return None
+        close = df["Close"] if "Close" in df.columns else df.iloc[:, 0]
+        close = close.dropna().sort_index()
+        close.index = close.index.tz_localize(None)
+        return close.round(4)
+    except Exception as e:
+        print(f"[!] Yahoo fetch failed for {ticker}: {e}")
+        return None
 DATA_DIR = ROOT / "data" / "angel_one"
 
 LOCAL_IP = os.getenv("ANGEL_LOCAL_IP", "192.168.68.61")
@@ -72,6 +88,18 @@ INSTRUMENTS = [
     {"symbol": "SETFNN50", "name": "SBI ETF Nifty Next 50", "exchange": "NSE", "token": "590111", "category": "equity"},
     {"symbol": "LIQUIDCASE", "name": "DSP Liquidity ETF", "exchange": "NSE", "token": "541519", "category": "debt"},
     {"symbol": "GOLDCASE", "name": "Axis Gold ETF", "exchange": "NSE", "token": "590081", "category": "gold"},
+
+    # US / International ETFs (historical prices via Yahoo Finance)
+    {"symbol": "SPY", "name": "SPDR S&P 500 ETF Trust", "exchange": "NYSE", "token": "", "category": "equity", "yahoo": "SPY"},
+    {"symbol": "QQQ", "name": "Invesco QQQ Trust", "exchange": "NASDAQ", "token": "", "category": "equity", "yahoo": "QQQ"},
+    {"symbol": "VTI", "name": "Vanguard Total Stock Market ETF", "exchange": "NYSE", "token": "", "category": "equity", "yahoo": "VTI"},
+    {"symbol": "VT", "name": "Vanguard Total World Stock ETF", "exchange": "NYSE", "token": "", "category": "equity", "yahoo": "VT"},
+    {"symbol": "VXUS", "name": "Vanguard Total International Stock ETF", "exchange": "NASDAQ", "token": "", "category": "equity", "yahoo": "VXUS"},
+    {"symbol": "EEM", "name": "iShares MSCI Emerging Markets ETF", "exchange": "NYSE", "token": "", "category": "equity", "yahoo": "EEM"},
+    {"symbol": "BND", "name": "Vanguard Total Bond Market ETF", "exchange": "NASDAQ", "token": "", "category": "debt", "yahoo": "BND"},
+    {"symbol": "TLT", "name": "iShares 20+ Year Treasury Bond ETF", "exchange": "NASDAQ", "token": "", "category": "debt", "yahoo": "TLT"},
+    {"symbol": "GLD", "name": "SPDR Gold Shares", "exchange": "NYSE", "token": "", "category": "gold", "yahoo": "GLD"},
+    {"symbol": "AGG", "name": "iShares Core U.S. Aggregate Bond ETF", "exchange": "NYSE", "token": "", "category": "debt", "yahoo": "AGG"},
 ]
 
 
@@ -193,23 +221,38 @@ def fetch_all_historical(api: AngelSmartAPI, out_dir: Path, fromdate: str = "200
 
     for inst in INSTRUMENTS:
         symbol = inst["symbol"]
+        is_international = not inst.get("token") or inst["exchange"] not in ("NSE", "BSE", "MCX")
         print(f"  [hist] {symbol}")
         try:
-            res = api.get_candle_data(inst["exchange"], inst["token"], "ONE_DAY", fromdate, todate)
-            if not res.get("status") or not isinstance(res.get("data"), list):
-                print(f"      [!] no data: {res.get('message')}")
-                continue
-            rows = []
-            for row in res["data"]:
-                rows.append({
-                    "datetime": row[0],
-                    "open": row[1],
-                    "high": row[2],
-                    "low": row[3],
-                    "close": row[4],
-                    "volume": row[5],
+            if is_international:
+                s = fetch_series_yahoo(inst.get("yahoo", symbol), period="max")
+                if s is None or len(s) < 60:
+                    print(f"      [!] no Yahoo data")
+                    continue
+                df = pd.DataFrame({
+                    "datetime": s.index,
+                    "open": s.values,
+                    "high": s.values,
+                    "low": s.values,
+                    "close": s.values,
+                    "volume": 0,
                 })
-            df = pd.DataFrame(rows)
+            else:
+                res = api.get_candle_data(inst["exchange"], inst["token"], "ONE_DAY", fromdate, todate)
+                if not res.get("status") or not isinstance(res.get("data"), list):
+                    print(f"      [!] no data: {res.get('message')}")
+                    continue
+                rows = []
+                for row in res["data"]:
+                    rows.append({
+                        "datetime": row[0],
+                        "open": row[1],
+                        "high": row[2],
+                        "low": row[3],
+                        "close": row[4],
+                        "volume": row[5],
+                    })
+                df = pd.DataFrame(rows)
             df.to_csv(hist_dir / f"{symbol}.csv", index=False)
         except Exception as e:
             print(f"      [!] error: {e}")
@@ -220,10 +263,12 @@ def fetch_all_quotes(api: AngelSmartAPI, out_dir: Path):
     quotes_dir = out_dir / "quotes"
     quotes_dir.mkdir(parents=True, exist_ok=True)
 
-    # Fetch in batches of 50 to keep payload reasonable.
+    # Fetch in batches of 50 to keep payload reasonable. Skip international symbols
+    # because Angel One cannot quote US/foreign markets.
+    local_instruments = [inst for inst in INSTRUMENTS if inst.get("token") and inst["exchange"] in ("NSE", "BSE", "MCX")]
     batch_size = 50
-    for i in range(0, len(INSTRUMENTS), batch_size):
-        batch = INSTRUMENTS[i:i + batch_size]
+    for i in range(0, len(local_instruments), batch_size):
+        batch = local_instruments[i:i + batch_size]
         print(f"  [quote] batch {i // batch_size + 1} ({len(batch)} symbols)")
         try:
             res = api.get_quotes(batch)

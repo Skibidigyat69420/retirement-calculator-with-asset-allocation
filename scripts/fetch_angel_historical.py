@@ -62,6 +62,18 @@ INSTRUMENTS = [
     {"symbol": "LIQUIDCASE", "name": "DSP Liquidity ETF", "exchange": "NSE", "token": "541519", "category": "debt", "yahoo": "LIQUIDCASE.NS"},
     # Gold proxy
     {"symbol": "GOLDCASE", "name": "Axis Gold ETF", "exchange": "NSE", "token": "590081", "category": "gold", "yahoo": "GOLDCASE.NS"},
+
+    # US / International equity & bond ETFs (always fetched via Yahoo Finance)
+    {"symbol": "SPY", "name": "SPDR S&P 500 ETF Trust", "exchange": "NYSE", "token": "", "category": "equity", "yahoo": "SPY"},
+    {"symbol": "QQQ", "name": "Invesco QQQ Trust", "exchange": "NASDAQ", "token": "", "category": "equity", "yahoo": "QQQ"},
+    {"symbol": "VTI", "name": "Vanguard Total Stock Market ETF", "exchange": "NYSE", "token": "", "category": "equity", "yahoo": "VTI"},
+    {"symbol": "VT", "name": "Vanguard Total World Stock ETF", "exchange": "NYSE", "token": "", "category": "equity", "yahoo": "VT"},
+    {"symbol": "VXUS", "name": "Vanguard Total International Stock ETF", "exchange": "NASDAQ", "token": "", "category": "equity", "yahoo": "VXUS"},
+    {"symbol": "EEM", "name": "iShares MSCI Emerging Markets ETF", "exchange": "NYSE", "token": "", "category": "equity", "yahoo": "EEM"},
+    {"symbol": "BND", "name": "Vanguard Total Bond Market ETF", "exchange": "NASDAQ", "token": "", "category": "debt", "yahoo": "BND"},
+    {"symbol": "TLT", "name": "iShares 20+ Year Treasury Bond ETF", "exchange": "NASDAQ", "token": "", "category": "debt", "yahoo": "TLT"},
+    {"symbol": "GLD", "name": "SPDR Gold Shares", "exchange": "NYSE", "token": "", "category": "gold", "yahoo": "GLD"},
+    {"symbol": "AGG", "name": "iShares Core U.S. Aggregate Bond ETF", "exchange": "NYSE", "token": "", "category": "debt", "yahoo": "AGG"},
 ]
 
 # Default MVO basket optimized for the longest available common history while
@@ -264,15 +276,17 @@ def main():
     print("Fetching historical prices...")
     for inst in INSTRUMENTS:
         symbol = inst["symbol"]
+        is_international = not inst["token"] or inst["exchange"] not in ("NSE", "BSE", "MCX")
         print(f"  - {symbol} ({inst['name']})")
         s = None
-        if use_angel:
+        if use_angel and not is_international:
             try:
                 s = angel.fetch_series(inst)
             except Exception as e:
                 print(f"      [!] Angel fetch error: {e}")
         if s is None or len(s) < args.min_days:
-            print(f"      -> Yahoo fallback")
+            source = "Yahoo (international)" if is_international else "Yahoo fallback"
+            print(f"      -> {source}")
             s = fetch_series_yahoo(inst["yahoo"], period="max")
         if s is None or len(s) < args.min_days:
             failed.append(symbol)

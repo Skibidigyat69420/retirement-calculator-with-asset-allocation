@@ -266,7 +266,11 @@ export const MVO = () => {
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">Select Benchmarks / ETFs</label>
             <div className="flex flex-wrap gap-2">
-              {INSTRUMENTS.filter((i) => i.benchmark || ['NIFTYBEES', 'GOLDBEES', 'LIQUIDBEES'].includes(i.symbol)).map((inst) => {
+              {INSTRUMENTS.filter((i) =>
+                i.benchmark ||
+                ['NIFTYBEES', 'GOLDBEES', 'LIQUIDBEES'].includes(i.symbol) ||
+                ['SPY', 'QQQ', 'VTI', 'VT', 'VXUS', 'EEM', 'BND', 'TLT', 'GLD', 'AGG'].includes(i.symbol),
+              ).map((inst) => {
                 const selected = selectedSymbols.includes(inst.symbol);
                 return (
                   <button
