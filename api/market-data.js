@@ -1,6 +1,10 @@
 import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PROJECT_ROOT = resolve(__dirname, '..');
 
 /**
  * Vercel serverless function that serves the bundled historical market data.
@@ -33,7 +37,7 @@ export default function handler(req, res) {
 
 function serveBundle(req, res) {
   try {
-    const filePath = resolve(process.cwd(), 'public', 'data', 'market-data.json');
+    const filePath = resolve(PROJECT_ROOT, 'public', 'data', 'market-data.json');
     const raw = readFileSync(filePath, 'utf8');
     const data = JSON.parse(raw);
 
@@ -122,10 +126,9 @@ function handleRefresh(req, res) {
   }
 
   try {
-    const cwd = resolve(process.cwd());
-    const python = resolve(cwd, '.venv', 'bin', 'python');
-    const script = resolve(cwd, 'scripts', 'fetch_angel_historical.py');
-    const output = execSync(`"${python}" "${script}"`, { cwd, encoding: 'utf8', timeout: 300000 });
+    const python = resolve(PROJECT_ROOT, '.venv', 'bin', 'python');
+    const script = resolve(PROJECT_ROOT, 'scripts', 'fetch_angel_historical.py');
+    const output = execSync(`"${python}" "${script}"`, { cwd: PROJECT_ROOT, encoding: 'utf8', timeout: 300000 });
     return res.status(200).json({ success: true, output: output.split('\n').filter(Boolean) });
   } catch (err) {
     console.error('Market data refresh error:', err);

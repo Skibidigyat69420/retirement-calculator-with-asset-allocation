@@ -1,5 +1,9 @@
 import { readFileSync, readdirSync, statSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PROJECT_ROOT = resolve(__dirname, '..');
 
 /**
  * Serves the most recent Angel One SELECT * snapshot from data/angel_one/{timestamp}/.
@@ -19,7 +23,7 @@ export default function handler(req, res) {
   }
 
   try {
-    const baseDir = resolve(process.cwd(), 'data', 'angel_one');
+    const baseDir = resolve(PROJECT_ROOT, 'data', 'angel_one');
     const entries = readdirSync(baseDir)
       .map((name) => ({ name, path: resolve(baseDir, name) }))
       .filter((entry) => statSync(entry.path).isDirectory())
