@@ -40,13 +40,14 @@ INSTRUMENTS = [
     {"symbol": "GOLDCASE", "name": "Axis Gold ETF", "exchange": "NSE", "token": "590081", "category": "gold", "yahoo": "GOLDCASE.NS"},
 ]
 
-DEFAULT_ALLOCATION_SYMBOLS = ["NIFTY50", "NIFTYNEXT50", "NIFTYMID150", "NIFTYSMALL250", "GOLDBEES", "LIQUIDBEES"]
+# Default MVO basket optimized for the longest available common history.
+DEFAULT_ALLOCATION_SYMBOLS = ["NIFTY50", "NIFTY500", "BANKNIFTY", "GOLDBEES", "LIQUIDBEES"]
 RISK_FREE_RATE = 0.06
 TRADING_DAYS = 252
 
 
-def fetch_series(ticker: str, period: str = "5y"):
-    """Download daily close prices for a Yahoo ticker."""
+def fetch_series(ticker: str, period: str = "max"):
+    """Download daily close prices for a Yahoo ticker from the earliest available date."""
     try:
         df = yf.Ticker(ticker).history(period=period, auto_adjust=True)
         if df.empty:

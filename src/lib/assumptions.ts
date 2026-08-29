@@ -1,5 +1,6 @@
 import type { AssetCategory } from '../types';
 import type { MarketDataSet } from './marketData';
+import { alignMarketData } from './marketData';
 import { DEFAULT_RATES } from './constants';
 
 export interface CategoryAssumptions {
@@ -74,21 +75,33 @@ export function buildAssumptionsFromMarketData(marketData: MarketDataSet): Assum
     });
   });
 
-  // Override with market data covariance for available symbols
-  const symbolToCategory = new Map<string, AssetCategory>();
-  (Object.keys(CATEGORY_SYMBOL_MAP) as AssetCategory[]).forEach((cat) => {
-    (CATEGORY_SYMBOL_MAP[cat] || []).forEach((sym) => symbolToCategory.set(sym, cat));
-  });
+  // Override with market data covariance for available symbols. The bundle stores full
+  // per-symbol histories, so we align the mapped symbols to their common history first.
+  const mappedSymbols = Array.from(
+    new Set((Object.values(CATEGORY_SYMBOL_MAP) as string[][]).flat()),
+  ).filter((sym) => marketData.symbols.includes(sym));
 
-  marketData.symbols.forEach((sym1, i) => {
-    const cat1 = symbolToCategory.get(sym1);
-    if (!cat1) return;
-    marketData.symbols.forEach((sym2, j) => {
-      const cat2 = symbolToCategory.get(sym2);
-      if (!cat2) return;
-      cov[cat1][cat2] = marketData.covariance[i][j];
-    });
-  });
+  if (mappedSymbols.length >= 2) {
+    try {
+      const aligned = alignMarketData(marketData, mappedSymbols);
+      const symbolToCategory = new Map<string, AssetCategory>();
+      (Object.keys(CATEGORY_SYMBOL_MAP) as AssetCategory[]).forEach((cat) => {
+        (CATEGORY_SYMBOL_MAP[cat] || []).forEach((sym) => symbolToCategory.set(sym, cat));
+      });
+
+      aligned.symbols.forEach((sym1, i) => {
+        const cat1 = symbolToCategory.get(sym1);
+        if (!cat1) return;
+        aligned.symbols.forEach((sym2, j) => {
+          const cat2 = symbolToCategory.get(sym2);
+          if (!cat2) return;
+          cov[cat1][cat2] = aligned.covariance[i][j];
+        });
+      });
+    } catch {
+      // Ignore alignment failures and keep default covariance.
+    }
+  }
 
   // Correlation
   const correlation: Record<AssetCategory, Record<AssetCategory, number>> = { ...cov };

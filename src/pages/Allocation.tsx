@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { PieChart, TrendingUp, Target, ArrowRight, AlertTriangle, CheckCircle2, Shield, RotateCcw } from 'lucide-react';
+import { useMemo, useState, useEffect } from 'react';
+import { PieChart, TrendingUp, Target, ArrowRight, AlertTriangle, CheckCircle2, Shield, RotateCcw, BarChart3, Zap } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Slider } from '../components/ui/Slider';
 import { SectionTitle } from '../components/ui/SectionTitle';
@@ -9,15 +9,56 @@ import { useCalculator } from '../context/CalculatorContext';
 import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
 import { formatCurrency, formatPercent } from '../lib/formatters';
 import { projectAssetAllocation, getTargetGlideAllocation } from '../lib/projections';
+import { useMarketData } from '../hooks/useMarketData';
+import { DEFAULT_ALLOCATION_SYMBOLS } from '../lib/instruments';
+import { runMVO, type ConstraintSet, type Portfolio } from '../lib/mvo';
 import type { AssetCategory } from '../types';
 import { Link } from 'react-router-dom';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
 
+const categoryMap: Record<string, AssetCategory> = {
+  equity: 'equity',
+  index: 'equity',
+  debt: 'debt',
+  gold: 'gold',
+  commodity: 'gold',
+};
+
 export const Allocation = () => {
-  const { inputs, assumptions, riskProfile, wealthResult } = useCalculator();
+  const { inputs, assumptions, riskProfile, wealthResult, setInputs } = useCalculator();
   const [manualTargets, setManualTargets] = useState<Record<AssetCategory, number> | null>(null);
   const targets = manualTargets || riskProfile.targets;
+
+  const { data: marketData, loadBackendData } = useMarketData();
+  const [appliedMvo, setAppliedMvo] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadBackendData(DEFAULT_ALLOCATION_SYMBOLS);
+  }, [loadBackendData]);
+
+  const mvoResult = useMemo(() => {
+    if (!marketData || marketData.symbols.length < 2) return null;
+    const means = marketData.stats.map((s) => s.annualizedReturn);
+    const constraints: ConstraintSet = {
+      minWeight: marketData.symbols.map(() => 0),
+      maxWeight: marketData.symbols.map(() => 1),
+      maxEquity: riskProfile.maxEquity / 100,
+    };
+    return runMVO(marketData.symbols, means, marketData.covariance, {
+      samples: 20000,
+      riskFreeRate: riskProfile.riskFreeRate / 100,
+      constraints,
+    });
+  }, [marketData, riskProfile.maxEquity, riskProfile.riskFreeRate]);
+
+  const mvoTargets = useMemo(() => {
+    if (!mvoResult || !marketData) return null;
+    return {
+      maxSharpe: portfolioToCategoryTargets(mvoResult.maxSharpe, marketData.instruments),
+      minVariance: portfolioToCategoryTargets(mvoResult.minVariance, marketData.instruments),
+    };
+  }, [mvoResult, marketData]);
 
   const projection = useMemo(() => {
     try {
@@ -39,6 +80,19 @@ export const Allocation = () => {
 
   const updateTarget = (cat: AssetCategory, value: number) => {
     setManualTargets((prev) => ({ ...(prev || riskProfile.targets), [cat]: value }));
+  };
+
+  const applyMvoTargets = (mvoPortfolio: Portfolio, label: string) => {
+    const newTargets = portfolioToCategoryTargets(mvoPortfolio, marketData?.instruments || []);
+    setManualTargets(newTargets);
+    const equitySplit = Math.round(newTargets.equity);
+    setInputs((prev) => ({
+      ...prev,
+      sip: { ...prev.sip, equitySplit, debtSplit: 100 - equitySplit },
+      stp: { ...prev.stp, equitySplit, debtSplit: 100 - equitySplit },
+    }));
+    setAppliedMvo(label);
+    setTimeout(() => setAppliedMvo(null), 3000);
   };
 
   const assetEvolutionData = useMemo(() => {
@@ -138,6 +192,49 @@ export const Allocation = () => {
         </Card>
       </div>
 
+      {mvoTargets && (
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-serif text-navy flex items-center gap-2">
+              <BarChart3 size={18} className="text-gold" /> Market-Optimized Targets
+            </h3>
+            <Link to="/mvo" className="text-xs text-gold hover:underline flex items-center">
+              Open MVO <ArrowRight size={12} className="ml-1" />
+            </Link>
+          </div>
+          <p className="text-sm text-stone-600 mb-4">
+            Targets derived from the mean-variance efficient frontier using the longest available history. These respect your risk profile's max equity constraint.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { key: 'maxSharpe', label: 'Max Sharpe', targets: mvoTargets.maxSharpe, portfolio: mvoResult?.maxSharpe },
+              { key: 'minVariance', label: 'Min Variance', targets: mvoTargets.minVariance, portfolio: mvoResult?.minVariance },
+            ].map((item) => (
+              <div key={item.key} className="p-4 bg-stone-50 rounded-xl border border-stone-100 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-serif text-navy flex items-center gap-2"><Zap size={16} className="text-gold" /> {item.label}</span>
+                  <span className="text-xs font-mono text-stone-500">Sharpe {item.portfolio?.sharpe.toFixed(2)}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  {CATEGORIES.filter((c) => item.targets[c] > 0.5).map((cat) => (
+                    <div key={cat} className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: ASSET_COLORS[cat] }} />
+                      <span>{ASSET_LABELS[cat]} {formatPercent(item.targets[cat])}</span>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => item.portfolio && applyMvoTargets(item.portfolio, item.label)}
+                  className="w-full py-2 px-3 bg-navy text-white rounded-lg text-xs font-medium hover:bg-stone-800 transition-colors flex items-center justify-center gap-1"
+                >
+                  {appliedMvo === item.label ? <><CheckCircle2 size={14} /> Applied</> : <>Apply to Target Mix</>}
+                </button>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       <Card>
         <h3 className="text-lg font-serif text-navy mb-4">Rebalancing Analysis</h3>
         <div className="overflow-x-auto">
@@ -219,3 +316,19 @@ export const Allocation = () => {
     </div>
   );
 };
+
+function portfolioToCategoryTargets(portfolio: Portfolio, instruments: { category?: string }[]): Record<AssetCategory, number> {
+  const targets: Record<AssetCategory, number> = {
+    equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0,
+  };
+  const total = portfolio.weights.reduce((a, b) => a + b, 0);
+  portfolio.weights.forEach((w, idx) => {
+    const cat = (categoryMap[instruments[idx]?.category || ''] || 'other') as AssetCategory;
+    targets[cat] += total > 0 ? (w / total) * 100 : 0;
+  });
+  const sum = Object.values(targets).reduce((a, b) => a + b, 0);
+  if (sum > 0) {
+    (Object.keys(targets) as AssetCategory[]).forEach((cat) => (targets[cat] = (targets[cat] / sum) * 100));
+  }
+  return targets;
+}

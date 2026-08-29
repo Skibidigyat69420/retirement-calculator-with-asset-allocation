@@ -10,11 +10,13 @@ import {
   Layers,
   ArrowRight,
   Globe,
+  Calendar,
+  Database,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
-  ScatterChart,
-  Scatter,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -28,8 +30,8 @@ import { Badge } from '../components/ui/Badge';
 import { Alert } from '../components/ui/Alert';
 import { useMarketData } from '../hooks/useMarketData';
 import { INSTRUMENTS, DEFAULT_ALLOCATION_SYMBOLS } from '../lib/instruments';
-import { runMVO, type Portfolio, type MVOResult } from '../lib/mvo';
-import { getDefaultDateRange } from '../lib/marketData';
+import { runMVO, type Portfolio, type MVOResult, type ConstraintSet } from '../lib/mvo';
+import { getMaxHistoryDateRange } from '../lib/marketData';
 import { loadSession, buildDefaultCredentials } from '../lib/smartapi';
 import { useCalculator } from '../context/CalculatorContext';
 import { formatPercent } from '../lib/formatters';
@@ -45,46 +47,48 @@ const categoryMap: Record<string, AssetCategory> = {
 };
 
 export const MVO = () => {
-  const { addAsset, updateAsset, inputs, assumptions, riskProfile } = useCalculator();
-  const { data, loading, progress, error, fetchData, loadBackendData } = useMarketData();
+  const { addAsset, updateAsset, inputs, riskProfile, setInputs } = useCalculator();
+  const { data, loading, progress, error, fetchData, loadBackendData, alignToSymbols } = useMarketData();
 
-  const defaultRange = useMemo(() => getDefaultDateRange(3), []);
+  const maxRange = useMemo(() => getMaxHistoryDateRange(), []);
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>(DEFAULT_ALLOCATION_SYMBOLS);
-  const [from, setFrom] = useState(defaultRange.from);
-  const [to, setTo] = useState(defaultRange.to);
+  const [from, setFrom] = useState(maxRange.from);
+  const [to, setTo] = useState(maxRange.to);
+  const [maxEquity, setMaxEquity] = useState(riskProfile.maxEquity);
   const [appliedStrategy, setAppliedStrategy] = useState<string | null>(null);
 
-  const selectedSymbolsKey = selectedSymbols.join(',');
+  // Load the backend bundle once on mount using maximum-history default symbols.
   useEffect(() => {
-    const symbols = selectedSymbolsKey.split(',').filter(Boolean);
-    loadBackendData(symbols, from, to);
-  }, [loadBackendData, selectedSymbolsKey, from, to]);
+    loadBackendData(DEFAULT_ALLOCATION_SYMBOLS, from, to);
+  }, [loadBackendData, from, to]);
+
+  // Re-align data when the user changes the selected symbol set.
+  const alignedData = useMemo(() => {
+    if (!data) return null;
+    return alignToSymbols(selectedSymbols) || data;
+  }, [data, selectedSymbols, alignToSymbols]);
+
+  const equityMask = useMemo(() => {
+    return (alignedData?.instruments || []).map((inst) =>
+      inst?.category === 'index' || inst?.category === 'equity',
+    );
+  }, [alignedData]);
 
   const mvoResult: MVOResult | null = useMemo(() => {
-    const options = { samples: 10000, riskFreeRate: riskProfile.riskFreeRate / 100 };
-    if (data) {
-      return runMVO(data.symbols, data.stats.map((s) => s.annualizedReturn), data.covariance, options);
-    }
-    // Fallback to assumption-driven MVO across broad asset categories
-    const cats: AssetCategory[] = ['equity', 'debt', 'gold', 'liquid', 'other'];
-    const means = cats.map((c) => assumptions.categories[c].mean);
-    const cov = cats.map((i) => cats.map((j) => assumptions.covariance[i][j]));
-    return runMVO(cats, means, cov, { ...options, samples: 8000 });
-  }, [data, assumptions, riskProfile.riskFreeRate]);
-
-  const symbolsForDisplay = useMemo(() => {
-    if (data) return data.symbols;
-    return ['equity', 'debt', 'gold', 'liquid', 'other'];
-  }, [data]);
-
-  const instrumentsForDisplay = useMemo(() => {
-    if (data) return data.instruments;
-    return symbolsForDisplay.map((s) => ({
-      symbol: s,
-      name: s.charAt(0).toUpperCase() + s.slice(1),
-      category: s === 'gold' ? 'gold' : s === 'debt' || s === 'liquid' ? 'debt' : s === 'other' ? 'commodity' : 'index',
-    })) as typeof INSTRUMENTS;
-  }, [data, symbolsForDisplay]);
+    if (!alignedData || alignedData.symbols.length < 2) return null;
+    const means = alignedData.stats.map((s) => s.annualizedReturn);
+    const constraints: ConstraintSet = {
+      minWeight: alignedData.symbols.map(() => 0),
+      maxWeight: alignedData.symbols.map(() => 1),
+      maxEquity: maxEquity / 100,
+      maxVolatility: riskProfile.targetVolatility / 100,
+    };
+    return runMVO(alignedData.symbols, means, alignedData.covariance, {
+      samples: 30000,
+      riskFreeRate: riskProfile.riskFreeRate / 100,
+      constraints,
+    });
+  }, [alignedData, maxEquity, riskProfile.riskFreeRate, riskProfile.targetVolatility]);
 
   const frontierData = useMemo(() => {
     if (!mvoResult) return [];
@@ -92,17 +96,6 @@ export const MVO = () => {
       .filter((p) => p.volatility * 100 <= riskProfile.targetVolatility * 1.2)
       .map((p) => ({ risk: p.volatility * 100, return: p.expectedReturn * 100, sharpe: p.sharpe }));
   }, [mvoResult, riskProfile.targetVolatility]);
-
-  const maxSharpeEquityPct = useMemo(() => {
-    if (!mvoResult) return 0;
-    return mvoResult.maxSharpe.weights.reduce((sum, w, i) => {
-      const symbol = mvoResult.symbols[i];
-      const isEquity = data
-        ? data.instruments[i]?.category === 'index' || data.instruments[i]?.category === 'equity'
-        : symbol === 'equity';
-      return sum + (isEquity ? w : 0);
-    }, 0) * 100;
-  }, [mvoResult, data]);
 
   const highlightedPortfolios = useMemo(() => {
     if (!mvoResult) return [];
@@ -116,20 +109,17 @@ export const MVO = () => {
   }, [mvoResult]);
 
   const correlationMatrix = useMemo(() => {
-    if (!mvoResult) return [];
-    const corr = mvoResult.symbols.map((_, i) =>
-      mvoResult.symbols.map((__, j) => {
-        const cov = mvoResult.covariance[i][j];
-        const stdI = Math.sqrt(mvoResult.covariance[i][i]);
-        const stdJ = Math.sqrt(mvoResult.covariance[j][j]);
-        return stdI > 0 && stdJ > 0 ? cov / (stdI * stdJ) : 0;
-      }),
-    );
-    return mvoResult.symbols.map((sym, i) => ({
+    if (!alignedData) return [];
+    return alignedData.symbols.map((sym, i) => ({
       symbol: sym,
-      values: corr[i].map((v, j) => ({ symbol: mvoResult.symbols[j], value: v })),
+      values: alignedData.correlation[i].map((v, j) => ({ symbol: alignedData.symbols[j], value: v })),
     }));
-  }, [mvoResult]);
+  }, [alignedData]);
+
+  const historyDays = useMemo(() => {
+    if (!alignedData || alignedData.prices.length === 0) return 0;
+    return alignedData.prices[0].dates.length;
+  }, [alignedData]);
 
   const handleBackendFetch = async () => {
     await loadBackendData(selectedSymbols, from, to);
@@ -145,20 +135,41 @@ export const MVO = () => {
     await fetchData(selectedSymbols, from, to, creds, session);
   };
 
-  const applyWeights = (portfolio: Portfolio, strategyName: string) => {
-    if (!data) {
-      // When using fallback assumptions, apply category weights to SIP split instead of adding assets
-      const cats = ['equity', 'debt', 'gold', 'liquid', 'other'] as AssetCategory[];
-      const eqWeight = portfolio.weights[cats.indexOf('equity')] || 0;
-      const debtWeight = portfolio.weights[cats.indexOf('debt')] || 0;
-      const total = eqWeight + debtWeight;
-      if (total > 0) {
-        // Update SIP split proportionally
-        // We can't directly update SIP here without context helper, so we just alert
-        alert(`${strategyName} weights: Equity ${(eqWeight * 100).toFixed(1)}%, Debt ${(debtWeight * 100).toFixed(1)}%. Apply this in Master Plan > Cashflows.`);
-      }
-      setAppliedStrategy(strategyName);
-      setTimeout(() => setAppliedStrategy(null), 3000);
+  const applyWeightsToAllocation = (portfolio: Portfolio, strategyName: string) => {
+    if (!alignedData) return;
+
+    const targets = { ...riskProfile.targets };
+    const total = portfolio.weights.reduce((a, b) => a + b, 0);
+
+    // Reset category weights.
+    (Object.keys(targets) as AssetCategory[]).forEach((cat) => (targets[cat] = 0));
+
+    portfolio.weights.forEach((w, idx) => {
+      const inst = alignedData.instruments[idx];
+      const category = (categoryMap[inst?.category || ''] || 'other') as AssetCategory;
+      targets[category] += total > 0 ? (w / total) * 100 : 0;
+    });
+
+    // Normalize to 100%.
+    const targetTotal = Object.values(targets).reduce((a, b) => a + b, 0);
+    if (targetTotal > 0) {
+      (Object.keys(targets) as AssetCategory[]).forEach((cat) => (targets[cat] = (targets[cat] / targetTotal) * 100));
+    }
+
+    const equitySplit = Math.round(targets.equity);
+    setInputs((prev) => ({
+      ...prev,
+      sip: { ...prev.sip, equitySplit, debtSplit: 100 - equitySplit },
+      stp: { ...prev.stp, equitySplit, debtSplit: 100 - equitySplit },
+    }));
+
+    setAppliedStrategy(`${strategyName}-alloc`);
+    setTimeout(() => setAppliedStrategy(null), 3000);
+  };
+
+  const applyWeightsToAssets = (portfolio: Portfolio, strategyName: string) => {
+    if (!alignedData) {
+      alert('No live market data loaded. Connect Angel One SmartAPI first.');
       return;
     }
 
@@ -166,10 +177,10 @@ export const MVO = () => {
     existingIds.forEach((id) => updateAsset(id as string, { value: 0 }));
 
     portfolio.weights.forEach((w, idx) => {
-      const symbol = data.symbols[idx];
+      const symbol = alignedData.symbols[idx];
       const instrument = INSTRUMENTS.find((i) => i.symbol === symbol);
       const category = (categoryMap[instrument?.category || ''] || 'other') as AssetCategory;
-      const returnPct = (data.stats[idx]?.annualizedReturn || 0.08) * 100;
+      const returnPct = (alignedData.stats[idx]?.annualizedReturn || 0.08) * 100;
       addAsset({
         name: `${instrument?.name || symbol} (${strategyName})`,
         value: Math.round(w * 10000000),
@@ -185,11 +196,13 @@ export const MVO = () => {
     setSelectedSymbols((prev) => (prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol]));
   };
 
+  const sourceLabel = data?.source === 'angel' ? 'Angel One SmartAPI' : data?.source === 'yahoo' ? 'Yahoo Finance' : 'Assumption mode';
+
   return (
     <div className="space-y-8">
       <SectionTitle
         title="Asset Allocation Optimizer"
-        subtitle="Mean-variance optimization using Angel One daily history. When live data is unavailable, the engine falls back to the category assumption set."
+        subtitle="Mean-variance optimization using the longest available daily history. The efficient frontier is built from live or bundled market data and filtered by your risk profile."
         badge="Quant Lab"
       />
 
@@ -199,7 +212,7 @@ export const MVO = () => {
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Risk Profile</div>
           <div className="text-xl font-serif text-navy mt-1">{riskProfile.label}</div>
@@ -211,15 +224,22 @@ export const MVO = () => {
           <div className="text-xs text-stone-500 mt-1">Used for Sharpe ratio calculation</div>
         </Card>
         <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Frontier Filter</div>
-          <div className="text-xl font-serif text-navy mt-1">≤ {formatPercent(riskProfile.targetVolatility * 1.2)}</div>
-          <div className="text-xs text-stone-500 mt-1">Volatility cap for displayed frontier</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">History</div>
+          <div className="text-xl font-serif text-navy mt-1">{historyDays > 0 ? `${historyDays} days` : '—'}</div>
+          <div className="text-xs text-stone-500 mt-1">{alignedData?.dateRange.from} → {alignedData?.dateRange.to}</div>
+        </Card>
+        <Card>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Data Source</div>
+          <div className="text-xl font-serif text-navy mt-1 flex items-center gap-2">
+            <Database size={16} /> {sourceLabel}
+          </div>
+          <div className="text-xs text-stone-500 mt-1">{data?.symbols.length || 0} instruments available</div>
         </Card>
       </div>
 
-      {mvoResult && maxSharpeEquityPct > riskProfile.maxEquity && (
+      {mvoResult && mvoResult.maxSharpe.weights.reduce((sum, w, i) => sum + (equityMask[i] ? w : 0), 0) * 100 > maxEquity && (
         <Alert variant="warning" icon={AlertCircle}>
-          The max-Sharpe portfolio exceeds your risk profile's equity limit ({formatPercent(riskProfile.maxEquity)}). Consider the Min-Variance portfolio or adjust your risk profile.
+          The unconstrained max-Sharpe portfolio exceeds your equity limit. The constrained frontier below respects the max-equity slider.
         </Alert>
       )}
 
@@ -234,11 +254,11 @@ export const MVO = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">From</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1 flex items-center gap-1"><Calendar size={12} /> From</label>
               <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:border-navy" />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">To</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1 flex items-center gap-1"><Calendar size={12} /> To</label>
               <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:border-navy" />
             </div>
           </div>
@@ -258,6 +278,26 @@ export const MVO = () => {
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
+              Max Equity Constraint ({formatPercent(maxEquity)})
+            </label>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={maxEquity}
+              onChange={(e) => setMaxEquity(Number(e.target.value))}
+              className="w-full accent-navy"
+            />
+            <div className="flex justify-between text-xs text-stone-500 mt-1">
+              <span>0%</span>
+              <span>Profile default: {formatPercent(riskProfile.maxEquity)}</span>
+              <span>100%</span>
             </div>
           </div>
 
@@ -307,16 +347,16 @@ export const MVO = () => {
               <h3 className="text-lg font-serif text-navy mb-6">Efficient Frontier</h3>
               <div className="h-96 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ScatterChart margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
+                  <LineChart data={frontierData} margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
                     <XAxis type="number" dataKey="risk" name="Risk" unit="%" tickFormatter={(v) => `${v.toFixed(1)}%`} tick={{ fontSize: 12, fill: '#78716c' }} axisLine={false} tickLine={false} label={{ value: 'Annualized Volatility', position: 'insideBottom', offset: -5, fill: '#78716c', fontSize: 12 }} />
                     <YAxis type="number" dataKey="return" name="Return" unit="%" tickFormatter={(v) => `${v.toFixed(1)}%`} tick={{ fontSize: 12, fill: '#78716c' }} axisLine={false} tickLine={false} label={{ value: 'Expected Return', angle: -90, position: 'insideLeft', fill: '#78716c', fontSize: 12 }} />
                     <Tooltip cursor={{ strokeDasharray: '3 3' }} formatter={((value: number) => `${value.toFixed(2)}%`) as any} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                    <Scatter data={frontierData} fill="#1A233A" opacity={0.4} />
+                    <Line dataKey="return" stroke="#1A233A" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
                     {highlightedPortfolios.map((p) => (
                       <ReferenceDot key={p.key} x={p.risk} y={p.return} r={6} fill={p.color} stroke="none" label={{ value: p.label, position: 'top', fill: p.color, fontSize: 11, fontWeight: 700 }} />
                     ))}
-                  </ScatterChart>
+                  </LineChart>
                 </ResponsiveContainer>
               </div>
             </Card>
@@ -364,8 +404,8 @@ export const MVO = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100">
-                  {data?.stats.map((s, idx) => {
-                    const inst = data.instruments[idx];
+                  {alignedData?.stats.map((s, idx) => {
+                    const inst = alignedData.instruments[idx];
                     return (
                       <tr key={s.symbol}>
                         <td className="py-2 pr-4 font-medium text-navy">{inst?.name || s.symbol}</td>
@@ -376,19 +416,6 @@ export const MVO = () => {
                       </tr>
                     );
                   })}
-                  {!data && assumptions && (
-                    <>
-                      {(['equity', 'debt', 'gold', 'liquid', 'other'] as AssetCategory[]).map((cat) => (
-                        <tr key={cat}>
-                          <td className="py-2 pr-4 font-medium text-navy capitalize">{cat}</td>
-                          <td className="py-2 pr-4 text-right font-mono">{formatPercent(assumptions.categories[cat].mean * 100)}</td>
-                          <td className="py-2 pr-4 text-right font-mono">{formatPercent(assumptions.categories[cat].std * 100)}</td>
-                          <td className="py-2 pr-4 text-right font-mono">{((assumptions.categories[cat].mean - 0.06) / assumptions.categories[cat].std).toFixed(2)}</td>
-                          <td className="py-2 pr-4 text-right font-mono text-rose-600">—</td>
-                        </tr>
-                      ))}
-                    </>
-                  )}
                 </tbody>
               </table>
             </div>
@@ -419,33 +446,42 @@ export const MVO = () => {
                       <span className="text-stone-400 block text-[10px]">VOLATILITY</span>
                       <span className="font-semibold text-navy">{formatPercent(strategy.portfolio.volatility * 100)}</span>
                     </div>
-                    <div className="p-2 bg-stone-50 rounded-lg">
+                    <div className="p-2 bg-stone-50 rounded-lg col-span-2">
                       <span className="text-stone-400 block text-[10px]">SHARPE</span>
                       <span className="font-semibold text-navy">{strategy.portfolio.sharpe.toFixed(2)}</span>
                     </div>
                   </div>
                   <div className="space-y-1">
                     {strategy.portfolio.weights.map((w, idx) => {
-                      const inst = instrumentsForDisplay[idx];
+                      const inst = alignedData?.instruments[idx];
                       const color = ASSET_COLORS[(categoryMap[inst?.category || ''] || 'other') as keyof typeof ASSET_COLORS];
                       return (
                         <div key={idx} className="flex items-center justify-between text-xs">
                           <span className="flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-                            {inst?.name || symbolsForDisplay[idx]}
+                            {inst?.name || alignedData?.symbols[idx]}
                           </span>
                           <span className="font-mono font-medium">{(w * 100).toFixed(1)}%</span>
                         </div>
                       );
                     })}
                   </div>
-                  <Button size="sm" variant="outline" className="w-full" onClick={() => applyWeights(strategy.portfolio, strategy.label)}>
-                    {appliedStrategy === strategy.label ? (
-                      <><Check size={14} className="mr-1" /> Applied</>
-                    ) : (
-                      <>Apply to Plan <ArrowRight size={14} className="ml-1" /></>
-                    )}
-                  </Button>
+                  <div className="flex flex-col gap-2">
+                    <Button size="sm" variant="outline" className="w-full" onClick={() => applyWeightsToAllocation(strategy.portfolio, strategy.label)}>
+                      {appliedStrategy === `${strategy.label}-alloc` ? (
+                        <><Check size={14} className="mr-1" /> Applied</>
+                      ) : (
+                        <>Apply to Allocation <ArrowRight size={14} className="ml-1" /></>
+                      )}
+                    </Button>
+                    <Button size="sm" variant="outline" className="w-full" onClick={() => applyWeightsToAssets(strategy.portfolio, strategy.label)}>
+                      {appliedStrategy === strategy.label ? (
+                        <><Check size={14} className="mr-1" /> Added</>
+                      ) : (
+                        <>Add to Assets <ArrowRight size={14} className="ml-1" /></>
+                      )}
+                    </Button>
+                  </div>
                 </Card>
               );
             })}

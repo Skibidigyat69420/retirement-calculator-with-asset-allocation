@@ -48,6 +48,8 @@ export function getInstrumentsByCategory(category: Instrument['category']): Inst
   return INSTRUMENTS.filter((i) => i.category === category);
 }
 
-export const DEFAULT_ALLOCATION_SYMBOLS = ['NIFTY50', 'NIFTYNEXT50', 'NIFTYMID150', 'NIFTYSMALL250', 'GOLDBEES', 'LIQUIDBEES'];
+// Default MVO basket optimized for the longest available common history while
+// covering large-cap equity, broad equity, banking sector, gold, and liquid debt.
+export const DEFAULT_ALLOCATION_SYMBOLS = ['NIFTY50', 'NIFTY500', 'BANKNIFTY', 'GOLDBEES', 'LIQUIDBEES'];
 
 export const BENCHMARK_SET: Instrument[] = INSTRUMENTS.filter((i) => i.benchmark);

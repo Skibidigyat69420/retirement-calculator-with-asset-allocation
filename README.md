@@ -16,7 +16,7 @@ A comprehensive, institutional-grade individual wealth planning suite built with
 - **MVO Optimizer** — Efficient frontier, max-Sharpe, min-variance, equal-weight, and risk-parity portfolios using the historical data backend; falls back to category assumptions offline.
 
 ### Data & Connectivity
-- **Historical Data Backend** — Real daily prices for Indian indices and ETFs are fetched from Yahoo Finance, stored as CSV/JSON, and served by a Vercel serverless function at `/api/market-data`.
+- **Live Historical Data Backend** — Maximum-history daily prices for Indian indices and ETFs are fetched from Angel One SmartAPI (when credentials are configured) or Yahoo Finance as a fallback, stored as CSV/JSON, and served by a Vercel serverless function at `/api/market-data`.
 - **Angel One SmartAPI** — Optional live refresh for instrument-level candles, holdings, funds, and streaming quotes when you authenticate.
 - **Live Market** — Streaming quote watchlists (when connected).
 - **Market Data** — Browse and download price history.
@@ -73,15 +73,21 @@ ANGEL_TOTP_SECRET=YOUR_TOTP_SECRET
 
 ### Fetch Historical Data
 
-Download real daily prices and rebuild the market-data bundle:
+Download the maximum available daily price history and rebuild the market-data bundle:
 
 ```bash
 npm run fetch:data
 ```
 
-This populates:
+This uses Angel One SmartAPI credentials from `.env` when available, otherwise falls back to Yahoo Finance. To force Yahoo Finance only:
+
+```bash
+npm run fetch:yahoo
+```
+
+The bundle stores full per-symbol histories so the frontend can align any selected subset to its longest common history. This populates:
 - `data/prices/{symbol}.csv` — one CSV per instrument
-- `public/data/market-data.json` — aligned prices, returns, covariance, correlation, and statistics
+- `public/data/market-data.json` — full histories, per-symbol statistics, and default-symbol covariance/correlation
 - Vercel function `api/market-data.js` reads from `public/data/market-data.json` at runtime
 
 ### Development
@@ -140,7 +146,7 @@ Year-by-year asset-class balance projections under mean and stochastic return as
 Deterministic accumulation and distribution engine: SIP, STP, SWP, asset growth, and depletion analysis.
 
 ### `src/lib/mvo.ts`
-Mean-variance optimizer using random portfolio sampling to approximate the efficient frontier and identify max-Sharpe, min-variance, equal-weight, and risk-parity portfolios.
+Mean-variance optimizer that builds a long-only Markowitz efficient frontier from live or bundled historical data. Computes max-Sharpe, min-variance, equal-weight, and risk-parity portfolios, with optional constraints such as max equity and volatility targets.
 
 ### `src/lib/implementationShortfall.ts`
 Post-trade implementation shortfall, pre-trade square-root market impact model, and rebalancing impact simulator.
