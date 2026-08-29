@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ShieldCheck, ArrowRight, ArrowLeft, RotateCcw, CheckCircle2, AlertTriangle, TrendingUp, Target, Activity, Wallet, BarChart2, PieChart } from 'lucide-react';
+import { ShieldCheck, ArrowRight, ArrowLeft, RotateCcw, CheckCircle2, AlertTriangle, TrendingUp, Target, Activity, Wallet, BarChart2, PieChart, Clock, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SectionTitle } from '../components/ui/SectionTitle';
@@ -15,11 +15,22 @@ import type { AssetCategory } from '../types';
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
 const categoryIcons: Record<string, React.ReactNode> = {
   time: <Target size={16} />,
+  tolerance: <Activity size={16} />,
   capacity: <Wallet size={16} />,
-  attitude: <Activity size={16} />,
-  experience: <BarChart2 size={16} />,
+  knowledge: <BarChart2 size={16} />,
   liquidity: <TrendingUp size={16} />,
-  goals: <ShieldCheck size={16} />,
+  flexibility: <ShieldCheck size={16} />,
+  behavior: <Clock size={16} />,
+};
+
+const categoryLabels: Record<string, string> = {
+  time: 'Time Horizon',
+  tolerance: 'Risk Tolerance',
+  capacity: 'Risk Capacity',
+  knowledge: 'Knowledge & Experience',
+  liquidity: 'Liquidity Needs',
+  flexibility: 'Goal Flexibility',
+  behavior: 'Behavioural Stability',
 };
 
 export const RiskQuestionnaire = () => {
@@ -114,13 +125,16 @@ export const RiskQuestionnaire = () => {
             </Card>
 
             <Card>
-              <h3 className="text-lg font-serif text-navy mb-4">Dimension Scores</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-serif text-navy">Dimension Scores</h3>
+                <span className="text-xs text-stone-500">Weighted 0–100</span>
+              </div>
               <div className="space-y-4">
                 {Object.entries(categoryScores).map(([category, scorePct]) => (
                   <div key={category}>
                     <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="flex items-center gap-2 text-stone-600 capitalize">
-                        {categoryIcons[category]} {category}
+                      <span className="flex items-center gap-2 text-stone-600">
+                        {categoryIcons[category]} {categoryLabels[category] || category}
                       </span>
                       <span className="font-medium text-navy">{Math.round(scorePct)}%</span>
                     </div>
@@ -134,6 +148,14 @@ export const RiskQuestionnaire = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+              <div className="mt-4 p-3 bg-stone-100 rounded-xl border border-stone-200 text-xs text-stone-600 flex items-start gap-2">
+                <Info size={14} className="shrink-0 mt-0.5 text-gold" />
+                <p>
+                  Risk Tolerance (25%) and Risk Capacity (20%) carry the most weight.
+                  A high-risk profile requires both the willingness to accept volatility
+                  and the financial ability to recover from it.
+                </p>
               </div>
             </Card>
           </div>
@@ -193,7 +215,7 @@ export const RiskQuestionnaire = () => {
     <div className="space-y-6">
       <SectionTitle
         title="Risk Questionnaire"
-        subtitle="Answer 8 questions to discover your risk profile. The result will drive your strategic allocation, MVO constraints, and goal success thresholds."
+        subtitle="Answer 16 questions across seven dimensions to discover your risk profile. The result drives your strategic allocation, MVO constraints, and goal success thresholds."
         badge="Behavioural Finance"
       />
 
@@ -223,8 +245,8 @@ export const RiskQuestionnaire = () => {
           >
             <div className="flex items-center gap-2 mb-4">
               <Badge variant="gold" className="flex items-center gap-1">
-                {categoryIcons[currentQuestion.category]}
-                {currentQuestion.category}
+                {categoryIcons[currentQuestion.dimension]}
+                {categoryLabels[currentQuestion.dimension] || currentQuestion.dimension}
               </Badge>
             </div>
 

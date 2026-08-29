@@ -4,21 +4,44 @@ A comprehensive, institutional-grade individual wealth planning platform built w
 
 The tool is designed for financial advisers and sophisticated individuals who want more than a static spreadsheet. Every input feeds a single Monte Carlo wealth engine, so changes on one page instantly ripple through the dashboard, goal planner, retirement check, allocation view, MVO optimizer, and the Investment Policy Statement generator.
 
-## How the System Flows
+## Inputs to Outputs: How Everything Works
 
-At the centre of the application is the `CalculatorContext`. It holds one canonical `MasterPlanInputs` object — your age, income, expenses, assets, SIP/STP/SWP settings, and goals — and produces two derived result objects:
+This planner is built around a single rule: every input should flow to every relevant output. There is no hidden state and no page-specific silos.
 
-- `result` from `src/lib/calculations.ts` — a deterministic accumulation and distribution timeline.
-- `wealthResult` from `src/lib/wealthEngine.ts` — a richer Monte Carlo output with goal probabilities, rebalancing trades, tax summary, currency exposure, and percentile fan charts.
+### The three input layers
 
-All ten route pages read from this context, so there is no hidden state drift. Update your monthly SIP in the Master Plan and the Dashboard, Reports, Retirement, and IPS pages all see the new number immediately.
+1. **Who you are** — entered through the Risk Questionnaire and Master Plan Profile.
+   - Age, retirement age, life expectancy
+   - Annual income and monthly expenditure
+   - Risk tolerance, capacity, knowledge, liquidity needs, goal flexibility, and behavioural stability
+2. **What you own and commit** — entered through Master Plan Assets and Cashflows.
+   - Existing assets by category and currency
+   - Monthly SIP amount, step-up rate, and equity/debt split
+   - Optional STP: a lumpsum deployed monthly into equity/debt
+   - SWP: target monthly income in retirement, post-retirement return, tax rate
+3. **What you want** — entered through Master Plan Goals.
+   - Essential, important, and aspirational goals with target amounts, horizons, and inflation
 
-The data pipeline works like this:
+### How inputs become outputs
 
-1. **Raw market data** is fetched ahead of time by Python scripts and stored as CSVs in `data/prices/` and as a bundled JSON file in `public/data/market-data.json`.
-2. The frontend loads that bundle through `/api/market-data` and computes return, volatility, covariance, and correlation statistics.
-3. Those statistics become the `AssumptionSet` that drives Monte Carlo simulations and the MVO optimizer.
-4. If you authenticate Angel One SmartAPI, you can bypass the bundle and pull live historical candles, funds, holdings, positions, orders, and trades directly into the app.
+All inputs live in one object, `MasterPlanInputs`, managed by `CalculatorContext`. Two engines transform that object into results:
+
+- `src/lib/calculations.ts` — a deterministic accumulation and distribution timeline.
+- `src/lib/wealthEngine.ts` — a correlated Monte Carlo simulation that produces goal success rates, percentile fan charts, rebalancing trades, tax and currency summaries, and sustainability checks.
+
+Because every page reads from the same context, the output you see on the Dashboard, Goal Planner, Retirement page, Allocation page, Reports, and IPS is always consistent. Change your SIP on the Cashflows tab and every chart, metric, and recommendation updates immediately.
+
+### Where market data fits in
+
+Market data is an optional but powerful enrichment layer. It does not replace your inputs; it calibrates the assumptions that drive projections and optimization.
+
+1. A Python fetcher downloads the maximum available daily price history for Indian indices/ETFs and international ETFs.
+2. The fetcher writes one CSV per symbol to `data/prices/` and bundles everything into `public/data/market-data.json`.
+3. The frontend loads the bundle through `/api/market-data` and computes annualised return, volatility, Sharpe ratio, max drawdown, covariance, and correlation.
+4. Those statistics become the `AssumptionSet` used by the wealth engine, projections engine, and MVO optimiser.
+5. If you connect Angel One SmartAPI, you can bypass the bundle and refresh candles, funds, holdings, positions, orders, and trades live.
+
+If the bundle is missing, the app falls back to sensible long-term assumptions and every planning feature still works.
 
 ## Core Planning Modules
 
@@ -26,12 +49,24 @@ The data pipeline works like this:
 The executive landing page shows net worth, savings rate, risk profile, terminal corpus, and plan success probability at a glance. It highlights sustainability warnings and goals that fall below your risk-profile threshold, then provides quick-action links to every other module.
 
 ### Risk Questionnaire
-Eight behavioural questions covering time horizon, capacity, attitude, experience, liquidity, and goals. The answers produce a risk profile that sets:
+A comprehensive 16-question assessment based on established risk-profiling practice, including the Grable & Lytton Risk Tolerance Scale and CFA Institute guidance. Questions are grouped into seven weighted dimensions:
+
+| Dimension | Weight | What it measures |
+|-----------|--------|------------------|
+| Time Horizon | 15% | When the money is likely to be needed |
+| Risk Tolerance | 25% | Emotional willingness to accept losses and volatility |
+| Risk Capacity | 20% | Financial ability to recover from losses — income stability, net worth, future liabilities |
+| Knowledge & Experience | 10% | Understanding of markets and prior exposure to volatile assets |
+| Liquidity Needs | 10% | How much capital must stay accessible |
+| Goal Flexibility | 10% | Whether goals are fixed or can shift |
+| Behavioural Stability | 10% | Past behaviour, regret aversion, and monitoring frequency |
+
+The weighted score maps to one of five profiles — Conservative, Moderate, Balanced, Growth, or Aggressive — and sets:
 
 - Strategic allocation targets (equity, debt, gold, real estate, liquid, other)
 - Maximum equity and volatility constraints for the MVO optimizer
 - Goal success thresholds and Monte Carlo simulation count
-- A glide path from today to retirement
+- A glide path from today's equity weight to the equity weight at retirement
 
 The profile is persisted to `localStorage` and can be applied to the Master Plan with one click.
 
@@ -108,8 +143,8 @@ The frontend does not need Angel One credentials for MVO, allocation, or plan re
 # Indian + international bundle (uses Angel One when creds are present, Yahoo Finance otherwise)
 npm run fetch:data
 
-# Yahoo Finance only
-npm run fetch:yahoo
+# Yahoo Finance only (no Angel One credentials needed)
+npm run fetch:data -- --yahoo-only
 
 # Full Angel One SELECT * dump: profile, funds, holdings, positions, orders, trades, historical candles, quotes
 npm run fetch:angel:all
@@ -127,11 +162,23 @@ Fetched outputs land in:
 - `data/angel_one/{timestamp}/` — full Angel One account snapshot
 - `public/data/market-data.json` — bundle consumed by the app
 
+### Verifying the feed
+
+After fetching, confirm the bundle is healthy:
+
+```bash
+# While the dev server is running
+curl -s http://127.0.0.1:5173/api/market-status | python3 -m json.tool
+```
+
+The status endpoint returns symbol count, source, full date range, default MVO basket range, and whether covariance/correlation matrices are present. You can also open the MVO page and check the **Data Source** card: it should show the number of instruments available and the history length.
+
 ## API Routes
 
 The `api/` folder contains Vercel-style serverless functions. During local development they are served by a custom Vite plugin in `vite.config.ts`.
 
 - `GET /api/market-data` — serve the bundled market data
+- `GET /api/market-status` — bundle metadata and health check
 - `POST /api/market-data` — refresh the bundle by running the Python fetcher
 - `POST /api/save-ips` — save an IPS Markdown document to `./ips/`
 - `GET /api/list-ips` — list saved IPS documents
@@ -190,7 +237,7 @@ The `api/` folder contains Vercel-style serverless functions. During local devel
 npm install
 python3 -m venv .venv
 source .venv/bin/activate
-pip install yfinance pandas numpy
+pip install -r requirements.txt
 ```
 
 ### Environment Variables
