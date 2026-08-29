@@ -145,7 +145,8 @@ export const MVO = () => {
     (Object.keys(targets) as AssetCategory[]).forEach((cat) => (targets[cat] = 0));
 
     portfolio.weights.forEach((w, idx) => {
-      const inst = alignedData.instruments[idx];
+      const symbol = alignedData.symbols[idx];
+      const inst = INSTRUMENTS.find((i) => i.symbol === symbol) || alignedData.instruments[idx];
       const category = (categoryMap[inst?.category || ''] || 'other') as AssetCategory;
       targets[category] += total > 0 ? (w / total) * 100 : 0;
     });
@@ -178,12 +179,14 @@ export const MVO = () => {
 
     portfolio.weights.forEach((w, idx) => {
       const symbol = alignedData.symbols[idx];
-      const instrument = INSTRUMENTS.find((i) => i.symbol === symbol);
+      const instrument = INSTRUMENTS.find((i) => i.symbol === symbol) || alignedData.instruments[idx];
       const category = (categoryMap[instrument?.category || ''] || 'other') as AssetCategory;
       const returnPct = (alignedData.stats[idx]?.annualizedReturn || 0.08) * 100;
+      const value = Math.round(w * 10000000);
+      if (value <= 0) return;
       addAsset({
         name: `${instrument?.name || symbol} (${strategyName})`,
-        value: Math.round(w * 10000000),
+        value,
         returnRate: Math.max(0, Math.min(30, returnPct)),
         category,
       });
@@ -264,21 +267,21 @@ export const MVO = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">Select Benchmarks / ETFs</label>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
+              Select Assets ({data?.symbols.length || 0} available)
+            </label>
             <div className="flex flex-wrap gap-2">
-              {INSTRUMENTS.filter((i) =>
-                i.benchmark ||
-                ['NIFTYBEES', 'GOLDBEES', 'LIQUIDBEES'].includes(i.symbol) ||
-                ['SPY', 'QQQ', 'VTI', 'VT', 'VXUS', 'EEM', 'BND', 'TLT', 'GLD', 'AGG'].includes(i.symbol),
-              ).map((inst) => {
-                const selected = selectedSymbols.includes(inst.symbol);
+              {(data?.symbols || DEFAULT_ALLOCATION_SYMBOLS).map((symbol) => {
+                const instrument = INSTRUMENTS.find((i) => i.symbol === symbol);
+                const selected = selectedSymbols.includes(symbol);
                 return (
                   <button
-                    key={inst.symbol}
-                    onClick={() => toggleSymbol(inst.symbol)}
+                    key={symbol}
+                    onClick={() => toggleSymbol(symbol)}
+                    title={instrument?.name || symbol}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${selected ? 'bg-navy text-white border-navy' : 'bg-white text-stone-600 border-stone-200 hover:border-navy'}`}
                   >
-                    {inst.name}
+                    {instrument?.name || symbol}
                   </button>
                 );
               })}

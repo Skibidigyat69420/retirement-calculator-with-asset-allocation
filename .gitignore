@@ -30,3 +30,4 @@ __pycache__/
 *.sw?
 ips/*
 !ips/.gitkeep
+data/live_feed.csv
