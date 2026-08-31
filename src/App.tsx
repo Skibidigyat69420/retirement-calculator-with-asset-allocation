@@ -12,6 +12,7 @@ import { IPSTemplate } from './pages/IPSTemplate';
 import { RiskQuestionnaire } from './pages/RiskQuestionnaire';
 import { Reports } from './pages/Reports';
 import { AngelData } from './pages/AngelData';
+import { Calculators } from './pages/Calculators';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
             <Route path="/allocation" element={<Allocation />} />
             <Route path="/mvo" element={<MVO />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/calculators" element={<Calculators />} />
             <Route path="/ips" element={<IPSTemplate />} />
             <Route path="/angel-connect" element={<AngelConnect />} />
             <Route path="/angel-data" element={<AngelData />} />

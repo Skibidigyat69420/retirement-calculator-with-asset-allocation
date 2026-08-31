@@ -58,6 +58,7 @@ export interface RiskProfile {
   equityAtRetirement: number;
   persona: string;
   recommendedApproach: string;
+  stressTestVerdict: string;
 }
 
 export interface RiskQuestion {

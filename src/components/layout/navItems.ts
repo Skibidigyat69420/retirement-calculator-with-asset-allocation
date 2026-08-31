@@ -17,6 +17,7 @@ export const navItems = [
   { path: '/risk', label: 'Risk Profile', icon: Shield },
   { path: '/master-plan', label: 'Master Plan', icon: PieChart },
   { path: '/goal', label: 'Goals', icon: Target },
+  { path: '/calculators', label: 'Calculators', icon: Calculator },
   { path: '/retirement', label: 'Retirement', icon: Calculator },
   { path: '/allocation', label: 'Allocation', icon: TrendingUp },
   { path: '/mvo', label: 'MVO', icon: BarChart2 },

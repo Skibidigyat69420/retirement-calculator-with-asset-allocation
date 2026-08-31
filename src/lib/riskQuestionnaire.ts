@@ -24,6 +24,7 @@ export interface RiskProfile {
   // Persona
   persona: string;
   recommendedApproach: string;
+  stressTestVerdict: string;
 }
 
 export type RiskDimension =
@@ -33,7 +34,8 @@ export type RiskDimension =
   | 'knowledge'
   | 'liquidity'
   | 'flexibility'
-  | 'behavior';
+  | 'behavior'
+  | 'context';
 
 export interface RiskQuestion {
   id: string;
@@ -48,15 +50,17 @@ export interface RiskQuestion {
 }
 
 /**
- * Comprehensive risk-assessment questionnaire.
+ * Detailed risk-assessment questionnaire.
  *
- * Drawing on the Grable & Lytton Risk Tolerance Scale, CFA Institute
- * risk-profiling guidance, and behavioural-finance practice. Questions are
- * grouped into seven dimensions so the final profile reflects both willingness
- * (attitude/behaviour) and ability (capacity/time/liquidity) to take risk.
+ * Built from established frameworks: Grable & Lytton Risk Tolerance Scale,
+ * CFA Institute risk-profiling guidance, and behavioural-finance research on
+ * loss aversion, mental accounting, and recency bias. Twenty questions are
+ * grouped into eight dimensions so the final profile reflects both willingness
+ * (attitude/behaviour) and ability (capacity/time/liquidity/context) to take
+ * risk, and so advisers can spot gaps between the two.
  */
 export const RISK_QUESTIONS: RiskQuestion[] = [
-  // === Time Horizon (15%) ===
+  // === Time Horizon (12%) ===
   {
     id: 'time-horizon-main',
     dimension: 'time',
@@ -82,7 +86,7 @@ export const RISK_QUESTIONS: RiskQuestion[] = [
     ],
   },
 
-  // === Risk Tolerance / Attitude (25%) ===
+  // === Risk Tolerance / Attitude (22%) ===
   {
     id: 'loss-reaction',
     dimension: 'tolerance',
@@ -120,7 +124,7 @@ export const RISK_QUESTIONS: RiskQuestion[] = [
     ],
   },
 
-  // === Risk Capacity (20%) ===
+  // === Risk Capacity (18%) ===
   {
     id: 'income-stability',
     dimension: 'capacity',
@@ -158,7 +162,7 @@ export const RISK_QUESTIONS: RiskQuestion[] = [
     ],
   },
 
-  // === Knowledge & Experience (10%) ===
+  // === Financial Knowledge & Experience (10%) ===
   {
     id: 'experience',
     dimension: 'knowledge',
@@ -184,7 +188,7 @@ export const RISK_QUESTIONS: RiskQuestion[] = [
     ],
   },
 
-  // === Liquidity Needs (10%) ===
+  // === Liquidity & Safety Net (10%) ===
   {
     id: 'liquidity-buffer',
     dimension: 'liquidity',
@@ -210,7 +214,7 @@ export const RISK_QUESTIONS: RiskQuestion[] = [
     ],
   },
 
-  // === Goal Flexibility / Constraints (10%) ===
+  // === Goal Flexibility (8%) ===
   {
     id: 'goals-essential',
     dimension: 'flexibility',
@@ -273,17 +277,56 @@ export const RISK_QUESTIONS: RiskQuestion[] = [
       { label: 'Only when reviewing with my adviser', score: 10 },
     ],
   },
+
+  // === Portfolio Context / Concentration (10%) ===
+  {
+    id: 'portfolio-concentration',
+    dimension: 'context',
+    text: 'How concentrated is your overall wealth in one asset, business, or employer?',
+    options: [
+      { label: 'Most wealth depends on one stock, business, or job', score: 1, description: 'High concentration risk' },
+      { label: 'Significant exposure to one source', score: 3 },
+      { label: 'Moderately diversified', score: 5 },
+      { label: 'Well diversified across asset classes', score: 8 },
+      { label: 'Very diversified across assets, geographies, and income sources', score: 10 },
+    ],
+  },
+  {
+    id: 'insurance-safety-net',
+    dimension: 'context',
+    text: 'How protected are you against large unexpected shocks (health, liability, property, disability)?',
+    options: [
+      { label: 'No meaningful insurance cover', score: 1 },
+      { label: 'Basic cover only', score: 3 },
+      { label: 'Adequate standard cover', score: 5 },
+      { label: 'Comprehensive cover with contingencies', score: 8 },
+      { label: 'Fully insured with umbrella / excess cover', score: 10 },
+    ],
+  },
+  {
+    id: 'dependents-obligations',
+    dimension: 'context',
+    text: 'How many people depend on your income or financial support?',
+    options: [
+      { label: 'Many dependents with limited support network', score: 1 },
+      { label: 'Several dependents', score: 3 },
+      { label: 'A few dependents', score: 5 },
+      { label: 'One dependent or shared support', score: 8 },
+      { label: 'No dependents / fully independent', score: 10 },
+    ],
+  },
 ];
 
 /** Dimension weights — willingness and ability are both required. */
 export const DIMENSION_WEIGHTS: Record<RiskDimension, number> = {
-  time: 0.15,
-  tolerance: 0.25,
-  capacity: 0.20,
+  time: 0.12,
+  tolerance: 0.22,
+  capacity: 0.18,
   knowledge: 0.10,
   liquidity: 0.10,
-  flexibility: 0.10,
+  flexibility: 0.08,
   behavior: 0.10,
+  context: 0.10,
 };
 
 export const RISK_PROFILES: RiskProfile[] = [
@@ -304,6 +347,7 @@ export const RISK_PROFILES: RiskProfile[] = [
     equityAtRetirement: 20,
     persona: 'You prioritise sleep-over-returns. Your focus is preserving capital, generating steady income, and avoiding permanent loss.',
     recommendedApproach: 'Heavy allocation to high-quality debt and liquid assets, with a small equity sleeve for inflation protection. Prefer SIPs over lumpsum equity deployment.',
+    stressTestVerdict: 'A 2008-style 30–40% equity drawdown would likely be unacceptable. Keep equity exposure low and use gold/debt as ballast.',
   },
   {
     id: 'moderate',
@@ -322,6 +366,7 @@ export const RISK_PROFILES: RiskProfile[] = [
     equityAtRetirement: 30,
     persona: 'You accept modest fluctuations in exchange for better long-term returns than pure debt, but large drawdowns make you uncomfortable.',
     recommendedApproach: 'Balanced equity-debt allocation with gold as a diversifier. Rebalance annually and use STPs for lumpsum deployment.',
+    stressTestVerdict: 'You can tolerate a 10–15% portfolio decline but should avoid aggressive equity concentrations.',
   },
   {
     id: 'balanced',
@@ -340,6 +385,7 @@ export const RISK_PROFILES: RiskProfile[] = [
     equityAtRetirement: 35,
     persona: 'You are comfortable riding out market cycles for meaningful real growth, provided the plan stays broadly on track.',
     recommendedApproach: 'Core equity allocation with debt and gold providing ballast. Use STPs for lumpsum deployment and rebalance when drift exceeds 5%.',
+    stressTestVerdict: 'A 20% portfolio decline is uncomfortable but manageable. Stay diversified and avoid panic selling.',
   },
   {
     id: 'growth',
@@ -358,6 +404,7 @@ export const RISK_PROFILES: RiskProfile[] = [
     equityAtRetirement: 40,
     persona: 'You think in decades, not quarters, and see market falls as opportunities to add to growth assets.',
     recommendedApproach: 'Equity-heavy portfolio with tactical allocation around extremes and disciplined rebalancing. Keep a small liquid reserve for opportunistic buying.',
+    stressTestVerdict: 'You can withstand a 25–30% drawdown as long as the long-term thesis remains intact.',
   },
   {
     id: 'aggressive',
@@ -376,6 +423,7 @@ export const RISK_PROFILES: RiskProfile[] = [
     equityAtRetirement: 45,
     persona: 'You have high conviction in equity compounding and the emotional capacity to hold through severe corrections without changing course.',
     recommendedApproach: 'Concentrated equity allocation with small gold/liquid buffers. Consider alternatives opportunistically and rebalance tactically.',
+    stressTestVerdict: 'You can emotionally and financially absorb a 35–45% drawdown. Maintain liquidity so you are not forced to sell at the bottom.',
   },
 ];
 
@@ -400,6 +448,7 @@ function getDimensionScores(answers: RiskAnswers): Record<RiskDimension, Dimensi
     liquidity: { score: 0, max: 0 },
     flexibility: { score: 0, max: 0 },
     behavior: { score: 0, max: 0 },
+    context: { score: 0, max: 0 },
   };
 
   RISK_QUESTIONS.forEach((q) => {
@@ -430,11 +479,6 @@ function getDimensionScores(answers: RiskAnswers): Record<RiskDimension, Dimensi
 
 /**
  * Weighted composite risk score (0–100).
- *
- * Each dimension is normalised to 0–100, then multiplied by its weight.
- * This prevents any single question from dominating the profile and
- * ensures both willingness (tolerance/behaviour) and ability (capacity/time/
- * liquidity) are required for a higher-risk profile.
  */
 export function calculateRiskScore(answers: RiskAnswers): number {
   const dimensions = getDimensionScores(answers);
@@ -463,6 +507,134 @@ export function getCategoryScores(answers: RiskAnswers): Record<string, number> 
 
 export function getDimensionBreakdown(answers: RiskAnswers): Record<RiskDimension, DimensionScore> {
   return getDimensionScores(answers);
+}
+
+export interface RiskGapAnalysis {
+  tolerancePct: number;
+  capacityPct: number;
+  gap: number; // positive = tolerance > capacity
+  verdict: string;
+}
+
+export function analyzeRiskGap(answers: RiskAnswers): RiskGapAnalysis {
+  const dims = getDimensionScores(answers);
+  const tolerancePct = dims.tolerance.percentage;
+  const capacityPct = dims.capacity.percentage;
+  const gap = tolerancePct - capacityPct;
+
+  let verdict: string;
+  if (gap > 20) {
+    verdict = 'Your willingness to take risk exceeds your financial capacity. The plan should use the lower capacity score to size equity exposure, or you should build a larger safety buffer before increasing risk.';
+  } else if (gap < -20) {
+    verdict = 'Your financial capacity is higher than your comfort with risk. You can afford more risk, but only take it if you are emotionally prepared; otherwise the plan may be abandoned in a downturn.';
+  } else {
+    verdict = 'Your risk tolerance and risk capacity are reasonably aligned. The recommended profile reflects both.';
+  }
+
+  return { tolerancePct, capacityPct, gap, verdict };
+}
+
+export interface BehavioralBias {
+  bias: string;
+  level: 'low' | 'moderate' | 'high';
+  description: string;
+  suggestion: string;
+}
+
+export function detectBehavioralBiases(answers: RiskAnswers): BehavioralBias[] {
+  const biases: BehavioralBias[] = [];
+
+  const lossReaction = answers['loss-reaction'] || 0;
+  const regret = answers['regret-aversion'] || 0;
+  const monitoring = answers['monitoring-frequency'] || 0;
+  const drawdown = answers['drawdown-tolerance'] || 0;
+  const pastBehavior = answers['past-behavior'] || 0;
+  const experience = answers['experience'] || 0;
+  const knowledge = answers['understanding-risk'] || 0;
+
+  // Loss aversion: high regret of losses + low drawdown tolerance
+  if (regret <= 3 && drawdown <= 4) {
+    biases.push({
+      bias: 'Loss Aversion',
+      level: 'high',
+      description: 'You feel losses much more strongly than equivalent gains.',
+      suggestion: 'Keep equity exposure at the lower end of your profile range and use gold/debt as emotional anchors.',
+    });
+  }
+
+  // Overconfidence: high knowledge/experience + aggressive past behaviour but low monitoring
+  if (experience >= 8 && knowledge >= 8 && monitoring <= 3) {
+    biases.push({
+      bias: 'Overconfidence / Over-monitoring',
+      level: 'moderate',
+      description: 'High confidence combined with frequent checking can lead to reactive trading.',
+      suggestion: 'Set a quarterly review calendar and pre-commit to rebalancing rules before markets move.',
+    });
+  }
+
+  // Panic selling risk: past behavior shows selling + low tolerance
+  if (pastBehavior <= 3 && lossReaction <= 3) {
+    biases.push({
+      bias: 'Panic-selling Tendency',
+      level: 'high',
+      description: 'You have previously sold during declines and are likely to do so again.',
+      suggestion: 'Reduce equity, automate rebalancing, and agree a written investment policy before the next downturn.',
+    });
+  }
+
+  // Recency / over-monitoring: checks very frequently
+  if (monitoring <= 3) {
+    biases.push({
+      bias: 'Noise Sensitivity',
+      level: 'high',
+      description: 'Frequent portfolio checks make short-term volatility feel like long-term risk.',
+      suggestion: 'Check the portfolio no more than monthly; review the Master Plan quarterly.',
+    });
+  }
+
+  // Action bias: wants to do something in declines but also fears them
+  if (lossReaction >= 8 && drawdown <= 5) {
+    biases.push({
+      bias: 'Action Bias vs Safety Preference',
+      level: 'moderate',
+      description: 'You want to buy dips but also have low drawdown tolerance — a conflict that can cause whipsawing.',
+      suggestion: 'Use a rules-based STP and keep a small "opportunistic" sleeve separate from core assets.',
+    });
+  }
+
+  return biases;
+}
+
+export function generateActionChecklist(profile: RiskProfile, gap: RiskGapAnalysis, biases: BehavioralBias[]): string[] {
+  const actions: string[] = [];
+
+  actions.push(`Set strategic allocation to ${profile.label.toLowerCase()} targets: ${profile.targets.equity}% equity, ${profile.targets.debt}% debt, ${profile.targets.gold}% gold.`);
+  actions.push(`Limit equity exposure to ${profile.maxEquity}% and expect a maximum drawdown around ${profile.maxDrawdown}%.`);
+  actions.push(`Require at least ${profile.goalSuccessThreshold}% probability of success before marking goals as on track.`);
+
+  if (gap.gap > 20) {
+    actions.push('Build a larger emergency fund and safety net before raising equity above capacity.');
+  } else if (gap.gap < -20) {
+    actions.push('Revisit the questionnaire in 6–12 months; if comfort rises, consider a gradual equity step-up.');
+  }
+
+  if (biases.some((b) => b.bias === 'Panic-selling Tendency')) {
+    actions.push('Automate SIPs and write down a rebalancing policy now to avoid emotion-driven selling later.');
+  }
+
+  if (biases.some((b) => b.bias === 'Noise Sensitivity')) {
+    actions.push('Reduce portfolio-checking frequency to monthly or quarterly.');
+  }
+
+  if (profile.id === 'conservative' || profile.id === 'moderate') {
+    actions.push('Prioritise debt and gold for stability; use equity only for long-dated goals.');
+  }
+
+  if (profile.id === 'growth' || profile.id === 'aggressive') {
+    actions.push('Maintain 6–12 months of liquidity so you are never forced to sell equities in a downturn.');
+  }
+
+  return actions;
 }
 
 // Convert profile targets to record with decimals (0-1)

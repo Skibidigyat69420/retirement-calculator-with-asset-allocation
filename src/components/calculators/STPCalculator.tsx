@@ -1,0 +1,67 @@
+import { useMemo, useState } from 'react';
+import { Wallet, ArrowRightLeft, PiggyBank, Calendar } from 'lucide-react';
+import { NumberInput } from '../ui/NumberInput';
+import { MetricCard } from '../ui/MetricCard';
+import { Card } from '../ui/Card';
+import { CalculatorShell } from './CalculatorShell';
+import { calculateSTP } from '../../lib/calculators';
+import { formatCurrency } from '../../lib/formatters';
+
+export const STPCalculator = () => {
+  const [lumpsum, setLumpsum] = useState(50_00_000);
+  const [monthlyTransfer, setMonthlyTransfer] = useState(1_00_000);
+  const [liquidReturn, setLiquidReturn] = useState(7);
+  const [targetReturn, setTargetReturn] = useState(12);
+
+  const result = useMemo(
+    () => calculateSTP(lumpsum, monthlyTransfer, liquidReturn, targetReturn),
+    [lumpsum, monthlyTransfer, liquidReturn, targetReturn],
+  );
+
+  return (
+    <CalculatorShell
+      title="STP Calculator"
+      description="Model deploying a lumpsum from a liquid fund into a target portfolio gradually."
+      inputs={
+        <>
+          <NumberInput label="Lumpsum Capital" value={lumpsum} onChange={setLumpsum} />
+          <NumberInput label="Monthly Transfer" value={monthlyTransfer} onChange={setMonthlyTransfer} />
+          <NumberInput label="Liquid Fund Return" value={liquidReturn} onChange={setLiquidReturn} suffix="%" />
+          <NumberInput label="Target Portfolio Return" value={targetReturn} onChange={setTargetReturn} suffix="%" />
+        </>
+      }
+      results={
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <MetricCard label="Initial Capital" value={formatCurrency(lumpsum)} icon={<Wallet size={18} />} variant="navy" />
+            <MetricCard label="STP Duration" value={`${result.months} months`} icon={<Calendar size={18} />} />
+            <MetricCard label="Final Target Value" value={formatCurrency(result.target)} icon={<ArrowRightLeft size={18} />} variant="gold" />
+            <MetricCard label="Total Final Value" value={formatCurrency(result.total)} icon={<PiggyBank size={18} />} variant="success" />
+          </div>
+
+          <Card>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-500 mb-4">Deployment Summary</h4>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-stone-500">Lumpsum deployed</span>
+                <span className="font-medium">{formatCurrency(lumpsum)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-stone-500">Monthly transfer</span>
+                <span className="font-medium">{formatCurrency(monthlyTransfer)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-stone-500">Un deployed liquid left</span>
+                <span className="font-medium">{formatCurrency(result.liquid)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-stone-500">Wealth gained vs idle cash</span>
+                <span className="font-medium">{formatCurrency(result.total - lumpsum)}</span>
+              </div>
+            </div>
+          </Card>
+        </>
+      }
+    />
+  );
+};
