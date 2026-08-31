@@ -33,7 +33,8 @@ import { DonutChart } from '../components/charts/DonutChart';
 import { ASSET_COLORS, ASSET_LABELS, FX_ASSUMPTIONS } from '../lib/constants';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { MonteCarloFanChart } from '../components/charts/MonteCarloFanChart';
-import type { AssetCategory, GoalPriority } from '../types';
+import { defaultScenarios } from '../lib/scenarios';
+import type { AssetCategory, GoalPriority, MasterPlanInputs } from '../types';
 
 const categoryOptions: { value: AssetCategory; label: string }[] = [
   { value: 'equity', label: 'Equity' },
@@ -152,7 +153,25 @@ export const MasterPlan = () => {
         badge="Core Engine"
       />
 
-      <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+        
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-stone-500">Load Scenario:</span>
+          <Select
+            value=""
+            onChange={(scenarioId) => {
+              if (!scenarioId) return;
+              const scenario = defaultScenarios().find((s) => s.id === scenarioId);
+              if (scenario) updateInputs(scenario.inputs);
+            }}
+            options={[
+              { value: '', label: 'Select a scenario...' },
+              ...defaultScenarios().map((s) => ({ value: s.id, label: s.name }))
+            ]}
+          />
+        </div>
+      </div>
 
       {activeTab === 'profile' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -368,8 +387,14 @@ export const MasterPlan = () => {
               <Plus size={14} className="mr-1" /> Add Goal
             </Button>
           </div>
+          <div className="text-xs text-stone-500 bg-stone-50 p-3 rounded-lg border border-stone-200">
+            <strong>Note:</strong> During simulation, the wealth engine automatically funds goals in order of priority: <strong>Essential</strong> first, then <strong>Important</strong>, then <strong>Aspirational</strong>.
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {inputs.goals.map((goal) => (
+            {[...inputs.goals].sort((a, b) => {
+              const p = { essential: 1, important: 2, aspirational: 3 };
+              return p[a.priority] - p[b.priority] || a.yearsToGoal - b.yearsToGoal;
+            }).map((goal) => (
               <Card key={goal.id} variant="subtle">
                 <div className="flex justify-between items-start mb-3">
                   <input

@@ -1,7 +1,6 @@
-import { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
-import type { MasterPlanInputs, Scenario, Goal, RiskProfile, RiskAnswers } from '../types';
+import { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import type { MasterPlanInputs, Scenario, Goal, RiskProfile, RiskAnswers, AssetCategory } from '../types';
 import { defaultClientInputs, defaultScenarios } from '../lib/scenarios';
-import { calculateMasterPlan } from '../lib/calculations';
 import { loadAssumptions, type AssumptionSet } from '../lib/assumptions';
 import { runWealthEngine, type WealthEngineResult } from '../lib/wealthEngine';
 import { calculateRiskScore, getRiskProfile, isComplete } from '../lib/riskQuestionnaire';
@@ -19,7 +18,6 @@ interface CalculatorContextType {
   addGoal: (goal?: Partial<Goal>) => void;
   updateGoal: (id: string, patch: Partial<Goal>) => void;
   removeGoal: (id: string) => void;
-  result: ReturnType<typeof calculateMasterPlan>;
   wealthResult: WealthEngineResult;
   scenarios: Scenario[];
   loadScenario: (scenario: Scenario) => void;
@@ -28,12 +26,18 @@ interface CalculatorContextType {
   riskAnswers: RiskAnswers;
   setRiskAnswers: React.Dispatch<React.SetStateAction<RiskAnswers>>;
   riskProfile: RiskProfile;
+  riskScore: number;
   applyRiskProfileToPlan: () => void;
+  manualTargets: Record<AssetCategory, number> | null;
+  setManualTargets: React.Dispatch<React.SetStateAction<Record<AssetCategory, number> | null>>;
+  resetToDefaults: () => void;
 }
 
 const CalculatorContext = createContext<CalculatorContextType | undefined>(undefined);
 
 const RISK_ANSWERS_KEY = 'soundthesis_risk_answers';
+const CLIENT_INPUTS_KEY = 'soundthesis_client_inputs';
+const CLIENT_INPUTS_VERSION = 1;
 
 function loadRiskAnswers(): RiskAnswers {
   try {
@@ -49,11 +53,48 @@ function saveRiskAnswers(answers: RiskAnswers): void {
   localStorage.setItem(RISK_ANSWERS_KEY, JSON.stringify(answers));
 }
 
+function loadClientInputs(): MasterPlanInputs | null {
+  try {
+    const raw = localStorage.getItem(CLIENT_INPUTS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed._version === CLIENT_INPUTS_VERSION) {
+        const { _version: _, ...inputs } = parsed;
+        return inputs as MasterPlanInputs;
+      }
+    }
+  } catch {
+    // ignore corrupt data
+  }
+  return null;
+}
+
+function saveClientInputs(inputs: MasterPlanInputs): void {
+  localStorage.setItem(CLIENT_INPUTS_KEY, JSON.stringify({ ...inputs, _version: CLIENT_INPUTS_VERSION }));
+}
+
+/** Generate a unique ID that won't collide on rapid creation */
+function generateId(prefix: string): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return `${prefix}-${crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 export const CalculatorProvider = ({ children }: { children: React.ReactNode }) => {
-  const [inputs, setInputs] = useState<MasterPlanInputs>(defaultClientInputs());
+  const [inputs, setInputs] = useState<MasterPlanInputs>(() => loadClientInputs() ?? defaultClientInputs());
   const [scenarios] = useState<Scenario[]>(defaultScenarios());
   const [assumptions, setAssumptions] = useState<AssumptionSet>(() => loadAssumptions());
   const [riskAnswers, setRiskAnswersState] = useState<RiskAnswers>(() => loadRiskAnswers());
+  const [manualTargets, setManualTargets] = useState<Record<AssetCategory, number> | null>(null);
+
+  // Debounced persistence for client inputs
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => saveClientInputs(inputs), 500);
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
+  }, [inputs]);
 
   const setRiskAnswers = useCallback((value: React.SetStateAction<RiskAnswers>) => {
     setRiskAnswersState((prev) => {
@@ -63,10 +104,13 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     });
   }, []);
 
-  const riskProfile = useMemo(() => {
-    const score = isComplete(riskAnswers) ? calculateRiskScore(riskAnswers) : 50;
-    return getRiskProfile(score);
+  const riskScore = useMemo(() => {
+    return isComplete(riskAnswers) ? calculateRiskScore(riskAnswers) : 50;
   }, [riskAnswers]);
+
+  const riskProfile = useMemo(() => {
+    return getRiskProfile(riskScore);
+  }, [riskScore]);
 
   const applyRiskProfileToPlan = useCallback(() => {
     const targets = riskProfile.targets;
@@ -77,11 +121,16 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       sip: { ...prev.sip, equitySplit, debtSplit: 100 - equitySplit },
       stp: { ...prev.stp, equitySplit, debtSplit: 100 - equitySplit },
     }));
+    setManualTargets(null); // Reset manual overrides to match risk profile
   }, [riskProfile]);
 
-  useEffect(() => {
-    saveRiskAnswers(riskAnswers);
-  }, [riskAnswers]);
+  const resetToDefaults = useCallback(() => {
+    setInputs(defaultClientInputs());
+    setRiskAnswers({});
+    setManualTargets(null);
+    localStorage.removeItem(CLIENT_INPUTS_KEY);
+    localStorage.removeItem(RISK_ANSWERS_KEY);
+  }, [setRiskAnswers]);
 
   const updateInputs = useCallback((patch: Partial<MasterPlanInputs>) => {
     setInputs((prev) => ({ ...prev, ...patch }));
@@ -100,11 +149,11 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       assets: [
         ...prev.assets,
         {
-          id: `asset-${Date.now()}`,
+          id: generateId('asset'),
           name: 'New Asset',
           value: 0,
           returnRate: 8,
-          category: 'other',
+          category: 'other' as AssetCategory,
           currency: 'INR',
           liquidateAtRetirement: false,
           ...asset,
@@ -147,7 +196,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       goals: [
         ...prev.goals,
         {
-          id: `goal-${Date.now()}`,
+          id: generateId('goal'),
           name: 'New Goal',
           targetAmount: 1000000,
           yearsToGoal: 5,
@@ -178,10 +227,9 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     setInputs(scenario.inputs);
   }, []);
 
-  const result = useMemo(() => calculateMasterPlan(inputs), [inputs]);
   const wealthResult = useMemo(
-    () => runWealthEngine(inputs, assumptions, { profile: riskProfile, score: calculateRiskScore(riskAnswers) }),
-    [inputs, assumptions, riskProfile, riskAnswers],
+    () => runWealthEngine(inputs, assumptions, { profile: riskProfile, score: riskScore }),
+    [inputs, assumptions, riskProfile, riskScore],
   );
 
   return (
@@ -199,7 +247,6 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         addGoal,
         updateGoal,
         removeGoal,
-        result,
         wealthResult,
         scenarios,
         loadScenario,
@@ -208,7 +255,11 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         riskAnswers,
         setRiskAnswers,
         riskProfile,
+        riskScore,
         applyRiskProfileToPlan,
+        manualTargets,
+        setManualTargets,
+        resetToDefaults,
       }}
     >
       {children}

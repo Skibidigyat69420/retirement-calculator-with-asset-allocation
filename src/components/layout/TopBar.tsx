@@ -1,14 +1,17 @@
 import { Menu } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-import { navItems } from './navItems';
+import { navItems, utilityItem } from './navItems';
 
 interface TopBarProps {
   onMenuClick: () => void;
+  mobileOpen?: boolean;
 }
 
-export const TopBar = ({ onMenuClick }: TopBarProps) => {
+export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
   const location = useLocation();
-  const current = navItems.find((item) => item.path === location.pathname);
+  const current =
+    navItems.find((item) => item.path === location.pathname) ||
+    (utilityItem.path === location.pathname ? utilityItem : null);
   const label = current?.label || 'Wealth Planner';
 
   return (
@@ -16,6 +19,8 @@ export const TopBar = ({ onMenuClick }: TopBarProps) => {
       <div className="flex items-center justify-between h-16 px-4">
         <button
           onClick={onMenuClick}
+          aria-label="Toggle menu"
+          aria-expanded={mobileOpen}
           className="p-2 -ml-2 text-stone-500 hover:text-navy rounded-lg hover:bg-stone-100 transition-colors"
         >
           <Menu size={22} />

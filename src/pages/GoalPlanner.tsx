@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Target, TrendingUp, PieChart, Plus, AlertTriangle, CheckCircle2, BarChart3 } from 'lucide-react';
+import { Target, TrendingUp, PieChart, Plus, AlertTriangle, CheckCircle2, BarChart3, Trash2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
 import { Card } from '../components/ui/Card';
 import { NumberInput } from '../components/ui/NumberInput';
@@ -20,7 +20,7 @@ const priorityOptions: { value: GoalPriority; label: string }[] = [
 ];
 
 export const GoalPlanner = () => {
-  const { inputs, riskProfile, wealthResult, updateGoal, addGoal } = useCalculator();
+  const { inputs, riskProfile, wealthResult, updateGoal, addGoal, removeGoal } = useCalculator();
   const [selectedGoalId, setSelectedGoalId] = useState<string>(inputs.goals[0]?.id || '');
 
   const selectedGoal = useMemo(
@@ -44,12 +44,17 @@ export const GoalPlanner = () => {
     }));
   }, [simulation]);
 
-  if (!selectedGoal || !simulation) {
+  if (inputs.goals.length === 0 || !selectedGoal || !simulation) {
     return (
       <div className="space-y-6">
         <SectionTitle title="Goal Planner" subtitle="Probability-based goal planning with PV, success rate, and distribution analysis." badge="Monte Carlo" />
-        <Card>
-          <p className="text-stone-500">No goals defined yet. Go to Master Plan &gt; Goals to add one.</p>
+        <Card className="flex flex-col items-center justify-center py-12 text-center">
+          <Target size={48} className="text-stone-200 mb-4" />
+          <h3 className="text-lg font-serif text-navy mb-2">No Goals Defined</h3>
+          <p className="text-stone-500 mb-6 max-w-md">Create your first financial goal to see Monte Carlo simulations, success probabilities, and required SIP amounts.</p>
+          <Button onClick={() => addGoal()} className="flex items-center gap-2">
+            <Plus size={16} /> Create your first goal
+          </Button>
         </Card>
       </div>
     );
@@ -105,7 +110,22 @@ export const GoalPlanner = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Selected Goal</div>
-                  <div className="text-xl font-serif text-navy mt-1">{selectedGoal.name}</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="text"
+                      value={selectedGoal.name}
+                      onChange={(e) => updateGoal(selectedGoal.id, { name: e.target.value })}
+                      className="text-xl font-serif text-navy bg-transparent border-b border-transparent hover:border-stone-300 focus:border-gold focus:outline-none transition-colors"
+                    />
+                    <button
+                      onClick={() => { if (confirm('Delete this goal?')) removeGoal(selectedGoal.id); }}
+                      className="text-stone-400 hover:text-red-600 transition-colors p-1"
+                      title="Delete goal"
+                      type="button"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
                 <Badge variant={selectedGoal.priority === 'essential' ? 'danger' : selectedGoal.priority === 'important' ? 'default' : 'outline'}>
                   {selectedGoal.priority}
@@ -116,6 +136,17 @@ export const GoalPlanner = () => {
                 <NumberInput label="Years to Goal" value={selectedGoal.yearsToGoal} onChange={(v) => updateGoal(selectedGoal.id, { yearsToGoal: v })} />
                 <NumberInput label="Inflation" value={selectedGoal.inflation} onChange={(v) => updateGoal(selectedGoal.id, { inflation: v })} suffix="%" />
                 <Select label="Priority" value={selectedGoal.priority} onChange={(v) => updateGoal(selectedGoal.id, { priority: v as GoalPriority })} options={priorityOptions} />
+                <div className="col-span-2 flex justify-end">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={selectedGoal.recurring}
+                      onChange={(e) => updateGoal(selectedGoal.id, { recurring: e.target.checked })}
+                      className="accent-gold"
+                    />
+                    Recurring goal
+                  </label>
+                </div>
               </div>
             </Card>
 
@@ -152,7 +183,12 @@ export const GoalPlanner = () => {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
                     <XAxis
                       dataKey="midpoint"
-                      tickFormatter={(v) => `₹${(Number(v) / 100000).toFixed(1)}L`}
+                      tickFormatter={(v) => {
+                        const n = Number(v);
+                        if (n >= 10000000) return '₹' + (n / 10000000).toFixed(1) + 'Cr';
+                        if (n >= 100000) return '₹' + (n / 100000).toFixed(1) + 'L';
+                        return '₹' + (n / 1000).toFixed(0) + 'K';
+                      }}
                       tick={{ fontSize: 10, fill: '#78716c' }}
                       angle={-45}
                       textAnchor="end"
@@ -214,8 +250,9 @@ export const GoalPlanner = () => {
                   <div className="flex justify-between"><span className="text-stone-500">Inflation-adjusted target</span><span className="font-medium text-navy">{formatCurrency(simulation.futureValue)}</span></div>
                   <div className="flex justify-between"><span className="text-stone-500">PV needed today</span><span className="font-medium text-navy">{formatCurrency(simulation.pvNeeded)}</span></div>
                   <div className="flex justify-between"><span className="text-stone-500">Required monthly SIP</span><span className="font-medium text-navy">{formatCurrency(simulation.requiredSIP)}</span></div>
-                  <div className="flex justify-between"><span className="text-stone-500">Current monthly SIP</span><span className="font-medium text-navy">{formatCurrency(wealthResult.monthlySIP)}</span></div>
-                  <div className="flex justify-between"><span className="text-stone-500">SIP gap / surplus</span><span className={`font-medium ${simulation.requiredSIP > wealthResult.monthlySIP ? 'text-red-600' : 'text-green-600'}`}>{formatCurrency(simulation.requiredSIP - wealthResult.monthlySIP)}</span></div>
+                  <div className="flex justify-between"><span className="text-stone-500">Total Portfolio SIP</span><span className="font-medium text-navy">{formatCurrency(wealthResult.monthlySIP)}</span></div>
+                  <div className="flex justify-between"><span className="text-stone-500">Allocated SIP (Avg)</span><span className="font-medium text-navy">{formatCurrency(wealthResult.monthlySIP / Math.max(1, inputs.goals.length))}</span></div>
+                  <div className="flex justify-between"><span className="text-stone-500">SIP gap / surplus (vs Avg)</span><span className={`font-medium ${simulation.requiredSIP > (wealthResult.monthlySIP / Math.max(1, inputs.goals.length)) ? 'text-red-600' : 'text-green-600'}`}>{formatCurrency(simulation.requiredSIP - (wealthResult.monthlySIP / Math.max(1, inputs.goals.length)))}</span></div>
                 </div>
               </div>
             </Card>

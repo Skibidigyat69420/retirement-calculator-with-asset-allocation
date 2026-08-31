@@ -10,6 +10,7 @@ export const Button = ({
   variant = 'primary',
   size = 'md',
   className,
+  type = 'button',
   ...props
 }: ButtonProps) => {
   const variants = {
@@ -31,6 +32,7 @@ export const Button = ({
 
   return (
     <button
+      type={type}
       {...props}
       className={cn(
         'inline-flex items-center justify-center rounded-xl font-semibold transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none',

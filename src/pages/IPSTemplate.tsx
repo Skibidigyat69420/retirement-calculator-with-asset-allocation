@@ -22,33 +22,37 @@ interface IPSForm {
   equityTarget: number;
   debtTarget: number;
   goldTarget: number;
+  realestateTarget: number;
   liquidTarget: number;
+  otherTarget: number;
   foreignExposure: number;
   hedgePolicy: string;
   notes: string;
 }
 
 export const IPSTemplate = () => {
-  const { inputs } = useCalculator();
+  const { inputs, riskProfile } = useCalculator();
   const netWorth = inputs.assets.reduce((sum, a) => sum + a.value, 0);
 
-  const [form, setForm] = useState<IPSForm>({
+  const [form, setForm] = useState<IPSForm>(() => ({
     clientName: '',
     adviser: 'Sound Thesis Wealth Advisory',
     reviewDate: new Date().toISOString().split('T')[0],
     returnObjective: 'Achieve long-term capital growth sufficient to fund retirement and essential goals while preserving purchasing power.',
-    riskTolerance: 'moderate',
-    maxDrawdown: 15,
-    equityTarget: 55,
-    debtTarget: 25,
-    goldTarget: 10,
-    liquidTarget: 10,
+    riskTolerance: riskProfile.label.toLowerCase().includes('conservative') ? 'low' : riskProfile.label.toLowerCase().includes('aggressive') ? 'high' : 'moderate',
+    maxDrawdown: Math.abs(riskProfile.maxDrawdown * 100),
+    equityTarget: riskProfile.targets.equity,
+    debtTarget: riskProfile.targets.debt,
+    goldTarget: riskProfile.targets.gold,
+    realestateTarget: riskProfile.targets.realestate,
+    liquidTarget: riskProfile.targets.liquid,
+    otherTarget: riskProfile.targets.other,
     foreignExposure: 0,
     hedgePolicy: 'Unhedged — foreign exposure, if any, will be reviewed quarterly.',
     notes: '',
-  });
+  }));
 
-  const totalAllocation = form.equityTarget + form.debtTarget + form.goldTarget + form.liquidTarget;
+  const totalAllocation = form.equityTarget + form.debtTarget + form.goldTarget + form.realestateTarget + form.liquidTarget + form.otherTarget;
   const allocationOk = Math.abs(totalAllocation - 100) < 0.1;
 
   const [savedFiles, setSavedFiles] = useState<SavedIPS[]>([]);
@@ -178,7 +182,9 @@ export const IPSTemplate = () => {
             <NumberInput label="Equity Target" value={form.equityTarget} onChange={(v) => setForm({ ...form, equityTarget: v })} suffix="%" />
             <NumberInput label="Debt Target" value={form.debtTarget} onChange={(v) => setForm({ ...form, debtTarget: v })} suffix="%" />
             <NumberInput label="Gold Target" value={form.goldTarget} onChange={(v) => setForm({ ...form, goldTarget: v })} suffix="%" />
+            <NumberInput label="Real Estate Target" value={form.realestateTarget} onChange={(v) => setForm({ ...form, realestateTarget: v })} suffix="%" />
             <NumberInput label="Liquid Target" value={form.liquidTarget} onChange={(v) => setForm({ ...form, liquidTarget: v })} suffix="%" />
+            <NumberInput label="Other Target" value={form.otherTarget} onChange={(v) => setForm({ ...form, otherTarget: v })} suffix="%" />
             <div className={`text-xs font-medium ${allocationOk ? 'text-green-600' : 'text-red-600'}`}>
               Total: {totalAllocation.toFixed(1)}% {allocationOk ? <CheckCircle size={12} className="inline ml-1" /> : '(must equal 100%)'}
             </div>
@@ -292,7 +298,9 @@ export const IPSTemplate = () => {
                 <tr><td>Equity</td><td>{form.equityTarget}%</td><td>{((inputs.assets.filter((a) => a.category === 'equity').reduce((s, a) => s + a.value, 0) / Math.max(netWorth, 1)) * 100).toFixed(1)}%</td></tr>
                 <tr><td>Debt</td><td>{form.debtTarget}%</td><td>{((inputs.assets.filter((a) => a.category === 'debt').reduce((s, a) => s + a.value, 0) / Math.max(netWorth, 1)) * 100).toFixed(1)}%</td></tr>
                 <tr><td>Gold</td><td>{form.goldTarget}%</td><td>{((inputs.assets.filter((a) => a.category === 'gold').reduce((s, a) => s + a.value, 0) / Math.max(netWorth, 1)) * 100).toFixed(1)}%</td></tr>
+                <tr><td>Real Estate</td><td>{form.realestateTarget}%</td><td>{((inputs.assets.filter((a) => a.category === 'realestate').reduce((s, a) => s + a.value, 0) / Math.max(netWorth, 1)) * 100).toFixed(1)}%</td></tr>
                 <tr><td>Liquid</td><td>{form.liquidTarget}%</td><td>{((inputs.assets.filter((a) => a.category === 'liquid').reduce((s, a) => s + a.value, 0) / Math.max(netWorth, 1)) * 100).toFixed(1)}%</td></tr>
+                <tr><td>Other</td><td>{form.otherTarget}%</td><td>{((inputs.assets.filter((a) => a.category === 'other').reduce((s, a) => s + a.value, 0) / Math.max(netWorth, 1)) * 100).toFixed(1)}%</td></tr>
               </tbody>
             </table>
 

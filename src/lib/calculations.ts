@@ -94,8 +94,10 @@ export const calculateSTPWithReturns = (
   months: number,
   equityReturn: number,
   debtReturn: number,
+  currentBalance?: number,
 ): { equity: number; debt: number; liquid: number } => {
-  if (!stp.active || stp.lumpsum <= 0) {
+  const initialLiquid = currentBalance !== undefined ? currentBalance : stp.lumpsum;
+  if (!stp.active || initialLiquid <= 0) {
     return { equity: 0, debt: 0, liquid: 0 };
   }
 
@@ -103,7 +105,7 @@ export const calculateSTPWithReturns = (
   const eqR = equityReturn / 100 / 12;
   const debtR = debtReturn / 100 / 12;
 
-  let liquid = stp.lumpsum;
+  let liquid = initialLiquid;
   let equity = 0;
   let debt = 0;
 
@@ -241,6 +243,8 @@ export const calculateMasterPlan = (
   let liquid = 0;
   let sipEquity = 0;
   let sipDebt = 0;
+  let stpBalance = stp.lumpsum;
+  let currentMonthlySip = sip.amount;
 
   // Accumulation phase
   for (let y = 1; y <= accYears; y++) {
@@ -251,28 +255,34 @@ export const calculateMasterPlan = (
     }));
 
     // 2. STP deployment for one year
-    if (stp.active && stp.lumpsum > 0) {
+    if (stp.active && stpBalance > 0) {
       const stpResult = calculateSTPWithReturns(
         stp,
         12,
         sip.equityReturn,
         sip.debtReturn,
+        stpBalance
       );
       equity += stpResult.equity;
       debt += stpResult.debt;
-      liquid += stpResult.liquid;
+      stpBalance = stpResult.liquid;
+      liquid = stpBalance;
+    } else {
+      liquid = stpBalance;
     }
 
     // 3. SIP for one year
-    const yearlySip = calculateSIPYearly(sip, 1, sipEquity, sipDebt);
+    const yearlySip = calculateSIPYearly({ ...sip, amount: currentMonthlySip }, 1, sipEquity, sipDebt);
     sipEquity = yearlySip.equity;
     sipDebt = yearlySip.debt;
     totalInvested += yearlySip.totalInvested;
+    currentMonthlySip *= (1 + sip.stepUp / 100);
 
     // 4. Sweep excess liquid above cap into equity/debt if STP has leftover
     if (liquid > stp.liquidCap && stp.active) {
       const excess = liquid - stp.liquidCap;
       liquid = stp.liquidCap;
+      stpBalance = liquid;
       equity += excess * (stp.equitySplit / 100);
       debt += excess * (stp.debtSplit / 100);
     }
@@ -312,9 +322,8 @@ export const calculateMasterPlan = (
   // Liquidate flagged assets into SWP corpus
   const retainedAssets: Asset[] = [];
   currentAssets.forEach((asset) => {
-    if (asset.liquidateAtRetirement) {
-      swpCorpus += asset.value;
-    } else {
+    if (!asset.liquidateAtRetirement) {
+      swpCorpus -= asset.value;
       retainedAssets.push(asset);
     }
   });

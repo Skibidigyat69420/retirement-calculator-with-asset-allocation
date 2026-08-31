@@ -136,6 +136,7 @@ function refineMinVariance(
     const newW = w.map((v, i) => v - lr * grad[i]);
     w = clipWeights(newW, constraints.minWeight, constraints.maxWeight);
     w = normalizeWeights(w);
+    w = applyEquityCap(w, constraints.equityMask, constraints.maxEquity);
   }
   return evaluatePortfolio(w, means, covariance, riskFreeRate);
 }
@@ -159,10 +160,11 @@ function refineMaxSharpe(
     const ret = portfolioReturn(w, means);
     const dRet = means;
     const dVol = covW.map((v) => v / vol);
-    const dSharpe = dRet.map((dr, i) => (dr - riskFreeRate) / vol - ((ret - riskFreeRate) / (vol * vol)) * dVol[i]);
+    const dSharpe = dRet.map((dr, i) => dr / vol - ((ret - riskFreeRate) / (vol * vol)) * dVol[i]);
     const newW = w.map((v, i) => v + lr * dSharpe[i]);
     w = clipWeights(newW, constraints.minWeight, constraints.maxWeight);
     w = normalizeWeights(w);
+    w = applyEquityCap(w, constraints.equityMask, constraints.maxEquity);
   }
   return evaluatePortfolio(w, means, covariance, riskFreeRate);
 }

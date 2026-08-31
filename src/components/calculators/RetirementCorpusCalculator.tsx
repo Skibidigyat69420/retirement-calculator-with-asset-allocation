@@ -7,13 +7,17 @@ import { CalculatorShell } from './CalculatorShell';
 import { calculateRetirementCorpus } from '../../lib/calculators';
 import { formatCurrency, formatPercent } from '../../lib/formatters';
 
+import { useCalculator } from '../../context/CalculatorContext';
+import { Button } from '../ui/Button';
+
 export const RetirementCorpusCalculator = () => {
-  const [currentAge, setCurrentAge] = useState(34);
-  const [retirementAge, setRetirementAge] = useState(60);
-  const [lifeExpectancy, setLifeExpectancy] = useState(85);
-  const [monthlyNeedToday, setMonthlyNeedToday] = useState(1_00_000);
-  const [inflation, setInflation] = useState(5);
-  const [postRetirementReturn, setPostRetirementReturn] = useState(9);
+  const { inputs, updateInputs } = useCalculator();
+  const [currentAge, setCurrentAge] = useState(inputs.currentAge || 34);
+  const [retirementAge, setRetirementAge] = useState(inputs.retirementAge || 60);
+  const [lifeExpectancy, setLifeExpectancy] = useState(inputs.lifeExpectancy || 85);
+  const [monthlyNeedToday, setMonthlyNeedToday] = useState(inputs.swp.monthlyNeedToday || 1_00_000);
+  const [inflation, setInflation] = useState(inputs.inflation || 5);
+  const [postRetirementReturn, setPostRetirementReturn] = useState(inputs.swp.postRetirementReturn || 9);
 
   const result = useMemo(
     () =>
@@ -28,6 +32,21 @@ export const RetirementCorpusCalculator = () => {
     [currentAge, retirementAge, lifeExpectancy, monthlyNeedToday, inflation, postRetirementReturn],
   );
 
+  const handleApply = () => {
+    updateInputs({
+      currentAge,
+      retirementAge,
+      lifeExpectancy,
+      inflation,
+      swp: {
+        ...inputs.swp,
+        monthlyNeedToday,
+        postRetirementReturn,
+      }
+    });
+    alert('Retirement assumptions applied to Master Plan');
+  };
+
   return (
     <CalculatorShell
       title="Retirement Corpus Required"
@@ -40,6 +59,9 @@ export const RetirementCorpusCalculator = () => {
           <NumberInput label="Monthly Need Today" value={monthlyNeedToday} onChange={setMonthlyNeedToday} />
           <NumberInput label="Inflation" value={inflation} onChange={setInflation} suffix="%" />
           <NumberInput label="Post-Retirement Return" value={postRetirementReturn} onChange={setPostRetirementReturn} suffix="%" />
+          <Button onClick={handleApply} className="w-full mt-2" variant="outline">
+            Apply to Master Plan
+          </Button>
         </>
       }
       results={

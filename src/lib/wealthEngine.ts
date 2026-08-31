@@ -276,6 +276,7 @@ interface SimulationState {
   goalSuccess: boolean[];
   cashFlows: CashFlowEvent[];
   yearlyValues: number[];
+  yearlyCategoryValues: Record<AssetCategory, number>[];
   depletionAge: number | null;
 }
 
@@ -290,6 +291,7 @@ function simulateOnePath(
   const accYears = Math.max(0, retirementAge - currentAge);
   const distYears = Math.max(0, lifeExpectancy - retirementAge);
   const infl = inflation / 100;
+  let currentIncome = annualIncome;
 
   const state: SimulationState = {
     values: { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 },
@@ -302,10 +304,14 @@ function simulateOnePath(
     goalSuccess: new Array(goals.length).fill(false),
     cashFlows: [],
     yearlyValues: [],
+    yearlyCategoryValues: [],
     depletionAge: null,
   };
 
   assets.forEach((a) => (state.values[a.category] += a.value));
+  if (stp.active) {
+    state.values.liquid = Math.max(0, state.values.liquid - stp.lumpsum);
+  }
   const sipWeights = buildSipWeights(sip);
   const stpWeights = buildStpWeights(stp);
 
@@ -368,9 +374,10 @@ function simulateOnePath(
         }
       });
 
-      const tax = annualIncome * calculateTax(annualIncome).effectiveRate;
+      const tax = currentIncome * calculateTax(currentIncome).effectiveRate;
       state.totalTaxes += tax;
       state.cashFlows.push({ year: y, age: currentAge + y, type: 'tax', amount: tax, description: 'Estimated income tax' });
+      currentIncome *= (1 + infl);
     } else {
       const yearsSinceRetirement = y - accYears;
       const monthlyNeed = swp.monthlyNeedToday * Math.pow(1 + infl, accYears + yearsSinceRetirement - 1);
@@ -389,6 +396,7 @@ function simulateOnePath(
     }
 
     state.yearlyValues.push(Object.values(state.values).reduce((a, b) => a + b, 0));
+    state.yearlyCategoryValues.push({ ...state.values });
   }
 
   return state;
@@ -425,7 +433,7 @@ function buildSnapshots(inputs: MasterPlanInputs, assumptions: AssumptionSet): W
     snapshots.push({
       year: y,
       age: currentAge + y,
-      values: { ...state.values },
+      values: { ...state.yearlyCategoryValues[y - 1] },
       total: round2(state.yearlyValues[y - 1]),
       realTotal: round2(state.yearlyValues[y - 1] / Math.pow(1 + infl, y)),
       invested: round2(state.totalInvested),
@@ -479,8 +487,7 @@ function buildGoalDistribution(
 
   const sipWeights = buildSipWeights(inputs.sip);
   const portfolioMean = sipWeights.reduce((sum, w, i) => sum + w * means[i], 0);
-  const realReturn = (1 + portfolioMean) / (1 + goal.inflation / 100) - 1;
-  const r = realReturn / 12;
+  const r = portfolioMean / 12;
   const n = goal.yearsToGoal * 12;
   const requiredSIP = r === 0 ? futureValue / n : (futureValue * r) / (Math.pow(1 + r, n) - 1);
   const pvNeeded = futureValue / Math.pow(1 + portfolioMean, goal.yearsToGoal);
@@ -604,9 +611,10 @@ export function runWealthEngine(
   const cagrReal = years > 0 ? (Math.pow(terminalRealValue / initialValue, 1 / years) - 1) * 100 : 0;
 
   let depletionAge: number | null = null;
-  for (let i = snapshots.length - 1; i >= 0; i--) {
-    if (snapshots[i].phase === 'distribution' && snapshots[i].total <= 0 && depletionAge === null) {
+  for (let i = 0; i < snapshots.length; i++) {
+    if (snapshots[i].phase === 'distribution' && snapshots[i].total <= 0) {
       depletionAge = snapshots[i].age;
+      break;
     }
   }
   const sustainable = depletionAge === null || (depletionAge !== null && depletionAge > lifeExpectancy);

@@ -31,7 +31,7 @@ import { Alert } from '../components/ui/Alert';
 import { useMarketData } from '../hooks/useMarketData';
 import { INSTRUMENTS, DEFAULT_ALLOCATION_SYMBOLS } from '../lib/instruments';
 import { runMVO, type Portfolio, type MVOResult, type ConstraintSet } from '../lib/mvo';
-import { getMaxHistoryDateRange } from '../lib/marketData';
+import { getMaxHistoryDateRange, alignMarketData } from '../lib/marketData';
 import { loadSession, buildDefaultCredentials } from '../lib/smartapi';
 import { useCalculator } from '../context/CalculatorContext';
 import { formatPercent } from '../lib/formatters';
@@ -48,7 +48,7 @@ const categoryMap: Record<string, AssetCategory> = {
 
 export const MVO = () => {
   const { addAsset, updateAsset, inputs, riskProfile, setInputs } = useCalculator();
-  const { data, loading, progress, error, fetchData, loadBackendData, alignToSymbols } = useMarketData();
+  const { data, rawBundle, loading, progress, error, fetchData, loadBackendData } = useMarketData();
 
   const maxRange = useMemo(() => getMaxHistoryDateRange(), []);
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>(DEFAULT_ALLOCATION_SYMBOLS);
@@ -64,9 +64,14 @@ export const MVO = () => {
 
   // Re-align data when the user changes the selected symbol set.
   const alignedData = useMemo(() => {
-    if (!data) return null;
-    return alignToSymbols(selectedSymbols) || data;
-  }, [data, selectedSymbols, alignToSymbols]);
+    if (!rawBundle) return data;
+    if (selectedSymbols.length < 2) return data;
+    try {
+      return alignMarketData(rawBundle, selectedSymbols);
+    } catch {
+      return data;
+    }
+  }, [data, rawBundle, selectedSymbols]);
 
   const equityMask = useMemo(() => {
     return (alignedData?.instruments || []).map((inst) =>
@@ -74,8 +79,8 @@ export const MVO = () => {
     );
   }, [alignedData]);
 
-  const mvoResult: MVOResult | null = useMemo(() => {
-    if (!alignedData || alignedData.symbols.length < 2) return null;
+  const mvoComputation = useMemo(() => {
+    if (!alignedData || alignedData.symbols.length < 2) return { result: null, error: null };
     const means = alignedData.stats.map((s) => s.annualizedReturn);
     const constraints: ConstraintSet = {
       minWeight: alignedData.symbols.map(() => 0),
@@ -84,12 +89,23 @@ export const MVO = () => {
       maxVolatility: riskProfile.targetVolatility / 100,
       equityMask,
     };
-    return runMVO(alignedData.symbols, means, alignedData.covariance, {
-      samples: 30000,
-      riskFreeRate: riskProfile.riskFreeRate / 100,
-      constraints,
-    });
+    try {
+      const result = runMVO(alignedData.symbols, means, alignedData.covariance, {
+        samples: 30000,
+        riskFreeRate: riskProfile.riskFreeRate / 100,
+        constraints,
+      });
+      return { result, error: null };
+    } catch (err: any) {
+      return { 
+        result: null, 
+        error: err?.message || 'Optimization failed (e.g. singular matrix). Try selecting a different mix of less-correlated assets.' 
+      };
+    }
   }, [alignedData, maxEquity, riskProfile.riskFreeRate, riskProfile.targetVolatility, equityMask]);
+
+  const mvoResult = mvoComputation.result;
+  const mvoError = mvoComputation.error;
 
   const frontierData = useMemo(() => {
     if (!mvoResult) return [];
@@ -240,6 +256,12 @@ export const MVO = () => {
           <div className="text-xs text-stone-500 mt-1">{data?.symbols.length || 0} instruments available</div>
         </Card>
       </div>
+
+      {mvoError && (
+        <Alert variant="danger" icon={AlertCircle}>
+          <strong>Optimization Error:</strong> {mvoError}
+        </Alert>
+      )}
 
       {mvoResult && mvoResult.maxSharpe.weights.reduce((sum, w, i) => sum + (equityMask[i] ? w : 0), 0) * 100 > maxEquity && (
         <Alert variant="warning" icon={AlertCircle}>

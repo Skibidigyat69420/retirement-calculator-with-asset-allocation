@@ -15,12 +15,15 @@ import {
   CartesianGrid,
   Tooltip,
 } from 'recharts';
+import { useCalculator } from '../../context/CalculatorContext';
+import { Button } from '../ui/Button';
 
 export const SIPCalculator = () => {
-  const [amount, setAmount] = useState(10000);
+  const { inputs, updateInputs } = useCalculator();
+  const [amount, setAmount] = useState(inputs.sip.amount || 10000);
   const [returnRate, setReturnRate] = useState(12);
-  const [years, setYears] = useState(15);
-  const [stepUp, setStepUp] = useState(5);
+  const [years, setYears] = useState(Math.max(1, inputs.retirementAge - inputs.currentAge));
+  const [stepUp, setStepUp] = useState(inputs.sip.stepUp || 5);
 
   const result = useMemo(
     () => calculateSIP(amount, returnRate, years, stepUp),
@@ -33,6 +36,17 @@ export const SIPCalculator = () => {
     invested: d.invested,
   }));
 
+  const handleApply = () => {
+    updateInputs({
+      sip: {
+        ...inputs.sip,
+        amount,
+        stepUp,
+      },
+    });
+    alert('SIP settings applied to Master Plan');
+  };
+
   return (
     <CalculatorShell
       title="SIP Calculator"
@@ -43,6 +57,9 @@ export const SIPCalculator = () => {
           <NumberInput label="Expected Return" value={returnRate} onChange={setReturnRate} suffix="%" />
           <NumberInput label="Duration" value={years} onChange={setYears} />
           <NumberInput label="Annual Step-up" value={stepUp} onChange={setStepUp} suffix="%" />
+          <Button onClick={handleApply} className="w-full mt-2" variant="outline">
+            Apply to Master Plan
+          </Button>
         </>
       }
       results={

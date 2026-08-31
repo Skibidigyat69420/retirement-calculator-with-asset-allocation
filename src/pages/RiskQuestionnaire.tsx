@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ShieldCheck, ArrowRight, ArrowLeft, RotateCcw, CheckCircle2, AlertTriangle, TrendingUp, Target, Activity, Wallet, BarChart2, PieChart, Clock, Info } from 'lucide-react';
+import { ShieldCheck, Shield, ArrowRight, ArrowLeft, RotateCcw, CheckCircle2, AlertTriangle, TrendingUp, Target, Activity, Wallet, BarChart2, PieChart, Clock, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SectionTitle } from '../components/ui/SectionTitle';
@@ -7,7 +7,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { useCalculator } from '../context/CalculatorContext';
-import { RISK_QUESTIONS, calculateRiskScore, isComplete, getCategoryScores, buildGlidePath } from '../lib/riskQuestionnaire';
+import { RISK_QUESTIONS, calculateRiskScore, isComplete, getCategoryScores, buildGlidePath, analyzeRiskGap, detectBehavioralBiases, generateActionChecklist } from '../lib/riskQuestionnaire';
 import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
 import { formatPercent } from '../lib/formatters';
 import type { AssetCategory } from '../types';
@@ -21,6 +21,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
   liquidity: <TrendingUp size={16} />,
   flexibility: <ShieldCheck size={16} />,
   behavior: <Clock size={16} />,
+  context: <Shield size={16} />,
 };
 
 const categoryLabels: Record<string, string> = {
@@ -31,6 +32,7 @@ const categoryLabels: Record<string, string> = {
   liquidity: 'Liquidity Needs',
   flexibility: 'Goal Flexibility',
   behavior: 'Behavioural Stability',
+  context: 'Portfolio Context',
 };
 
 export const RiskQuestionnaire = () => {
@@ -44,6 +46,10 @@ export const RiskQuestionnaire = () => {
   const score = useMemo(() => calculateRiskScore(riskAnswers), [riskAnswers]);
   const categoryScores = useMemo(() => getCategoryScores(riskAnswers), [riskAnswers]);
   const glidePath = useMemo(() => buildGlidePath(inputs.currentAge, inputs.retirementAge, riskProfile), [inputs.currentAge, inputs.retirementAge, riskProfile]);
+  
+  const gapAnalysis = useMemo(() => analyzeRiskGap(riskAnswers), [riskAnswers]);
+  const biases = useMemo(() => detectBehavioralBiases(riskAnswers), [riskAnswers]);
+  const actionChecklist = useMemo(() => generateActionChecklist(riskProfile, gapAnalysis, biases), [riskProfile, gapAnalysis, biases]);
 
   const handleAnswer = (scoreValue: number) => {
     setRiskAnswers((prev) => ({ ...prev, [currentQuestion.id]: scoreValue }));
@@ -82,7 +88,7 @@ export const RiskQuestionnaire = () => {
             <div className="mt-6 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-stone-300">Risk score</span>
-                <span className="font-medium">{score} / {Math.max(...RISK_QUESTIONS.map((q) => Math.max(...q.options.map((o) => o.score)))) * RISK_QUESTIONS.length}</span>
+                <span className="font-medium">{score} / 100</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-stone-300">Max drawdown tolerance</span>
@@ -161,6 +167,44 @@ export const RiskQuestionnaire = () => {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <Card>
+            <h3 className="text-lg font-serif text-navy mb-4">Risk Gap Analysis</h3>
+            <div className="mb-2 text-2xl font-serif text-navy">
+              Gap: {Math.abs(gapAnalysis.gap).toFixed(1)}%
+            </div>
+            <p className="text-sm text-stone-600 leading-relaxed">{gapAnalysis.verdict}</p>
+          </Card>
+          
+          <Card>
+            <h3 className="text-lg font-serif text-navy mb-4">Behavioral Biases</h3>
+            {biases.length > 0 ? (
+              <div className="space-y-4">
+                {biases.map((b, i) => (
+                  <div key={i} className="border-l-2 border-gold pl-3">
+                    <div className="text-sm font-medium text-navy">{b.bias}</div>
+                    <p className="text-xs text-stone-600 mt-1">{b.description}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-stone-600">No significant biases detected.</p>
+            )}
+          </Card>
+          
+          <Card>
+            <h3 className="text-lg font-serif text-navy mb-4">Action Checklist</h3>
+            <ul className="space-y-3 text-sm text-stone-600">
+              {actionChecklist.map((item, i) => (
+                <li key={i} className="flex gap-2">
+                  <CheckCircle2 size={16} className="text-gold shrink-0 mt-0.5" />
+                  <span className="leading-tight">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <h3 className="text-lg font-serif text-navy mb-4">Investor Persona</h3>
@@ -174,11 +218,18 @@ export const RiskQuestionnaire = () => {
           <Card>
             <h3 className="text-lg font-serif text-navy mb-4">Glide Path to Retirement</h3>
             <div className="h-64 w-full">
-              <svg viewBox={`0 0 ${glidePath.length * 40} 200`} className="w-full h-full" preserveAspectRatio="none">
+              <svg viewBox={`-30 0 ${glidePath.length * 40 + 30} 220`} className="w-full h-full" preserveAspectRatio="none">
+                {[0, 25, 50, 75, 100].map(pct => (
+                  <g key={pct}>
+                    <text x="-5" y={200 - pct * 2} fontSize="10" fill="#78716c" textAnchor="end" alignmentBaseline="middle">{pct}%</text>
+                    <line x1="0" y1={200 - pct * 2} x2={glidePath.length * 40} y2={200 - pct * 2} stroke="#e7e5e4" strokeWidth="1" strokeDasharray="4 4" />
+                  </g>
+                ))}
                 {glidePath.map((p, i) => (
                   <g key={p.age} transform={`translate(${i * 40}, 0)`}>
-                    <rect y={200 - p.equity * 2} width="35" height={p.equity * 2} fill={ASSET_COLORS.equity} opacity={0.8} rx="4" />
-                    <rect y={200 - (p.equity + p.debt) * 2} width="35" height={p.debt * 2} fill={ASSET_COLORS.debt} opacity={0.8} rx="4" />
+                    <rect y={200 - p.equity * 2} width="30" height={p.equity * 2} fill={ASSET_COLORS.equity} opacity={0.8} rx="4" />
+                    <rect y={200 - (p.equity + p.debt) * 2} width="30" height={p.debt * 2} fill={ASSET_COLORS.debt} opacity={0.8} rx="4" />
+                    <text x="15" y="215" fontSize="10" fill="#78716c" textAnchor="middle">{p.age}</text>
                   </g>
                 ))}
               </svg>
@@ -215,7 +266,7 @@ export const RiskQuestionnaire = () => {
     <div className="space-y-6">
       <SectionTitle
         title="Risk Questionnaire"
-        subtitle="Answer 16 questions across seven dimensions to discover your risk profile. The result drives your strategic allocation, MVO constraints, and goal success thresholds."
+        subtitle="Answer 20 questions across eight dimensions to discover your risk profile. The result drives your strategic allocation, MVO constraints, and goal success thresholds."
         badge="Behavioural Finance"
       />
 

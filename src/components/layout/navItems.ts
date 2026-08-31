@@ -10,20 +10,21 @@ import {
   FileText,
   ShieldCheck,
   Database,
+  PiggyBank,
 } from 'lucide-react';
 
 export const navItems = [
-  { path: '/', label: 'Dashboard', icon: Activity },
-  { path: '/risk', label: 'Risk Profile', icon: Shield },
-  { path: '/master-plan', label: 'Master Plan', icon: PieChart },
-  { path: '/goal', label: 'Goals', icon: Target },
-  { path: '/calculators', label: 'Calculators', icon: Calculator },
-  { path: '/retirement', label: 'Retirement', icon: Calculator },
-  { path: '/allocation', label: 'Allocation', icon: TrendingUp },
-  { path: '/mvo', label: 'MVO', icon: BarChart2 },
-  { path: '/angel-data', label: 'Angel Data', icon: Database },
-  { path: '/reports', label: 'Reports', icon: BarChart3 },
-  { path: '/ips', label: 'IPS', icon: FileText },
+  { path: '/', label: 'Dashboard', icon: Activity, section: 'Planning' },
+  { path: '/risk', label: 'Risk Profile', icon: Shield, section: 'Planning' },
+  { path: '/master-plan', label: 'Master Plan', icon: PieChart, section: 'Planning' },
+  { path: '/goal', label: 'Goals', icon: Target, section: 'Planning' },
+  { path: '/retirement', label: 'Retirement', icon: PiggyBank, section: 'Planning' },
+  { path: '/allocation', label: 'Allocation', icon: TrendingUp, section: 'Portfolio' },
+  { path: '/mvo', label: 'MVO', icon: BarChart2, section: 'Portfolio' },
+  { path: '/reports', label: 'Reports', icon: BarChart3, section: 'Reports' },
+  { path: '/ips', label: 'IPS', icon: FileText, section: 'Reports' },
+  { path: '/calculators', label: 'Calculators', icon: Calculator, section: 'Tools' },
+  { path: '/angel-data', label: 'Angel Data', icon: Database, section: 'Tools' },
 ];
 
 export const utilityItem = { path: '/angel-connect', label: 'Angel Connect', icon: ShieldCheck };

@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
+import { useEffect } from 'react';
 import { cn } from '../../lib/utils';
 import { navItems, utilityItem } from './navItems';
 
@@ -35,6 +36,48 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && mobileOpen) {
+        onClose();
+      }
+    };
+
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleEscape);
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [mobileOpen, onClose]);
+
+  const groupedNavItems = navItems.reduce((acc, item) => {
+    const section = item.section || 'General';
+    if (!acc[section]) acc[section] = [];
+    acc[section].push(item);
+    return acc;
+  }, {} as Record<string, typeof navItems>);
+
+  const renderNavSections = (onClick?: () => void) => (
+    <nav className="flex-1 space-y-6 overflow-y-auto pb-4 scrollbar-hide">
+      {Object.entries(groupedNavItems).map(([section, items]) => (
+        <div key={section} className="space-y-1">
+          <div className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-stone-400">
+            {section}
+          </div>
+          {items.map((item) => (
+            <NavLink key={item.path} item={item} onClick={onClick} />
+          ))}
+        </div>
+      ))}
+    </nav>
+  );
+
   return (
     <>
       {/* Desktop sidebar */}
@@ -49,13 +92,9 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
           </div>
         </Link>
 
-        <nav className="flex-1 space-y-1">
-          {navItems.map((item) => (
-            <NavLink key={item.path} item={item} />
-          ))}
-        </nav>
+        {renderNavSections()}
 
-        <div className="pt-4 border-t border-stone-200/70">
+        <div className="pt-4 mt-auto border-t border-stone-200/70">
           <NavLink item={utilityItem} />
         </div>
       </aside>
@@ -83,13 +122,9 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
               </button>
             </div>
 
-            <nav className="flex-1 space-y-1">
-              {navItems.map((item) => (
-                <NavLink key={item.path} item={item} onClick={onClose} />
-              ))}
-            </nav>
+            {renderNavSections(onClose)}
 
-            <div className="pt-4 border-t border-stone-200/70">
+            <div className="pt-4 mt-auto border-t border-stone-200/70">
               <NavLink item={utilityItem} onClick={onClose} />
             </div>
           </div>

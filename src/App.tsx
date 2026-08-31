@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { CalculatorProvider } from './context/CalculatorContext';
 import { Layout } from './components/layout/Layout';
 import { Dashboard } from './pages/Dashboard';
@@ -32,6 +32,7 @@ function App() {
             <Route path="/ips" element={<IPSTemplate />} />
             <Route path="/angel-connect" element={<AngelConnect />} />
             <Route path="/angel-data" element={<AngelData />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Layout>
       </BrowserRouter>

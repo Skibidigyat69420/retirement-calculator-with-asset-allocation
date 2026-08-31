@@ -1,4 +1,4 @@
-import { Input } from './Input';
+import { EnhancedNumberInput } from './EnhancedNumberInput';
 
 interface NumberInputProps {
   label?: string;
@@ -9,6 +9,8 @@ interface NumberInputProps {
   min?: number;
   max?: number;
   step?: number;
+  presets?: { label: string; value: number }[];
+  disabled?: boolean;
   className?: string;
 }
 
@@ -20,20 +22,23 @@ export const NumberInput = ({
   helper,
   min,
   max,
-  step,
+  step = 1,
+  presets,
+  disabled,
   className,
 }: NumberInputProps) => {
   return (
-    <Input
+    <EnhancedNumberInput
       label={label}
-      type="number"
       value={value}
-      onChange={(e) => onChange(Number(e.currentTarget.value))}
+      onChange={onChange}
       suffix={suffix}
       helper={helper}
       min={min}
       max={max}
       step={step}
+      presets={presets}
+      disabled={disabled}
       className={className}
     />
   );

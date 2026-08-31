@@ -26,8 +26,7 @@ const categoryMap: Record<string, AssetCategory> = {
 };
 
 export const Allocation = () => {
-  const { inputs, assumptions, riskProfile, wealthResult, setInputs } = useCalculator();
-  const [manualTargets, setManualTargets] = useState<Record<AssetCategory, number> | null>(null);
+  const { inputs, assumptions, riskProfile, wealthResult, setInputs, manualTargets, setManualTargets } = useCalculator();
   const targets = manualTargets || riskProfile.targets;
 
   const { data: marketData, loadBackendData } = useMarketData();
@@ -85,13 +84,20 @@ export const Allocation = () => {
   const projectedWeights = projection?.terminalWeights || wealthResult.projectedAllocation;
   const projectedData = CATEGORIES.map((cat) => ({ name: ASSET_LABELS[cat], value: projectedTotal * (projectedWeights[cat] || 0), color: ASSET_COLORS[cat] })).filter((d) => d.value > 0);
 
-  const updateTarget = (cat: AssetCategory, value: number) => {
-    setManualTargets((prev) => ({ ...(prev || riskProfile.targets), [cat]: value }));
+  const handleTargetChange = (category: AssetCategory, newValue: number) => {
+    setManualTargets((prev) => {
+      const current = prev || riskProfile.targets;
+      const updated = { ...current, [category]: newValue };
+      // Show warning if total != 100, but don't force normalize
+      return updated;
+    });
   };
 
   const applyMvoTargets = (mvoPortfolio: Portfolio, label: string) => {
     const newTargets = portfolioToCategoryTargets(mvoPortfolio, marketData?.instruments || []);
     setManualTargets(newTargets);
+    // Note: SIP/STP only support equity/debt splits.
+    // We assign all non-equity allocation into debt. Gold/real estate aren't available for SIPs.
     const equitySplit = Math.round(newTargets.equity);
     setInputs((prev) => ({
       ...prev,
@@ -115,9 +121,26 @@ export const Allocation = () => {
     }));
   }, [projection]);
 
+  const dynamicRebalancingTrades = useMemo(() => {
+    return CATEGORIES.map((c) => {
+      const currentVal = (wealthResult.currentAllocation[c] || 0) * totalValue;
+      const targetVal = totalValue * (targets[c] / 100);
+      const trade = targetVal - currentVal;
+      const action = Math.abs(trade) < totalValue * 0.02 ? 'Hold' : trade > 0 ? 'Buy' : 'Sell';
+      return {
+        category: c,
+        current: currentVal,
+        currentPct: (wealthResult.currentAllocation[c] || 0) * 100,
+        targetPct: targets[c],
+        trade,
+        action,
+      };
+    });
+  }, [wealthResult.currentAllocation, totalValue, targets]);
+
   const maxDrift = useMemo(
-    () => Math.max(...wealthResult.rebalancingTrades.map((r) => Math.abs((wealthResult.currentAllocation[r.category] * 100) - targets[r.category]))),
-    [wealthResult, targets],
+    () => Math.max(...dynamicRebalancingTrades.map((r) => Math.abs(r.currentPct - r.targetPct))),
+    [dynamicRebalancingTrades],
   );
 
   return (
@@ -203,11 +226,18 @@ export const Allocation = () => {
           </div>
           <div className="space-y-5">
             {CATEGORIES.map((cat) => (
-              <Slider key={cat} label={ASSET_LABELS[cat]} value={targets[cat]} onChange={(v) => updateTarget(cat, v)} suffix="%" />
+              <Slider key={cat} label={ASSET_LABELS[cat]} value={targets[cat]} onChange={(v) => handleTargetChange(cat, v)} suffix="%" />
             ))}
           </div>
           <div className="mt-4 flex items-center justify-between">
-            <span className="text-xs text-stone-500">Total: {formatPercent(Object.values(targets).reduce((a, b) => a + b, 0))}</span>
+            <span className="flex items-center text-xs">
+              <span className="text-stone-500">Total: {formatPercent(Object.values(targets).reduce((a, b) => a + b, 0))}</span>
+              {Math.abs(Object.values(targets).reduce((a, b) => a + b, 0) - 100) > 0.1 && (
+                <span className="ml-2 inline-flex items-center text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full font-medium">
+                  <AlertTriangle size={12} className="mr-1" /> Does not equal 100%
+                </span>
+              )}
+            </span>
             <button onClick={() => setManualTargets(null)} className="text-xs flex items-center text-gold hover:underline">
               <RotateCcw size={12} className="mr-1" /> Reset to {riskProfile.label}
             </button>
@@ -279,8 +309,7 @@ export const Allocation = () => {
               </tr>
             </thead>
             <tbody>
-              {wealthResult.rebalancingTrades.map((r) => {
-                const currentPct = wealthResult.currentAllocation[r.category] * 100;
+              {dynamicRebalancingTrades.map((r) => {
                 const projectedPct = (projectedWeights[r.category] || 0) * 100;
                 return (
                   <tr key={r.category} className="border-b border-stone-100 hover:bg-stone-50">
@@ -289,14 +318,14 @@ export const Allocation = () => {
                       {ASSET_LABELS[r.category]}
                     </td>
                     <td className="py-2 pr-4 text-right">{formatCurrency(r.current)}</td>
-                    <td className="py-2 pr-4 text-right">{formatPercent(currentPct)}</td>
-                    <td className="py-2 pr-4 text-right">{formatPercent(targets[r.category])}</td>
+                    <td className="py-2 pr-4 text-right">{formatPercent(r.currentPct)}</td>
+                    <td className="py-2 pr-4 text-right">{formatPercent(r.targetPct)}</td>
                     <td className="py-2 pr-4 text-right">{formatPercent(projectedPct)}</td>
                     <td className="py-2 pr-4 text-right font-medium">{formatCurrency(r.trade)}</td>
                     <td className="py-2 pr-4 text-center">
-                      {Math.abs(r.trade) < totalValue * 0.02 ? (
+                      {r.action === 'Hold' ? (
                         <span className="inline-flex items-center text-stone-500 text-xs"><CheckCircle2 size={12} className="mr-1" /> Hold</span>
-                      ) : r.trade > 0 ? (
+                      ) : r.action === 'Buy' ? (
                         <span className="text-green-600 text-xs font-semibold">Buy</span>
                       ) : (
                         <span className="text-red-600 text-xs font-semibold">Sell</span>
@@ -313,12 +342,9 @@ export const Allocation = () => {
       <Card>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-serif text-navy">Glide Path Reference</h3>
-          <Link to="/advanced-allocation" className="text-xs text-gold hover:underline flex items-center">
-            Advanced models <ArrowRight size={12} className="ml-1" />
-          </Link>
         </div>
         <p className="text-sm text-stone-600 mb-4">
-          The default glide path reduces equity as you approach retirement, shifting to capital preservation. Use the Advanced Allocation page for Black-Litterman, risk parity, and tactical overlays.
+          The default glide path reduces equity as you approach retirement, shifting to capital preservation.
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[

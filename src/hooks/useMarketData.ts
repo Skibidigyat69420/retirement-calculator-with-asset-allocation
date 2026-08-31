@@ -70,9 +70,7 @@ export function useMarketData(): UseMarketDataReturn {
   const alignToSymbols = useCallback((symbols: string[]): MarketDataSet | null => {
     if (!rawBundle) return data;
     try {
-      const aligned = alignMarketData(rawBundle, symbols);
-      setData(aligned);
-      return aligned;
+      return alignMarketData(rawBundle, symbols);
     } catch {
       return data;
     }

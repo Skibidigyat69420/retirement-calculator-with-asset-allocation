@@ -41,6 +41,7 @@ export function computePortfolioMetrics(
   holdingAnalytics: PortfolioHoldingAnalytics[],
   benchmarkReturns: number[] = [],
   riskFreeRate = 0.06,
+  covMatrix?: number[][],
 ): PortfolioMetrics {
   const totalValue = holdingAnalytics.reduce((sum, h) => sum + h.value, 0);
   const totalInvested = holdingAnalytics.reduce((sum, h) => sum + h.invested, 0);
@@ -72,10 +73,11 @@ export function computePortfolioMetrics(
     other: 0.2,
   };
 
-  const portfolioVariance = holdingAnalytics.reduce(
-    (sum, h, i) => sum + Math.pow(weights[i] * categoryVolatilities[h.category], 2),
-    0,
-  );
+  const portfolioVariance = weights.reduce((sum, wi, i) => 
+    sum + weights.reduce((inner, wj, j) => 
+      inner + wi * wj * (covMatrix?.[i]?.[j] ?? (i === j ? Math.pow(categoryVolatilities[holdingAnalytics[i].category], 2) : 0))
+    , 0)
+  , 0);
   const annualizedVolatility = Math.sqrt(portfolioVariance);
 
   const sharpe = annualizedVolatility > 0 ? (expectedReturn - riskFreeRate) / annualizedVolatility : 0;

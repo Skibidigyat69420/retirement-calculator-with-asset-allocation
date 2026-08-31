@@ -110,7 +110,9 @@ export function buildAssumptionsFromMarketData(marketData: MarketDataSet): Assum
   }
 
   // Correlation
-  const correlation: Record<AssetCategory, Record<AssetCategory, number>> = { ...cov };
+  const correlation = {} as Record<AssetCategory, Record<AssetCategory, number>>;
+  catList.forEach((cat) => { correlation[cat] = { ...cov[cat] }; });
+
   catList.forEach((cat) => {
     catList.forEach((cat2) => {
       const denom = result[cat].std * result[cat2].std;

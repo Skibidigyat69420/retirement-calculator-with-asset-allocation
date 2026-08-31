@@ -60,6 +60,9 @@ export async function fetchSymbolHistory(
   if (!instrument) {
     throw new Error(`Unknown symbol: ${symbol}`);
   }
+  if (!instrument.token) {
+    throw new Error(`Instrument ${symbol} has no token (e.g. US ETF), cannot fetch via SmartAPI.`);
+  }
 
   const cached = getCachedPrices(symbol, instrument.exchange, from, to);
   if (cached) return cached;
@@ -182,14 +185,20 @@ export async function fetchMarketData(
   for (let i = 0; i < symbols.length; i++) {
     const symbol = symbols[i];
     onProgress?.({ completed: i, total: symbols.length, currentSymbol: symbol });
-    const candles = await fetchSymbolHistory(symbol, from, to, creds, session);
-    prices.push({
-      symbol,
-      dates: candles.map((c) => c.date),
-      closes: candles.map((c) => c.close),
-    });
-    const inst = getInstrument(symbol);
-    if (inst) instruments.push(inst);
+    try {
+      const candles = await fetchSymbolHistory(symbol, from, to, creds, session);
+      if (candles.length > 0) {
+        prices.push({
+          symbol,
+          dates: candles.map((c) => c.date),
+          closes: candles.map((c) => c.close),
+        });
+        const inst = getInstrument(symbol);
+        if (inst) instruments.push(inst);
+      }
+    } catch (err: any) {
+      console.warn(`Skipping ${symbol}: ${err?.message}`);
+    }
   }
 
   onProgress?.({ completed: symbols.length, total: symbols.length, currentSymbol: '' });

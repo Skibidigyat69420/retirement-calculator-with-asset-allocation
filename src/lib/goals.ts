@@ -31,7 +31,7 @@ function choleskyL(cov: number[][]): number[][] {
 
 function generateCorrelatedReturns(L: number[][], means: number[], stds: number[]): number[] {
   const z = means.map(() => boxMuller());
-  return L.map((row, i) => means[i] + row.reduce((sum, l, k) => sum + l * z[k], 0) * stds[i]);
+  return L.map((row, i) => means[i] + row.reduce((sum, l, k) => sum + l * z[k], 0));
 }
 
 export function calculateGoalPV(goal: Goal, discountRate: number): number {
@@ -46,8 +46,7 @@ export function requiredMonthlySIPForGoal(
   annualReturn: number,
   inflation: number,
 ): number {
-  const realReturn = (1 + annualReturn / 100) / (1 + inflation / 100) - 1;
-  const r = realReturn / 12;
+  const r = (annualReturn / 100) / 12;
   const n = years * 12;
   if (r === 0) return targetAmount / n;
   return (targetAmount * r) / (Math.pow(1 + r, n) - 1);

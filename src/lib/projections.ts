@@ -1,4 +1,4 @@
-import type { AssetCategory, Asset, MasterPlanInputs, YearlySnapshot } from '../types';
+import type { AssetCategory, Asset, MasterPlanInputs, YearlySnapshot, AllocationScenario, RebalancingStrategy, GlidePathPoint } from '../types';
 import type { AssumptionSet } from './assumptions';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
@@ -145,28 +145,185 @@ export function projectAssetAllocation(
   targetWeights?: Record<AssetCategory, number>,
   simulations = 1000,
 ): ProjectionResult {
-  const { currentAge, retirementAge, lifeExpectancy, inflation, assets, sip, stp, swp, goals } = inputs;
+  return projectAllocationScenario(inputs, assumptions, { targetWeights, simulations });
+}
+
+function normalizeWeights(values: Record<AssetCategory, number>): Record<AssetCategory, number> {
+  const total = Object.values(values).reduce((a, b) => a + b, 0);
+  if (total <= 0) return { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
+  const out: Record<AssetCategory, number> = { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
+  CATEGORIES.forEach((c) => (out[c] = (values[c] || 0) / total));
+  return out;
+}
+
+function zeroWeights(): Record<AssetCategory, number> {
+  return { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
+}
+
+export function convertSnapshotsToAllocationProjection(snapshots: YearlySnapshot[]): YearlyCategoryProjection[] {
+  return snapshots.map((s) => {
+    const values: Record<AssetCategory, number> = {
+      equity: s.equity,
+      debt: s.debt,
+      gold: s.gold,
+      realestate: s.realEstate,
+      liquid: s.liquid,
+      other: s.other,
+    };
+    const weights = normalizeWeights(values);
+    const tgt = getTargetGlideAllocation(s.age, s.age + 1);
+    const drift: Record<AssetCategory, number> = { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
+    const rebalance: Record<AssetCategory, number> = { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
+    CATEGORIES.forEach((c) => {
+      drift[c] = weights[c] - tgt[c];
+      rebalance[c] = s.nominal * (tgt[c] - weights[c]);
+    });
+    return {
+      year: s.year,
+      age: s.age,
+      ...values,
+      total: s.nominal,
+      weights,
+      targetWeights: tgt,
+      drift,
+      newInvestmentNeeded: 0,
+      rebalancingNeeded: rebalance,
+      goalConsumption: s.annualWithdrawal || 0,
+      phase: s.phase,
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Scenario-driven allocation projection
+// ---------------------------------------------------------------------------
+
+export interface AllocationProjectOptions {
+  targetWeights?: Record<AssetCategory, number>;
+  glidePath?: GlidePathPoint[] | null;
+  rebalancing?: { strategy: RebalancingStrategy; threshold: number };
+  scenarioAssumptions?: AllocationScenario['assumptions'];
+  simulations?: number;
+}
+
+function buildScenarioAssumptionSet(
+  scenarioAssumptions: AllocationScenario['assumptions'],
+  baseAssumptions: AssumptionSet,
+  fallbackInflation: number,
+): { assumptions: AssumptionSet; inflation: number } {
+  if (scenarioAssumptions.useMasterPlanAssumptions) {
+    return { assumptions: baseAssumptions, inflation: fallbackInflation };
+  }
+
+  const categories: AssumptionSet['categories'] = Object.fromEntries(
+    CATEGORIES.map((c) => [c, { mean: scenarioAssumptions.categories[c].mean, std: scenarioAssumptions.categories[c].std }]),
+  ) as AssumptionSet['categories'];
+
+  const covariance: AssumptionSet['covariance'] = Object.fromEntries(
+    CATEGORIES.map((i) => [
+      i,
+      Object.fromEntries(CATEGORIES.map((j) => [j, scenarioAssumptions.correlation[i][j] * categories[i].std * categories[j].std])) as Record<AssetCategory, number>,
+    ]),
+  ) as AssumptionSet['covariance'];
+
+  return {
+    assumptions: {
+      ...baseAssumptions,
+      categories,
+      covariance,
+    },
+    inflation: scenarioAssumptions.inflation,
+  };
+}
+
+function getGlideWeights(age: number, _retirementAge: number, glidePath: GlidePathPoint[] | null | undefined): Record<AssetCategory, number> | null {
+  if (!glidePath || glidePath.length === 0) return null;
+  const sorted = [...glidePath].sort((a, b) => a.age - b.age);
+  if (age <= sorted[0].age) {
+    return normalizeWeights({ equity: sorted[0].equity, debt: sorted[0].debt, gold: 0, realestate: 0, liquid: 0, other: 0 });
+  }
+  if (age >= sorted[sorted.length - 1].age) {
+    const last = sorted[sorted.length - 1];
+    return normalizeWeights({ equity: last.equity, debt: last.debt, gold: 0, realestate: 0, liquid: 0, other: 0 });
+  }
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const a = sorted[i];
+    const b = sorted[i + 1];
+    if (age >= a.age && age <= b.age) {
+      const t = (age - a.age) / (b.age - a.age || 1);
+      const equity = a.equity + (b.equity - a.equity) * t;
+      const debt = a.debt + (b.debt - a.debt) * t;
+      return normalizeWeights({ equity, debt, gold: 0, realestate: 0, liquid: 0, other: 0 });
+    }
+  }
+  return null;
+}
+
+function resolveTargetWeights(
+  age: number,
+  retirementAge: number,
+  fixedTargets: Record<AssetCategory, number> | undefined,
+  glidePath: GlidePathPoint[] | null | undefined,
+): Record<AssetCategory, number> {
+  const glide = getGlideWeights(age, retirementAge, glidePath);
+  if (glide) return glide;
+  if (fixedTargets) return fixedTargets;
+  return getTargetGlideAllocation(age, retirementAge);
+}
+
+function applyRebalance(
+  values: Record<AssetCategory, number>,
+  targetWeights: Record<AssetCategory, number>,
+  strategy: RebalancingStrategy,
+  threshold: number,
+): { values: Record<AssetCategory, number>; rebalanced: boolean; trades: Record<AssetCategory, number> } {
+  const total = Object.values(values).reduce((a, b) => a + b, 0);
+  if (total <= 0) return { values, rebalanced: false, trades: zeroWeights() };
+
+  const weights = normalizeWeights(values);
+  const maxDrift = Math.max(...CATEGORIES.map((c) => Math.abs(weights[c] - targetWeights[c]) * 100));
+
+  if (strategy === 'none') return { values, rebalanced: false, trades: zeroWeights() };
+  if (strategy === 'threshold' && maxDrift < threshold) return { values, rebalanced: false, trades: zeroWeights() };
+
+  const trades: Record<AssetCategory, number> = zeroWeights();
+  CATEGORIES.forEach((c) => {
+    const targetValue = total * targetWeights[c];
+    trades[c] = targetValue - values[c];
+    values[c] = targetValue;
+  });
+  return { values, rebalanced: true, trades };
+}
+
+export function projectAllocationScenario(
+  inputs: MasterPlanInputs,
+  assumptions: AssumptionSet,
+  options: AllocationProjectOptions = {},
+): ProjectionResult {
+  const { currentAge, retirementAge, lifeExpectancy, inflation: inputInflation, assets, sip, stp, swp, goals } = inputs;
   const accYears = Math.max(0, retirementAge - currentAge);
   const distYears = Math.max(0, lifeExpectancy - retirementAge);
-  const infl = inflation / 100;
 
-  const means = CATEGORIES.map((c) => assumptions.categories[c].mean);
-  const covMatrix = CATEGORIES.map((i) => CATEGORIES.map((j) => assumptions.covariance[i][j]));
+  const scenario = options.scenarioAssumptions
+    ? buildScenarioAssumptionSet(options.scenarioAssumptions, assumptions, inputInflation)
+    : { assumptions, inflation: inputInflation };
+
+  const effectiveAssumptions = scenario.assumptions;
+  const infl = (scenario.inflation ?? inputInflation) / 100;
+  const means = CATEGORIES.map((c) => effectiveAssumptions.categories[c].mean);
+  const covMatrix = CATEGORIES.map((i) => CATEGORIES.map((j) => effectiveAssumptions.covariance[i][j]));
   const L = choleskyL(covMatrix);
-  const fxStats = buildCategoryFXStats(assets, assumptions.fx);
+  const fxStats = buildCategoryFXStats(assets, effectiveAssumptions.fx);
 
-  const weights = CATEGORIES.map((c) => {
-    if (c === 'equity') return sip.equitySplit / 100;
-    if (c === 'debt') return sip.debtSplit / 100;
-    return 0;
-  });
-  const totalSipWeight = weights.reduce((a, b) => a + b, 0);
-  const sipWeights = totalSipWeight > 0 ? weights.map((w) => w / totalSipWeight) : CATEGORIES.map(() => 1 / CATEGORIES.length);
+  const sipWeightsArr = CATEGORIES.map((c) => (c === 'equity' ? sip.equitySplit / 100 : c === 'debt' ? sip.debtSplit / 100 : 0));
+  const totalSipWeight = sipWeightsArr.reduce((a, b) => a + b, 0);
+  const sipWeights = totalSipWeight > 0 ? sipWeightsArr.map((w) => w / totalSipWeight) : CATEGORIES.map(() => 1 / CATEGORIES.length);
 
-  let totalContributions = 0;
-  let totalGoalConsumption = 0;
+  const rebalancing = options.rebalancing || { strategy: 'annual' as RebalancingStrategy, threshold: 5 };
+  const fixedTargets = options.targetWeights
+    ? (Object.fromEntries(CATEGORIES.map((c) => [c, options.targetWeights![c] / 100])) as Record<AssetCategory, number>)
+    : undefined;
 
-  // Track goal future values
   const goalTargets = goals.map((g) => ({
     ...g,
     futureValue: g.targetAmount * Math.pow(1 + g.inflation / 100, g.yearsToGoal),
@@ -187,7 +344,6 @@ export function projectAssetAllocation(
     for (let y = 1; y <= accYears + distYears; y++) {
       const phase: 'accumulation' | 'distribution' = y <= accYears ? 'accumulation' : 'distribution';
 
-      // Apply annual correlated returns plus FX return for foreign-currency assets
       const returns = generateCorrelatedReturns(L, means);
       const fxReturns = sampleFXReturn(fxStats);
       CATEGORIES.forEach((c, i) => {
@@ -195,7 +351,6 @@ export function projectAssetAllocation(
       });
 
       if (phase === 'accumulation') {
-        // SIP contributions
         for (let m = 0; m < 12; m++) {
           CATEGORIES.forEach((c, i) => {
             values[c] += monthlySip * sipWeights[i];
@@ -204,7 +359,6 @@ export function projectAssetAllocation(
         }
         monthlySip = monthlySip * (1 + sip.stepUp / 100);
 
-        // STP deployment
         if (stp.active && stpLiquid > 0) {
           for (let m = 0; m < 12; m++) {
             stpLiquid = stpLiquid * (1 + stp.liquidReturn / 100 / 12);
@@ -212,15 +366,14 @@ export function projectAssetAllocation(
             values.equity += transfer * (stp.equitySplit / 100);
             values.debt += transfer * (stp.debtSplit / 100);
             stpLiquid -= transfer;
+            contributions += transfer;
           }
         }
 
-        // Goal consumption as due
         goalTargets.forEach((g) => {
           if (g.dueYear === y) {
             const total = Object.values(values).reduce((a, b) => a + b, 0);
             if (total >= g.futureValue) {
-              // Deduct proportionally
               const ratio = g.futureValue / total;
               CATEGORIES.forEach((c) => (values[c] *= 1 - ratio));
               consumption += g.futureValue;
@@ -232,7 +385,6 @@ export function projectAssetAllocation(
           }
         });
       } else {
-        // Distribution: SWP
         const yearsSinceRetirement = y - accYears;
         const monthlyNeed = swp.monthlyNeedToday * Math.pow(1 + infl, accYears + yearsSinceRetirement - 1);
         const grossAnnual = (monthlyNeed * 12) / (1 - swp.taxRate / 100);
@@ -247,28 +399,31 @@ export function projectAssetAllocation(
           CATEGORIES.forEach((c) => (values[c] = 0));
         }
       }
+
+      // Rebalancing
+      const age = currentAge + y;
+      const targetWeights = resolveTargetWeights(age, retirementAge, fixedTargets, options.glidePath);
+      const rebalanceResult = applyRebalance(values, targetWeights, rebalancing.strategy, rebalancing.threshold);
+      values = rebalanceResult.values;
     }
 
     return { values, success, shortfall, contributions, consumption };
   };
 
-  const simResults = Array.from({ length: simulations }, runSimulation);
+  const simResults = Array.from({ length: options.simulations || 1000 }, runSimulation);
   const successCount = simResults.filter((r) => r.success).length;
-  const probabilityOfSuccess = successCount / simulations;
-  const shortfallRisk = simResults.reduce((sum, r) => sum + r.shortfall, 0) / simulations;
+  const probabilityOfSuccess = successCount / simResults.length;
+  const shortfallRisk = simResults.reduce((sum, r) => sum + r.shortfall, 0) / simResults.length;
 
-  // Deterministic median projection for yearly display
-  const medianRun = simResults.sort((a, b) =>
-    Object.values(b.values).reduce((x, y) => x + y, 0) - Object.values(a.values).reduce((x, y) => x + y, 0),
-  )[Math.floor(simulations / 2)];
-
-  // Build yearly projection from a single deterministic run using assumptions means
+  // Deterministic median projection
   const yearly: YearlyCategoryProjection[] = [];
   let values: Record<AssetCategory, number> = { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
   assets.forEach((a) => (values[a.category] += a.value));
 
   let monthlySip = sip.amount;
   let stpLiquid = stp.active ? stp.lumpsum : 0;
+  let totalContributions = 0;
+  let totalGoalConsumption = 0;
 
   yearly.push({
     year: 0,
@@ -276,7 +431,7 @@ export function projectAssetAllocation(
     ...values,
     total: Object.values(values).reduce((a, b) => a + b, 0),
     weights: normalizeWeights(values),
-    targetWeights: targetWeights || getTargetGlideAllocation(currentAge, retirementAge),
+    targetWeights: resolveTargetWeights(currentAge, retirementAge, fixedTargets, options.glidePath),
     drift: zeroWeights(),
     newInvestmentNeeded: 0,
     rebalancingNeeded: zeroWeights(),
@@ -287,7 +442,6 @@ export function projectAssetAllocation(
   for (let y = 1; y <= accYears + distYears; y++) {
     const phase: 'accumulation' | 'distribution' = y <= accYears ? 'accumulation' : 'distribution';
 
-    // Apply mean returns plus mean FX return for foreign-currency assets
     CATEGORIES.forEach((c, i) => {
       values[c] = values[c] * (1 + means[i]) * (1 + fxStats[c].mean);
     });
@@ -339,36 +493,43 @@ export function projectAssetAllocation(
       totalGoalConsumption += draw;
     }
 
-    const total = Object.values(values).reduce((a, b) => a + b, 0);
     const weights = normalizeWeights(values);
-    const tgt = targetWeights || getTargetGlideAllocation(currentAge + y, retirementAge);
-    const drift: Record<AssetCategory, number> = { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
-    const rebalance: Record<AssetCategory, number> = { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
+    const age = currentAge + y;
+    const tgt = resolveTargetWeights(age, retirementAge, fixedTargets, options.glidePath);
+
+    const rebalanceResult = applyRebalance(values, tgt, rebalancing.strategy, rebalancing.threshold);
+    values = rebalanceResult.values;
+    const postRebalanceTotal = Object.values(values).reduce((a, b) => a + b, 0);
+
+    const drift: Record<AssetCategory, number> = zeroWeights();
     CATEGORIES.forEach((c) => {
       drift[c] = weights[c] - tgt[c];
-      rebalance[c] = total * (tgt[c] - weights[c]);
     });
 
     yearly.push({
       year: y,
-      age: currentAge + y,
+      age,
       equity: round2(values.equity),
       debt: round2(values.debt),
       gold: round2(values.gold),
       realestate: round2(values.realestate),
       liquid: round2(values.liquid),
       other: round2(values.other),
-      total: round2(total),
+      total: round2(postRebalanceTotal),
       weights,
       targetWeights: tgt,
       drift,
       newInvestmentNeeded: round2(newInvestment),
-      rebalancingNeeded: rebalance,
+      rebalancingNeeded: rebalanceResult.trades,
       goalConsumption: round2(goalConsumption),
       phase,
     });
   }
 
+  const sorted = [...simResults].sort((a, b) =>
+    Object.values(b.values).reduce((x, y) => x + y, 0) - Object.values(a.values).reduce((x, y) => x + y, 0),
+  );
+  const medianRun = sorted[Math.floor(sorted.length / 2)];
   const terminalValue = Object.values(medianRun.values).reduce((a, b) => a + b, 0);
 
   return {
@@ -380,50 +541,4 @@ export function projectAssetAllocation(
     probabilityOfSuccess: round2(probabilityOfSuccess * 100),
     shortfallRisk: round2(shortfallRisk),
   };
-}
-
-function normalizeWeights(values: Record<AssetCategory, number>): Record<AssetCategory, number> {
-  const total = Object.values(values).reduce((a, b) => a + b, 0);
-  if (total <= 0) return { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
-  const out: Record<AssetCategory, number> = { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
-  CATEGORIES.forEach((c) => (out[c] = (values[c] || 0) / total));
-  return out;
-}
-
-function zeroWeights(): Record<AssetCategory, number> {
-  return { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
-}
-
-export function convertSnapshotsToAllocationProjection(snapshots: YearlySnapshot[]): YearlyCategoryProjection[] {
-  return snapshots.map((s) => {
-    const values: Record<AssetCategory, number> = {
-      equity: s.equity,
-      debt: s.debt,
-      gold: s.gold,
-      realestate: s.realEstate,
-      liquid: s.liquid,
-      other: s.other,
-    };
-    const weights = normalizeWeights(values);
-    const tgt = getTargetGlideAllocation(s.age, s.age + 1);
-    const drift: Record<AssetCategory, number> = { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
-    const rebalance: Record<AssetCategory, number> = { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
-    CATEGORIES.forEach((c) => {
-      drift[c] = weights[c] - tgt[c];
-      rebalance[c] = s.nominal * (tgt[c] - weights[c]);
-    });
-    return {
-      year: s.year,
-      age: s.age,
-      ...values,
-      total: s.nominal,
-      weights,
-      targetWeights: tgt,
-      drift,
-      newInvestmentNeeded: 0,
-      rebalancingNeeded: rebalance,
-      goalConsumption: s.annualWithdrawal || 0,
-      phase: s.phase,
-    };
-  });
 }

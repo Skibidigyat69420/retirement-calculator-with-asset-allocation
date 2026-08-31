@@ -1,4 +1,4 @@
-import { FileText, TrendingUp, Target, PieChart, ShieldCheck, AlertTriangle, CheckCircle2, Globe, Wallet } from 'lucide-react';
+import { FileText, TrendingUp, Target, PieChart, ShieldCheck, AlertTriangle, CheckCircle2, Globe, Wallet, Printer } from 'lucide-react';
 import { useCalculator } from '../context/CalculatorContext';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { Card } from '../components/ui/Card';
@@ -6,6 +6,7 @@ import { MetricCard } from '../components/ui/MetricCard';
 import { Badge } from '../components/ui/Badge';
 import { DonutChart } from '../components/charts/DonutChart';
 import { MonteCarloFanChart } from '../components/charts/MonteCarloFanChart';
+import { Button } from '../components/ui/Button';
 import { formatCurrency, formatPercent } from '../lib/formatters';
 import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
 import type { AssetCategory } from '../types';
@@ -14,6 +15,10 @@ const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'li
 
 export const Reports = () => {
   const { inputs, riskProfile, wealthResult } = useCalculator();
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   const currentAllocationData = CATEGORIES.map((cat) => ({
     name: ASSET_LABELS[cat],
@@ -32,13 +37,18 @@ export const Reports = () => {
   const aspirationalGoals = wealthResult.goalResults.filter((g) => g.goal.priority === 'aspirational');
 
   return (
-    <div className="space-y-6">
-      <SectionTitle
-        title="Plan Reports"
-        subtitle="A consolidated view of your financial plan: net worth, allocation, goals, Monte Carlo outcomes, tax, and currency exposure."
-        badge="Comprehensive"
-      />
-
+    <div className="space-y-6 print:space-y-4 print:p-0">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
+        <SectionTitle
+          title="Plan Reports"
+          subtitle="A consolidated view of your financial plan: net worth, allocation, goals, Monte Carlo outcomes, tax, and currency exposure."
+          badge="Comprehensive"
+        />
+        <Button onClick={handlePrint} className="flex items-center gap-2">
+          <Printer size={16} />
+          Print Report
+        </Button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <MetricCard label="Net Worth" value={formatCurrency(wealthResult.netWorth)} subtext="Current assets" variant="navy" />
         <MetricCard label="Net Annual Savings" value={formatCurrency(wealthResult.annualSavings)} subtext={`${formatPercent(wealthResult.savingsRate)} of income`} variant="gold" />

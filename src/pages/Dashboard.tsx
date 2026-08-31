@@ -135,7 +135,7 @@ export const Dashboard = () => {
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <MetricCard
           label="Net Worth"
           value={formatCurrency(wealthResult.netWorth)}
@@ -180,7 +180,7 @@ export const Dashboard = () => {
         <MetricCard
           label="Currency Exposure"
           value={wealthResult.currencyExposure.length > 1
-            ? `${formatPercent(wealthResult.currencyExposure.find((c) => c.currency !== 'INR')?.percentage || 0)} non-INR`
+            ? `${formatPercent(wealthResult.currencyExposure.filter((c) => c.currency !== 'INR').reduce((sum, c) => sum + c.percentage, 0))} non-INR`
             : '100% INR'}
           subtext={wealthResult.currencyExposure.map((c) => `${c.currency} ${formatPercent(c.percentage)}`).join(' · ')}
           icon={<DollarSign size={20} />}

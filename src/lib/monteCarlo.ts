@@ -36,7 +36,7 @@ function generateCorrelatedReturns(L: number[][], stdDevs: number[], means: numb
   const n = L.length;
   const z = Array.from({ length: n }, () => boxMuller());
   const correlated = L.map((row) => row.reduce((sum, l, k) => sum + l * z[k], 0));
-  return correlated.map((r, i) => means[i] + r * stdDevs[i]);
+  return correlated.map((r, i) => means[i] + r);
 }
 
 export interface RetirementSimParams {
@@ -118,7 +118,7 @@ export function runRetirementMonteCarlo(params: RetirementSimParams): MonteCarlo
       values = buildArrays(normWeights).map((w) => newTotal * w);
 
       path.push([...values]);
-      monthlyContribution *= Math.pow(1 + sipStepUp / 100, 1 / 12);
+      monthlyContribution *= (1 + sipStepUp / 100);
     }
 
     // Distribution phase

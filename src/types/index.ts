@@ -333,3 +333,37 @@ export interface TaxLossHarvestOpportunity {
   harvestableLoss: number;
   taxAlpha: number;
 }
+
+// Allocation scenario workspace
+export type RebalancingStrategy = 'annual' | 'threshold' | 'none';
+
+export interface GlidePathPoint {
+  age: number;
+  equity: number;
+  debt: number;
+}
+
+export interface CategoryAssumption {
+  mean: number; // annual return decimal, e.g. 0.12
+  std: number; // annual volatility decimal, e.g. 0.15
+}
+
+export interface AllocationScenario {
+  id: string;
+  name: string;
+  source: 'current' | 'risk-profile' | 'mvo-max-sharpe' | 'mvo-min-variance' | 'risk-parity' | 'glide-path' | 'custom';
+  targets: Record<AssetCategory, number>; // percentages 0-100
+  assumptions: {
+    useMasterPlanAssumptions: boolean;
+    categories: Record<AssetCategory, CategoryAssumption>;
+    inflation: number;
+    correlation: Record<AssetCategory, Record<AssetCategory, number>>;
+  };
+  glidePath: GlidePathPoint[] | null;
+  rebalancing: {
+    strategy: RebalancingStrategy;
+    threshold: number; // percent drift that triggers rebalance
+  };
+  narrative: string;
+  createdAt: number;
+}

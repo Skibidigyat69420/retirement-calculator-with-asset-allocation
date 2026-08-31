@@ -166,16 +166,35 @@ export const AngelConnect = () => {
 
   const handleSyncToPlan = () => {
     if (holdings.length === 0) return;
-    const totalVal = holdings.reduce((acc, h) => acc + h.totalHoldingValue, 0);
-    addAsset({
-      name: `Angel One Equity Portfolio (${holdings.length} stocks)`,
-      value: totalVal,
-      returnRate: 12,
-      category: 'equity',
+    
+    // Group holdings by category. Default to 'equity' for unknown stocks.
+    const grouped = holdings.reduce((acc, h) => {
+      // The symbol in holdings is usually the tradingsymbol (e.g. RELIANCE-EQ)
+      // We do a best-effort match, or default to equity.
+      let category = 'equity';
+      if (h.tradingsymbol.includes('GOLD') || h.tradingsymbol.includes('SGB')) category = 'gold';
+      else if (h.tradingsymbol.includes('LIQUID')) category = 'liquid';
+      else if (h.tradingsymbol.includes('GSEC') || h.tradingsymbol.includes('SDL')) category = 'debt';
+      
+      acc[category] = (acc[category] || 0) + h.totalHoldingValue;
+      return acc;
+    }, {} as Record<string, number>);
+
+    Object.entries(grouped).forEach(([cat, val]) => {
+      if (val > 0) {
+        addAsset({
+          name: `Angel One ${cat.charAt(0).toUpperCase() + cat.slice(1)} Portfolio`,
+          value: val,
+          returnRate: cat === 'equity' ? 12 : cat === 'gold' ? 8 : 6,
+          category: cat as any,
+        });
+      }
     });
+
+    const totalVal = holdings.reduce((acc, h) => acc + h.totalHoldingValue, 0);
     setStatusMessage({
       type: 'success',
-      text: `Imported ₹${totalVal.toLocaleString('en-IN')} portfolio value into Master Asset Allocation!`,
+      text: `Imported ₹${totalVal.toLocaleString('en-IN')} portfolio value across ${Object.keys(grouped).length} categories!`,
     });
   };
 
