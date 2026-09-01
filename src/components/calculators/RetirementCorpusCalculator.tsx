@@ -11,7 +11,7 @@ import { useCalculator } from '../../context/CalculatorContext';
 import { Button } from '../ui/Button';
 
 export const RetirementCorpusCalculator = () => {
-  const { inputs, updateInputs } = useCalculator();
+  const { inputs, updateInputs, showToast } = useCalculator();
   const [currentAge, setCurrentAge] = useState(inputs.currentAge || 34);
   const [retirementAge, setRetirementAge] = useState(inputs.retirementAge || 60);
   const [lifeExpectancy, setLifeExpectancy] = useState(inputs.lifeExpectancy || 85);
@@ -44,7 +44,7 @@ export const RetirementCorpusCalculator = () => {
         postRetirementReturn,
       }
     });
-    alert('Retirement assumptions applied to Master Plan');
+    showToast('Retirement assumptions applied to Master Plan.', 'success');
   };
 
   return (

@@ -1,3 +1,5 @@
+import { COLORS } from '../../lib/constants';
+
 interface MiniSparklineProps {
   data: number[];
   width?: number;
@@ -6,7 +8,7 @@ interface MiniSparklineProps {
   className?: string;
 }
 
-export const MiniSparkline = ({ data, width = 100, height = 32, color = '#1A233A', className }: MiniSparklineProps) => {
+export const MiniSparkline = ({ data, width = 100, height = 32, color = COLORS.navy, className }: MiniSparklineProps) => {
   if (data.length < 2) {
     return <div className={className} style={{ width, height }} />;
   }

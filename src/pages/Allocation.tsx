@@ -14,6 +14,7 @@ import { DEFAULT_ALLOCATION_SYMBOLS } from '../lib/instruments';
 import { runMVO, type ConstraintSet, type Portfolio } from '../lib/mvo';
 import type { AssetCategory } from '../types';
 import { Link } from 'react-router-dom';
+import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
 
@@ -26,7 +27,7 @@ const categoryMap: Record<string, AssetCategory> = {
 };
 
 export const Allocation = () => {
-  const { inputs, assumptions, riskProfile, wealthResult, setInputs, manualTargets, setManualTargets } = useCalculator();
+  const { inputs, assumptions, riskProfile, wealthResult, setInputs, manualTargets, setManualTargets, showToast } = useCalculator();
   const targets = manualTargets || riskProfile.targets;
 
   const { data: marketData, loadBackendData } = useMarketData();
@@ -80,9 +81,26 @@ export const Allocation = () => {
 
   const targetData = CATEGORIES.map((cat) => ({ name: ASSET_LABELS[cat], value: totalValue * (targets[cat] / 100), color: ASSET_COLORS[cat] })).filter((d) => d.value > 0);
 
-  const projectedTotal = projection?.terminalValue || wealthResult.terminalValue;
-  const projectedWeights = projection?.terminalWeights || wealthResult.projectedAllocation;
+  // ?? not ||: a legitimately depleted median Monte Carlo run has terminalValue
+  // 0 and zero weights — falling back to the mean-path values would mix
+  // incoherent numbers (nonzero total with 0% weights).
+  const projectedTotal = projection?.terminalValue ?? wealthResult.terminalValue;
+  const projectedWeights = projection?.terminalWeights ?? wealthResult.projectedAllocation;
   const projectedData = CATEGORIES.map((cat) => ({ name: ASSET_LABELS[cat], value: projectedTotal * (projectedWeights[cat] || 0), color: ASSET_COLORS[cat] })).filter((d) => d.value > 0);
+
+  const normalizeTargets = () => {
+    setManualTargets((prev) => {
+      const current = prev || riskProfile.targets;
+      const sum = Object.values(current).reduce((a, b) => a + b, 0);
+      if (sum <= 0) return prev;
+      const scaled = { ...current };
+      (Object.keys(scaled) as AssetCategory[]).forEach((cat) => {
+        scaled[cat] = (scaled[cat] / sum) * 100;
+      });
+      return scaled;
+    });
+    showToast('Targets normalized proportionally to equal 100%.', 'info');
+  };
 
   const handleTargetChange = (category: AssetCategory, newValue: number) => {
     setManualTargets((prev) => {
@@ -96,15 +114,18 @@ export const Allocation = () => {
   const applyMvoTargets = (mvoPortfolio: Portfolio, label: string) => {
     const newTargets = portfolioToCategoryTargets(mvoPortfolio, marketData?.instruments || []);
     setManualTargets(newTargets);
-    // Note: SIP/STP only support equity/debt splits.
-    // We assign all non-equity allocation into debt. Gold/real estate aren't available for SIPs.
-    const equitySplit = Math.round(newTargets.equity);
+    // Note: SIP/STP only support equity/debt splits, so we preserve the
+    // equity:debt ratio from the MVO targets instead of lumping gold and other
+    // non-equity categories into debt flows.
+    const investable = newTargets.equity + newTargets.debt;
+    const equitySplit = investable > 0 ? Math.round((newTargets.equity / investable) * 100) : 0;
     setInputs((prev) => ({
       ...prev,
       sip: { ...prev.sip, equitySplit, debtSplit: 100 - equitySplit },
       stp: { ...prev.stp, equitySplit, debtSplit: 100 - equitySplit },
     }));
     setAppliedMvo(label);
+    showToast(`Applied ${label} allocation to strategic targets and plan!`, 'success');
     setTimeout(() => setAppliedMvo(null), 3000);
   };
 
@@ -171,14 +192,16 @@ export const Allocation = () => {
           <div className="text-2xl font-serif text-navy mt-1">{formatPercent(targets.equity)}</div>
         </Card>
         <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Projected Terminal Value</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Median Terminal Value (MC)</div>
           <div className="text-2xl font-serif text-navy mt-1">{formatCurrency(projectedTotal)}</div>
+          <div className="text-[10px] text-stone-400 mt-0.5">Median of simulated paths under target mix</div>
         </Card>
         <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Plan Success Probability</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Success Under Target Mix</div>
           <div className={`text-2xl font-serif mt-1 ${projection && projection.probabilityOfSuccess >= riskProfile.goalSuccessThreshold ? 'text-green-600' : projection && projection.probabilityOfSuccess >= riskProfile.goalSuccessThreshold * 0.6 ? 'text-amber-600' : 'text-red-600'}`}>
             {projection ? formatPercent(projection.probabilityOfSuccess) : '—'}
           </div>
+          <div className="text-[10px] text-stone-400 mt-0.5">All goals funded, target allocation</div>
         </Card>
       </div>
 
@@ -224,21 +247,36 @@ export const Allocation = () => {
             <h3 className="text-lg font-serif text-navy flex items-center gap-2"><Shield size={18} className="text-gold" /> Strategic Target</h3>
             <Link to="/risk" className="text-xs text-gold hover:underline">{riskProfile.label}</Link>
           </div>
-          <div className="space-y-5">
-            {CATEGORIES.map((cat) => (
-              <Slider key={cat} label={ASSET_LABELS[cat]} value={targets[cat]} onChange={(v) => handleTargetChange(cat, v)} suffix="%" />
-            ))}
-          </div>
+            {CATEGORIES.map((cat) => {
+              return (
+                <Slider
+                  key={cat}
+                  label={ASSET_LABELS[cat]}
+                  value={Math.round(targets[cat])}
+                  onChange={(v) => handleTargetChange(cat, v)}
+                  min={0}
+                  max={100}
+                  suffix="%"
+                />
+              );
+            })}
           <div className="mt-4 flex items-center justify-between">
             <span className="flex items-center text-xs">
               <span className="text-stone-500">Total: {formatPercent(Object.values(targets).reduce((a, b) => a + b, 0))}</span>
               {Math.abs(Object.values(targets).reduce((a, b) => a + b, 0) - 100) > 0.1 && (
                 <span className="ml-2 inline-flex items-center text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full font-medium">
                   <AlertTriangle size={12} className="mr-1" /> Does not equal 100%
+                  <button onClick={normalizeTargets} className="ml-1.5 underline hover:text-amber-800">Normalize</button>
                 </span>
               )}
             </span>
-            <button onClick={() => setManualTargets(null)} className="text-xs flex items-center text-gold hover:underline">
+            <button
+              onClick={() => {
+                setManualTargets(null);
+                showToast(`Reset targets to ${riskProfile.label} profile.`, 'info');
+              }}
+              className="text-xs flex items-center text-gold hover:underline"
+            >
               <RotateCcw size={12} className="mr-1" /> Reset to {riskProfile.label}
             </button>
           </div>
@@ -367,6 +405,12 @@ export const Allocation = () => {
           })}
         </div>
       </Card>
+
+      <WorkflowFooter
+        prev={{ path: '/retirement', label: 'Retirement Readiness' }}
+        next={{ path: '/mvo', label: 'Mean-Variance Optimization' }}
+        flowHint="Strategic targets guide rebalancing trade suggestions and MVO constraint envelopes."
+      />
     </div>
   );
 };

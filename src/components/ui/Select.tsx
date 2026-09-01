@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { cn } from '../../lib/utils';
 
 interface SelectOption {
@@ -11,18 +12,26 @@ interface SelectProps {
   onChange: (val: string) => void;
   options: SelectOption[];
   className?: string;
+  id?: string;
 }
 
-export const Select = ({ label, value, onChange, options, className }: SelectProps) => {
+export const Select = ({ label, value, onChange, options, className, id }: SelectProps) => {
+  const generatedId = useId();
+  const selectId = id ?? generatedId;
+
   return (
     <div className={cn('space-y-1.5', className)}>
       {label && (
-        <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500">
+        <label
+          htmlFor={selectId}
+          className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500"
+        >
           {label}
         </label>
       )}
       <div className="relative">
         <select
+          id={selectId}
           value={value}
           onChange={(e) => onChange(e.currentTarget.value)}
           className={cn(

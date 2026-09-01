@@ -8,9 +8,10 @@ import { MetricCard } from '../components/ui/MetricCard';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
-import { formatCurrency, formatPercent } from '../lib/formatters';
+import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { useCalculator } from '../context/CalculatorContext';
 import { ASSET_COLORS } from '../lib/constants';
+import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import type { GoalPriority } from '../types';
 
 const priorityOptions: { value: GoalPriority; label: string }[] = [
@@ -20,8 +21,9 @@ const priorityOptions: { value: GoalPriority; label: string }[] = [
 ];
 
 export const GoalPlanner = () => {
-  const { inputs, riskProfile, wealthResult, updateGoal, addGoal, removeGoal } = useCalculator();
+  const { inputs, riskProfile, wealthResult, updateGoal, addGoal, removeGoal, showToast } = useCalculator();
   const [selectedGoalId, setSelectedGoalId] = useState<string>(inputs.goals[0]?.id || '');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const selectedGoal = useMemo(
     () => inputs.goals.find((g) => g.id === selectedGoalId) || inputs.goals[0],
@@ -32,6 +34,18 @@ export const GoalPlanner = () => {
     () => wealthResult.goalResults.find((g) => g.goal.id === selectedGoal?.id) || wealthResult.goalResults[0],
     [wealthResult.goalResults, selectedGoal],
   );
+
+  // Compare each goal's required SIP against its proportional share of the total
+  // portfolio SIP (allocated by required SIP weight), not against an even split.
+  const totalRequiredSIP = useMemo(
+    () => wealthResult.goalResults.reduce((sum, g) => sum + g.requiredSIP, 0),
+    [wealthResult.goalResults],
+  );
+
+  const allocatedSIP = useMemo(() => {
+    if (!simulation || totalRequiredSIP <= 0) return 0;
+    return (wealthResult.monthlySIP * simulation.requiredSIP) / totalRequiredSIP;
+  }, [simulation, totalRequiredSIP, wealthResult.monthlySIP]);
 
   const histogramData = useMemo(() => {
     if (!simulation) return [];
@@ -117,14 +131,37 @@ export const GoalPlanner = () => {
                       onChange={(e) => updateGoal(selectedGoal.id, { name: e.target.value })}
                       className="text-xl font-serif text-navy bg-transparent border-b border-transparent hover:border-stone-300 focus:border-gold focus:outline-none transition-colors"
                     />
-                    <button
-                      onClick={() => { if (confirm('Delete this goal?')) removeGoal(selectedGoal.id); }}
-                      className="text-stone-400 hover:text-red-600 transition-colors p-1"
-                      title="Delete goal"
-                      type="button"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    {confirmDeleteId === selectedGoal.id ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            removeGoal(selectedGoal.id);
+                            setConfirmDeleteId(null);
+                            showToast(`Removed goal "${selectedGoal.name}".`, 'info');
+                          }}
+                          className="px-2 py-0.5 bg-rose-600 text-white rounded text-[11px] font-semibold hover:bg-rose-700"
+                        >
+                          Delete
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="px-2 py-0.5 bg-stone-200 text-stone-700 rounded text-[11px] hover:bg-stone-300"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDeleteId(selectedGoal.id)}
+                        className="text-stone-400 hover:text-red-600 transition-colors p-1"
+                        title="Delete goal"
+                        type="button"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </div>
                 </div>
                 <Badge variant={selectedGoal.priority === 'essential' ? 'danger' : selectedGoal.priority === 'important' ? 'default' : 'outline'}>
@@ -183,12 +220,7 @@ export const GoalPlanner = () => {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
                     <XAxis
                       dataKey="midpoint"
-                      tickFormatter={(v) => {
-                        const n = Number(v);
-                        if (n >= 10000000) return '₹' + (n / 10000000).toFixed(1) + 'Cr';
-                        if (n >= 100000) return '₹' + (n / 100000).toFixed(1) + 'L';
-                        return '₹' + (n / 1000).toFixed(0) + 'K';
-                      }}
+                      tickFormatter={(v) => formatCurrencyCompact(Number(v))}
                       tick={{ fontSize: 10, fill: '#78716c' }}
                       angle={-45}
                       textAnchor="end"
@@ -251,8 +283,9 @@ export const GoalPlanner = () => {
                   <div className="flex justify-between"><span className="text-stone-500">PV needed today</span><span className="font-medium text-navy">{formatCurrency(simulation.pvNeeded)}</span></div>
                   <div className="flex justify-between"><span className="text-stone-500">Required monthly SIP</span><span className="font-medium text-navy">{formatCurrency(simulation.requiredSIP)}</span></div>
                   <div className="flex justify-between"><span className="text-stone-500">Total Portfolio SIP</span><span className="font-medium text-navy">{formatCurrency(wealthResult.monthlySIP)}</span></div>
-                  <div className="flex justify-between"><span className="text-stone-500">Allocated SIP (Avg)</span><span className="font-medium text-navy">{formatCurrency(wealthResult.monthlySIP / Math.max(1, inputs.goals.length))}</span></div>
-                  <div className="flex justify-between"><span className="text-stone-500">SIP gap / surplus (vs Avg)</span><span className={`font-medium ${simulation.requiredSIP > (wealthResult.monthlySIP / Math.max(1, inputs.goals.length)) ? 'text-red-600' : 'text-green-600'}`}>{formatCurrency(simulation.requiredSIP - (wealthResult.monthlySIP / Math.max(1, inputs.goals.length)))}</span></div>
+                  <div className="flex justify-between"><span className="text-stone-500">Required SIP (all goals)</span><span className="font-medium text-navy">{formatCurrency(totalRequiredSIP)}</span></div>
+                  <div className="flex justify-between"><span className="text-stone-500">Allocated SIP (proportional share)</span><span className="font-medium text-navy">{formatCurrency(allocatedSIP)}</span></div>
+                  <div className="flex justify-between"><span className="text-stone-500">SIP gap / surplus</span><span className={`font-medium ${simulation.requiredSIP > allocatedSIP ? 'text-red-600' : 'text-green-600'}`}>{formatCurrency(simulation.requiredSIP - allocatedSIP)}</span></div>
                 </div>
               </div>
             </Card>
@@ -299,6 +332,12 @@ export const GoalPlanner = () => {
           </Card>
         </div>
       </div>
+
+      <WorkflowFooter
+        prev={{ path: '/master-plan', label: 'Master Plan' }}
+        next={{ path: '/retirement', label: 'Retirement Readiness' }}
+        flowHint="Goal targets and time horizons are funded in priority order (Essential first) by the wealth engine."
+      />
     </div>
   );
 };

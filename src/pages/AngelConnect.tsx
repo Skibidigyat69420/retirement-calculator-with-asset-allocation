@@ -38,9 +38,10 @@ import {
 } from '../lib/smartapi';
 import { formatCurrency, formatPercent } from '../lib/formatters';
 import { useCalculator } from '../context/CalculatorContext';
+import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 
 export const AngelConnect = () => {
-  const { addAsset } = useCalculator();
+  const { addAsset, showToast } = useCalculator();
 
   const [creds, setCreds] = useState<SmartApiCredentials>(() => buildDefaultCredentials());
 
@@ -107,11 +108,13 @@ export const AngelConnect = () => {
     if (res.success && res.session) {
       setSession(res.session);
       setStatusMessage({ type: 'success', text: res.message });
+      showToast('Successfully authenticated with Angel One SmartAPI!', 'success');
 
       // Automatically fetch funds and holdings
       loadPortfolioData(res.session, creds);
     } else {
       setStatusMessage({ type: 'error', text: res.message });
+      showToast(res.message || 'SmartAPI authentication failed.', 'error');
     }
   };
 
@@ -137,6 +140,7 @@ export const AngelConnect = () => {
     setFunds(null);
     setHoldings([]);
     setStatusMessage({ type: 'info', text: 'Disconnected from Angel One SmartAPI session.' });
+    showToast('Disconnected from Angel One SmartAPI session.', 'info');
   };
 
   const handleTestHistoricalData = async () => {
@@ -196,6 +200,7 @@ export const AngelConnect = () => {
       type: 'success',
       text: `Imported ₹${totalVal.toLocaleString('en-IN')} portfolio value across ${Object.keys(grouped).length} categories!`,
     });
+    showToast(`Imported ₹${totalVal.toLocaleString('en-IN')} portfolio value into Master Plan!`, 'success');
   };
 
   const totalHoldingsValue = holdings.reduce((acc, h) => acc + h.totalHoldingValue, 0);
@@ -338,6 +343,7 @@ export const AngelConnect = () => {
                   </label>
                   <input
                     type="password"
+                    autoComplete="current-password"
                     placeholder="4-digit MPIN or Password"
                     value={creds.pin}
                     onChange={(e) => setCreds({ ...creds, pin: e.target.value })}
@@ -835,6 +841,12 @@ export const AngelConnect = () => {
           </Card>
         </div>
       )}
+
+      <WorkflowFooter
+        prev={{ path: '/calculators', label: 'Financial Calculators' }}
+        next={{ path: '/angel-data', label: 'Market Data Lab' }}
+        flowHint="Connect your Angel One SmartAPI account to sync live equity, debt, and gold holdings directly into your wealth plan."
+      />
     </div>
   );
 };

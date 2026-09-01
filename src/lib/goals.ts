@@ -29,7 +29,7 @@ function choleskyL(cov: number[][]): number[][] {
   return L;
 }
 
-function generateCorrelatedReturns(L: number[][], means: number[], stds: number[]): number[] {
+function generateCorrelatedReturns(L: number[][], means: number[]): number[] {
   const z = means.map(() => boxMuller());
   return L.map((row, i) => means[i] + row.reduce((sum, l, k) => sum + l * z[k], 0));
 }
@@ -44,7 +44,6 @@ export function requiredMonthlySIPForGoal(
   targetAmount: number,
   years: number,
   annualReturn: number,
-  inflation: number,
 ): number {
   const r = (annualReturn / 100) / 12;
   const n = years * 12;
@@ -73,7 +72,6 @@ export function simulateGoal(
   const futureValue = goal.targetAmount * Math.pow(1 + goal.inflation / 100, goal.yearsToGoal);
 
   const means = CATEGORIES.map((c) => assumptions.categories[c].mean);
-  const stds = CATEGORIES.map((c) => assumptions.categories[c].std);
   const covMatrix = CATEGORIES.map((i) => CATEGORIES.map((j) => assumptions.covariance[i][j]));
   const L = choleskyL(covMatrix);
 
@@ -87,7 +85,7 @@ export function simulateGoal(
   for (let s = 0; s < simulations; s++) {
     let corpus = currentPortfolioValue;
     for (let y = 0; y < goal.yearsToGoal; y++) {
-      const returns = generateCorrelatedReturns(L, means, stds);
+      const returns = generateCorrelatedReturns(L, means);
       const weightedReturn = normalizedWeights.reduce((sum, w, i) => sum + w * returns[i], 0);
       corpus = (corpus + monthlySIP * 12) * (1 + weightedReturn);
     }
@@ -116,7 +114,7 @@ export function simulateGoal(
     });
   }
 
-  const requiredSIP = requiredMonthlySIPForGoal(futureValue, goal.yearsToGoal, portfolioMean * 100, goal.inflation);
+  const requiredSIP = requiredMonthlySIPForGoal(futureValue, goal.yearsToGoal, portfolioMean * 100);
 
   return {
     goal: { ...goal, futureValue },

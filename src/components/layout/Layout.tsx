@@ -16,7 +16,7 @@ export const Layout = ({ children }: LayoutProps) => {
       <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <TopBar onMenuClick={() => setMobileOpen(true)} />
+        <TopBar onMenuClick={() => setMobileOpen(true)} mobileOpen={mobileOpen} />
         <motion.main
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}

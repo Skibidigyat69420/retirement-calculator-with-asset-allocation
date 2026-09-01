@@ -1,15 +1,18 @@
 import { Link, useLocation } from 'react-router-dom';
-import { X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { useEffect } from 'react';
 import { cn } from '../../lib/utils';
 import { navItems, utilityItem } from './navItems';
+import { useCalculator } from '../../context/CalculatorContext';
+import { isComplete } from '../../lib/riskQuestionnaire';
 
 interface NavLinkProps {
   item: typeof navItems[0];
   onClick?: () => void;
+  completed?: boolean;
 }
 
-const NavLink = ({ item, onClick }: NavLinkProps) => {
+const NavLink = ({ item, onClick, completed }: NavLinkProps) => {
   const location = useLocation();
   const Icon = item.icon;
   const active = location.pathname === item.path;
@@ -26,6 +29,13 @@ const NavLink = ({ item, onClick }: NavLinkProps) => {
     >
       <Icon size={18} className={cn('transition-colors', active ? 'text-white' : 'text-stone-400 group-hover:text-ink')} />
       <span>{item.label}</span>
+      {completed && (
+        <Check
+          size={14}
+          className={cn('ml-auto', active ? 'text-gold' : 'text-emerald-500')}
+          aria-label="Completed"
+        />
+      )}
     </Link>
   );
 };
@@ -36,6 +46,24 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
+  const { inputs, riskAnswers, wealthResult, manualTargets } = useCalculator();
+
+  // Comprehensive workflow completion flags per route
+  const completionMap: Record<string, boolean> = {
+    '/risk': isComplete(riskAnswers),
+    '/master-plan': inputs.assets.length > 0 && inputs.annualIncome > 0,
+    '/goal': inputs.goals.length > 0,
+    '/retirement': wealthResult.snapshots.length > 0,
+    '/allocation': manualTargets !== null || isComplete(riskAnswers),
+    '/mvo': true,
+    '/reports': wealthResult.netWorth > 0,
+    '/ips': Boolean(inputs.client?.name),
+  };
+
+  const workflowSteps = ['/risk', '/master-plan', '/goal', '/retirement', '/allocation', '/reports', '/ips'];
+  const completedCount = workflowSteps.filter((path) => completionMap[path]).length;
+  const progressPercent = Math.round((completedCount / workflowSteps.length) * 100);
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && mobileOpen) {
@@ -71,7 +99,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
             {section}
           </div>
           {items.map((item) => (
-            <NavLink key={item.path} item={item} onClick={onClick} />
+            <NavLink key={item.path} item={item} onClick={onClick} completed={completionMap[item.path]} />
           ))}
         </div>
       ))}
@@ -94,7 +122,34 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
 
         {renderNavSections()}
 
-        <div className="pt-4 mt-auto border-t border-stone-200/70">
+        {/* Progress & Client Profile summary */}
+        <div className="p-3 my-2 bg-paper/90 rounded-xl border border-stone-200/80">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-stone-500 mb-1.5">
+            <span>Advisor Progress</span>
+            <span className="text-navy font-bold">{completedCount}/{workflowSteps.length}</span>
+          </div>
+          <div className="w-full h-1.5 bg-stone-200 rounded-full overflow-hidden mb-2.5">
+            <div className="h-full bg-gold rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
+          </div>
+          <Link
+            to="/master-plan"
+            className="flex items-center gap-2 text-left p-1 rounded-lg hover:bg-white transition-colors group"
+          >
+            <div className="w-6 h-6 rounded-full bg-navy text-gold text-[10px] font-bold flex items-center justify-center shrink-0">
+              {inputs.client?.name?.charAt(0) || 'C'}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-semibold text-navy truncate group-hover:text-gold transition-colors">
+                {inputs.client?.name || 'Client Plan'}
+              </div>
+              <div className="text-[10px] text-stone-400 truncate">
+                {inputs.client?.advisor || 'Sound Thesis'}
+              </div>
+            </div>
+          </Link>
+        </div>
+
+        <div className="pt-2 mt-auto border-t border-stone-200/70">
           <NavLink item={utilityItem} />
         </div>
       </aside>
@@ -102,11 +157,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div
-            className="flex-1 bg-navy/20 backdrop-blur-sm"
-            onClick={onClose}
-          />
-          <div className="w-72 bg-cream h-full shadow-elevated px-4 py-6 flex flex-col">
+          <div className="w-72 bg-cream h-full shadow-elevated px-4 py-6 flex flex-col animate-drawer-in">
             <div className="flex items-center justify-between px-2 mb-8">
               <Link to="/" onClick={onClose} className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-navy rounded-xl flex items-center justify-center shadow-sm">
@@ -128,6 +179,10 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
               <NavLink item={utilityItem} onClick={onClose} />
             </div>
           </div>
+          <div
+            className="flex-1 bg-navy/20 backdrop-blur-sm animate-overlay-in"
+            onClick={onClose}
+          />
         </div>
       )}
     </>

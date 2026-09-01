@@ -17,6 +17,9 @@ export const formatCurrencyCompact = (val: number): string => {
   return formatCurrency(val);
 };
 
+// Alias matching the audit-plan naming; same Lakhs/Crores-by-magnitude logic.
+export const formatCompactCurrency = formatCurrencyCompact;
+
 export const formatPercent = (val: number, fractionDigits = 1): string => {
   if (val === undefined || val === null || Number.isNaN(val)) return '0%';
   return `${val.toFixed(fractionDigits)}%`;
@@ -28,6 +31,17 @@ export const formatNumber = (val: number, fractionDigits = 0): string => {
     maximumFractionDigits: fractionDigits,
     minimumFractionDigits: fractionDigits,
   }).format(val);
+};
+
+export const formatDate = (val: Date | string | number, withTime = false): string => {
+  const date = val instanceof Date ? val : new Date(val);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    ...(withTime ? { hour: '2-digit', minute: '2-digit' } : {}),
+  }).format(date);
 };
 
 export const parseCurrencyInput = (val: string): number => {

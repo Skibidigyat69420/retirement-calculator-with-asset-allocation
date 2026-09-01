@@ -30,7 +30,14 @@ export const ProgressBar = ({ value, max = 100, variant = 'default', size = 'md'
           <span>{pct.toFixed(1)}%</span>
         </div>
       )}
-      <div className={cn('w-full bg-stone-200 rounded-full overflow-hidden', heights[size])}>
+      <div
+        className={cn('w-full bg-stone-200 rounded-full overflow-hidden', heights[size])}
+        role="progressbar"
+        aria-valuenow={Math.round(pct)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={label}
+      >
         <div
           className={cn('h-full transition-all duration-500 rounded-full', variants[variant])}
           style={{ width: `${pct}%` }}

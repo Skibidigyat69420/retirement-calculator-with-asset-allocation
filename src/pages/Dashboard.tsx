@@ -28,20 +28,22 @@ import { Button } from '../components/ui/Button';
 import { NominalRealChart } from '../components/charts/NominalRealChart';
 import { DonutChart } from '../components/charts/DonutChart';
 import { AssetEvolutionChart } from '../components/charts/AssetEvolutionChart';
-import { formatCurrency, formatPercent } from '../lib/formatters';
+import { WorkflowFooter } from '../components/layout/WorkflowFooter';
+import { isComplete, calculateRiskScore } from '../lib/riskQuestionnaire';
+import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { cn } from '../lib/utils';
 import { ASSET_COLORS } from '../lib/constants';
 import { MonteCarloFanChart } from '../components/charts/MonteCarloFanChart';
 
 const tools = [
-  { path: '/risk', label: 'Risk Profile', icon: ShieldCheck, desc: 'Behavioural questionnaire that drives allocation.' },
-  { path: '/master-plan', label: 'Master Plan', icon: Activity, desc: 'Unified profile, assets, cashflows, goals & results.' },
-  { path: '/goal', label: 'Goals', icon: Target, desc: 'Probability-weighted goals, PV needed & required SIP.' },
-  { path: '/retirement', label: 'Retirement', icon: Calculator, desc: 'FIRE-style corpus gap analysis.' },
-  { path: '/allocation', label: 'Asset Allocation', icon: PieChart, desc: 'Current vs target, projections & glide path.' },
-  { path: '/mvo', label: 'MVO Optimizer', icon: BarChart2, desc: 'Mean-variance frontier from historical data.' },
-  { path: '/reports', label: 'Plan Reports', icon: BarChart3, desc: 'Consolidated plan summary, tax & currency.' },
-  { path: '/ips', label: 'IPS Template', icon: FileText, desc: 'Generate a CFA-aligned policy statement.' },
+  { path: '/risk', label: 'Risk Profile', desc: 'Assess risk tolerance', icon: ShieldCheck },
+  { path: '/master-plan', label: 'Master Plan', desc: 'Configure cashflows & assets', icon: Activity },
+  { path: '/goal', label: 'Goal Planner', desc: 'Prioritized goal funding', icon: Target },
+  { path: '/retirement', label: 'Retirement Check', desc: 'Longevity & shortfall solver', icon: Calculator },
+  { path: '/allocation', label: 'Asset Allocation', desc: 'Rebalance portfolio & targets', icon: PieChart },
+  { path: '/mvo', label: 'MVO Optimizer', desc: 'Mean-Variance Frontier', icon: BarChart2 },
+  { path: '/reports', label: 'Executive Report', desc: 'Comprehensive plan & print', icon: BarChart3 },
+  { path: '/ips', label: 'IPS Document', desc: 'Investment Policy Statement', icon: FileText },
 ];
 
 const quickActions = [
@@ -54,7 +56,10 @@ const quickActions = [
 ];
 
 export const Dashboard = () => {
-  const { inputs, riskProfile, wealthResult } = useCalculator();
+  const { inputs, riskProfile, wealthResult, riskAnswers, manualTargets } = useCalculator();
+
+  const hasPlanData = wealthResult.netWorth > 0 || wealthResult.annualIncome > 0;
+  const nonInrExposure = wealthResult.currencyExposure.filter((c) => c.currency !== 'INR');
 
   const allocationData = useMemo(() => {
     return Object.entries(wealthResult.currentAllocation)
@@ -69,15 +74,13 @@ export const Dashboard = () => {
   const chartData = useMemo(
     () =>
       wealthResult.snapshots
-        .filter((s) => s.phase === 'accumulation')
-        .map((s) => ({ label: `Y${s.year}`, nominal: s.total, real: s.realTotal })),
+        .map((s) => ({ label: `Age ${s.age}`, nominal: s.total, real: s.realTotal })),
     [wealthResult.snapshots],
   );
 
   const assetEvolutionData = useMemo(
     () =>
       wealthResult.snapshots
-        .filter((s) => s.phase === 'accumulation')
         .map((s) => ({
           label: `Age ${s.age}`,
           equity: s.values.equity,
@@ -90,6 +93,48 @@ export const Dashboard = () => {
     [wealthResult.snapshots],
   );
 
+  const riskScore = useMemo(() => calculateRiskScore(riskAnswers), [riskAnswers]);
+
+  const checklistItems = [
+    {
+      label: '1. Risk Profile',
+      path: '/risk',
+      completed: isComplete(riskAnswers),
+      subtext: isComplete(riskAnswers) ? `${riskProfile.label} (${riskScore}/100)` : 'Questionnaire pending',
+    },
+    {
+      label: '2. Household Assets',
+      path: '/master-plan',
+      completed: inputs.assets.length > 0,
+      subtext: `${inputs.assets.length} holdings · ${formatCurrencyCompact(wealthResult.netWorth)}`,
+    },
+    {
+      label: '3. Cashflows & SIP',
+      path: '/master-plan',
+      completed: inputs.annualIncome > 0 && wealthResult.monthlySIP > 0,
+      subtext: `${formatCurrencyCompact(wealthResult.monthlySIP)}/mo · ${formatPercent(wealthResult.savingsRate)} savings`,
+    },
+    {
+      label: '4. Goal Funding',
+      path: '/goal',
+      completed: inputs.goals.length > 0,
+      subtext: `${inputs.goals.length} goals · ${wealthResult.goalsAtRisk.length === 0 ? 'All on track' : `${wealthResult.goalsAtRisk.length} at risk`}`,
+    },
+    {
+      label: '5. Retirement Solvency',
+      path: '/retirement',
+      completed: wealthResult.sustainable,
+      subtext: wealthResult.sustainable ? 'Sustainable > life exp' : `Depletes age ${wealthResult.depletionAge}`,
+    },
+    {
+      label: '6. Asset Allocation',
+      path: '/allocation',
+      completed: manualTargets !== null || isComplete(riskAnswers),
+      subtext: manualTargets ? 'Customized weights' : `${riskProfile.label} targets`,
+    },
+  ];
+  const completedChecklistCount = checklistItems.filter((i) => i.completed).length;
+
   return (
     <div className="space-y-8">
       <SectionTitle
@@ -98,15 +143,30 @@ export const Dashboard = () => {
         badge="Wealth OS"
       />
 
+      {!hasPlanData && (
+        <Alert variant="info" icon={Sparkles}>
+          No plan data yet — add your assets, income, and goals to see projections.{' '}
+          <Link to="/master-plan" className="font-semibold underline hover:text-navy">
+            Set up your plan <ArrowRight size={12} className="inline" />
+          </Link>
+        </Alert>
+      )}
+
       {!wealthResult.sustainable && (
         <Alert variant="danger" icon={AlertTriangle}>
-          Your current plan is not sustainable — corpus is projected to deplete at age {wealthResult.depletionAge}. Increase SIPs, extend retirement age, or reduce withdrawal needs.
+          Your current plan is not sustainable — corpus is projected to deplete at age {wealthResult.depletionAge}. Increase SIPs, extend retirement age, or reduce withdrawal needs.{' '}
+          <Link to="/master-plan" className="font-semibold underline">
+            Fix in Master Plan <ArrowRight size={12} className="inline" />
+          </Link>
         </Alert>
       )}
 
       {!essentialSuccess && (
         <Alert variant="warning" icon={AlertTriangle}>
-          One or more essential goals have a success probability below {formatPercent(riskProfile.goalSuccessThreshold)}. Visit the Goal Planner to review required SIPs.
+          One or more essential goals have a success probability below {formatPercent(riskProfile.goalSuccessThreshold)}.{' '}
+          <Link to="/goal" className="font-semibold underline">
+            Review in Goal Planner <ArrowRight size={12} className="inline" />
+          </Link>
         </Alert>
       )}
 
@@ -116,10 +176,13 @@ export const Dashboard = () => {
         </div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
-            <Badge variant="gold" className="mb-3">Overview</Badge>
-            <h3 className="text-2xl md:text-3xl font-serif text-white">Welcome back</h3>
-            <p className="mt-2 text-stone-200 max-w-xl">
-              You are {inputs.currentAge} years old, targeting retirement at {inputs.retirementAge}. Your plan has a{' '}
+            <Badge variant="gold" className="mb-3">Mandate: {inputs.client?.notes || 'Core Wealth Growth'}</Badge>
+            <h3 className="text-2xl md:text-3xl font-serif text-white">Welcome, {inputs.client?.name || 'Vikram & Ananya Sharma'}</h3>
+            <p className="mt-1 text-xs text-gold/80 font-medium">
+              Advisor: {inputs.client?.advisor || 'Sound Thesis Wealth Advisory'} · Review Date: {inputs.client?.reviewDate || 'Quarterly'}
+            </p>
+            <p className="mt-2 text-stone-200 max-w-xl text-sm">
+              You are {inputs.currentAge} years old targeting retirement at {inputs.retirementAge}. Your plan has a{' '}
               <span className="text-gold font-semibold">{formatPercent(wealthResult.monteCarlo.successRate * 100)}</span>{' '}
               probability of meeting all goals and sustaining withdrawals.
             </p>
@@ -129,9 +192,51 @@ export const Dashboard = () => {
               <Button variant="secondary"><Activity size={16} className="mr-2" /> Update Plan</Button>
             </Link>
             <Link to="/risk">
-              <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 hover:text-white">Risk Profile</Button>
+              <Button variant="outline" className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white">Risk Profile</Button>
             </Link>
           </div>
+        </div>
+      </Card>
+
+      {/* 6-Stage Planning Readiness Checklist */}
+      <Card className="border-stone-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div>
+            <h3 className="text-base font-serif font-bold text-navy flex items-center gap-2">
+              <ShieldCheck size={18} className="text-gold" /> Advisor Planning Checklist
+            </h3>
+            <p className="text-xs text-stone-500">Track progress through the 6 stages of your institutional financial architecture</p>
+          </div>
+          <Badge variant="outline" className="self-start sm:self-auto font-medium">
+            {completedChecklistCount} of 6 Completed
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {checklistItems.map((item) => (
+            <Link
+              key={item.label}
+              to={item.path}
+              className={`p-3 rounded-xl border flex items-start gap-3 transition-all hover:shadow-xs group ${
+                item.completed
+                  ? 'bg-stone-50/50 border-stone-200 hover:border-navy/40'
+                  : 'bg-amber-50/30 border-amber-200 hover:border-amber-400'
+              }`}
+            >
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                item.completed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+              }`}>
+                {item.completed ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-semibold text-navy group-hover:text-gold transition-colors flex items-center justify-between">
+                  <span>{item.label}</span>
+                  <ArrowRight size={12} className="text-stone-300 group-hover:text-gold transition-transform group-hover:translate-x-0.5" />
+                </div>
+                <div className="text-[11px] text-stone-500 truncate mt-0.5">{item.subtext}</div>
+              </div>
+            </Link>
+          ))}
         </div>
       </Card>
 
@@ -160,8 +265,8 @@ export const Dashboard = () => {
         </Link>
         <MetricCard
           label="Terminal Corpus"
-          value={formatCurrency(wealthResult.terminalValue)}
-          subtext={`At age ${inputs.retirementAge}`}
+          value={formatCurrencyCompact(wealthResult.terminalValue)}
+          subtext={`At age ${inputs.lifeExpectancy}`}
           icon={<BarChart3 size={20} />}
         />
         <MetricCard
@@ -179,8 +284,8 @@ export const Dashboard = () => {
         />
         <MetricCard
           label="Currency Exposure"
-          value={wealthResult.currencyExposure.length > 1
-            ? `${formatPercent(wealthResult.currencyExposure.filter((c) => c.currency !== 'INR').reduce((sum, c) => sum + c.percentage, 0))} non-INR`
+          value={nonInrExposure.length > 0
+            ? nonInrExposure.map((c) => `${c.currency} ${formatPercent(c.percentage)}`).join(' · ')
             : '100% INR'}
           subtext={wealthResult.currencyExposure.map((c) => `${c.currency} ${formatPercent(c.percentage)}`).join(' · ')}
           icon={<DollarSign size={20} />}
@@ -205,8 +310,8 @@ export const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card variant="elevated" className="lg:col-span-2">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-serif text-navy">Accumulation Trajectory</h3>
-            <Badge variant="navy">Nominal vs Real</Badge>
+            <h3 className="text-lg font-serif text-navy">Wealth Trajectory</h3>
+            <Badge variant="navy">Accumulation + Distribution</Badge>
           </div>
           <NominalRealChart data={chartData} xKey="label" />
         </Card>
@@ -216,7 +321,16 @@ export const Dashboard = () => {
             <h3 className="text-lg font-serif text-navy">Current Allocation</h3>
             <Badge variant="outline">Today</Badge>
           </div>
-          <DonutChart data={allocationData} />
+          {allocationData.length > 0 ? (
+            <DonutChart data={allocationData} />
+          ) : (
+            <div className="h-80 flex flex-col items-center justify-center text-center text-sm text-stone-500">
+              <p>No assets added yet.</p>
+              <Link to="/master-plan" className="mt-2 text-gold font-semibold hover:underline flex items-center">
+                Add assets <ArrowRight size={12} className="ml-1" />
+              </Link>
+            </div>
+          )}
         </Card>
       </div>
 
@@ -237,6 +351,14 @@ export const Dashboard = () => {
             </Link>
           </div>
           <div className="space-y-3">
+            {wealthResult.goalResults.length === 0 && (
+              <div className="p-6 text-center text-sm text-stone-500">
+                <p>No goals defined yet.</p>
+                <Link to="/goal" className="mt-2 inline-flex items-center text-gold font-semibold hover:underline">
+                  Create a goal <ArrowRight size={12} className="ml-1" />
+                </Link>
+              </div>
+            )}
             {wealthResult.goalResults.map((g) => (
               <div key={g.goal.id} className="p-3 bg-stone-50/80 rounded-xl border border-stone-100">
                 <div className="flex items-center justify-between">
@@ -305,6 +427,11 @@ export const Dashboard = () => {
           })}
         </div>
       </Card>
+
+      <WorkflowFooter
+        next={{ path: '/risk', label: 'Risk Questionnaire' }}
+        flowHint="Discover your behavioral risk profile to automatically parameterize your portfolio and financial plan."
+      />
     </div>
   );
 };

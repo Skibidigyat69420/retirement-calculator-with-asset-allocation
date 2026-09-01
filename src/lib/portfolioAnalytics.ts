@@ -73,10 +73,18 @@ export function computePortfolioMetrics(
     other: 0.2,
   };
 
-  const portfolioVariance = weights.reduce((sum, wi, i) => 
-    sum + weights.reduce((inner, wj, j) => 
-      inner + wi * wj * (covMatrix?.[i]?.[j] ?? (i === j ? Math.pow(categoryVolatilities[holdingAnalytics[i].category], 2) : 0))
-    , 0)
+  // Full covariance wᵀΣw: aggregate weights by category, use covMatrix when
+  // provided, else a diagonal matrix of category volatilities
+  const categoryWeights = CATEGORIES.map((c) =>
+    holdingAnalytics.reduce((sum, h, i) => sum + (h.category === c ? weights[i] : 0), 0),
+  );
+  const sigma = CATEGORIES.map((ci, i) =>
+    CATEGORIES.map((_cj, j) =>
+      covMatrix?.[i]?.[j] ?? (i === j ? Math.pow(categoryVolatilities[ci], 2) : 0),
+    ),
+  );
+  const portfolioVariance = categoryWeights.reduce((sum, wi, i) =>
+    sum + categoryWeights.reduce((inner, wj, j) => inner + wi * wj * sigma[i][j], 0)
   , 0);
   const annualizedVolatility = Math.sqrt(portfolioVariance);
 

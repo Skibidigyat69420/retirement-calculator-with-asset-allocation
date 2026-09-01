@@ -32,7 +32,7 @@ function boxMuller(): number {
   return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
 }
 
-function generateCorrelatedReturns(L: number[][], stdDevs: number[], means: number[]): number[] {
+function generateCorrelatedReturns(L: number[][], means: number[]): number[] {
   const n = L.length;
   const z = Array.from({ length: n }, () => boxMuller());
   const correlated = L.map((row) => row.reduce((sum, l, k) => sum + l * z[k], 0));
@@ -109,7 +109,7 @@ export function runRetirementMonteCarlo(params: RetirementSimParams): MonteCarlo
 
     // Accumulation phase
     for (let y = 1; y <= accYears; y++) {
-      const returns = generateCorrelatedReturns(L, stdArr, meanArr);
+      const returns = generateCorrelatedReturns(L, meanArr);
       const annualContribution = monthlyContribution * 12;
       const weightedReturn = CATEGORIES.reduce((sum, _, i) => sum + normWeights[CATEGORIES[i]] * returns[i], 0);
 
@@ -128,7 +128,7 @@ export function runRetirementMonteCarlo(params: RetirementSimParams): MonteCarlo
     let corpus = terminalTotal;
 
     for (let y = 1; y <= distYears; y++) {
-      const returns = generateCorrelatedReturns(L, stdArr, meanArr);
+      const returns = generateCorrelatedReturns(L, meanArr);
       const grossAnnualNeed = (monthlyNeed * 12) / taxFactor;
       corpus -= grossAnnualNeed;
 

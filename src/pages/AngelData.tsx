@@ -17,6 +17,7 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Alert } from '../components/ui/Alert';
 import { formatCurrency } from '../lib/formatters';
+import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import {
   loadSession,
   buildDefaultCredentials,
@@ -355,6 +356,12 @@ export const AngelData = () => {
           <p className="text-sm text-stone-500">No trades found.</p>
         )}
       </Card>
+
+      <WorkflowFooter
+        prev={{ path: '/connect', label: 'Angel One Connect' }}
+        next={{ path: '/', label: 'Dashboard' }}
+        flowHint="Live JSON snapshot logs and market telemetry verifying raw API payloads from Angel One SmartAPI."
+      />
     </div>
   );
 };

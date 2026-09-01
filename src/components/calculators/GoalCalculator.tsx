@@ -6,12 +6,17 @@ import { Card } from '../ui/Card';
 import { CalculatorShell } from './CalculatorShell';
 import { calculateGoal } from '../../lib/calculators';
 import { formatCurrency } from '../../lib/formatters';
+import { useCalculator } from '../../context/CalculatorContext';
+import { Input } from '../ui/Input';
+import { Button } from '../ui/Button';
 
 export const GoalCalculator = () => {
+  const { inputs, addGoal, showToast } = useCalculator();
+  const [name, setName] = useState('');
   const [target, setTarget] = useState(1_00_00_000);
   const [years, setYears] = useState(15);
   const [returnRate, setReturnRate] = useState(12);
-  const [inflation, setInflation] = useState(5);
+  const [inflation, setInflation] = useState(inputs.inflation || 5);
   const [stepUp, setStepUp] = useState(5);
 
   const result = useMemo(
@@ -19,17 +24,32 @@ export const GoalCalculator = () => {
     [target, years, returnRate, inflation, stepUp],
   );
 
+  const handleAddGoal = () => {
+    const goalName = name.trim() || 'New Goal';
+    addGoal({
+      name: goalName,
+      targetAmount: target,
+      yearsToGoal: years,
+      inflation,
+    });
+    showToast(`Added goal "${goalName}" to Master Plan.`, 'success');
+  };
+
   return (
     <CalculatorShell
       title="Target Corpus Calculator"
       description="Work backwards from a future goal to today's required investment."
       inputs={
         <>
+          <Input label="Goal Name (optional)" value={name} onChange={(e) => setName(e.currentTarget.value)} placeholder="e.g. Child Education" />
           <NumberInput label="Target Amount (today's ₹)" value={target} onChange={setTarget} />
           <NumberInput label="Time Horizon" value={years} onChange={setYears} />
           <NumberInput label="Expected Return" value={returnRate} onChange={setReturnRate} suffix="%" />
           <NumberInput label="Goal Inflation" value={inflation} onChange={setInflation} suffix="%" />
           <NumberInput label="Annual SIP Step-up" value={stepUp} onChange={setStepUp} suffix="%" />
+          <Button onClick={handleAddGoal} className="w-full mt-2" variant="outline">
+            Add to Master Plan Goals
+          </Button>
         </>
       }
       results={

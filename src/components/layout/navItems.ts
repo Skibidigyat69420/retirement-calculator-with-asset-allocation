@@ -24,7 +24,7 @@ export const navItems = [
   { path: '/reports', label: 'Reports', icon: BarChart3, section: 'Reports' },
   { path: '/ips', label: 'IPS', icon: FileText, section: 'Reports' },
   { path: '/calculators', label: 'Calculators', icon: Calculator, section: 'Tools' },
-  { path: '/angel-data', label: 'Angel Data', icon: Database, section: 'Tools' },
+  { path: '/angel-data', label: 'Angel Data', icon: Database, section: 'Data' },
 ];
 
-export const utilityItem = { path: '/angel-connect', label: 'Angel Connect', icon: ShieldCheck };
+export const utilityItem = { path: '/angel-connect', label: 'Angel Connect', icon: ShieldCheck, section: 'Data' };

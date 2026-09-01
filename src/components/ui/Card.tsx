@@ -18,7 +18,7 @@ export const Card = ({ children, className, variant = 'default' }: CardProps) =>
   return (
     <div
       className={cn(
-        'rounded-2xl p-5 md:p-6 transition-all duration-200',
+        'rounded-2xl p-5 md:p-6 transition-all duration-200 print:break-inside-avoid',
         variant === 'default' && 'hover:shadow-card-hover',
         variants[variant],
         className,

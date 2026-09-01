@@ -95,7 +95,16 @@ export interface Goal {
   probabilityDistribution?: GoalProbabilityBin[];
 }
 
+export interface ClientProfile {
+  name: string;
+  email?: string;
+  advisor: string;
+  reviewDate: string;
+  notes?: string;
+}
+
 export interface MasterPlanInputs {
+  client: ClientProfile;
   currentAge: number;
   retirementAge: number;
   lifeExpectancy: number;

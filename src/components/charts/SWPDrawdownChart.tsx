@@ -8,6 +8,7 @@ import {
   Tooltip,
 } from 'recharts';
 import { formatCurrencyCompact } from '../../lib/formatters';
+import { COLORS } from '../../lib/constants';
 
 interface DataPoint {
   label: string;
@@ -26,11 +27,11 @@ export const SWPDrawdownChart = ({ data, xKey = 'label' }: SWPDrawdownChartProps
         <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="colorCorpus" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#B68B40" stopOpacity={0.2} />
-              <stop offset="95%" stopColor="#B68B40" stopOpacity={0} />
+              <stop offset="5%" stopColor={COLORS.gold} stopOpacity={0.2} />
+              <stop offset="95%" stopColor={COLORS.gold} stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
           <XAxis
             dataKey={xKey}
             tick={{ fontSize: 12, fill: '#78716c' }}
@@ -58,7 +59,7 @@ export const SWPDrawdownChart = ({ data, xKey = 'label' }: SWPDrawdownChartProps
             type="monotone"
             dataKey="corpus"
             name="Corpus Left"
-            stroke="#B68B40"
+            stroke={COLORS.gold}
             strokeWidth={2.5}
             fill="url(#colorCorpus)"
           />

@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { NumberInput } from '../components/ui/NumberInput';
 import { useCalculator } from '../context/CalculatorContext';
 import { formatCurrency } from '../lib/formatters';
+import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 
 interface SavedIPS {
   name: string;
@@ -31,31 +32,35 @@ interface IPSForm {
 }
 
 export const IPSTemplate = () => {
-  const { inputs, riskProfile } = useCalculator();
+  const { inputs, riskProfile, manualTargets, updateClient, showToast } = useCalculator();
   const netWorth = inputs.assets.reduce((sum, a) => sum + a.value, 0);
+  // Prefer manual allocation overrides (from the Allocation page) over the
+  // risk-profile defaults so the IPS reflects the live target mix.
+  const initialTargets = manualTargets || riskProfile.targets;
 
   const [form, setForm] = useState<IPSForm>(() => ({
-    clientName: '',
-    adviser: 'Sound Thesis Wealth Advisory',
-    reviewDate: new Date().toISOString().split('T')[0],
+    clientName: inputs.client?.name || '',
+    adviser: inputs.client?.advisor || 'Sound Thesis Wealth Advisory',
+    reviewDate: inputs.client?.reviewDate || new Date().toISOString().split('T')[0],
     returnObjective: 'Achieve long-term capital growth sufficient to fund retirement and essential goals while preserving purchasing power.',
     riskTolerance: riskProfile.label.toLowerCase().includes('conservative') ? 'low' : riskProfile.label.toLowerCase().includes('aggressive') ? 'high' : 'moderate',
-    maxDrawdown: Math.abs(riskProfile.maxDrawdown * 100),
-    equityTarget: riskProfile.targets.equity,
-    debtTarget: riskProfile.targets.debt,
-    goldTarget: riskProfile.targets.gold,
-    realestateTarget: riskProfile.targets.realestate,
-    liquidTarget: riskProfile.targets.liquid,
-    otherTarget: riskProfile.targets.other,
+    maxDrawdown: Math.abs(riskProfile.maxDrawdown),
+    equityTarget: initialTargets.equity,
+    debtTarget: initialTargets.debt,
+    goldTarget: initialTargets.gold,
+    realestateTarget: initialTargets.realestate,
+    liquidTarget: initialTargets.liquid,
+    otherTarget: initialTargets.other,
     foreignExposure: 0,
     hedgePolicy: 'Unhedged — foreign exposure, if any, will be reviewed quarterly.',
-    notes: '',
+    notes: inputs.client?.notes || '',
   }));
 
   const totalAllocation = form.equityTarget + form.debtTarget + form.goldTarget + form.realestateTarget + form.liquidTarget + form.otherTarget;
   const allocationOk = Math.abs(totalAllocation - 100) < 0.1;
 
   const [savedFiles, setSavedFiles] = useState<SavedIPS[]>([]);
+  const [saveApiAvailable, setSaveApiAvailable] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [loadStatus, setLoadStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -63,11 +68,17 @@ export const IPSTemplate = () => {
   const loadSavedFiles = async () => {
     try {
       const res = await fetch('/api/list-ips');
-      if (!res.ok) throw new Error('Failed to list saved IPS files');
+      // Static hosting (no API) serves index.html for /api/* — detect that
+      if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
+        throw new Error('IPS storage API unavailable');
+      }
       const data = await res.json();
       setSavedFiles(data.files || []);
+      setSaveApiAvailable(true);
     } catch (err) {
-      console.error(err);
+      setSaveApiAvailable(false);
+      setSavedFiles([]);
+      if (err instanceof Error && err.message !== 'IPS storage API unavailable') console.error(err);
     }
   };
 
@@ -107,16 +118,9 @@ export const IPSTemplate = () => {
       const res = await fetch(`/api/load-ips?filename=${encodeURIComponent(filename)}`);
       const data = await res.json();
       if (!res.ok || !data.content) throw new Error(data.error || 'Load failed');
-      // For now we just offer the raw markdown; future enhancement could parse it back into the form.
-      const blob = new Blob([data.content], { type: 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
+      setForm((prev) => parseIPSMarkdown(data.content, prev));
       setLoadStatus('idle');
-      setStatusMessage(`Downloaded ${filename}`);
+      setStatusMessage(`Loaded ${filename} into the form`);
     } catch (err: any) {
       setLoadStatus('error');
       setStatusMessage(err?.message || 'Load failed');
@@ -132,6 +136,7 @@ export const IPSTemplate = () => {
     a.download = `IPS-${form.clientName || 'client'}.md`;
     a.click();
     URL.revokeObjectURL(url);
+    showToast('Exported IPS markdown document.', 'success');
   };
 
   return (
@@ -148,17 +153,46 @@ export const IPSTemplate = () => {
 
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500 mb-1">Client Name</label>
-            <input type="text" value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} className="w-full bg-transparent border-b border-stone-300 py-2 text-sm font-medium text-navy focus:border-gold focus:outline-none" />
+            <input
+              type="text"
+              value={form.clientName}
+              onChange={(e) => {
+                const name = e.target.value;
+                setForm((prev) => ({ ...prev, clientName: name }));
+                updateClient({ name });
+              }}
+              placeholder="e.g. Vikram & Ananya Sharma"
+              className="w-full bg-transparent border-b border-stone-300 py-2 text-sm font-medium text-navy focus:border-gold focus:outline-none"
+            />
           </div>
 
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500 mb-1">Adviser / Firm</label>
-            <input type="text" value={form.adviser} onChange={(e) => setForm({ ...form, adviser: e.target.value })} className="w-full bg-transparent border-b border-stone-300 py-2 text-sm font-medium text-navy focus:border-gold focus:outline-none" />
+            <input
+              type="text"
+              value={form.adviser}
+              onChange={(e) => {
+                const advisor = e.target.value;
+                setForm((prev) => ({ ...prev, adviser: advisor }));
+                updateClient({ advisor });
+              }}
+              placeholder="e.g. Sound Thesis Wealth Advisory"
+              className="w-full bg-transparent border-b border-stone-300 py-2 text-sm font-medium text-navy focus:border-gold focus:outline-none"
+            />
           </div>
 
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500 mb-1">Next Review Date</label>
-            <input type="date" value={form.reviewDate} onChange={(e) => setForm({ ...form, reviewDate: e.target.value })} className="w-full bg-transparent border-b border-stone-300 py-2 text-sm font-medium text-navy focus:border-gold focus:outline-none" />
+            <input
+              type="date"
+              value={form.reviewDate}
+              onChange={(e) => {
+                const reviewDate = e.target.value;
+                setForm((prev) => ({ ...prev, reviewDate }));
+                updateClient({ reviewDate });
+              }}
+              className="w-full bg-transparent border-b border-stone-300 py-2 text-sm font-medium text-navy focus:border-gold focus:outline-none"
+            />
           </div>
 
           <div>
@@ -229,7 +263,11 @@ export const IPSTemplate = () => {
               <FolderOpen size={16} className="text-gold" /> Saved IPS Documents
             </h4>
             {savedFiles.length === 0 ? (
-              <p className="text-xs text-stone-500">No saved IPS files yet.</p>
+              <p className="text-xs text-stone-500">
+                {saveApiAvailable
+                  ? 'No saved IPS files yet.'
+                  : 'Server-side save/load requires the API (available on the deployed app). Use Download instead.'}
+              </p>
             ) : (
               <ul className="space-y-2 max-h-48 overflow-y-auto">
                 {savedFiles.map((file) => (
@@ -329,6 +367,14 @@ export const IPSTemplate = () => {
           </div>
         </Card>
       </div>
+
+      <div className="print:hidden">
+        <WorkflowFooter
+          prev={{ path: '/reports', label: 'Plan Reports' }}
+          next={{ path: '/calculators', label: 'Financial Calculators' }}
+          flowHint="A formal Investment Policy Statement institutionalizes your strategic asset allocation and rebalancing rules."
+        />
+      </div>
     </div>
   );
 };
@@ -369,7 +415,9 @@ ${inputs.goals.map((g) => `- ${g.name} (${g.priority}): ${g.yearsToGoal} years, 
 | Equity | ${form.equityTarget}% | ${currentPct('equity')}% |
 | Debt | ${form.debtTarget}% | ${currentPct('debt')}% |
 | Gold | ${form.goldTarget}% | ${currentPct('gold')}% |
+| Real Estate | ${form.realestateTarget}% | ${currentPct('realestate')}% |
 | Liquid | ${form.liquidTarget}% | ${currentPct('liquid')}% |
+| Other | ${form.otherTarget}% | ${currentPct('other')}% |
 
 ## Currency Policy
 
@@ -386,4 +434,61 @@ ${form.notes || 'None.'}
 - **Client:** ____________________ Date: ________
 - **Investment Adviser:** ____________________ Date: ________
 `;
+}
+
+/** Parse a saved IPS markdown document back into the form state. Fields that
+ *  cannot be found in the document keep their current values. */
+function parseIPSMarkdown(md: string, current: IPSForm): IPSForm {
+  const next = { ...current };
+  const field = (label: string) => {
+    const m = md.match(new RegExp(`^-\\s*\\*\\*${label}:\\*\\*\\s*(.+)$`, 'm'));
+    return m ? m[1].trim() : null;
+  };
+  const num = (raw: string | null) => {
+    if (!raw) return null;
+    const n = parseFloat(raw);
+    return Number.isNaN(n) ? null : n;
+  };
+
+  const clientName = field('Client name\\(s\\)');
+  if (clientName && clientName !== '[To be completed]') next.clientName = clientName;
+  const adviser = field('Adviser / firm');
+  if (adviser) next.adviser = adviser;
+  const reviewDate = field('Next review date');
+  if (reviewDate && /^\d{4}-\d{2}-\d{2}/.test(reviewDate)) next.reviewDate = reviewDate.slice(0, 10);
+  const returnObjective = field('Return objective');
+  if (returnObjective) next.returnObjective = returnObjective;
+  const riskTolerance = field('Risk tolerance')?.toLowerCase();
+  if (riskTolerance === 'low' || riskTolerance === 'moderate' || riskTolerance === 'high') next.riskTolerance = riskTolerance;
+  const maxDrawdown = num(field('Maximum acceptable drawdown'));
+  if (maxDrawdown !== null) next.maxDrawdown = maxDrawdown;
+  const foreignExposure = num(field('Foreign exposure limit'));
+  if (foreignExposure !== null) next.foreignExposure = foreignExposure;
+  const hedgePolicy = field('Hedging policy');
+  if (hedgePolicy) next.hedgePolicy = hedgePolicy;
+
+  const row = (label: string) => {
+    const m = md.match(new RegExp(`^\\|\\s*${label}\\s*\\|\\s*([\\d.]+)%`, 'm'));
+    return m ? parseFloat(m[1]) : null;
+  };
+  const equity = row('Equity');
+  if (equity !== null) next.equityTarget = equity;
+  const debt = row('Debt');
+  if (debt !== null) next.debtTarget = debt;
+  const gold = row('Gold');
+  if (gold !== null) next.goldTarget = gold;
+  const realestate = row('Real Estate');
+  if (realestate !== null) next.realestateTarget = realestate;
+  const liquid = row('Liquid');
+  if (liquid !== null) next.liquidTarget = liquid;
+  const other = row('Other');
+  if (other !== null) next.otherTarget = other;
+
+  const notesMatch = md.match(/##\s*Special Notes\s*\n+([\s\S]*?)(?=\n##|$)/);
+  if (notesMatch) {
+    const notes = notesMatch[1].trim();
+    next.notes = notes === 'None.' ? '' : notes;
+  }
+
+  return next;
 }

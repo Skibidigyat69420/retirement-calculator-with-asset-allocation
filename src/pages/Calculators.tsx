@@ -18,6 +18,8 @@ import { GoalCalculator } from '../components/calculators/GoalCalculator';
 import { RetirementCorpusCalculator } from '../components/calculators/RetirementCorpusCalculator';
 import { EMICalculator } from '../components/calculators/EMICalculator';
 
+import { WorkflowFooter } from '../components/layout/WorkflowFooter';
+
 const tabs = [
   { id: 'sip', label: 'SIP', icon: <TrendingUp size={16} /> },
   { id: 'lumpsum', label: 'Lumpsum', icon: <Wallet size={16} /> },
@@ -48,6 +50,12 @@ export const Calculators = () => {
       {activeTab === 'goal' && <GoalCalculator />}
       {activeTab === 'retirement' && <RetirementCorpusCalculator />}
       {activeTab === 'emi' && <EMICalculator />}
+
+      <WorkflowFooter
+        prev={{ path: '/ips', label: 'Investment Policy Statement' }}
+        next={{ path: '/connect', label: 'Angel One Connect' }}
+        flowHint="Standalone calculators allow quick what-if simulations before committing parameters to the master plan."
+      />
     </div>
   );
 };

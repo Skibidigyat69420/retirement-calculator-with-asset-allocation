@@ -5,7 +5,8 @@ import { MetricCard } from '../ui/MetricCard';
 import { Card } from '../ui/Card';
 import { CalculatorShell } from './CalculatorShell';
 import { calculateEMI } from '../../lib/calculators';
-import { formatCurrency } from '../../lib/formatters';
+import { formatCurrency, formatCurrencyCompact } from '../../lib/formatters';
+import { COLORS } from '../../lib/constants';
 import {
   ResponsiveContainer,
   BarChart,
@@ -54,10 +55,10 @@ export const EMICalculator = () => {
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
                   <XAxis dataKey="year" tick={{ fontSize: 12, fill: '#78716c' }} axisLine={false} tickLine={false} />
                   <YAxis
-                    tickFormatter={(v) => `₹${(Number(v) / 100000).toFixed(1)}L`}
+                    tickFormatter={formatCurrencyCompact}
                     tick={{ fontSize: 12, fill: '#78716c' }}
                     axisLine={false}
                     tickLine={false}
@@ -67,8 +68,8 @@ export const EMICalculator = () => {
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   />
                   <Legend verticalAlign="top" height={36} iconType="circle" />
-                  <Bar dataKey="principal" name="Principal" stackId="a" fill="#111111" />
-                  <Bar dataKey="interest" name="Interest" stackId="a" fill="#A31621" />
+                  <Bar dataKey="principal" name="Principal" stackId="a" fill={COLORS.ink} />
+                  <Bar dataKey="interest" name="Interest" stackId="a" fill={COLORS.red} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

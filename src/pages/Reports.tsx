@@ -9,16 +9,19 @@ import { MonteCarloFanChart } from '../components/charts/MonteCarloFanChart';
 import { Button } from '../components/ui/Button';
 import { formatCurrency, formatPercent } from '../lib/formatters';
 import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
+import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import type { AssetCategory } from '../types';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
 
 export const Reports = () => {
-  const { inputs, riskProfile, wealthResult } = useCalculator();
+  const { inputs, riskProfile, wealthResult, manualTargets } = useCalculator();
 
   const handlePrint = () => {
     window.print();
   };
+
+  const targets = manualTargets || riskProfile.targets;
 
   const currentAllocationData = CATEGORIES.map((cat) => ({
     name: ASSET_LABELS[cat],
@@ -28,7 +31,7 @@ export const Reports = () => {
 
   const targetAllocationData = CATEGORIES.map((cat) => ({
     name: ASSET_LABELS[cat],
-    value: wealthResult.netWorth * (riskProfile.targets[cat] / 100),
+    value: wealthResult.netWorth * (targets[cat] / 100),
     color: ASSET_COLORS[cat],
   })).filter((d) => d.value > 0);
 
@@ -38,6 +41,8 @@ export const Reports = () => {
 
   return (
     <div className="space-y-6 print:space-y-4 print:p-0">
+      {/* Hide app chrome (sidebar, top bar, footer) when printing the report */}
+      <style>{`@media print { aside, header, footer { display: none !important; } }`}</style>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
         <SectionTitle
           title="Plan Reports"
@@ -49,10 +54,32 @@ export const Reports = () => {
           Print Report
         </Button>
       </div>
+
+      {/* Executive Client Header Banner */}
+      <Card className="bg-paper border-stone-200 print:border-none print:shadow-none print:p-0">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Institutional Wealth Plan</div>
+            <h2 className="text-xl sm:text-2xl font-serif text-navy font-bold mt-0.5">{inputs.client?.name || 'Private Client Plan'}</h2>
+            <p className="text-xs text-stone-500 mt-1">
+              Advisor: <strong className="text-stone-700">{inputs.client?.advisor || 'Sound Thesis Wealth Advisory'}</strong> · Review Date: <strong className="text-stone-700">{inputs.client?.reviewDate || new Date().toISOString().split('T')[0]}</strong>
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="navy" className="text-xs px-3 py-1">
+              Risk: {riskProfile.label}
+            </Badge>
+            <Badge variant={wealthResult.sustainable ? 'success' : 'danger'} className="text-xs px-3 py-1">
+              {wealthResult.sustainable ? 'Sustainable' : `Depletes Age ${wealthResult.depletionAge}`}
+            </Badge>
+          </div>
+        </div>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <MetricCard label="Net Worth" value={formatCurrency(wealthResult.netWorth)} subtext="Current assets" variant="navy" />
         <MetricCard label="Net Annual Savings" value={formatCurrency(wealthResult.annualSavings)} subtext={`${formatPercent(wealthResult.savingsRate)} of income`} variant="gold" />
-        <MetricCard label="Terminal Corpus" value={formatCurrency(wealthResult.terminalValue)} subtext={`At age ${inputs.retirementAge}`} />
+        <MetricCard label="Terminal Corpus" value={formatCurrency(wealthResult.terminalValue)} subtext={`At age ${inputs.lifeExpectancy}`} />
         <MetricCard label="Plan Success Rate" value={formatPercent(wealthResult.monteCarlo.successRate * 100)} subtext="All goals + SWP sustainable" variant={wealthResult.monteCarlo.successRate * 100 >= riskProfile.goalSuccessThreshold ? 'success' : 'danger'} />
       </div>
 
@@ -220,6 +247,14 @@ export const Reports = () => {
           </div>
         </div>
       )}
+
+      <div className="print:hidden">
+        <WorkflowFooter
+          prev={{ path: '/mvo', label: 'Mean-Variance Optimization' }}
+          next={{ path: '/ips', label: 'Investment Policy Statement' }}
+          flowHint="Executive plan summaries, tax analyses, and Monte Carlo curves feed into your formal CFA-aligned IPS document."
+        />
+      </div>
     </div>
   );
 };

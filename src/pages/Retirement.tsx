@@ -1,17 +1,20 @@
 import { useMemo } from 'react';
-import { Calculator, TrendingUp, AlertTriangle, CheckCircle2, Target } from 'lucide-react';
+import { Calculator, TrendingUp, AlertTriangle, CheckCircle2, Target, Sparkles, Clock, DollarSign } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { NumberInput } from '../components/ui/NumberInput';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { MetricCard } from '../components/ui/MetricCard';
 import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
 import { NominalRealChart } from '../components/charts/NominalRealChart';
 import { SWPDrawdownChart } from '../components/charts/SWPDrawdownChart';
+import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import { useCalculator } from '../context/CalculatorContext';
 import { formatCurrency, formatPercent } from '../lib/formatters';
+import { requiredMonthlySIPForGoal } from '../lib/goals';
 
 export const Retirement = () => {
-  const { inputs, wealthResult, riskProfile, updateInputs, updateSIP, updateSWP } = useCalculator();
+  const { inputs, wealthResult, riskProfile, updateInputs, updateSIP, updateSWP, showToast } = useCalculator();
 
   const yearsToRetirement = Math.max(0, inputs.retirementAge - inputs.currentAge);
 
@@ -42,6 +45,20 @@ export const Retirement = () => {
 
   const gap = projectedCorpusAtRetirement - requiredCorpus;
   const successRate = wealthResult.monteCarlo.successRate * 100;
+  const shortfall = Math.abs(gap);
+  const blendedReturn = (inputs.sip.equitySplit * inputs.sip.equityReturn + inputs.sip.debtSplit * inputs.sip.debtReturn) / 100;
+
+  const extraSIPNeeded = useMemo(() => {
+    if (gap >= 0 || yearsToRetirement <= 0) return 0;
+    return Math.round(requiredMonthlySIPForGoal(shortfall, yearsToRetirement, blendedReturn));
+  }, [gap, yearsToRetirement, blendedReturn, shortfall]);
+
+  const recommendedDelayAge = Math.min(inputs.lifeExpectancy - 5, inputs.retirementAge + 3);
+
+  const sustainableMonthlyNeed = useMemo(() => {
+    if (gap >= 0 || requiredCorpus <= 0) return inputs.swp.monthlyNeedToday;
+    return Math.round(Math.max(10000, (projectedCorpusAtRetirement / requiredCorpus) * inputs.swp.monthlyNeedToday));
+  }, [gap, requiredCorpus, projectedCorpusAtRetirement, inputs.swp.monthlyNeedToday]);
 
   const chartData = useMemo(
     () =>
@@ -67,16 +84,100 @@ export const Retirement = () => {
       <SectionTitle
         title="Retirement Readiness"
         subtitle="A unified FIRE-style check powered by the master wealth engine: projected corpus vs. what you actually need."
-        badge="Standalone"
+        badge="Planning"
       />
 
       {!wealthResult.sustainable && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 text-red-800">
           <AlertTriangle size={20} className="shrink-0 mt-0.5" />
           <div className="text-sm">
-            <strong>Plan is not sustainable.</strong> Corpus is projected to deplete at age {wealthResult.depletionAge}. Increase SIP, delay retirement, or reduce monthly needs.
+            <strong>Plan is not sustainable.</strong> Corpus is projected to deplete at age {wealthResult.depletionAge}. Review the shortfall solver below to balance your plan.
           </div>
         </div>
+      )}
+
+      {gap < 0 && (
+        <Card className="border-amber-200 bg-amber-50/40">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles size={20} className="text-gold" />
+            <h3 className="text-base font-serif font-bold text-navy">
+              Advisory Shortfall Solver — How to Close the Gap of {formatCurrency(shortfall)}
+            </h3>
+          </div>
+          <p className="text-xs text-stone-600 mb-4">
+            Select any of the three recommended actions to immediately align your plan with full retirement sustainability:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Lever 1: Increase SIP */}
+            <div className="bg-white p-4 rounded-xl border border-stone-200/80 shadow-xs flex flex-col justify-between space-y-3">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-navy mb-1">
+                  <DollarSign size={14} className="text-gold" /> Option 1: Increase SIP
+                </div>
+                <p className="text-xs text-stone-600">
+                  Boost monthly SIP by <strong>+{formatCurrency(extraSIPNeeded)}</strong> (to <strong>{formatCurrency(inputs.sip.amount + extraSIPNeeded)}</strong>/mo).
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-xs font-semibold"
+                onClick={() => {
+                  updateSIP({ amount: inputs.sip.amount + extraSIPNeeded });
+                  showToast(`Monthly SIP increased to ${formatCurrency(inputs.sip.amount + extraSIPNeeded)}!`, 'success');
+                }}
+              >
+                Apply SIP Increase
+              </Button>
+            </div>
+
+            {/* Lever 2: Delay Retirement */}
+            <div className="bg-white p-4 rounded-xl border border-stone-200/80 shadow-xs flex flex-col justify-between space-y-3">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-navy mb-1">
+                  <Clock size={14} className="text-gold" /> Option 2: Extend Horizon
+                </div>
+                <p className="text-xs text-stone-600">
+                  Delay retirement by 3 years to age <strong>{recommendedDelayAge}</strong> to allow longer compounding.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-xs font-semibold"
+                onClick={() => {
+                  updateInputs({ retirementAge: recommendedDelayAge });
+                  showToast(`Retirement age shifted to ${recommendedDelayAge}!`, 'success');
+                }}
+              >
+                Retire at Age {recommendedDelayAge}
+              </Button>
+            </div>
+
+            {/* Lever 3: Calibrate Drawdown */}
+            <div className="bg-white p-4 rounded-xl border border-stone-200/80 shadow-xs flex flex-col justify-between space-y-3">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-navy mb-1">
+                  <Target size={14} className="text-gold" /> Option 3: Calibrate Spend
+                </div>
+                <p className="text-xs text-stone-600">
+                  Adjust retirement drawdown to sustainable level: <strong>{formatCurrency(sustainableMonthlyNeed)}</strong>/mo today.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-xs font-semibold"
+                onClick={() => {
+                  updateSWP({ monthlyNeedToday: sustainableMonthlyNeed });
+                  showToast(`Retirement drawdown updated to ${formatCurrency(sustainableMonthlyNeed)}/mo!`, 'success');
+                }}
+              >
+                Set Sustainable Spend
+              </Button>
+            </div>
+          </div>
+        </Card>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -198,6 +299,12 @@ export const Retirement = () => {
           </Card>
         </div>
       </div>
+
+      <WorkflowFooter
+        prev={{ path: '/goal', label: 'Goals Planner' }}
+        next={{ path: '/allocation', label: 'Asset Allocation' }}
+        flowHint="Accumulated retirement corpus and required drawdowns dictate strategic asset allocation."
+      />
     </div>
   );
 };

@@ -6,7 +6,9 @@ import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { CalculatorShell } from './CalculatorShell';
 import { calculateSWP } from '../../lib/calculators';
-import { formatCurrency } from '../../lib/formatters';
+import { formatCurrency, formatCurrencyCompact } from '../../lib/formatters';
+import { useCalculator } from '../../context/CalculatorContext';
+import { Button } from '../ui/Button';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -16,13 +18,15 @@ import {
   CartesianGrid,
   Tooltip,
 } from 'recharts';
+import { COLORS } from '../../lib/constants';
 
 export const SWPCalculator = () => {
-  const [corpus, setCorpus] = useState(5_00_00_000);
-  const [monthlyWithdrawal, setMonthlyWithdrawal] = useState(2_50_000);
-  const [returnRate, setReturnRate] = useState(9);
-  const [inflation, setInflation] = useState(5);
-  const [taxRate, setTaxRate] = useState(10);
+  const { inputs, updateSWP, updateInputs, showToast } = useCalculator();
+  const [corpus, setCorpus] = useState(1_00_00_000);
+  const [monthlyWithdrawal, setMonthlyWithdrawal] = useState(inputs.swp.monthlyNeedToday || 50000);
+  const [returnRate, setReturnRate] = useState(inputs.swp.postRetirementReturn || 9);
+  const [inflation, setInflation] = useState(inputs.inflation || 5);
+  const [taxRate, setTaxRate] = useState(inputs.swp.taxRate || 10);
 
   const result = useMemo(
     () => calculateSWP(corpus, monthlyWithdrawal, returnRate, inflation, taxRate),
@@ -35,6 +39,16 @@ export const SWPCalculator = () => {
     withdrawn: d.withdrawn,
   }));
 
+  const handleApply = () => {
+    updateSWP({
+      monthlyNeedToday: monthlyWithdrawal,
+      postRetirementReturn: returnRate,
+      taxRate,
+    });
+    updateInputs({ inflation });
+    showToast('Withdrawal settings applied to Master Plan.', 'success');
+  };
+
   return (
     <CalculatorShell
       title="Corpus Sustainability (SWP)"
@@ -46,6 +60,9 @@ export const SWPCalculator = () => {
           <NumberInput label="Expected Return" value={returnRate} onChange={setReturnRate} suffix="%" />
           <NumberInput label="Annual Inflation" value={inflation} onChange={setInflation} suffix="%" />
           <NumberInput label="Tax Rate on Withdrawals" value={taxRate} onChange={setTaxRate} suffix="%" />
+          <Button onClick={handleApply} className="w-full mt-2" variant="outline">
+            Apply to Master Plan
+          </Button>
         </>
       }
       results={
@@ -76,14 +93,14 @@ export const SWPCalculator = () => {
                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="swpCorpus" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#D1CDC3" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#D1CDC3" stopOpacity={0} />
+                      <stop offset="5%" stopColor={COLORS.gold} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={COLORS.gold} stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
                   <XAxis dataKey="year" tick={{ fontSize: 12, fill: '#78716c' }} axisLine={false} tickLine={false} />
                   <YAxis
-                    tickFormatter={(v) => `₹${(Number(v) / 100000).toFixed(1)}L`}
+                    tickFormatter={formatCurrencyCompact}
                     tick={{ fontSize: 12, fill: '#78716c' }}
                     axisLine={false}
                     tickLine={false}
@@ -96,7 +113,7 @@ export const SWPCalculator = () => {
                     type="monotone"
                     dataKey="corpus"
                     name="Corpus Left"
-                    stroke="#111111"
+                    stroke={COLORS.gold}
                     strokeWidth={2}
                     fill="url(#swpCorpus)"
                   />

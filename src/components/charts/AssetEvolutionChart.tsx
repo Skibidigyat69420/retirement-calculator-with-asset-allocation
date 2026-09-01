@@ -9,7 +9,7 @@ import {
   Legend,
 } from 'recharts';
 import { formatCurrencyCompact } from '../../lib/formatters';
-import { ASSET_COLORS } from '../../lib/constants';
+import { ASSET_COLORS, COLORS } from '../../lib/constants';
 
 interface DataPoint {
   label: string;
@@ -31,7 +31,7 @@ export const AssetEvolutionChart = ({ data, xKey = 'label' }: AssetEvolutionChar
     <div className="h-80 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
           <XAxis
             dataKey={xKey}
             tick={{ fontSize: 12, fill: '#78716c' }}

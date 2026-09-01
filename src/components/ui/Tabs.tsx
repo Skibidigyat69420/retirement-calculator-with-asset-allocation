@@ -14,10 +14,16 @@ interface TabsProps {
 
 export const Tabs = ({ tabs, active, onChange }: TabsProps) => {
   return (
-    <div className="inline-flex p-1.5 bg-white border border-stone-200/70 rounded-2xl shadow-sm overflow-x-auto max-w-full">
+    <div
+      role="tablist"
+      className="inline-flex p-1.5 bg-white border border-stone-200/70 rounded-2xl shadow-sm overflow-x-auto max-w-full"
+    >
       {tabs.map((tab) => (
         <button
           key={tab.id}
+          type="button"
+          role="tab"
+          aria-selected={active === tab.id}
           onClick={() => onChange(tab.id)}
           className={cn(
             'flex items-center px-4 py-2 text-sm font-semibold rounded-xl whitespace-nowrap transition-all duration-150',

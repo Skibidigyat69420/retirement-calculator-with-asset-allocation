@@ -6,8 +6,8 @@
   --color-paper: #F6F4F0;
   --color-warm: #D1CDC3;
   --color-warm-dark: #B0AAA0;
-  --color-navy: #111111;
-  --color-gold: #D1CDC3;
+  --color-navy: #1A233A;
+  --color-gold: #B68B40;
   --color-red: #A31621;
   --color-ink: #111111;
   --color-accent: #E7E2DD;
@@ -28,6 +28,39 @@
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif text-ink tracking-tight;
+  }
+  /* Slider track base lives in the base layer so component utilities
+     (e.g. bg-transparent, appearance-none) can override it. */
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 5px;
+    background: #E7E2DD;
+    border-radius: 999px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 17px;
+    height: 17px;
+    background: #111111;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(17, 17, 17, 0.15);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 17px;
+    height: 17px;
+    background: #111111;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(17, 17, 17, 0.15);
+    cursor: pointer;
   }
 }
 
@@ -53,41 +86,30 @@
   background: #B0AAA0;
 }
 
-/* Slider thumb styling */
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 5px;
-  background: #E7E2DD;
-  border-radius: 999px;
+/* Mobile drawer motion */
+@keyframes drawer-slide-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
 }
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 17px;
-  height: 17px;
-  background: #111111;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  box-shadow: 0 2px 5px rgba(17, 17, 17, 0.15);
-  cursor: pointer;
-  transition: transform 0.15s ease;
+@keyframes overlay-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
+.animate-drawer-in {
+  animation: drawer-slide-in 0.25s ease-out;
 }
-input[type="range"]::-moz-range-thumb {
-  width: 17px;
-  height: 17px;
-  background: #111111;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  box-shadow: 0 2px 5px rgba(17, 17, 17, 0.15);
-  cursor: pointer;
+.animate-overlay-in {
+  animation: overlay-fade-in 0.2s ease-out;
 }
 
 @media print {
   body { background: white !important; }
-  .sidebar, .topbar, .no-print { display: none !important; }
-  main { margin: 0 !important; padding: 0 !important; max-width: 100% !important; }
+  /* Hide app chrome: sidebar (<aside>), topbar (<header>), nav, footer */
+  aside, header, footer, nav, .no-print { display: none !important; }
+  main { margin: 0 !important; padding: 0 !important; max-width: 100% !important; width: 100% !important; }
+  /* Serif report typography */
+  h1, h2, h3, h4, h5, h6 { font-family: Georgia, "Times New Roman", ui-serif, serif !important; }
+  /* Keep cards and table rows intact across page breaks */
+  table, thead, tr { break-inside: avoid; }
+  .print-keep { break-inside: avoid; }
 }

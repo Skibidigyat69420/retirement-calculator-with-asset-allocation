@@ -5,7 +5,8 @@ import { MetricCard } from '../ui/MetricCard';
 import { Card } from '../ui/Card';
 import { CalculatorShell } from './CalculatorShell';
 import { calculateLumpsum } from '../../lib/calculators';
-import { formatCurrency } from '../../lib/formatters';
+import { formatCurrency, formatCurrencyCompact } from '../../lib/formatters';
+import { COLORS } from '../../lib/constants';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -55,14 +56,14 @@ export const LumpsumCalculator = () => {
             >
               <defs>
                 <linearGradient id="lumpsumValue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#111111" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#111111" stopOpacity={0} />
+                  <stop offset="5%" stopColor={COLORS.ink} stopOpacity={0.15} />
+                  <stop offset="95%" stopColor={COLORS.ink} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
               <XAxis dataKey="year" tick={{ fontSize: 12, fill: '#78716c' }} axisLine={false} tickLine={false} />
               <YAxis
-                tickFormatter={(v) => `₹${(Number(v) / 100000).toFixed(1)}L`}
+                tickFormatter={formatCurrencyCompact}
                 tick={{ fontSize: 12, fill: '#78716c' }}
                 axisLine={false}
                 tickLine={false}
@@ -75,7 +76,7 @@ export const LumpsumCalculator = () => {
                 type="monotone"
                 dataKey="value"
                 name="Future Value"
-                stroke="#111111"
+                stroke={COLORS.ink}
                 strokeWidth={2}
                 fill="url(#lumpsumValue)"
               />

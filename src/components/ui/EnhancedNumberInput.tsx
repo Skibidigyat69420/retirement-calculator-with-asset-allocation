@@ -67,6 +67,7 @@ export const EnhancedNumberInput = ({
   const adjust = (delta: number) => {
     const newVal = clamp(value + delta);
     onChange(newVal);
+    setLocalValue(String(newVal));
   };
 
   const hasError = !!error || (min !== undefined && value < min) || (max !== undefined && value > max);

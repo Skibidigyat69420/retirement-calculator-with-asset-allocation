@@ -30,12 +30,13 @@ import { Badge } from '../components/ui/Badge';
 import { Alert } from '../components/ui/Alert';
 import { useMarketData } from '../hooks/useMarketData';
 import { INSTRUMENTS, DEFAULT_ALLOCATION_SYMBOLS } from '../lib/instruments';
-import { runMVO, type Portfolio, type MVOResult, type ConstraintSet } from '../lib/mvo';
+import { runMVO, type Portfolio, type ConstraintSet } from '../lib/mvo';
 import { getMaxHistoryDateRange, alignMarketData } from '../lib/marketData';
 import { loadSession, buildDefaultCredentials } from '../lib/smartapi';
 import { useCalculator } from '../context/CalculatorContext';
 import { formatPercent } from '../lib/formatters';
 import { ASSET_COLORS } from '../lib/constants';
+import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import type { AssetCategory } from '../types';
 
 const categoryMap: Record<string, AssetCategory> = {
@@ -47,7 +48,7 @@ const categoryMap: Record<string, AssetCategory> = {
 };
 
 export const MVO = () => {
-  const { addAsset, updateAsset, inputs, riskProfile, setInputs } = useCalculator();
+  const { addAsset, updateAsset, inputs, riskProfile, setInputs, showToast } = useCalculator();
   const { data, rawBundle, loading, progress, error, fetchData, loadBackendData } = useMarketData();
 
   const maxRange = useMemo(() => getMaxHistoryDateRange(), []);
@@ -81,6 +82,37 @@ export const MVO = () => {
 
   const mvoComputation = useMemo(() => {
     if (!alignedData || alignedData.symbols.length < 2) return { result: null, error: null };
+
+    // Input validation: reject non-finite or implausible statistics before optimizing.
+    const invalidStat = alignedData.stats.find(
+      (s) =>
+        !Number.isFinite(s.annualizedReturn) ||
+        !Number.isFinite(s.annualizedVolatility) ||
+        s.annualizedVolatility < 0 ||
+        s.annualizedVolatility > 1 ||
+        s.annualizedReturn < -1 ||
+        s.annualizedReturn > 1,
+    );
+    if (invalidStat) {
+      return {
+        result: null,
+        error: `Invalid statistics for ${invalidStat.symbol}: volatility is missing/above 100% or the annualized return is implausible (beyond ±100%). Re-fetch the data or remove this asset from the selection.`,
+      };
+    }
+
+    // Guard against a singular covariance matrix: (near-)perfectly correlated assets.
+    for (let i = 0; i < alignedData.symbols.length; i++) {
+      for (let j = i + 1; j < alignedData.symbols.length; j++) {
+        const c = alignedData.correlation[i]?.[j];
+        if (Number.isFinite(c) && Math.abs(c) >= 0.9999) {
+          return {
+            result: null,
+            error: `Singular covariance matrix: ${alignedData.symbols[i]} and ${alignedData.symbols[j]} are ~100% correlated. Remove one of them or pick less-correlated assets.`,
+          };
+        }
+      }
+    }
+
     const means = alignedData.stats.map((s) => s.annualizedReturn);
     const constraints: ConstraintSet = {
       minWeight: alignedData.symbols.map(() => 0),
@@ -95,11 +127,17 @@ export const MVO = () => {
         riskFreeRate: riskProfile.riskFreeRate / 100,
         constraints,
       });
+      if (result.frontier.length === 0) {
+        return {
+          result: null,
+          error: `No feasible solution: no portfolio satisfies the ${formatPercent(riskProfile.targetVolatility)} volatility cap with this asset mix. Raise the volatility target in your risk profile or add lower-risk assets.`,
+        };
+      }
       return { result, error: null };
     } catch (err: any) {
-      return { 
-        result: null, 
-        error: err?.message || 'Optimization failed (e.g. singular matrix). Try selecting a different mix of less-correlated assets.' 
+      return {
+        result: null,
+        error: `Optimization failed: ${err?.message || 'singular matrix or no feasible solution'}. Try selecting a different mix of less-correlated assets.`,
       };
     }
   }, [alignedData, maxEquity, riskProfile.riskFreeRate, riskProfile.targetVolatility, equityMask]);
@@ -138,18 +176,38 @@ export const MVO = () => {
     return alignedData.prices[0].dates.length;
   }, [alignedData]);
 
+  const isDateRangeValid = from && to && from < to;
+
   const handleBackendFetch = async () => {
+    if (!isDateRangeValid) {
+      showToast('Invalid date range: "From" must be earlier than "To".', 'warning');
+      return;
+    }
     await loadBackendData(selectedSymbols, from, to);
   };
 
   const handleAngelFetch = async () => {
     const session = loadSession();
     if (!session) {
-      alert('Please connect to Angel One SmartAPI first via the Angel Connect page.');
+      showToast('Please connect to Angel One SmartAPI first via the Angel Connect page.', 'warning');
       return;
     }
+    if (!isDateRangeValid) {
+      showToast('Invalid date range: "From" must be earlier than "To".', 'warning');
+      return;
+    }
+    // US/international instruments have no SmartAPI token and cannot be fetched.
+    const fetchable = selectedSymbols.filter((s) => !!INSTRUMENTS.find((i) => i.symbol === s)?.token);
+    const skipped = selectedSymbols.filter((s) => !fetchable.includes(s));
+    if (fetchable.length === 0) {
+      showToast(`None of the selected symbols can be fetched via SmartAPI (no token): ${skipped.join(', ')}. Use backend data.`, 'warning');
+      return;
+    }
+    if (skipped.length > 0) {
+      showToast(`Skipping ${skipped.join(', ')} — no SmartAPI token (e.g. US ETFs).`, 'info');
+    }
     const creds = buildDefaultCredentials();
-    await fetchData(selectedSymbols, from, to, creds, session);
+    await fetchData(fetchable, from, to, creds, session);
   };
 
   const applyWeightsToAllocation = (portfolio: Portfolio, strategyName: string) => {
@@ -182,12 +240,13 @@ export const MVO = () => {
     }));
 
     setAppliedStrategy(`${strategyName}-alloc`);
+    showToast(`Applied ${strategyName} weights to SIP/STP equity split (${equitySplit}%).`, 'success');
     setTimeout(() => setAppliedStrategy(null), 3000);
   };
 
   const applyWeightsToAssets = (portfolio: Portfolio, strategyName: string) => {
     if (!alignedData) {
-      alert('No live market data loaded. Connect Angel One SmartAPI first.');
+      showToast('No market data loaded. Load backend or SmartAPI data first.', 'warning');
       return;
     }
 
@@ -209,6 +268,7 @@ export const MVO = () => {
       });
     });
     setAppliedStrategy(strategyName);
+    showToast(`Added ${strategyName} portfolio assets to your plan holdings.`, 'success');
     setTimeout(() => setAppliedStrategy(null), 3000);
   };
 
@@ -518,6 +578,12 @@ export const MVO = () => {
           </div>
         </>
       )}
+
+      <WorkflowFooter
+        prev={{ path: '/allocation', label: 'Asset Allocation' }}
+        next={{ path: '/reports', label: 'Plan Reports' }}
+        flowHint="Mean-variance efficient portfolios provide empirically optimal weights to apply to your plan targets."
+      />
     </div>
   );
 };

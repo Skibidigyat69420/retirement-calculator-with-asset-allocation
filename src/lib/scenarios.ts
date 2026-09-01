@@ -2,6 +2,13 @@ import type { MasterPlanInputs, Scenario } from '../types';
 import { DEFAULT_RATES, DEFAULT_ALLOCATION } from './constants';
 
 export const defaultClientInputs = (): MasterPlanInputs => ({
+  client: {
+    name: 'Vikram & Ananya Sharma',
+    email: 'vikram.sharma@example.com',
+    advisor: 'Sound Thesis Wealth Advisory',
+    reviewDate: '2026-09-01',
+    notes: 'Primary focus is securing early retirement at age 45 with essential children education funded.',
+  },
   currentAge: 34,
   retirementAge: 45,
   lifeExpectancy: 80,

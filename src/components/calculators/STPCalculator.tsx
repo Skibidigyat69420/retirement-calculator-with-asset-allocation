@@ -6,17 +6,30 @@ import { Card } from '../ui/Card';
 import { CalculatorShell } from './CalculatorShell';
 import { calculateSTP } from '../../lib/calculators';
 import { formatCurrency } from '../../lib/formatters';
+import { useCalculator } from '../../context/CalculatorContext';
+import { Button } from '../ui/Button';
 
 export const STPCalculator = () => {
-  const [lumpsum, setLumpsum] = useState(50_00_000);
-  const [monthlyTransfer, setMonthlyTransfer] = useState(1_00_000);
-  const [liquidReturn, setLiquidReturn] = useState(7);
+  const { inputs, updateSTP, showToast } = useCalculator();
+  const [lumpsum, setLumpsum] = useState(inputs.stp.lumpsum || 50_00_000);
+  const [monthlyTransfer, setMonthlyTransfer] = useState(inputs.stp.monthlyTransfer || 1_00_000);
+  const [liquidReturn, setLiquidReturn] = useState(inputs.stp.liquidReturn || 7);
   const [targetReturn, setTargetReturn] = useState(12);
 
   const result = useMemo(
     () => calculateSTP(lumpsum, monthlyTransfer, liquidReturn, targetReturn),
     [lumpsum, monthlyTransfer, liquidReturn, targetReturn],
   );
+
+  const handleApply = () => {
+    updateSTP({
+      active: true,
+      lumpsum,
+      monthlyTransfer,
+      liquidReturn,
+    });
+    showToast('STP settings applied to Master Plan.', 'success');
+  };
 
   return (
     <CalculatorShell
@@ -28,6 +41,9 @@ export const STPCalculator = () => {
           <NumberInput label="Monthly Transfer" value={monthlyTransfer} onChange={setMonthlyTransfer} />
           <NumberInput label="Liquid Fund Return" value={liquidReturn} onChange={setLiquidReturn} suffix="%" />
           <NumberInput label="Target Portfolio Return" value={targetReturn} onChange={setTargetReturn} suffix="%" />
+          <Button onClick={handleApply} className="w-full mt-2" variant="outline">
+            Apply to Master Plan
+          </Button>
         </>
       }
       results={

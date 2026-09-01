@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { cn } from '../../lib/utils';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -6,16 +7,23 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   helper?: string;
 }
 
-export const Input = ({ label, suffix, helper, className, ...props }: InputProps) => {
+export const Input = ({ label, suffix, helper, className, id, ...props }: InputProps) => {
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
+
   return (
     <div className={cn('space-y-1.5', className)}>
       {label && (
-        <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500">
+        <label
+          htmlFor={inputId}
+          className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500"
+        >
           {label}
         </label>
       )}
       <div className="relative">
         <input
+          id={inputId}
           {...props}
           className={cn(
             'w-full bg-white border border-stone-200 rounded-xl px-3 py-2.5 text-sm font-medium text-navy placeholder:text-stone-400 transition-all',

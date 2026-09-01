@@ -24,6 +24,7 @@ export const Alert = ({ children, variant = 'info', icon: Icon, className }: Ale
 
   return (
     <div
+      role="alert"
       className={cn(
         'p-4 rounded-2xl border text-sm flex items-start gap-3 shadow-sm',
         variants[variant],

@@ -1,6 +1,9 @@
-import { Menu } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Menu, ChevronRight, CheckCircle2, AlertTriangle, RotateCcw, Printer, Wallet, User, ShieldCheck } from 'lucide-react';
+import { useLocation, Link } from 'react-router-dom';
 import { navItems, utilityItem } from './navItems';
+import { useCalculator } from '../../context/CalculatorContext';
+import { formatCurrencyCompact } from '../../lib/formatters';
 
 interface TopBarProps {
   onMenuClick: () => void;
@@ -9,33 +12,157 @@ interface TopBarProps {
 
 export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
   const location = useLocation();
+  const { inputs, riskProfile, riskScore, wealthResult, resetToDefaults } = useCalculator();
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
   const current =
     navItems.find((item) => item.path === location.pathname) ||
     (utilityItem.path === location.pathname ? utilityItem : null);
-  const label = current?.label || 'Wealth Planner';
+  const label = current?.label || 'Overview';
+  const section = current?.section || 'Advisory';
+
+  const isPrintablePage = location.pathname === '/reports' || location.pathname === '/ips';
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const confirmReset = () => {
+    resetToDefaults();
+    setShowResetConfirm(false);
+  };
 
   return (
-    <header className="lg:hidden sticky top-0 z-40 bg-cream/90 backdrop-blur-md border-b border-stone-200">
-      <div className="flex items-center justify-between h-16 px-4">
-        <button
-          onClick={onMenuClick}
-          aria-label="Toggle menu"
-          aria-expanded={mobileOpen}
-          className="p-2 -ml-2 text-stone-500 hover:text-navy rounded-lg hover:bg-stone-100 transition-colors"
-        >
-          <Menu size={22} />
-        </button>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-navy rounded-lg flex items-center justify-center">
-            <span className="text-gold font-serif font-bold">S</span>
+    <>
+      <header className="sticky top-0 z-30 bg-cream/90 backdrop-blur-md border-b border-stone-200/80 px-4 sm:px-6 lg:px-8 py-3 transition-all">
+        <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto">
+          {/* Mobile hamburger & title */}
+          <div className="flex items-center gap-3 lg:hidden">
+            <button
+              onClick={onMenuClick}
+              aria-label="Toggle menu"
+              aria-expanded={mobileOpen}
+              className="p-2 -ml-2 text-stone-500 hover:text-navy rounded-xl hover:bg-stone-100 transition-colors"
+            >
+              <Menu size={22} />
+            </button>
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 bg-navy rounded-lg flex items-center justify-center">
+                <span className="text-gold font-serif font-bold text-xs">S</span>
+              </div>
+              <span className="text-sm font-serif text-navy font-semibold truncate">{label}</span>
+            </div>
           </div>
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Sound Thesis</div>
-            <div className="text-sm font-serif text-navy leading-tight">{label}</div>
+
+          {/* Desktop Breadcrumbs */}
+          <div className="hidden lg:flex items-center gap-2 text-xs">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">{section}</span>
+            <ChevronRight size={14} className="text-stone-300" />
+            <span className="font-serif text-navy font-semibold text-sm">{label}</span>
+          </div>
+
+          {/* Desktop & Mobile Top Badges */}
+          <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+            {/* Client Profile Chip */}
+            <Link
+              to="/master-plan"
+              title="Click to edit client profile in Master Plan"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-stone-200 hover:border-gold/60 text-xs font-medium text-navy transition-all shadow-xs"
+            >
+              <User size={13} className="text-gold shrink-0" />
+              <span className="max-w-[120px] sm:max-w-[160px] truncate">
+                {inputs.client?.name || 'Client Plan'}
+              </span>
+            </Link>
+
+            {/* Risk Profile Pill (Desktop) */}
+            <Link
+              to="/risk"
+              title={`Risk Score: ${riskScore}/100. Click to view Questionnaire`}
+              className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-stone-200 hover:border-navy/40 text-xs font-medium text-stone-700 transition-all shadow-xs"
+            >
+              <ShieldCheck size={13} className="text-navy shrink-0" />
+              <span className="capitalize">{riskProfile.label}</span>
+              <span className="text-[10px] text-stone-400 font-mono">({riskScore})</span>
+            </Link>
+
+            {/* Plan Longevity Pill */}
+            <Link
+              to="/retirement"
+              title={wealthResult.sustainable ? 'Plan sustainable through life expectancy' : `Plan depletes at age ${wealthResult.depletionAge}`}
+              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-all shadow-xs ${
+                wealthResult.sustainable
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100/80'
+                  : 'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100/80'
+              }`}
+            >
+              {wealthResult.sustainable ? (
+                <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
+              ) : (
+                <AlertTriangle size={13} className="text-amber-600 shrink-0" />
+              )}
+              <span>
+                {wealthResult.sustainable
+                  ? 'Sustainable'
+                  : `Depletion: Age ${wealthResult.depletionAge ?? '—'}`}
+              </span>
+            </Link>
+
+            {/* Net Worth Chip */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-navy text-white text-xs font-semibold shadow-xs">
+              <Wallet size={13} className="text-gold shrink-0" />
+              <span>{formatCurrencyCompact(wealthResult.netWorth)}</span>
+            </div>
+
+            {/* Print button on Reports/IPS */}
+            {isPrintablePage && (
+              <button
+                onClick={handlePrint}
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-stone-200 hover:border-navy text-stone-600 hover:text-navy text-xs font-medium transition-colors shadow-xs"
+                title="Print or export as PDF"
+              >
+                <Printer size={13} />
+                <span className="hidden md:inline">Print</span>
+              </button>
+            )}
+
+            {/* Quick Reset Plan Button */}
+            <button
+              onClick={() => setShowResetConfirm(true)}
+              className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-white hover:border-stone-200 border border-transparent transition-colors"
+              title="Reset plan inputs to defaults"
+            >
+              <RotateCcw size={14} />
+            </button>
           </div>
         </div>
-        <div className="w-8" />
-      </div>
-    </header>
+      </header>
+
+      {/* Reset Confirmation Modal */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy/40 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-stone-200 animate-in fade-in zoom-in-95">
+            <h3 className="text-base font-serif font-bold text-navy mb-2">Reset Plan Inputs?</h3>
+            <p className="text-xs text-stone-500 mb-6 leading-relaxed">
+              This will revert all client profile information, assets, SIP/STP/SWP allocations, and questionnaire responses back to the default sample client.
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="px-4 py-2 text-xs font-semibold text-stone-600 hover:bg-stone-100 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmReset}
+                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors shadow-sm"
+              >
+                Reset to Defaults
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };

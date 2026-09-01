@@ -10,6 +10,7 @@ import { useCalculator } from '../context/CalculatorContext';
 import { RISK_QUESTIONS, calculateRiskScore, isComplete, getCategoryScores, buildGlidePath, analyzeRiskGap, detectBehavioralBiases, generateActionChecklist } from '../lib/riskQuestionnaire';
 import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
 import { formatPercent } from '../lib/formatters';
+import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import type { AssetCategory } from '../types';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
@@ -80,6 +81,25 @@ export const RiskQuestionnaire = () => {
           badge="Behavioural Finance"
         />
 
+        {!isComplete(riskAnswers) && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-amber-800">
+            <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <strong>Incomplete questionnaire.</strong> You have answered {Object.keys(riskAnswers).length} of {RISK_QUESTIONS.length} questions; unanswered questions score 0 and bias the profile toward conservative.{' '}
+              <button
+                onClick={() => {
+                  const firstUnanswered = RISK_QUESTIONS.findIndex((q) => typeof riskAnswers[q.id] !== 'number');
+                  setStep(firstUnanswered >= 0 ? firstUnanswered : 0);
+                  setShowResults(false);
+                }}
+                className="underline hover:text-amber-900"
+              >
+                Resume where you left off
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-1 bg-navy text-white">
             <div className="text-[10px] font-bold uppercase tracking-widest text-gold">Profile</div>
@@ -106,8 +126,18 @@ export const RiskQuestionnaire = () => {
             <Button className="w-full mt-6" onClick={handleApply}>
               <CheckCircle2 size={16} className="mr-2" /> Apply to Allocation
             </Button>
-            <Button variant="ghost" className="w-full mt-2 text-white/70 hover:text-white" onClick={handleReset}>
-              <RotateCcw size={16} className="mr-2" /> Retake Questionnaire
+            <Button
+              variant="outline"
+              className="w-full mt-2 bg-white/10 text-white border-white/20 hover:bg-white/20"
+              onClick={() => {
+                setShowResults(false);
+                setStep(0);
+              }}
+            >
+              Edit Questionnaire Answers
+            </Button>
+            <Button variant="ghost" className="w-full mt-1 text-white/70 hover:text-white" onClick={handleReset}>
+              <RotateCcw size={16} className="mr-2" /> Reset All Answers
             </Button>
           </Card>
 
@@ -258,6 +288,12 @@ export const RiskQuestionnaire = () => {
             </div>
           </div>
         </Card>
+
+        <WorkflowFooter
+          prev={{ path: '/', label: 'Dashboard' }}
+          next={{ path: '/master-plan', label: 'Master Plan' }}
+          flowHint="Risk profile establishes your strategic asset allocation targets and SIP/STP equity splits."
+        />
       </div>
     );
   }
@@ -283,6 +319,30 @@ export const RiskQuestionnaire = () => {
               className="h-full bg-gold rounded-full"
               transition={{ duration: 0.3 }}
             />
+          </div>
+
+          {/* Direct Question Jump Tray */}
+          <div className="flex flex-wrap items-center justify-center gap-1.5 mt-4 pt-3 border-t border-stone-100">
+            {RISK_QUESTIONS.map((q, idx) => {
+              const isAnswered = typeof riskAnswers[q.id] === 'number';
+              const isCurrent = idx === step;
+              return (
+                <button
+                  key={q.id}
+                  onClick={() => setStep(idx)}
+                  className={`w-7 h-7 rounded-lg text-xs font-semibold flex items-center justify-center transition-all ${
+                    isCurrent
+                      ? 'bg-navy text-white shadow-xs scale-105'
+                      : isAnswered
+                      ? 'bg-gold/20 text-stone-800 hover:bg-gold/30'
+                      : 'bg-stone-100 text-stone-400 hover:bg-stone-200'
+                  }`}
+                  title={`Question ${idx + 1}: ${q.text.slice(0, 30)}...`}
+                >
+                  {idx + 1}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -338,13 +398,22 @@ export const RiskQuestionnaire = () => {
           >
             <ArrowLeft size={16} className="mr-2" /> Back
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => setShowResults(true)}
-            disabled={!Object.keys(riskAnswers).length}
-          >
-            Skip to Results <ArrowRight size={16} className="ml-2" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => setStep((s) => Math.min(RISK_QUESTIONS.length - 1, s + 1))}
+              disabled={step === RISK_QUESTIONS.length - 1}
+            >
+              Next <ArrowRight size={16} className="ml-2" />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowResults(true)}
+              disabled={!Object.keys(riskAnswers).length}
+            >
+              Skip to Results <ArrowRight size={16} className="ml-2" />
+            </Button>
+          </div>
         </div>
       </Card>
 

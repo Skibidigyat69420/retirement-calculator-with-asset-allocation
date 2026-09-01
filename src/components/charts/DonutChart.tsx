@@ -16,6 +16,14 @@ interface DonutChartProps {
 export const DonutChart = ({ data, innerRadius = 60, outerRadius = 90 }: DonutChartProps) => {
   const total = data.reduce((acc, d) => acc + d.value, 0);
 
+  if (total <= 0) {
+    return (
+      <div className="h-72 w-full flex items-center justify-center">
+        <p className="text-sm text-stone-400 text-center px-6">No allocation to display — the projected corpus is depleted at this horizon.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="h-72 w-full relative">
       <ResponsiveContainer width="100%" height="100%">
@@ -44,17 +52,21 @@ export const DonutChart = ({ data, innerRadius = 60, outerRadius = 90 }: DonutCh
               boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
             }}
           />
-          <Legend verticalAlign="bottom" height={36} iconType="circle" />
+          <Legend
+            verticalAlign="bottom"
+            height={48}
+            iconType="circle"
+            iconSize={8}
+            wrapperStyle={{ fontSize: '11px', lineHeight: '16px', width: '100%', overflow: 'hidden' }}
+          />
         </PieChart>
       </ResponsiveContainer>
-      {total > 0 && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="text-center">
-            <div className="text-[10px] uppercase tracking-wider text-stone-400">Total</div>
-            <div className="text-sm font-serif font-semibold text-navy">{formatCurrencyCompact(total)}</div>
-          </div>
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ bottom: 48 }}>
+        <div className="text-center">
+          <div className="text-[10px] uppercase tracking-wider text-stone-400">Total</div>
+          <div className="text-sm font-serif font-semibold text-navy">{formatCurrencyCompact(total)}</div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

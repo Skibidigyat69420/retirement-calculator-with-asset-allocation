@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useId } from 'react';
 import { Plus, Minus, AlertCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -42,6 +42,7 @@ export const CurrencyInput = ({
 }: CurrencyInputProps) => {
   const [localValue, setLocalValue] = useState(formatDisplay(value));
   const [isEditing, setIsEditing] = useState(false);
+  const inputId = useId();
 
   useEffect(() => {
     if (!isEditing) {
@@ -68,7 +69,9 @@ export const CurrencyInput = ({
   );
 
   const adjust = (delta: number) => {
-    onChange(clamp(value + delta));
+    const newVal = clamp(value + delta);
+    onChange(newVal);
+    setLocalValue(formatDisplay(newVal));
   };
 
   const hasError = !!error || (min !== undefined && value < min) || (max !== undefined && value > max);
@@ -76,7 +79,10 @@ export const CurrencyInput = ({
   return (
     <div className={cn('space-y-1.5', className)}>
       {label && (
-        <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500">
+        <label
+          htmlFor={inputId}
+          className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500"
+        >
           {label}
         </label>
       )}
@@ -85,6 +91,7 @@ export const CurrencyInput = ({
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-stone-400">₹</span>
 
         <input
+          id={inputId}
           type="text"
           inputMode="numeric"
           value={localValue}

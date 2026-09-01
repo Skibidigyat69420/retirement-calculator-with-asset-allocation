@@ -19,6 +19,7 @@ import { useState, useMemo } from 'react';
 import { useCalculator } from '../context/CalculatorContext';
 import { Card } from '../components/ui/Card';
 import { NumberInput } from '../components/ui/NumberInput';
+import { CurrencyInput } from '../components/ui/CurrencyInput';
 import { Slider } from '../components/ui/Slider';
 import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
@@ -30,11 +31,12 @@ import { NominalRealChart } from '../components/charts/NominalRealChart';
 import { AssetEvolutionChart } from '../components/charts/AssetEvolutionChart';
 import { SWPDrawdownChart } from '../components/charts/SWPDrawdownChart';
 import { DonutChart } from '../components/charts/DonutChart';
-import { ASSET_COLORS, ASSET_LABELS, FX_ASSUMPTIONS } from '../lib/constants';
+import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { MonteCarloFanChart } from '../components/charts/MonteCarloFanChart';
-import { defaultScenarios } from '../lib/scenarios';
-import type { AssetCategory, GoalPriority, MasterPlanInputs } from '../types';
+import { Input } from '../components/ui/Input';
+import { WorkflowFooter } from '../components/layout/WorkflowFooter';
+import type { AssetCategory, GoalPriority } from '../types';
 
 const categoryOptions: { value: AssetCategory; label: string }[] = [
   { value: 'equity', label: 'Equity' },
@@ -45,15 +47,17 @@ const categoryOptions: { value: AssetCategory; label: string }[] = [
   { value: 'other', label: 'Other' },
 ];
 
-const strategyOptions = [
-  { value: 'true', label: 'Liquidate to SWP Corpus' },
-  { value: 'false', label: 'Retain & Let Grow' },
+const currencyOptions = [
+  { value: 'INR', label: 'INR (₹)' },
+  { value: 'USD', label: 'USD ($)' },
+  { value: 'EUR', label: 'EUR (€)' },
+  { value: 'GBP', label: 'GBP (£)' },
 ];
 
-const currencyOptions = Object.keys(FX_ASSUMPTIONS).map((currency) => ({
-  value: currency,
-  label: currency,
-}));
+const strategyOptions = [
+  { value: 'true', label: 'Liquidate & Fund Retirement' },
+  { value: 'false', label: 'Retain & Keep Invested' },
+];
 
 const priorityOptions: { value: GoalPriority; label: string }[] = [
   { value: 'essential', label: 'Essential' },
@@ -65,6 +69,7 @@ export const MasterPlan = () => {
   const {
     inputs,
     updateInputs,
+    updateClient,
     updateAsset,
     addAsset,
     removeAsset,
@@ -76,6 +81,9 @@ export const MasterPlan = () => {
     removeGoal,
     wealthResult,
     riskProfile,
+    scenarios,
+    loadScenario,
+    showToast,
   } = useCalculator();
 
   const [activeTab, setActiveTab] = useState('profile');
@@ -162,70 +170,137 @@ export const MasterPlan = () => {
             value=""
             onChange={(scenarioId) => {
               if (!scenarioId) return;
-              const scenario = defaultScenarios().find((s) => s.id === scenarioId);
-              if (scenario) updateInputs(scenario.inputs);
+              const scenario = scenarios.find((s) => s.id === scenarioId);
+              if (scenario) loadScenario(scenario);
             }}
             options={[
               { value: '', label: 'Select a scenario...' },
-              ...defaultScenarios().map((s) => ({ value: s.id, label: s.name }))
+              ...scenarios.map((s) => ({ value: s.id, label: s.name }))
             ]}
           />
         </div>
       </div>
 
       {activeTab === 'profile' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2">
-            <div className="flex items-center space-x-2 mb-6">
-              <User size={18} className="text-gold" />
-              <h3 className="text-lg font-serif text-navy">Life & Economy Profile</h3>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <NumberInput label="Current Age" value={inputs.currentAge} onChange={(v) => updateInputs({ currentAge: v })} />
-              <NumberInput label="Retirement Age" value={inputs.retirementAge} onChange={(v) => updateInputs({ retirementAge: v })} />
-              <NumberInput label="Life Expectancy" value={inputs.lifeExpectancy} onChange={(v) => updateInputs({ lifeExpectancy: v })} />
-              <NumberInput label="Annual Income" value={inputs.annualIncome} onChange={(v) => updateInputs({ annualIncome: v })} helper="Pre-tax household income" />
-              <NumberInput label="Inflation Assumption" value={inputs.inflation} onChange={(v) => updateInputs({ inflation: v })} suffix="%" helper="Used for real returns and SWP" />
-            </div>
-          </Card>
-          <Card>
-            <h3 className="text-lg font-serif text-navy mb-4">Profile Snapshot</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Years to retirement</span>
-                <span className="font-medium text-navy">{Math.max(0, inputs.retirementAge - inputs.currentAge)}</span>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2">
+              <div className="flex items-center space-x-2 mb-6">
+                <User size={18} className="text-gold" />
+                <h3 className="text-lg font-serif text-navy">Client & Advisory Mandate</h3>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Distribution years</span>
-                <span className="font-medium text-navy">{Math.max(0, inputs.lifeExpectancy - inputs.retirementAge)}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <Input
+                  label="Client Name"
+                  value={inputs.client?.name || ''}
+                  onChange={(e) => updateClient({ name: e.target.value })}
+                  placeholder="e.g. Vikram & Ananya Sharma"
+                />
+                <Input
+                  label="Wealth Advisor / Firm"
+                  value={inputs.client?.advisor || ''}
+                  onChange={(e) => updateClient({ advisor: e.target.value })}
+                  placeholder="e.g. Sound Thesis Wealth Advisory"
+                />
+                <Input
+                  label="Mandate Review Date"
+                  type="date"
+                  value={inputs.client?.reviewDate || ''}
+                  onChange={(e) => updateClient({ reviewDate: e.target.value })}
+                />
+                <Input
+                  label="Advisory Focus / Mandate"
+                  value={inputs.client?.notes || ''}
+                  onChange={(e) => updateClient({ notes: e.target.value })}
+                  placeholder="Primary planning objective"
+                />
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Current net worth</span>
-                <span className="font-medium text-navy">{formatCurrency(netWorth)}</span>
+
+              <div className="border-t border-stone-100 pt-6 mt-6">
+                <h4 className="text-sm font-semibold text-stone-600 uppercase tracking-wider mb-4">Life Horizon & Economy</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <NumberInput label="Current Age" value={inputs.currentAge} onChange={(v) => updateInputs({ currentAge: v })} />
+                  <NumberInput label="Retirement Age" value={inputs.retirementAge} onChange={(v) => updateInputs({ retirementAge: v })} />
+                  <NumberInput label="Life Expectancy" value={inputs.lifeExpectancy} onChange={(v) => updateInputs({ lifeExpectancy: v })} />
+                  <CurrencyInput label="Annual Income" value={inputs.annualIncome} onChange={(v) => updateInputs({ annualIncome: v })} helper="Pre-tax household income" />
+                  <NumberInput label="Inflation Assumption" value={inputs.inflation} onChange={(v) => updateInputs({ inflation: v })} suffix="%" helper="Used for real returns and SWP" />
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Net annual savings</span>
-                <span className="font-medium text-navy">{formatCurrency(wealthResult.annualSavings)}</span>
+            </Card>
+
+            <Card>
+              <h3 className="text-lg font-serif text-navy mb-4">Profile Snapshot</h3>
+              <div className="space-y-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-stone-500">Client</span>
+                  <span className="font-medium text-navy truncate max-w-[150px]">{inputs.client?.name || '—'}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-stone-500">Years to retirement</span>
+                  <span className="font-medium text-navy">{Math.max(0, inputs.retirementAge - inputs.currentAge)} yrs</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-stone-500">Distribution years</span>
+                  <span className="font-medium text-navy">{Math.max(0, inputs.lifeExpectancy - inputs.retirementAge)} yrs</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-stone-500">Current net worth</span>
+                  <span className="font-medium text-navy">{formatCurrency(netWorth)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-stone-500">Net annual savings</span>
+                  <span className="font-medium text-navy">{formatCurrency(wealthResult.annualSavings)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-stone-500">Net savings rate</span>
+                  <span className="font-medium text-navy">{formatPercent(wealthResult.savingsRate)}</span>
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Net savings rate</span>
-                <span className="font-medium text-navy">{formatPercent(wealthResult.savingsRate)}</span>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
         </div>
       )}
 
       {activeTab === 'assets' && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-serif text-navy flex items-center gap-2">
-              <Building2 size={18} className="text-gold" /> Existing Assets
-            </h3>
-            <Button variant="outline" size="sm" onClick={() => addAsset()}>
-              <Plus size={14} className="mr-1" /> Add Asset
-            </Button>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-serif text-navy flex items-center gap-2">
+                <Building2 size={18} className="text-gold" /> Existing Assets
+              </h3>
+              <p className="text-xs text-stone-500 mt-0.5">
+                Total portfolio value: <strong className="text-navy">{formatCurrency(netWorth)}</strong> across {inputs.assets.length} assets
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  addAsset({ name: 'Diversified Equity MF', category: 'equity', value: 1000000, returnRate: 12, currency: 'INR', liquidateAtRetirement: true });
+                  showToast('Added Equity Mutual Fund asset', 'success');
+                }}
+              >
+                + Equity MF
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  addAsset({ name: 'Fixed Deposit / Debt', category: 'debt', value: 500000, returnRate: 7, currency: 'INR', liquidateAtRetirement: true });
+                  showToast('Added Debt asset', 'success');
+                }}
+              >
+                + Debt/FD
+              </Button>
+              <Button size="sm" onClick={() => addAsset()}>
+                <Plus size={14} className="mr-1" /> Add Custom
+              </Button>
+            </div>
           </div>
+          {inputs.assets.length === 0 && (
+            <p className="text-sm text-stone-500">No assets yet. Click <strong>Add Asset</strong> to record your holdings.</p>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {inputs.assets.map((asset) => (
               <Card key={asset.id} variant="subtle">
@@ -244,7 +319,7 @@ export const MasterPlan = () => {
                   </button>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <NumberInput label="Value" value={asset.value} onChange={(v) => updateAsset(asset.id, { value: v })} />
+                  <CurrencyInput label="Value" value={asset.value} onChange={(v) => updateAsset(asset.id, { value: v })} />
                   <NumberInput label="Return" value={asset.returnRate} onChange={(v) => updateAsset(asset.id, { returnRate: v })} suffix="%" />
                   <Select
                     label="Category"
@@ -284,10 +359,10 @@ export const MasterPlan = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-              <NumberInput label="Annual Income" value={inputs.annualIncome} onChange={(v) => updateInputs({ annualIncome: v })} helper="Pre-tax household income" />
-              <NumberInput label="Monthly Expenditure" value={inputs.monthlyExpenditure} onChange={(v) => updateInputs({ monthlyExpenditure: v })} helper="Current lifestyle spend" />
-              <NumberInput label="Monthly SIP" value={inputs.sip.amount} onChange={(v) => updateSIP({ amount: v })} helper="Systematic investment" />
-              <NumberInput label={inputs.stp.active ? 'Monthly STP' : 'STP Monthly Transfer'} value={inputs.stp.monthlyTransfer} onChange={(v) => updateSTP({ monthlyTransfer: v })} helper={inputs.stp.active ? 'From liquid corpus' : 'Enable STP to use'} />
+              <CurrencyInput label="Annual Income" value={inputs.annualIncome} onChange={(v) => updateInputs({ annualIncome: v })} helper="Pre-tax household income" />
+              <CurrencyInput label="Monthly Expenditure" value={inputs.monthlyExpenditure} onChange={(v) => updateInputs({ monthlyExpenditure: v })} helper="Current lifestyle spend" />
+              <CurrencyInput label="Monthly SIP" value={inputs.sip.amount} onChange={(v) => updateSIP({ amount: v })} helper="Systematic investment" />
+              <CurrencyInput label={inputs.stp.active ? 'Monthly STP' : 'STP Monthly Transfer'} value={inputs.stp.monthlyTransfer} onChange={(v) => updateSTP({ monthlyTransfer: v })} helper={inputs.stp.active ? 'From liquid corpus' : 'Enable STP to use'} />
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -325,7 +400,7 @@ export const MasterPlan = () => {
                 <h3 className="text-lg font-serif text-navy">SIP Injection</h3>
               </div>
               <div className="space-y-4">
-                <NumberInput label="Monthly SIP" value={inputs.sip.amount} onChange={(v) => updateSIP({ amount: v })} />
+                <CurrencyInput label="Monthly SIP" value={inputs.sip.amount} onChange={(v) => updateSIP({ amount: v })} />
                 <Slider label="Equity Split" value={inputs.sip.equitySplit} onChange={(v) => updateSIP({ equitySplit: v, debtSplit: 100 - v })} />
                 <Slider label="Debt Split" value={inputs.sip.debtSplit} onChange={(v) => updateSIP({ debtSplit: v, equitySplit: 100 - v })} />
                 <NumberInput label="Annual Step-up" value={inputs.sip.stepUp} onChange={(v) => updateSIP({ stepUp: v })} suffix="%" />
@@ -352,10 +427,10 @@ export const MasterPlan = () => {
               </label>
               {inputs.stp.active && (
                 <div className="space-y-4">
-                  <NumberInput label="STP Lumpsum" value={inputs.stp.lumpsum} onChange={(v) => updateSTP({ lumpsum: v })} />
-                  <NumberInput label="Monthly Transfer" value={inputs.stp.monthlyTransfer} onChange={(v) => updateSTP({ monthlyTransfer: v })} />
+                  <CurrencyInput label="STP Lumpsum" value={inputs.stp.lumpsum} onChange={(v) => updateSTP({ lumpsum: v })} />
+                  <CurrencyInput label="Monthly Transfer" value={inputs.stp.monthlyTransfer} onChange={(v) => updateSTP({ monthlyTransfer: v })} />
                   <NumberInput label="Liquid Return" value={inputs.stp.liquidReturn} onChange={(v) => updateSTP({ liquidReturn: v })} suffix="%" />
-                  <NumberInput label="Liquid Cap" value={inputs.stp.liquidCap} onChange={(v) => updateSTP({ liquidCap: v })} />
+                  <CurrencyInput label="Liquid Cap" value={inputs.stp.liquidCap} onChange={(v) => updateSTP({ liquidCap: v })} />
                   <Slider label="Equity Split" value={inputs.stp.equitySplit} onChange={(v) => updateSTP({ equitySplit: v, debtSplit: 100 - v })} />
                   <Slider label="Debt Split" value={inputs.stp.debtSplit} onChange={(v) => updateSTP({ debtSplit: v, equitySplit: 100 - v })} />
                 </div>
@@ -368,7 +443,7 @@ export const MasterPlan = () => {
                 <h3 className="text-lg font-serif text-navy">Distribution (SWP)</h3>
               </div>
               <div className="space-y-4">
-                <NumberInput label="Target Monthly Income (Today's ₹)" value={inputs.swp.monthlyNeedToday} onChange={(v) => updateSWP({ monthlyNeedToday: v })} />
+                <CurrencyInput label="Target Monthly Income (Today's ₹)" value={inputs.swp.monthlyNeedToday} onChange={(v) => updateSWP({ monthlyNeedToday: v })} />
                 <NumberInput label="Post-Retirement Return" value={inputs.swp.postRetirementReturn} onChange={(v) => updateSWP({ postRetirementReturn: v })} suffix="%" />
                 <NumberInput label="SWP Tax Rate" value={inputs.swp.taxRate} onChange={(v) => updateSWP({ taxRate: v })} suffix="%" />
               </div>
@@ -390,6 +465,9 @@ export const MasterPlan = () => {
           <div className="text-xs text-stone-500 bg-stone-50 p-3 rounded-lg border border-stone-200">
             <strong>Note:</strong> During simulation, the wealth engine automatically funds goals in order of priority: <strong>Essential</strong> first, then <strong>Important</strong>, then <strong>Aspirational</strong>.
           </div>
+          {inputs.goals.length === 0 && (
+            <p className="text-sm text-stone-500">No goals yet. Click <strong>Add Goal</strong> to create one.</p>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {[...inputs.goals].sort((a, b) => {
               const p = { essential: 1, important: 2, aspirational: 3 };
@@ -411,7 +489,7 @@ export const MasterPlan = () => {
                   </button>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <NumberInput label="Target Amount" value={goal.targetAmount} onChange={(v) => updateGoal(goal.id, { targetAmount: v })} />
+                  <CurrencyInput label="Target Amount" value={goal.targetAmount} onChange={(v) => updateGoal(goal.id, { targetAmount: v })} />
                   <NumberInput label="Years to Goal" value={goal.yearsToGoal} onChange={(v) => updateGoal(goal.id, { yearsToGoal: v })} />
                   <NumberInput label="Inflation" value={goal.inflation} onChange={(v) => updateGoal(goal.id, { inflation: v })} suffix="%" />
                   <Select
@@ -615,6 +693,12 @@ export const MasterPlan = () => {
           </Card>
         </div>
       )}
+
+      <WorkflowFooter
+        prev={{ path: '/risk', label: 'Risk Questionnaire' }}
+        next={{ path: '/goal', label: 'Goals Planner' }}
+        flowHint="Master plan assets, cashflows, and life profile parameters power the Monte Carlo simulation engine."
+      />
     </div>
   );
 };

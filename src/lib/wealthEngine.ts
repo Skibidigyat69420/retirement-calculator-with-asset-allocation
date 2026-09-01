@@ -1,4 +1,4 @@
-import type { AssetCategory, MasterPlanInputs, Goal, Asset } from '../types';
+import type { AssetCategory, MasterPlanInputs, Goal, GoalPriority, Asset } from '../types';
 import type { AssumptionSet } from './assumptions';
 import type { RiskProfile } from '../types';
 
@@ -267,6 +267,7 @@ function buildStpWeights(stp: MasterPlanInputs['stp']): { equity: number; debt: 
 
 interface SimulationState {
   values: Record<AssetCategory, number>;
+  retained: Record<AssetCategory, number>;
   monthlySip: number;
   stpLiquid: number;
   totalInvested: number;
@@ -295,6 +296,7 @@ function simulateOnePath(
 
   const state: SimulationState = {
     values: { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 },
+    retained: { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 },
     monthlySip: sip.amount,
     stpLiquid: stp.active ? stp.lumpsum : 0,
     totalInvested: 0,
@@ -309,15 +311,29 @@ function simulateOnePath(
   };
 
   assets.forEach((a) => (state.values[a.category] += a.value));
+  assets.forEach((a) => {
+    if (!a.liquidateAtRetirement) state.retained[a.category] += a.value;
+  });
   if (stp.active) {
     state.values.liquid = Math.max(0, state.values.liquid - stp.lumpsum);
   }
   const sipWeights = buildSipWeights(sip);
   const stpWeights = buildStpWeights(stp);
 
+  const customMeans = CATEGORIES.map((c, i) => {
+    const catAssets = assets.filter((a) => a.category === c);
+    const catTotal = catAssets.reduce((sum, a) => sum + a.value, 0);
+    if (catTotal <= 0) return means[i];
+    return catAssets.reduce((sum, a) => sum + (a.value * a.returnRate) / 100, 0) / catTotal;
+  });
+
+  // Maturity year is primary (goals are funded when they mature); priority
+  // breaks same-year ties so essential goals are funded first when capital
+  // is constrained.
+  const PRIORITY_RANK: Record<GoalPriority, number> = { essential: 0, important: 1, aspirational: 2 };
   const sortedGoals = goals
     .map((g, idx) => ({ goal: g, idx, futureValue: g.targetAmount * Math.pow(1 + g.inflation / 100, g.yearsToGoal) }))
-    .sort((a, b) => a.goal.yearsToGoal - b.goal.yearsToGoal);
+    .sort((a, b) => a.goal.yearsToGoal - b.goal.yearsToGoal || PRIORITY_RANK[a.goal.priority] - PRIORITY_RANK[b.goal.priority]);
 
   for (let y = 1; y <= accYears + distYears; y++) {
     const phase: 'accumulation' | 'distribution' = y <= accYears ? 'accumulation' : 'distribution';
@@ -329,7 +345,9 @@ function simulateOnePath(
       ? CATEGORIES.map((cat) => fxStats[cat].mean)
       : sampleFXReturn(fxStats);
     CATEGORIES.forEach((c, i) => {
-      state.values[c] = state.values[c] * (1 + returns[i]) * (1 + fxReturns[i]);
+      const mean = customMeans[i];
+      state.values[c] = state.values[c] * (1 + returns[i] - means[i] + mean) * (1 + fxReturns[i]);
+      state.retained[c] = state.retained[c] * (1 + returns[i] - means[i] + mean) * (1 + fxReturns[i]);
     });
 
     if (phase === 'accumulation') {
@@ -362,13 +380,15 @@ function simulateOnePath(
         if (goal.yearsToGoal === y) {
           const total = Object.values(state.values).reduce((a, b) => a + b, 0);
           if (total >= futureValue) {
-            const ratio = futureValue / total;
+            const ratio = total > 0 ? futureValue / total : 0;
             CATEGORIES.forEach((c) => (state.values[c] *= 1 - ratio));
+            CATEGORIES.forEach((c) => (state.retained[c] *= 1 - ratio));
             state.totalGoalsFunded += futureValue;
             state.goalSuccess[idx] = true;
             state.cashFlows.push({ year: y, age: currentAge + y, type: 'goal', amount: futureValue, description: `Goal: ${goal.name}` });
           } else {
             CATEGORIES.forEach((c) => (state.values[c] = 0));
+            CATEGORIES.forEach((c) => (state.retained[c] = 0));
             state.cashFlows.push({ year: y, age: currentAge + y, type: 'goal', amount: total, description: `Goal shortfall: ${goal.name}` });
           }
         }
@@ -380,11 +400,21 @@ function simulateOnePath(
       currentIncome *= (1 + infl);
     } else {
       const yearsSinceRetirement = y - accYears;
+      if (yearsSinceRetirement === 1) {
+        // Assets not flagged liquidateAtRetirement stay invested but leave the SWP corpus.
+        const retainedTotal = Object.values(state.retained).reduce((a, b) => a + b, 0);
+        if (retainedTotal > 0) {
+          CATEGORIES.forEach((c) => {
+            state.values[c] = Math.max(0, state.values[c] - state.retained[c]);
+          });
+          state.cashFlows.push({ year: y, age: currentAge + y, type: 'other', amount: retainedTotal, description: 'Assets retained at retirement (excluded from SWP corpus)' });
+        }
+      }
       const monthlyNeed = swp.monthlyNeedToday * Math.pow(1 + infl, accYears + yearsSinceRetirement - 1);
       const grossAnnual = (monthlyNeed * 12) / (1 - swp.taxRate / 100);
       const total = Object.values(state.values).reduce((a, b) => a + b, 0);
       if (total >= grossAnnual) {
-        const ratio = grossAnnual / total;
+        const ratio = total > 0 ? grossAnnual / total : 0;
         CATEGORIES.forEach((c) => (state.values[c] *= 1 - ratio));
         state.totalWithdrawn += grossAnnual;
         state.cashFlows.push({ year: y, age: currentAge + y, type: 'withdrawal', amount: grossAnnual, description: 'Annual SWP withdrawal' });
@@ -395,14 +425,19 @@ function simulateOnePath(
       }
     }
 
-    state.yearlyValues.push(Object.values(state.values).reduce((a, b) => a + b, 0));
-    state.yearlyCategoryValues.push({ ...state.values });
+    state.yearlyValues.push(
+      Object.values(state.values).reduce((a, b) => a + b, 0) +
+        Object.values(state.retained).reduce((a, b) => a + b, 0),
+    );
+    const categorySnapshot = { ...state.values };
+    CATEGORIES.forEach((c) => (categorySnapshot[c] += state.retained[c]));
+    state.yearlyCategoryValues.push(categorySnapshot);
   }
 
   return state;
 }
 
-function buildSnapshots(inputs: MasterPlanInputs, assumptions: AssumptionSet): WealthSnapshot[] {
+function buildSnapshots(inputs: MasterPlanInputs, assumptions: AssumptionSet): { snapshots: WealthSnapshot[]; depletionAge: number | null } {
   const { currentAge } = inputs;
   const means = CATEGORIES.map((c) => assumptions.categories[c].mean);
   const fxStats = buildCategoryFXStats(inputs.assets, assumptions.fx);
@@ -445,7 +480,7 @@ function buildSnapshots(inputs: MasterPlanInputs, assumptions: AssumptionSet): W
     });
   }
 
-  return snapshots;
+  return { snapshots, depletionAge: state.depletionAge };
 }
 
 function buildGoalDistribution(
@@ -601,7 +636,7 @@ export function runWealthEngine(
     trade: totalValue * targetAllocation[c] - currentAllocation[c],
   }));
 
-  const snapshots = buildSnapshots(inputs, assumptions);
+  const { snapshots, depletionAge } = buildSnapshots(inputs, assumptions);
   const terminalSnapshot = snapshots[snapshots.length - 1];
   const terminalValue = terminalSnapshot?.total || 0;
   const terminalRealValue = terminalSnapshot?.realTotal || 0;
@@ -610,13 +645,6 @@ export function runWealthEngine(
   const cagrNominal = years > 0 ? (Math.pow(terminalValue / initialValue, 1 / years) - 1) * 100 : 0;
   const cagrReal = years > 0 ? (Math.pow(terminalRealValue / initialValue, 1 / years) - 1) * 100 : 0;
 
-  let depletionAge: number | null = null;
-  for (let i = 0; i < snapshots.length; i++) {
-    if (snapshots[i].phase === 'distribution' && snapshots[i].total <= 0) {
-      depletionAge = snapshots[i].age;
-      break;
-    }
-  }
   const sustainable = depletionAge === null || (depletionAge !== null && depletionAge > lifeExpectancy);
 
   const simCount = riskProfile?.profile?.monteCarloSimulations || 2000;

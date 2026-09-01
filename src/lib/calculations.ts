@@ -243,7 +243,7 @@ export const calculateMasterPlan = (
   let liquid = 0;
   let sipEquity = 0;
   let sipDebt = 0;
-  let stpBalance = stp.lumpsum;
+  let stpBalance = stp.active ? stp.lumpsum : 0;
   let currentMonthlySip = sip.amount;
 
   // Accumulation phase
@@ -313,13 +313,18 @@ export const calculateMasterPlan = (
 
   // Terminal corpus calculation
   const terminalSnapshot = snapshots[snapshots.length - 1];
+  // All categories can fund retirement; assets NOT flagged liquidateAtRetirement
+  // are retained (kept invested, excluded from the SWP corpus). This mirrors the
+  // wealthEngine's retained-asset handling.
   let swpCorpus =
     terminalSnapshot.equity +
     terminalSnapshot.debt +
+    terminalSnapshot.gold +
+    terminalSnapshot.realEstate +
     terminalSnapshot.liquid +
     terminalSnapshot.other;
 
-  // Liquidate flagged assets into SWP corpus
+  // Split retained assets out of the SWP corpus
   const retainedAssets: Asset[] = [];
   currentAssets.forEach((asset) => {
     if (!asset.liquidateAtRetirement) {
