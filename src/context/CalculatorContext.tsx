@@ -6,6 +6,9 @@ import { runWealthEngine, type WealthEngineResult } from '../lib/wealthEngine';
 import { calculateRiskScore, getRiskProfile } from '../lib/riskQuestionnaire';
 import { loadClientData, saveClientData, resetClientData } from '../lib/persistenceUtils';
 import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
+import { useNetlifyIdentity, type IdentityState } from '../hooks/useNetlifyIdentity';
+import type { StoredPlan } from '../lib/store';
+import { savePlan, loadPlan, listPlans, deletePlan } from '../lib/planStorage';
 
 export interface ToastNotification {
   id: string;
@@ -41,6 +44,12 @@ interface CalculatorContextType {
   setManualTargets: React.Dispatch<React.SetStateAction<Record<AssetCategory, number> | null>>;
   resetToDefaults: () => void;
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
+  identity: IdentityState;
+  savedPlans: StoredPlan[];
+  refreshSavedPlans: () => Promise<void>;
+  saveCurrentPlan: (name?: string) => Promise<void>;
+  loadSavedPlan: (id: string) => Promise<void>;
+  deleteSavedPlan: (id: string) => Promise<void>;
 }
 
 const CalculatorContext = createContext<CalculatorContextType | undefined>(undefined);
@@ -81,6 +90,9 @@ function generateId(prefix: string): string {
 }
 
 export const CalculatorProvider = ({ children }: { children: React.ReactNode }) => {
+  const identity = useNetlifyIdentity();
+  const [savedPlans, setSavedPlans] = useState<StoredPlan[]>([]);
+
   const [inputs, setInputs] = useState<MasterPlanInputs>(() => loadClientData() ?? defaultClientInputs());
   const [scenarios] = useState<Scenario[]>(defaultScenarios());
   const [assumptions, setAssumptions] = useState<AssumptionSet>(() => loadAssumptions());
@@ -167,6 +179,64 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     localStorage.removeItem(RISK_ANSWERS_KEY);
     showToast('Plan inputs and risk profile reset to defaults.', 'info');
   }, [setRiskAnswers, setManualTargets, showToast]);
+
+  const refreshSavedPlans = useCallback(async () => {
+    try {
+      const plans = await listPlans();
+      setSavedPlans(plans);
+    } catch (err) {
+      console.error('Failed to refresh saved plans:', err);
+    }
+  }, []);
+
+  const saveCurrentPlan = useCallback(async (name?: string) => {
+    try {
+      const result = await savePlan({ inputs, assumptions, riskAnswers, manualTargets }, undefined, name);
+      if (result.success) {
+        showToast(name ? `Saved plan: ${name}` : 'Plan saved to cloud', 'success');
+        await refreshSavedPlans();
+      } else {
+        showToast(result.error || 'Failed to save plan', 'error');
+      }
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to save plan', 'error');
+    }
+  }, [inputs, assumptions, riskAnswers, manualTargets, showToast, refreshSavedPlans]);
+
+  const loadSavedPlan = useCallback(async (id: string) => {
+    try {
+      const plan = await loadPlan(id);
+      if (!plan) {
+        showToast('Plan not found', 'error');
+        return;
+      }
+      if (plan.inputs) setInputs(plan.inputs as MasterPlanInputs);
+      if (plan.assumptions) setAssumptions(plan.assumptions as AssumptionSet);
+      if (plan.riskAnswers) setRiskAnswers(plan.riskAnswers as RiskAnswers);
+      if (plan.manualTargets !== undefined) setManualTargets(plan.manualTargets as Record<AssetCategory, number> | null);
+      showToast(`Loaded plan: ${plan.name}`, 'success');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to load plan', 'error');
+    }
+  }, [showToast, setRiskAnswers, setManualTargets]);
+
+  const deleteSavedPlan = useCallback(async (id: string) => {
+    try {
+      await deletePlan(id);
+      showToast('Plan deleted', 'info');
+      await refreshSavedPlans();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to delete plan', 'error');
+    }
+  }, [showToast, refreshSavedPlans]);
+
+  // Synchronize the local plan list with the active identity user.
+  useEffect(() => {
+    if (!identity.isReady) return;
+    // Defer so this effect does not synchronously trigger another render.
+    const timer = setTimeout(() => refreshSavedPlans(), 0);
+    return () => clearTimeout(timer);
+  }, [identity.isReady, identity.user, refreshSavedPlans]);
 
   const updateInputs = useCallback((patch: Partial<MasterPlanInputs>) => {
     setInputs((prev) => ({ ...prev, ...patch }));
@@ -309,6 +379,12 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         setManualTargets,
         resetToDefaults,
         showToast,
+        identity,
+        savedPlans,
+        refreshSavedPlans,
+        saveCurrentPlan,
+        loadSavedPlan,
+        deleteSavedPlan,
       }}
     >
       {children}

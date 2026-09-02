@@ -30,7 +30,10 @@ function apiRoutesPlugin() {
 
         try {
           const url = new URL(req.url || '/', `http://${req.headers.host}`)
-          const routeName = url.pathname.replace(/^\/(api\/)?/, '').split('?')[0]
+          const routeName = url.pathname
+            .replace(/^\/(api\/)?/, '')
+            .replace(/^plan\//, 'plan-')
+            .split('?')[0]
           const handlerPath = resolve(projectRoot, 'netlify', 'functions', `${routeName}.js`)
 
           if (!routeName || !existsSync(handlerPath)) {

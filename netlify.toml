@@ -3,6 +3,11 @@
   publish = "dist"
 
 [[redirects]]
+  from = "/api/plan/*"
+  to = "/.netlify/functions/plan-:splat"
+  status = 200
+
+[[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200

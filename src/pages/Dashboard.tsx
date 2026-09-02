@@ -31,6 +31,7 @@ import { NominalRealChart } from '../components/charts/NominalRealChart';
 import { DonutChart } from '../components/charts/DonutChart';
 import { AssetEvolutionChart } from '../components/charts/AssetEvolutionChart';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
+import { PlanManager } from '../components/identity/PlanManager';
 import { isComplete } from '../lib/riskQuestionnaire';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { cn } from '../lib/utils';
@@ -435,6 +436,12 @@ export const Dashboard = () => {
           })}
         </div>
       </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <PlanManager />
+        </div>
+      </div>
 
       <WorkflowFooter
         next={{ path: '/risk', label: 'Risk Profile' }}
