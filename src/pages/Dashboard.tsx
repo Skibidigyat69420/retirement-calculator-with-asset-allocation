@@ -16,6 +16,8 @@ import {
   TrendingUp,
   Sparkles,
   DollarSign,
+  Database,
+  PiggyBank,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useCalculator } from '../context/CalculatorContext';
@@ -29,7 +31,7 @@ import { NominalRealChart } from '../components/charts/NominalRealChart';
 import { DonutChart } from '../components/charts/DonutChart';
 import { AssetEvolutionChart } from '../components/charts/AssetEvolutionChart';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
-import { isComplete, calculateRiskScore } from '../lib/riskQuestionnaire';
+import { isComplete } from '../lib/riskQuestionnaire';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { cn } from '../lib/utils';
 import { ASSET_COLORS } from '../lib/constants';
@@ -44,19 +46,25 @@ const tools = [
   { path: '/mvo', label: 'MVO Optimizer', desc: 'Mean-Variance Frontier', icon: BarChart2 },
   { path: '/reports', label: 'Executive Report', desc: 'Comprehensive plan & print', icon: BarChart3 },
   { path: '/ips', label: 'IPS Document', desc: 'Investment Policy Statement', icon: FileText },
+  { path: '/calculators', label: 'Calculators', desc: 'SIP, SWP, lumpsum & retirement tools', icon: TrendingUp },
+  { path: '/angel-data', label: 'Angel Data', desc: 'Live broker snapshot logs', icon: Database },
 ];
 
 const quickActions = [
   { path: '/risk', label: 'Risk Profile', icon: ShieldCheck },
   { path: '/master-plan', label: 'Update Plan', icon: Activity },
   { path: '/goal', label: 'Check Goals', icon: Target },
+  { path: '/retirement', label: 'Retirement', icon: PiggyBank },
   { path: '/allocation', label: 'Rebalance', icon: PieChart },
   { path: '/mvo', label: 'Run MVO', icon: BarChart2 },
   { path: '/reports', label: 'Plan Report', icon: BarChart3 },
+  { path: '/ips', label: 'IPS', icon: FileText },
+  { path: '/calculators', label: 'Calculators', icon: TrendingUp },
+  { path: '/angel-data', label: 'Angel Data', icon: Database },
 ];
 
 export const Dashboard = () => {
-  const { inputs, riskProfile, wealthResult, riskAnswers, manualTargets } = useCalculator();
+  const { inputs, riskProfile, wealthResult, riskAnswers, riskScore, manualTargets } = useCalculator();
 
   const hasPlanData = wealthResult.netWorth > 0 || wealthResult.annualIncome > 0;
   const nonInrExposure = wealthResult.currencyExposure.filter((c) => c.currency !== 'INR');
@@ -93,7 +101,7 @@ export const Dashboard = () => {
     [wealthResult.snapshots],
   );
 
-  const riskScore = useMemo(() => calculateRiskScore(riskAnswers), [riskAnswers]);
+
 
   const checklistItems = [
     {
@@ -178,7 +186,7 @@ export const Dashboard = () => {
           <div>
             <Badge variant="gold" className="mb-3">Mandate: {inputs.client?.notes || 'Core Wealth Growth'}</Badge>
             <h3 className="text-2xl md:text-3xl font-serif text-white">Welcome, {inputs.client?.name || 'Vikram & Ananya Sharma'}</h3>
-            <p className="mt-1 text-xs text-gold/80 font-medium">
+            <p className="mt-1 text-xs text-gold font-medium">
               Advisor: {inputs.client?.advisor || 'Sound Thesis Wealth Advisory'} · Review Date: {inputs.client?.reviewDate || 'Quarterly'}
             </p>
             <p className="mt-2 text-stone-200 max-w-xl text-sm">
@@ -205,7 +213,7 @@ export const Dashboard = () => {
             <h3 className="text-base font-serif font-bold text-navy flex items-center gap-2">
               <ShieldCheck size={18} className="text-gold" /> Advisor Planning Checklist
             </h3>
-            <p className="text-xs text-stone-500">Track progress through the 6 stages of your institutional financial architecture</p>
+            <p className="text-xs text-stone-700">Track progress through the 6 stages of your institutional financial architecture</p>
           </div>
           <Badge variant="outline" className="self-start sm:self-auto font-medium">
             {completedChecklistCount} of 6 Completed
@@ -233,7 +241,7 @@ export const Dashboard = () => {
                   <span>{item.label}</span>
                   <ArrowRight size={12} className="text-stone-300 group-hover:text-gold transition-transform group-hover:translate-x-0.5" />
                 </div>
-                <div className="text-[11px] text-stone-500 truncate mt-0.5">{item.subtext}</div>
+                <div className="text-[11px] text-stone-700 truncate mt-0.5">{item.subtext}</div>
               </div>
             </Link>
           ))}
@@ -324,7 +332,7 @@ export const Dashboard = () => {
           {allocationData.length > 0 ? (
             <DonutChart data={allocationData} />
           ) : (
-            <div className="h-80 flex flex-col items-center justify-center text-center text-sm text-stone-500">
+            <div className="h-80 flex flex-col items-center justify-center text-center text-sm text-stone-700">
               <p>No assets added yet.</p>
               <Link to="/master-plan" className="mt-2 text-gold font-semibold hover:underline flex items-center">
                 Add assets <ArrowRight size={12} className="ml-1" />
@@ -346,13 +354,13 @@ export const Dashboard = () => {
         <Card variant="elevated">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-serif text-navy">Goal Health</h3>
-            <Link to="/goal" className="text-xs text-gold hover:underline flex items-center font-semibold">
+            <Link to="/goal" className="text-xs text-navy hover:text-gold underline flex items-center font-semibold">
               Open planner <ArrowRight size={12} className="ml-1" />
             </Link>
           </div>
           <div className="space-y-3">
             {wealthResult.goalResults.length === 0 && (
-              <div className="p-6 text-center text-sm text-stone-500">
+              <div className="p-6 text-center text-sm text-stone-700">
                 <p>No goals defined yet.</p>
                 <Link to="/goal" className="mt-2 inline-flex items-center text-gold font-semibold hover:underline">
                   Create a goal <ArrowRight size={12} className="ml-1" />
@@ -364,7 +372,7 @@ export const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     {g.successRate >= riskProfile.goalSuccessThreshold / 100 ? (
-                      <CheckCircle2 size={16} className="text-emerald-600 mr-2" />
+                      <CheckCircle2 size={16} className="text-emerald-700 mr-2" />
                     ) : (
                       <XCircle size={16} className="text-rose-500 mr-2" />
                     )}
@@ -382,7 +390,7 @@ export const Dashboard = () => {
                     {formatPercent(g.successRate * 100)}
                   </Badge>
                 </div>
-                <div className="mt-2 flex items-center justify-between text-xs text-stone-500">
+                <div className="mt-2 flex items-center justify-between text-xs text-stone-700">
                   <span>Future need {formatCurrency(g.futureValue)}</span>
                   <span>Required SIP {formatCurrency(g.requiredSIP)}/mo</span>
                 </div>
@@ -419,7 +427,7 @@ export const Dashboard = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-navy truncate">{tool.label}</div>
-                  <div className="text-xs text-stone-500 truncate">{tool.desc}</div>
+                  <div className="text-xs text-stone-700 truncate">{tool.desc}</div>
                 </div>
                 <ArrowRight size={14} className="text-stone-300 group-hover:text-gold shrink-0 ml-2" />
               </Link>
@@ -429,7 +437,7 @@ export const Dashboard = () => {
       </Card>
 
       <WorkflowFooter
-        next={{ path: '/risk', label: 'Risk Questionnaire' }}
+        next={{ path: '/risk', label: 'Risk Profile' }}
         flowHint="Discover your behavioral risk profile to automatically parameterize your portfolio and financial plan."
       />
     </div>

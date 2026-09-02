@@ -25,7 +25,7 @@ export const ProgressBar = ({ value, max = 100, variant = 'default', size = 'md'
   return (
     <div className={className}>
       {label && (
-        <div className="flex justify-between text-xs text-stone-500 mb-1">
+        <div className="flex justify-between text-xs text-stone-700 mb-1">
           <span>{label}</span>
           <span>{pct.toFixed(1)}%</span>
         </div>

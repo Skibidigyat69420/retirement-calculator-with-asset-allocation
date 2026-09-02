@@ -13,13 +13,21 @@ interface DonutChartProps {
   outerRadius?: number;
 }
 
+const TOOLTIP_STYLE = {
+  borderRadius: '12px',
+  border: 'none',
+  boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+};
+
+const LEGEND_WRAPPER_STYLE = { fontSize: '11px', lineHeight: '16px', width: '100%', overflow: 'hidden' };
+
 export const DonutChart = ({ data, innerRadius = 60, outerRadius = 90 }: DonutChartProps) => {
   const total = data.reduce((acc, d) => acc + d.value, 0);
 
   if (total <= 0) {
     return (
       <div className="h-72 w-full flex items-center justify-center">
-        <p className="text-sm text-stone-400 text-center px-6">No allocation to display — the projected corpus is depleted at this horizon.</p>
+        <p className="text-sm text-stone-600 text-center px-6">No allocation to display — the projected corpus is depleted at this horizon.</p>
       </div>
     );
   }
@@ -46,24 +54,20 @@ export const DonutChart = ({ data, innerRadius = 60, outerRadius = 90 }: DonutCh
               formatCurrencyCompact(typeof value === 'number' ? value : Number(value)),
               String(name),
             ]}
-            contentStyle={{
-              borderRadius: '12px',
-              border: 'none',
-              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-            }}
+            contentStyle={TOOLTIP_STYLE}
           />
           <Legend
             verticalAlign="bottom"
             height={48}
             iconType="circle"
             iconSize={8}
-            wrapperStyle={{ fontSize: '11px', lineHeight: '16px', width: '100%', overflow: 'hidden' }}
+            wrapperStyle={LEGEND_WRAPPER_STYLE}
           />
         </PieChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ bottom: 48 }}>
         <div className="text-center">
-          <div className="text-[10px] uppercase tracking-wider text-stone-400">Total</div>
+          <div className="text-[10px] uppercase tracking-wider text-stone-600">Total</div>
           <div className="text-sm font-serif font-semibold text-navy">{formatCurrencyCompact(total)}</div>
         </div>
       </div>

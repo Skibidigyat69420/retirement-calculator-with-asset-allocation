@@ -26,11 +26,19 @@ interface AssetEvolutionChartProps {
   xKey?: string;
 }
 
+const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 };
+
+const TOOLTIP_STYLE = {
+  borderRadius: '12px',
+  border: 'none',
+  boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+};
+
 export const AssetEvolutionChart = ({ data, xKey = 'label' }: AssetEvolutionChartProps) => {
   return (
     <div className="h-80 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <BarChart data={data} margin={CHART_MARGIN}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
           <XAxis
             dataKey={xKey}
@@ -50,11 +58,7 @@ export const AssetEvolutionChart = ({ data, xKey = 'label' }: AssetEvolutionChar
               formatCurrencyCompact(typeof value === 'number' ? value : Number(value)),
               String(name),
             ]}
-            contentStyle={{
-              borderRadius: '12px',
-              border: 'none',
-              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-            }}
+            contentStyle={TOOLTIP_STYLE}
           />
           <Legend verticalAlign="top" height={36} iconType="circle" />
           <Bar dataKey="equity" name="Equity" stackId="a" fill={ASSET_COLORS.equity} radius={[0, 0, 0, 0]} />

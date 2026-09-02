@@ -9,7 +9,7 @@ interface BadgeProps {
 export const Badge = ({ children, variant = 'default', className }: BadgeProps) => {
   const variants = {
     default: 'bg-stone-100 text-stone-600',
-    gold: 'bg-gold/30 text-ink border border-gold/50',
+    gold: 'bg-gold text-navy border border-gold/50',
     navy: 'bg-navy text-white',
     outline: 'border border-stone-300 text-stone-600 bg-white',
     success: 'bg-emerald-50 text-emerald-700 border border-emerald-100',

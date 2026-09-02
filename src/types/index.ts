@@ -8,6 +8,7 @@ export interface Asset {
   category: AssetCategory;
   currency: string; // e.g. INR, USD
   liquidateAtRetirement: boolean;
+  source?: string; // e.g. 'mvo' for optimizer-imported proxy assets
 }
 
 export interface SIPConfig {

@@ -21,7 +21,7 @@ import {
 import { COLORS } from '../../lib/constants';
 
 export const SWPCalculator = () => {
-  const { inputs, updateSWP, updateInputs, showToast } = useCalculator();
+  const { inputs, wealthResult, updateSWP, updateInputs, showToast } = useCalculator();
   const [corpus, setCorpus] = useState(1_00_00_000);
   const [monthlyWithdrawal, setMonthlyWithdrawal] = useState(inputs.swp.monthlyNeedToday || 50000);
   const [returnRate, setReturnRate] = useState(inputs.swp.postRetirementReturn || 9);
@@ -49,6 +49,17 @@ export const SWPCalculator = () => {
     showToast('Withdrawal settings applied to Master Plan.', 'success');
   };
 
+  const handleSyncFromPlan = () => {
+    const retirementSnapshot = wealthResult.snapshots.find((s) => s.age === inputs.retirementAge);
+    const projectedCorpus = Math.round(retirementSnapshot?.total || wealthResult.netWorth);
+    if (projectedCorpus > 0) setCorpus(projectedCorpus);
+    setMonthlyWithdrawal(inputs.swp.monthlyNeedToday || 50000);
+    setReturnRate(inputs.swp.postRetirementReturn || 9);
+    setInflation(inputs.inflation || 5);
+    setTaxRate(inputs.swp.taxRate || 10);
+    showToast(`Loaded retirement parameters (Corpus: ${formatCurrency(projectedCorpus)}) from Master Plan!`, 'info');
+  };
+
   return (
     <CalculatorShell
       title="Corpus Sustainability (SWP)"
@@ -60,9 +71,14 @@ export const SWPCalculator = () => {
           <NumberInput label="Expected Return" value={returnRate} onChange={setReturnRate} suffix="%" />
           <NumberInput label="Annual Inflation" value={inflation} onChange={setInflation} suffix="%" />
           <NumberInput label="Tax Rate on Withdrawals" value={taxRate} onChange={setTaxRate} suffix="%" />
-          <Button onClick={handleApply} className="w-full mt-2" variant="outline">
-            Apply to Master Plan
-          </Button>
+          <div className="flex gap-2 mt-2">
+            <Button onClick={handleSyncFromPlan} className="flex-1 text-xs" variant="ghost">
+              Sync from Plan
+            </Button>
+            <Button onClick={handleApply} className="flex-1 text-xs" variant="outline">
+              Apply to Plan
+            </Button>
+          </div>
         </>
       }
       results={
@@ -83,7 +99,7 @@ export const SWPCalculator = () => {
 
           <Card>
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-500">Drawdown Trajectory</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-700">Drawdown Trajectory</h4>
               <Badge variant={result.sustainable ? 'success' : 'danger'}>
                 {result.sustainable ? 'Sustainable' : `Depletes in Y${result.years}`}
               </Badge>

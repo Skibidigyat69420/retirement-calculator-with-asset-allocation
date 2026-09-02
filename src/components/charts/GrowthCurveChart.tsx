@@ -8,6 +8,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import { useMemo } from 'react';
 import { formatCurrencyCompact } from '../../lib/formatters';
 import { COLORS } from '../../lib/constants';
 
@@ -23,16 +24,27 @@ interface GrowthCurveChartProps {
   xKey?: string;
 }
 
+const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 };
+
+const TOOLTIP_STYLE = {
+  borderRadius: '12px',
+  border: 'none',
+  boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+};
+
+const ACTIVE_DOT = { r: 6 };
+
 export const GrowthCurveChart = ({
   data,
   name = 'Value',
   color = COLORS.navy,
   xKey = 'label',
 }: GrowthCurveChartProps) => {
+  const dot = useMemo(() => ({ r: 3, fill: color, strokeWidth: 0 }), [color]);
   return (
     <div className="h-72 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <LineChart data={data} margin={CHART_MARGIN}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
           <XAxis
             dataKey={xKey}
@@ -51,11 +63,7 @@ export const GrowthCurveChart = ({
             formatter={(value: any) =>
               formatCurrencyCompact(typeof value === 'number' ? value : Number(value))
             }
-            contentStyle={{
-              borderRadius: '12px',
-              border: 'none',
-              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-            }}
+            contentStyle={TOOLTIP_STYLE}
           />
           <Legend verticalAlign="top" height={36} iconType="circle" />
           <Line
@@ -64,8 +72,8 @@ export const GrowthCurveChart = ({
             name={name}
             stroke={color}
             strokeWidth={2.5}
-            dot={{ r: 3, fill: color, strokeWidth: 0 }}
-            activeDot={{ r: 6 }}
+            dot={dot}
+            activeDot={ACTIVE_DOT}
           />
         </LineChart>
       </ResponsiveContainer>

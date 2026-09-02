@@ -55,6 +55,14 @@ export const SIPCalculator = () => {
     showToast('SIP settings applied to Master Plan.', 'success');
   };
 
+  const handleSyncFromPlan = () => {
+    setAmount(inputs.sip.amount);
+    setStepUp(inputs.sip.stepUp);
+    const horizon = Math.max(1, inputs.retirementAge - inputs.currentAge);
+    setYears(horizon);
+    showToast(`Loaded SIP (${formatCurrency(inputs.sip.amount)}/mo, ${horizon} yrs) from Master Plan.`, 'info');
+  };
+
   return (
     <CalculatorShell
       title="SIP Calculator"
@@ -65,9 +73,14 @@ export const SIPCalculator = () => {
           <NumberInput label="Expected Return" value={returnRate} onChange={setReturnRate} suffix="%" />
           <NumberInput label="Duration" value={years} onChange={setYears} />
           <NumberInput label="Annual Step-up" value={stepUp} onChange={setStepUp} suffix="%" />
-          <Button onClick={handleApply} className="w-full mt-2" variant="outline">
-            Apply to Master Plan
-          </Button>
+          <div className="flex gap-2 mt-2">
+            <Button onClick={handleSyncFromPlan} className="flex-1 text-xs" variant="ghost">
+              Sync from Plan
+            </Button>
+            <Button onClick={handleApply} className="flex-1 text-xs" variant="outline">
+              Apply to Plan
+            </Button>
+          </div>
         </>
       }
       results={
@@ -94,7 +107,7 @@ export const SIPCalculator = () => {
       }
     >
       <Card>
-        <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-500 mb-4">
+        <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-700 mb-4">
           Growth Curve
         </h4>
         <div className="h-72">
@@ -120,7 +133,7 @@ export const SIPCalculator = () => {
               />
               <Area
                 type="monotone"
-                dataKey="value"
+                dataKey="total"
                 name="Future Value"
                 stroke={COLORS.ink}
                 strokeWidth={2}

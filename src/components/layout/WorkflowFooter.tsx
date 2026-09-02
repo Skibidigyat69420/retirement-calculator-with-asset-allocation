@@ -24,9 +24,9 @@ export const WorkflowFooter = ({ prev, next, flowHint }: WorkflowFooterProps) =>
               to={prev.path}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-stone-200 bg-white text-stone-600 hover:text-navy hover:border-navy/40 hover:shadow-sm text-sm font-medium transition-all group"
             >
-              <ArrowLeft size={16} className="text-stone-400 group-hover:text-navy group-hover:-translate-x-0.5 transition-transform" />
+              <ArrowLeft size={16} className="text-stone-600 group-hover:text-navy group-hover:-translate-x-0.5 transition-transform" />
               <div className="text-left">
-                <span className="block text-[10px] uppercase font-semibold text-stone-400">Previous Step</span>
+                <span className="block text-[10px] uppercase font-semibold text-stone-600">Previous Step</span>
                 <span>{prev.label}</span>
               </div>
             </Link>
@@ -37,7 +37,7 @@ export const WorkflowFooter = ({ prev, next, flowHint }: WorkflowFooterProps) =>
 
         {/* Middle Data Flow Hint */}
         {flowHint && (
-          <div className="hidden lg:flex items-center justify-center gap-2 px-4 py-1.5 bg-paper rounded-full border border-stone-200/70 text-xs text-stone-500 max-w-md text-center">
+          <div className="hidden lg:flex items-center justify-center gap-2 px-4 py-1.5 bg-paper rounded-full border border-stone-200/70 text-xs text-stone-700 max-w-md text-center">
             <CheckCircle2 size={13} className="text-gold shrink-0" />
             <span className="truncate">{flowHint}</span>
           </div>
@@ -51,7 +51,7 @@ export const WorkflowFooter = ({ prev, next, flowHint }: WorkflowFooterProps) =>
               className="inline-flex items-center justify-end gap-2 px-5 py-2.5 rounded-xl bg-navy text-white hover:bg-navy/90 hover:shadow-md text-sm font-medium transition-all group w-full sm:w-auto"
             >
               <div className="text-right">
-                <span className="block text-[10px] uppercase font-semibold text-gold/90">Next Step</span>
+                <span className="block text-[10px] uppercase font-semibold text-gold">Next Step</span>
                 <span>{next.label}</span>
               </div>
               <ArrowRight size={16} className="text-gold group-hover:translate-x-0.5 transition-transform" />

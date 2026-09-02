@@ -387,8 +387,10 @@ function simulateOnePath(
             state.goalSuccess[idx] = true;
             state.cashFlows.push({ year: y, age: currentAge + y, type: 'goal', amount: futureValue, description: `Goal: ${goal.name}` });
           } else {
+            // Use all available liquid capital for the goal, but do not wipe out
+            // retained assets — they should continue growing for later goals/SWP.
             CATEGORIES.forEach((c) => (state.values[c] = 0));
-            CATEGORIES.forEach((c) => (state.retained[c] = 0));
+            state.totalGoalsFunded += total;
             state.cashFlows.push({ year: y, age: currentAge + y, type: 'goal', amount: total, description: `Goal shortfall: ${goal.name}` });
           }
         }
@@ -599,6 +601,7 @@ export function runWealthEngine(
   inputs: MasterPlanInputs,
   assumptions: AssumptionSet,
   riskProfile?: { profile?: RiskProfile; score?: number },
+  targetOverrides?: Record<AssetCategory, number> | null,
 ): WealthEngineResult {
   const { lifeExpectancy, assets, sip, stp, goals, annualIncome, monthlyExpenditure } = inputs;
   const netWorth = assets.reduce((sum, a) => sum + a.value, 0);
@@ -618,14 +621,15 @@ export function runWealthEngine(
     other: totalValue > 0 ? currentAllocation.other / totalValue : 0,
   };
 
-  const targetAllocation: Record<AssetCategory, number> = riskProfile?.profile
+  const activeTargets = targetOverrides || (riskProfile?.profile ? riskProfile.profile.targets : null);
+  const targetAllocation: Record<AssetCategory, number> = activeTargets
     ? {
-        equity: riskProfile.profile.targets.equity / 100,
-        debt: riskProfile.profile.targets.debt / 100,
-        gold: riskProfile.profile.targets.gold / 100,
-        realestate: riskProfile.profile.targets.realestate / 100,
-        liquid: riskProfile.profile.targets.liquid / 100,
-        other: riskProfile.profile.targets.other / 100,
+        equity: (activeTargets.equity || 0) / 100,
+        debt: (activeTargets.debt || 0) / 100,
+        gold: (activeTargets.gold || 0) / 100,
+        realestate: (activeTargets.realestate || 0) / 100,
+        liquid: (activeTargets.liquid || 0) / 100,
+        other: (activeTargets.other || 0) / 100,
       }
     : { equity: 0.55, debt: 0.25, gold: 0.1, realestate: 0.05, liquid: 0.05, other: 0 };
 

@@ -13,9 +13,10 @@ interface SelectProps {
   options: SelectOption[];
   className?: string;
   id?: string;
+  'aria-label'?: string;
 }
 
-export const Select = ({ label, value, onChange, options, className, id }: SelectProps) => {
+export const Select = ({ label, value, onChange, options, className, id, 'aria-label': ariaLabel }: SelectProps) => {
   const generatedId = useId();
   const selectId = id ?? generatedId;
 
@@ -24,7 +25,7 @@ export const Select = ({ label, value, onChange, options, className, id }: Selec
       {label && (
         <label
           htmlFor={selectId}
-          className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500"
+          className="block text-[11px] font-semibold uppercase tracking-wider text-stone-700"
         >
           {label}
         </label>
@@ -34,6 +35,7 @@ export const Select = ({ label, value, onChange, options, className, id }: Selec
           id={selectId}
           value={value}
           onChange={(e) => onChange(e.currentTarget.value)}
+          aria-label={ariaLabel || label}
           className={cn(
             'w-full appearance-none bg-white border border-stone-200 rounded-xl px-3 py-2.5 pr-9 text-sm font-medium text-navy',
             'focus:border-gold focus:ring-2 focus:ring-gold/10 focus:outline-none',
@@ -46,7 +48,7 @@ export const Select = ({ label, value, onChange, options, className, id }: Selec
             </option>
           ))}
         </select>
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 text-xs">▼</span>
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-stone-600 text-xs">▼</span>
       </div>
     </div>
   );

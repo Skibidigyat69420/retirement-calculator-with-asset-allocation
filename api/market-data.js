@@ -80,7 +80,7 @@ function serveBundle(req, res) {
     return res.status(200).json(result);
   } catch (err) {
     console.error('Market data API error:', err);
-    return res.status(500).json({
+    return res.status(404).json({
       error: 'Market data bundle not found. Run `npm run fetch:data` first.',
     });
   }

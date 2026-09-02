@@ -12,22 +12,23 @@ interface DataTableProps<T> {
   data: T[];
   className?: string;
   emptyMessage?: string;
+  'aria-label'?: string;
 }
 
-export function DataTable<T>({ columns, data, className, emptyMessage = 'No data available' }: DataTableProps<T>) {
+export function DataTable<T>({ columns, data, className, emptyMessage = 'No data available', 'aria-label': ariaLabel }: DataTableProps<T>) {
   if (data.length === 0) {
     return (
-      <div className="text-center py-10 text-stone-400 text-sm bg-stone-50 rounded-xl border border-stone-100">
+      <div className="text-center py-10 text-stone-600 text-sm bg-stone-50 rounded-xl border border-stone-100">
         {emptyMessage}
       </div>
     );
   }
 
   return (
-    <div className={cn('overflow-x-auto', className)}>
+    <div className={cn('overflow-x-auto', className)} role="region" aria-label={ariaLabel || 'Data table'} tabIndex={0}>
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-500">
+          <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-700">
             {columns.map((col) => (
               <th
                 key={col.key}

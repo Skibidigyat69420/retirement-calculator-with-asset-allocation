@@ -31,3 +31,7 @@ __pycache__/
 ips/*
 !ips/.gitkeep
 data/live_feed.csv
+
+# QA artifacts
+qa-results.xml
+qa-screenshots/

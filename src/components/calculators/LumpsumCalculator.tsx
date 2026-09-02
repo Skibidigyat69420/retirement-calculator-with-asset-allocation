@@ -17,7 +17,11 @@ import {
   Tooltip,
 } from 'recharts';
 
+import { useCalculator } from '../../context/CalculatorContext';
+import { Button } from '../ui/Button';
+
 export const LumpsumCalculator = () => {
+  const { addAsset, showToast } = useCalculator();
   const [principal, setPrincipal] = useState(500000);
   const [returnRate, setReturnRate] = useState(12);
   const [years, setYears] = useState(15);
@@ -26,6 +30,18 @@ export const LumpsumCalculator = () => {
     () => calculateLumpsum(principal, returnRate, years),
     [principal, returnRate, years],
   );
+
+  const handleAddToPlan = () => {
+    addAsset({
+      name: `Lumpsum Investment (${years}Y @ ${returnRate}%)`,
+      value: principal,
+      returnRate,
+      category: 'equity',
+      currency: 'INR',
+      liquidateAtRetirement: true,
+    });
+    showToast(`Added ${formatCurrency(principal)} investment to Master Plan assets!`, 'success');
+  };
 
   return (
     <CalculatorShell
@@ -36,6 +52,9 @@ export const LumpsumCalculator = () => {
           <NumberInput label="Lumpsum Amount" value={principal} onChange={setPrincipal} />
           <NumberInput label="Expected Return" value={returnRate} onChange={setReturnRate} suffix="%" />
           <NumberInput label="Duration" value={years} onChange={setYears} />
+          <Button onClick={handleAddToPlan} className="w-full mt-2" variant="outline">
+            Add to Master Plan Assets
+          </Button>
         </>
       }
       results={
@@ -47,7 +66,7 @@ export const LumpsumCalculator = () => {
       }
     >
       <Card>
-        <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-500 mb-4">Growth Curve</h4>
+        <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-700 mb-4">Growth Curve</h4>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart

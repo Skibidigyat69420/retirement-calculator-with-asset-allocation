@@ -24,16 +24,17 @@ export const Tabs = ({ tabs, active, onChange }: TabsProps) => {
           type="button"
           role="tab"
           aria-selected={active === tab.id}
+          aria-label={tab.label}
           onClick={() => onChange(tab.id)}
           className={cn(
-            'flex items-center px-4 py-2 text-sm font-semibold rounded-xl whitespace-nowrap transition-all duration-150',
+            'flex items-center px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl whitespace-nowrap transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy/30',
             active === tab.id
               ? 'bg-navy text-white shadow-sm'
-              : 'text-stone-500 hover:text-navy hover:bg-stone-100/60',
+              : 'text-stone-700 hover:text-navy hover:bg-stone-100/60',
           )}
         >
           {tab.icon && (
-            <span className={cn('mr-2', active === tab.id ? 'text-gold' : 'text-stone-400')}>
+            <span className={cn('mr-2', active === tab.id ? 'text-gold' : 'text-stone-600')}>
               {tab.icon}
             </span>
           )}

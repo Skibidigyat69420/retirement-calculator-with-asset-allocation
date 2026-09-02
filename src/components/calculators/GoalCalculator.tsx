@@ -35,6 +35,19 @@ export const GoalCalculator = () => {
     showToast(`Added goal "${goalName}" to Master Plan.`, 'success');
   };
 
+  const handleLoadGoal = () => {
+    if (inputs.goals.length > 0) {
+      const g = inputs.goals[0];
+      setName(g.name);
+      setTarget(g.targetAmount);
+      setYears(g.yearsToGoal);
+      setInflation(g.inflation);
+      showToast(`Loaded goal "${g.name}" from Master Plan.`, 'info');
+    } else {
+      showToast('No goals found in Master Plan to load.', 'warning');
+    }
+  };
+
   return (
     <CalculatorShell
       title="Target Corpus Calculator"
@@ -47,9 +60,14 @@ export const GoalCalculator = () => {
           <NumberInput label="Expected Return" value={returnRate} onChange={setReturnRate} suffix="%" />
           <NumberInput label="Goal Inflation" value={inflation} onChange={setInflation} suffix="%" />
           <NumberInput label="Annual SIP Step-up" value={stepUp} onChange={setStepUp} suffix="%" />
-          <Button onClick={handleAddGoal} className="w-full mt-2" variant="outline">
-            Add to Master Plan Goals
-          </Button>
+          <div className="flex gap-2 mt-2">
+            <Button onClick={handleLoadGoal} className="flex-1 text-xs" variant="ghost">
+              Sync from Plan
+            </Button>
+            <Button onClick={handleAddGoal} className="flex-1 text-xs" variant="outline">
+              Add to Plan Goals
+            </Button>
+          </div>
         </>
       }
       results={
@@ -61,26 +79,26 @@ export const GoalCalculator = () => {
           </div>
 
           <Card>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-500 mb-4">Goal Funding Options</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-700 mb-4">Goal Funding Options</h4>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-stone-500">Target (today's value)</span>
+                <span className="text-stone-700">Target (today's value)</span>
                 <span className="font-medium">{formatCurrency(result.target)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-500">Inflation-adjusted target</span>
+                <span className="text-stone-700">Inflation-adjusted target</span>
                 <span className="font-medium">{formatCurrency(result.futureValue)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-500">Invest lumpsum today</span>
+                <span className="text-stone-700">Invest lumpsum today</span>
                 <span className="font-medium">{formatCurrency(result.requiredLumpsum)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-500">OR monthly SIP</span>
+                <span className="text-stone-700">OR monthly SIP</span>
                 <span className="font-medium">{formatCurrency(result.requiredSIP)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-500">OR step-up SIP (growing {stepUp}%/yr)</span>
+                <span className="text-stone-700">OR step-up SIP (growing {stepUp}%/yr)</span>
                 <span className="font-medium">{formatCurrency(result.requiredSIPWithStepUp)}</span>
               </div>
             </div>

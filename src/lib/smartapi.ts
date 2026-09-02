@@ -378,7 +378,17 @@ export async function fetchLTPs(
  * Storage Helpers
  */
 export function saveCredentials(creds: SmartApiCredentials) {
-  localStorage.setItem(STORAGE_KEY_CREDS, JSON.stringify(creds));
+  // Persist only non-sensitive fields. PIN/TOTP secret must be re-entered each session.
+  const safeCreds: SmartApiCredentials = {
+    apiKey: creds.apiKey,
+    clientCode: creds.clientCode,
+    pin: '',
+    totpSecret: '',
+    localIp: creds.localIp,
+    publicIp: creds.publicIp,
+    macAddress: creds.macAddress,
+  };
+  localStorage.setItem(STORAGE_KEY_CREDS, JSON.stringify(safeCreds));
 }
 
 export function loadCredentials(): SmartApiCredentials | null {

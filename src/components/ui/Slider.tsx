@@ -22,7 +22,7 @@ export const Slider = ({
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center">
-        <label className="text-[11px] font-semibold uppercase tracking-wider text-stone-500">
+        <label className="text-[11px] font-semibold uppercase tracking-wider text-stone-700">
           {label}
         </label>
         <span className="text-sm font-semibold text-navy bg-stone-100 px-2 py-0.5 rounded-md">

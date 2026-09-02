@@ -8,6 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "test:qa": "node scripts/headless-qa.js",
+    "test:unit": "npx tsx --test tests/**/*.test.ts",
     "test:angel": "node scripts/test-smartapi.js",
     "fetch:data": ".venv/bin/python scripts/fetch_angel_historical.py",
     "fetch:yahoo": ".venv/bin/python scripts/fetch_historical.py",
@@ -33,11 +35,15 @@
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
+    "@axe-core/puppeteer": "^4.13.0",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
+    "axe-core": "^4.13.0",
     "oxlint": "^1.79.0",
+    "puppeteer-core": "^25.9.0",
+    "tsx": "^4.23.13",
     "typescript": "~6.0.2",
     "vite": "^8.2.2"
   }

@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Check, X } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { cn } from '../../lib/utils';
 import { navItems, utilityItem } from './navItems';
 import { useCalculator } from '../../context/CalculatorContext';
@@ -24,10 +24,10 @@ const NavLink = ({ item, onClick, completed }: NavLinkProps) => {
         'group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150',
         active
           ? 'bg-navy text-white shadow-md'
-          : 'text-stone-500 hover:bg-white hover:text-navy hover:shadow-sm',
+          : 'text-stone-700 hover:bg-white hover:text-navy hover:shadow-sm',
       )}
     >
-      <Icon size={18} className={cn('transition-colors', active ? 'text-white' : 'text-stone-400 group-hover:text-ink')} />
+      <Icon size={18} className={cn('transition-colors', active ? 'text-white' : 'text-stone-600 group-hover:text-ink')} />
       <span>{item.label}</span>
       {completed && (
         <Check
@@ -47,20 +47,21 @@ interface SidebarProps {
 
 export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
   const { inputs, riskAnswers, wealthResult, manualTargets } = useCalculator();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   // Comprehensive workflow completion flags per route
   const completionMap: Record<string, boolean> = {
     '/risk': isComplete(riskAnswers),
     '/master-plan': inputs.assets.length > 0 && inputs.annualIncome > 0,
     '/goal': inputs.goals.length > 0,
-    '/retirement': wealthResult.snapshots.length > 0,
+    '/retirement': wealthResult.sustainable,
     '/allocation': manualTargets !== null || isComplete(riskAnswers),
     '/mvo': true,
     '/reports': wealthResult.netWorth > 0,
     '/ips': Boolean(inputs.client?.name),
   };
 
-  const workflowSteps = ['/risk', '/master-plan', '/goal', '/retirement', '/allocation', '/reports', '/ips'];
+  const workflowSteps = ['/risk', '/master-plan', '/goal', '/retirement', '/allocation', '/mvo', '/reports', '/ips', '/calculators'];
   const completedCount = workflowSteps.filter((path) => completionMap[path]).length;
   const progressPercent = Math.round((completedCount / workflowSteps.length) * 100);
 
@@ -74,6 +75,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
     if (mobileOpen) {
       document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', handleEscape);
+      closeButtonRef.current?.focus();
     } else {
       document.body.style.overflow = '';
     }
@@ -92,10 +94,10 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
   }, {} as Record<string, typeof navItems>);
 
   const renderNavSections = (onClick?: () => void) => (
-    <nav className="flex-1 space-y-6 overflow-y-auto pb-4 scrollbar-hide">
+    <nav className="flex-1 space-y-6 overflow-y-auto pb-4" style={{ scrollbarWidth: 'none' }}>
       {Object.entries(groupedNavItems).map(([section, items]) => (
         <div key={section} className="space-y-1">
-          <div className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-stone-400">
+          <div className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-stone-600">
             {section}
           </div>
           {items.map((item) => (
@@ -115,7 +117,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
             <span className="text-gold font-serif font-bold text-lg">S</span>
           </div>
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Sound Thesis</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-stone-600">Sound Thesis</div>
             <div className="text-sm font-serif text-navy leading-tight">Wealth Planner</div>
           </div>
         </Link>
@@ -124,7 +126,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
 
         {/* Progress & Client Profile summary */}
         <div className="p-3 my-2 bg-paper/90 rounded-xl border border-stone-200/80">
-          <div className="flex items-center justify-between text-[11px] font-semibold text-stone-500 mb-1.5">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-stone-700 mb-1.5">
             <span>Advisor Progress</span>
             <span className="text-navy font-bold">{completedCount}/{workflowSteps.length}</span>
           </div>
@@ -142,7 +144,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
               <div className="text-xs font-semibold text-navy truncate group-hover:text-gold transition-colors">
                 {inputs.client?.name || 'Client Plan'}
               </div>
-              <div className="text-[10px] text-stone-400 truncate">
+              <div className="text-[10px] text-stone-600 truncate">
                 {inputs.client?.advisor || 'Sound Thesis'}
               </div>
             </div>
@@ -156,7 +158,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
+        <div className="lg:hidden fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Navigation menu">
           <div className="w-72 bg-cream h-full shadow-elevated px-4 py-6 flex flex-col animate-drawer-in">
             <div className="flex items-center justify-between px-2 mb-8">
               <Link to="/" onClick={onClose} className="flex items-center gap-3">
@@ -164,11 +166,16 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
                   <span className="text-gold font-serif font-bold text-lg">S</span>
                 </div>
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Sound Thesis</div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-stone-600">Sound Thesis</div>
                   <div className="text-sm font-serif text-navy leading-tight">Wealth Planner</div>
                 </div>
               </Link>
-              <button onClick={onClose} className="p-2 text-stone-500 hover:text-navy">
+              <button
+                ref={closeButtonRef}
+                onClick={onClose}
+                aria-label="Close menu"
+                className="p-2 text-stone-700 hover:text-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-navy/30"
+              >
                 <X size={20} />
               </button>
             </div>

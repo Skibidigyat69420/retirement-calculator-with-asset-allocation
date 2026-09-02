@@ -20,11 +20,19 @@ interface SWPDrawdownChartProps {
   xKey?: string;
 }
 
+const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 };
+
+const TOOLTIP_STYLE = {
+  borderRadius: '12px',
+  border: 'none',
+  boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+};
+
 export const SWPDrawdownChart = ({ data, xKey = 'label' }: SWPDrawdownChartProps) => {
   return (
     <div className="h-80 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <AreaChart data={data} margin={CHART_MARGIN}>
           <defs>
             <linearGradient id="colorCorpus" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={COLORS.gold} stopOpacity={0.2} />
@@ -49,11 +57,7 @@ export const SWPDrawdownChart = ({ data, xKey = 'label' }: SWPDrawdownChartProps
             formatter={(value: any) =>
               formatCurrencyCompact(typeof value === 'number' ? value : Number(value))
             }
-            contentStyle={{
-              borderRadius: '12px',
-              border: 'none',
-              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-            }}
+            contentStyle={TOOLTIP_STYLE}
           />
           <Area
             type="monotone"

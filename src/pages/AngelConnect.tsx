@@ -229,11 +229,11 @@ export const AngelConnect = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-stone-200 gap-6">
+      <div className="flex border-b border-stone-200 gap-6 overflow-x-auto whitespace-nowrap">
         <button
           onClick={() => setActiveTab('connect')}
           className={`pb-3 text-sm font-semibold transition-all relative ${
-            activeTab === 'connect' ? 'text-navy border-b-2 border-gold' : 'text-stone-400 hover:text-navy'
+            activeTab === 'connect' ? 'text-navy border-b-2 border-gold' : 'text-stone-600 hover:text-navy'
           }`}
         >
           API Authentication & Credentials
@@ -241,7 +241,7 @@ export const AngelConnect = () => {
         <button
           onClick={() => setActiveTab('guide')}
           className={`pb-3 text-sm font-semibold transition-all relative ${
-            activeTab === 'guide' ? 'text-navy border-b-2 border-gold' : 'text-stone-400 hover:text-navy'
+            activeTab === 'guide' ? 'text-navy border-b-2 border-gold' : 'text-stone-600 hover:text-navy'
           }`}
         >
           Setup Guide & Portal Form
@@ -249,7 +249,7 @@ export const AngelConnect = () => {
         <button
           onClick={() => setActiveTab('holdings')}
           className={`pb-3 text-sm font-semibold transition-all relative ${
-            activeTab === 'holdings' ? 'text-navy border-b-2 border-gold' : 'text-stone-400 hover:text-navy'
+            activeTab === 'holdings' ? 'text-navy border-b-2 border-gold' : 'text-stone-600 hover:text-navy'
           }`}
         >
           Live Portfolio & Holdings ({holdings.length})
@@ -257,7 +257,7 @@ export const AngelConnect = () => {
         <button
           onClick={() => setActiveTab('scripts')}
           className={`pb-3 text-sm font-semibold transition-all relative ${
-            activeTab === 'scripts' ? 'text-navy border-b-2 border-gold' : 'text-stone-400 hover:text-navy'
+            activeTab === 'scripts' ? 'text-navy border-b-2 border-gold' : 'text-stone-600 hover:text-navy'
           }`}
         >
           Standalone Scripts & CLI
@@ -272,7 +272,7 @@ export const AngelConnect = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-serif text-navy">SmartAPI Connection Parameters</h3>
-                <p className="text-xs text-stone-500">
+                <p className="text-xs text-stone-700">
                   Enter your credentials from the Angel One SmartAPI Developer Portal.
                 </p>
               </div>
@@ -280,7 +280,7 @@ export const AngelConnect = () => {
                 href="https://smartapi.angelone.in/docs/Introduction#"
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs text-gold flex items-center gap-1 hover:underline"
+                className="text-xs text-navy flex items-center gap-1 hover:text-gold underline"
               >
                 SmartAPI Docs <ExternalLink size={12} />
               </a>
@@ -297,7 +297,7 @@ export const AngelConnect = () => {
                 }`}
               >
                 {statusMessage.type === 'success' ? (
-                  <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
+                  <CheckCircle2 size={18} className="text-emerald-700 shrink-0 mt-0.5" />
                 ) : (
                   <AlertCircle size={18} className="text-rose-600 shrink-0 mt-0.5" />
                 )}
@@ -308,7 +308,7 @@ export const AngelConnect = () => {
             <form onSubmit={handleConnect} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">
                     API Key <span className="text-rose-500">*</span>
                   </label>
                   <input
@@ -316,13 +316,14 @@ export const AngelConnect = () => {
                     placeholder="e.g. 7Xxxxxxx"
                     value={creds.apiKey}
                     onChange={(e) => setCreds({ ...creds, apiKey: e.target.value })}
+                    aria-label="API Key"
                     className="w-full px-3.5 py-2.5 bg-white border border-stone-200 rounded-xl text-sm font-mono focus:outline-none focus:border-navy"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">
                     Angel One Client Code (User ID) <span className="text-rose-500">*</span>
                   </label>
                   <input
@@ -330,6 +331,7 @@ export const AngelConnect = () => {
                     placeholder="e.g. S123456"
                     value={creds.clientCode}
                     onChange={(e) => setCreds({ ...creds, clientCode: e.target.value.toUpperCase() })}
+                    aria-label="Angel One Client Code"
                     className="w-full px-3.5 py-2.5 bg-white border border-stone-200 rounded-xl text-sm font-mono focus:outline-none focus:border-navy"
                     required
                   />
@@ -338,7 +340,7 @@ export const AngelConnect = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">
                     MPIN / Password <span className="text-rose-500">*</span>
                   </label>
                   <input
@@ -347,6 +349,7 @@ export const AngelConnect = () => {
                     placeholder="4-digit MPIN or Password"
                     value={creds.pin}
                     onChange={(e) => setCreds({ ...creds, pin: e.target.value })}
+                    aria-label="MPIN or Password"
                     className="w-full px-3.5 py-2.5 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:border-navy"
                     required
                   />
@@ -354,14 +357,14 @@ export const AngelConnect = () => {
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700">
                       TOTP Secret Key (QR Token)
                     </label>
                     <a
                       href="https://smartapi.angelone.in/enable-totp"
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[11px] text-gold hover:underline flex items-center gap-1"
+                      className="text-[11px] text-navy hover:text-gold underline flex items-center gap-1"
                     >
                       Get Secret <ExternalLink size={10} />
                     </a>
@@ -371,6 +374,7 @@ export const AngelConnect = () => {
                     placeholder="Base32 Secret e.g. JBSWY3DPEHPK3PXP"
                     value={creds.totpSecret || ''}
                     onChange={(e) => setCreds({ ...creds, totpSecret: e.target.value })}
+                    aria-label="TOTP Secret Key"
                     className="w-full px-3.5 py-2.5 bg-white border border-stone-200 rounded-xl text-sm font-mono focus:outline-none focus:border-navy"
                   />
                 </div>
@@ -384,14 +388,14 @@ export const AngelConnect = () => {
                       <Clock size={16} />
                     </div>
                     <div>
-                      <div className="text-[11px] uppercase tracking-wider text-stone-400">Live Generated TOTP</div>
+                      <div className="text-[11px] uppercase tracking-wider text-stone-600">Live Generated TOTP</div>
                       <div className="text-base font-mono font-bold text-navy tracking-widest">
                         {activeTotp || '------'}
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs text-stone-500">{totpCountdown}s refresh</div>
+                    <div className="text-xs text-stone-700">{totpCountdown}s refresh</div>
                     <div className="w-20 bg-stone-200 h-1.5 rounded-full overflow-hidden mt-1">
                       <div
                         className="bg-gold h-full transition-all duration-1000"
@@ -412,7 +416,7 @@ export const AngelConnect = () => {
                   <span className="flex items-center gap-2">
                     <Sliders size={14} className="text-gold" /> System Network Headers (Auto-Detected)
                   </span>
-                  <span className="text-stone-400 text-[11px]">
+                  <span className="text-stone-600 text-[11px]">
                     {showAdvancedNetwork ? 'Hide ▲' : 'Show Details ▼'}
                   </span>
                 </button>
@@ -420,29 +424,32 @@ export const AngelConnect = () => {
                 {showAdvancedNetwork && (
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
                     <div>
-                      <label className="block text-stone-500 mb-1">Public IP (ClientPublicIP)</label>
+                      <label className="block text-stone-700 mb-1">Public IP (ClientPublicIP)</label>
                       <input
                         type="text"
                         value={creds.publicIp}
                         onChange={(e) => setCreds({ ...creds, publicIp: e.target.value })}
+                        aria-label="Public IP"
                         className="w-full px-2.5 py-1.5 bg-white border border-stone-200 rounded-lg font-mono text-xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-stone-500 mb-1">Local IP (ClientLocalIP)</label>
+                      <label className="block text-stone-700 mb-1">Local IP (ClientLocalIP)</label>
                       <input
                         type="text"
                         value={creds.localIp}
                         onChange={(e) => setCreds({ ...creds, localIp: e.target.value })}
+                        aria-label="Local IP"
                         className="w-full px-2.5 py-1.5 bg-white border border-stone-200 rounded-lg font-mono text-xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-stone-500 mb-1">MAC Address (MACAddress)</label>
+                      <label className="block text-stone-700 mb-1">MAC Address (MACAddress)</label>
                       <input
                         type="text"
                         value={creds.macAddress}
                         onChange={(e) => setCreds({ ...creds, macAddress: e.target.value })}
+                        aria-label="MAC Address"
                         className="w-full px-2.5 py-1.5 bg-white border border-stone-200 rounded-lg font-mono text-xs"
                       />
                     </div>
@@ -483,7 +490,7 @@ export const AngelConnect = () => {
                     {historicalTest.loading ? 'Testing NIFTY 50 daily candles...' : 'Test Historical Data (NIFTY 50)'}
                   </Button>
                   {historicalTest.count > 0 && (
-                    <p className="text-xs text-emerald-600 mt-2 text-center">
+                    <p className="text-xs text-emerald-700 mt-2 text-center">
                       Fetched {historicalTest.count} daily candles successfully.
                     </p>
                   )}
@@ -506,13 +513,15 @@ export const AngelConnect = () => {
               <div className="space-y-3 text-xs font-mono">
                 <div className="bg-white/10 p-2.5 rounded-lg flex items-center justify-between">
                   <div>
-                    <span className="text-stone-400 block text-[10px]">PUBLIC IP</span>
+                    <span className="text-stone-300 block text-[10px]">PUBLIC IP</span>
                     <span className="text-white font-semibold">{creds.publicIp}</span>
                   </div>
                   <button
                     onClick={() => handleCopy(creds.publicIp, 'pubIp')}
-                    className="text-stone-300 hover:text-gold p-1"
+                    className="text-stone-300 hover:text-gold p-1 rounded focus:outline-none focus:ring-2 focus:ring-gold/50"
                     title="Copy Public IP"
+                    aria-label="Copy Public IP"
+                    type="button"
                   >
                     {copiedKey === 'pubIp' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                   </button>
@@ -520,13 +529,15 @@ export const AngelConnect = () => {
 
                 <div className="bg-white/10 p-2.5 rounded-lg flex items-center justify-between">
                   <div>
-                    <span className="text-stone-400 block text-[10px]">LOCAL IP</span>
+                    <span className="text-stone-300 block text-[10px]">LOCAL IP</span>
                     <span className="text-white font-semibold">{creds.localIp}</span>
                   </div>
                   <button
                     onClick={() => handleCopy(creds.localIp, 'locIp')}
-                    className="text-stone-300 hover:text-gold p-1"
+                    className="text-stone-300 hover:text-gold p-1 rounded focus:outline-none focus:ring-2 focus:ring-gold/50"
                     title="Copy Local IP"
+                    aria-label="Copy Local IP"
+                    type="button"
                   >
                     {copiedKey === 'locIp' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                   </button>
@@ -534,13 +545,15 @@ export const AngelConnect = () => {
 
                 <div className="bg-white/10 p-2.5 rounded-lg flex items-center justify-between">
                   <div>
-                    <span className="text-stone-400 block text-[10px]">MAC ADDRESS</span>
+                    <span className="text-stone-300 block text-[10px]">MAC ADDRESS</span>
                     <span className="text-white font-semibold">{creds.macAddress}</span>
                   </div>
                   <button
                     onClick={() => handleCopy(creds.macAddress, 'mac')}
-                    className="text-stone-300 hover:text-gold p-1"
+                    className="text-stone-300 hover:text-gold p-1 rounded focus:outline-none focus:ring-2 focus:ring-gold/50"
                     title="Copy MAC"
+                    aria-label="Copy MAC"
+                    type="button"
                   >
                     {copiedKey === 'mac' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                   </button>
@@ -559,18 +572,18 @@ export const AngelConnect = () => {
                     <div className="text-sm font-semibold text-navy">
                       {session.userProfile?.name || session.userProfile?.clientcode || creds.clientCode}
                     </div>
-                    <div className="text-xs text-stone-500">Angel One Account Active</div>
+                    <div className="text-xs text-stone-700">Angel One Account Active</div>
                   </div>
                 </div>
 
                 {funds && (
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-stone-100 text-xs">
                     <div className="p-2.5 bg-stone-50 rounded-lg">
-                      <span className="text-stone-400 block text-[10px]">AVAILABLE CASH</span>
+                      <span className="text-stone-600 block text-[10px]">AVAILABLE CASH</span>
                       <span className="font-semibold text-navy">{formatCurrency(funds.availablecash)}</span>
                     </div>
                     <div className="p-2.5 bg-stone-50 rounded-lg">
-                      <span className="text-stone-400 block text-[10px]">TOTAL MARGIN</span>
+                      <span className="text-stone-600 block text-[10px]">TOTAL MARGIN</span>
                       <span className="font-semibold text-navy">{formatCurrency(funds.availablemargin)}</span>
                     </div>
                   </div>
@@ -694,17 +707,17 @@ export const AngelConnect = () => {
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card className="bg-white">
-              <div className="text-xs text-stone-500 font-medium">Total Live Portfolio Value</div>
+              <div className="text-xs text-stone-700 font-medium">Total Live Portfolio Value</div>
               <div className="text-2xl font-serif font-bold text-navy mt-1">{formatCurrency(totalHoldingsValue)}</div>
-              <div className="text-xs text-stone-400 mt-1">{holdings.length} Positions</div>
+              <div className="text-xs text-stone-600 mt-1">{holdings.length} Positions</div>
             </Card>
 
             <Card className="bg-white">
-              <div className="text-xs text-stone-500 font-medium">Total Unrealized P&L</div>
-              <div className={`text-2xl font-serif font-bold mt-1 ${totalPnL >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+              <div className="text-xs text-stone-700 font-medium">Total Unrealized P&L</div>
+              <div className={`text-2xl font-serif font-bold mt-1 ${totalPnL >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
                 {formatCurrency(totalPnL)}
               </div>
-              <div className="text-xs text-stone-400 mt-1">
+              <div className="text-xs text-stone-600 mt-1">
                 {totalHoldingsValue > 0 ? formatPercent((totalPnL / totalHoldingsValue) * 100) : '0%'}
               </div>
             </Card>
@@ -742,15 +755,15 @@ export const AngelConnect = () => {
             </div>
 
             {holdings.length === 0 ? (
-              <div className="text-center py-12 text-stone-400">
+              <div className="text-center py-12 text-stone-600">
                 <PieChart size={40} className="mx-auto mb-2 opacity-30" />
                 <p className="text-sm">No live holdings loaded yet.</p>
                 <p className="text-xs mt-1">Connect your Angel One API credentials to stream your portfolio.</p>
               </div>
             ) : (
-              <table className="w-full text-left text-xs">
+              <table className="w-full min-w-[540px] text-left text-xs">
                 <thead>
-                  <tr className="border-b border-stone-200 text-stone-400 uppercase tracking-wider text-[10px]">
+                  <tr className="border-b border-stone-200 text-stone-600 uppercase tracking-wider text-[10px]">
                     <th className="pb-3 font-semibold">Stock / Symbol</th>
                     <th className="pb-3 font-semibold text-right">Quantity</th>
                     <th className="pb-3 font-semibold text-right">Avg Price</th>
@@ -766,14 +779,14 @@ export const AngelConnect = () => {
                         <TrendingUp size={14} className="text-gold" />
                         <div>
                           <div>{h.tradingsymbol}</div>
-                          <span className="text-[10px] text-stone-400 font-normal">{h.exchange}</span>
+                          <span className="text-[10px] text-stone-600 font-normal">{h.exchange}</span>
                         </div>
                       </td>
                       <td className="py-3 text-right font-mono">{h.quantity}</td>
                       <td className="py-3 text-right font-mono">{formatCurrency(h.averageprice)}</td>
                       <td className="py-3 text-right font-mono font-semibold text-navy">{formatCurrency(h.ltp)}</td>
                       <td className="py-3 text-right font-mono font-semibold">{formatCurrency(h.totalHoldingValue)}</td>
-                      <td className={`py-3 text-right font-mono font-semibold ${h.pnl >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      <td className={`py-3 text-right font-mono font-semibold ${h.pnl >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
                         {formatCurrency(h.pnl)} ({formatPercent(h.totalPnlPercentage)})
                       </td>
                     </tr>
@@ -795,7 +808,7 @@ export const AngelConnect = () => {
               </h3>
               <Badge variant="outline">scripts/test-smartapi.js</Badge>
             </div>
-            <p className="text-xs text-stone-500">
+            <p className="text-xs text-stone-700">
               Run this script directly in your terminal to test authentication and stream market quotes without the browser:
             </p>
             <div className="bg-stone-900 text-stone-200 p-4 rounded-xl font-mono text-xs overflow-x-auto">
@@ -823,7 +836,7 @@ export const AngelConnect = () => {
               </h3>
               <Badge variant="outline">smartapi_connector.py</Badge>
             </div>
-            <p className="text-xs text-stone-500">
+            <p className="text-xs text-stone-700">
               Use the Python client for algorithmic trading or automated data pipelines:
             </p>
             <div className="bg-stone-900 text-stone-200 p-4 rounded-xl font-mono text-xs overflow-x-auto">
@@ -843,8 +856,8 @@ export const AngelConnect = () => {
       )}
 
       <WorkflowFooter
-        prev={{ path: '/calculators', label: 'Financial Calculators' }}
-        next={{ path: '/angel-data', label: 'Market Data Lab' }}
+        prev={{ path: '/calculators', label: 'Calculators' }}
+        next={{ path: '/angel-data', label: 'Angel Data' }}
         flowHint="Connect your Angel One SmartAPI account to sync live equity, debt, and gold holdings directly into your wealth plan."
       />
     </div>

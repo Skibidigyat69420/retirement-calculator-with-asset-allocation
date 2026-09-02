@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { resolve } from 'path'
 import { pathToFileURL } from 'url'
+import { existsSync } from 'fs'
 
 /**
  * Vite dev-server plugin that executes Vercel-style serverless handlers
@@ -35,23 +36,32 @@ function apiRoutesPlugin() {
             return res
           }
         }
-        // Skip the Angel One proxy (handled by Vite's proxy config).
-        if (req.url?.startsWith('/angelone')) {
-          return next()
+
+        const sendError = (status: number, message: string) => {
+          if (res.headersSent) return
+          res.status(status).json({ error: message })
         }
 
-        const url = new URL(req.url || '/', `http://${req.headers.host}`)
-        const routeName = url.pathname.replace(/^\/(api\/)?/, '').split('?')[0]
-        req.query = Object.fromEntries(url.searchParams)
-        const handlerPath = resolve(projectRoot, 'api', `${routeName}.js`)
-
         try {
-          const mod = await import(pathToFileURL(handlerPath).href)
+          // Skip the Angel One proxy (handled by Vite's proxy config).
+          if (req.url?.startsWith('/angelone')) {
+            return next()
+          }
+
+          const url = new URL(req.url || '/', `http://${req.headers.host}`)
+          const routeName = url.pathname.replace(/^\/(api\/)?/, '').split('?')[0]
+          req.query = Object.fromEntries(url.searchParams)
+          const handlerPath = resolve(projectRoot, 'api', `${routeName}.js`)
+
+          if (!routeName || !existsSync(handlerPath)) {
+            return sendError(404, 'API handler not found')
+          }
+
+          // Append a cache-busting query so edits to api/ files are reloaded per request.
+          const mod = await import(`${pathToFileURL(handlerPath).href}?t=${Date.now()}`)
           const handler = mod.default
           if (typeof handler !== 'function') {
-            res.statusCode = 500
-            res.end(JSON.stringify({ error: 'API handler not found or invalid' }))
-            return
+            return sendError(500, 'API handler not found or invalid')
           }
 
           // Collect request body for POST requests.
@@ -62,21 +72,26 @@ function apiRoutesPlugin() {
               try {
                 req.body = body ? JSON.parse(body) : {}
               } catch {
-                req.body = {}
+                return sendError(400, 'Invalid JSON body')
               }
-              handler(req, res)
+              Promise.resolve(handler(req, res)).catch((err) => {
+                console.error('API handler error:', err)
+                sendError(500, 'Internal server error')
+              })
+            })
+            req.on('error', (err: Error) => {
+              console.error('Request body error:', err)
+              sendError(400, 'Failed to read request body')
             })
           } else {
-            handler(req, res)
+            Promise.resolve(handler(req, res)).catch((err) => {
+              console.error('API handler error:', err)
+              sendError(500, 'Internal server error')
+            })
           }
         } catch (err) {
-          // If the handler file doesn't exist, fall through to Vite's default handling.
-          if ((err as any).code === 'ENOENT') {
-            return next()
-          }
           console.error('API route error:', err)
-          res.statusCode = 500
-          res.end(JSON.stringify({ error: 'Internal server error' }))
+          sendError(500, 'Internal server error')
         }
       })
     },

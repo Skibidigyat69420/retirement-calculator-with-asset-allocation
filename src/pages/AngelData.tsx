@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useReducer, useEffect, useCallback } from 'react';
 import {
   RefreshCw,
   User,
@@ -46,14 +46,38 @@ interface Snapshot {
   files: SnapshotFile;
 }
 
+interface DataState {
+  snapshot: Snapshot | null;
+  loading: boolean;
+  error: string | null;
+}
+
+type DataAction =
+  | { type: 'load' }
+  | { type: 'success'; payload: Snapshot }
+  | { type: 'error'; payload: string };
+
+const initialDataState: DataState = { snapshot: null, loading: false, error: null };
+
+function dataReducer(state: DataState, action: DataAction): DataState {
+  switch (action.type) {
+    case 'load':
+      return { ...state, loading: true, error: null };
+    case 'success':
+      return { snapshot: action.payload, loading: false, error: null };
+    case 'error':
+      return { ...state, loading: false, error: action.payload };
+    default:
+      return state;
+  }
+}
+
 export const AngelData = () => {
-  const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(dataReducer, initialDataState);
+  const { snapshot, loading, error } = state;
 
   const loadSnapshot = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    dispatch({ type: 'load' });
     try {
       const response = await fetch('/api/angel-one-snapshot');
       if (!response.ok) {
@@ -61,12 +85,9 @@ export const AngelData = () => {
         throw new Error(err.error || `Snapshot request failed: ${response.status}`);
       }
       const data: Snapshot = await response.json();
-      setSnapshot(data);
+      dispatch({ type: 'success', payload: data });
     } catch (err: any) {
-      setError(err?.message || 'Failed to load Angel One snapshot');
-      setSnapshot(null);
-    } finally {
-      setLoading(false);
+      dispatch({ type: 'error', payload: err?.message || 'Failed to load Angel One snapshot' });
     }
   }, []);
 
@@ -77,12 +98,11 @@ export const AngelData = () => {
   const handleLiveRefresh = async () => {
     const session = loadSession();
     if (!session) {
-      alert('Please connect to Angel One SmartAPI first via the Angel Connect page.');
+      dispatch({ type: 'error', payload: 'Please connect to Angel One SmartAPI first via the Angel Connect page.' });
       return;
     }
     const creds = buildDefaultCredentials();
-    setLoading(true);
-    setError(null);
+    dispatch({ type: 'load' });
     try {
       const [profile, rms, holdings, positions, orderBook, tradeBook] = await Promise.all([
         fetchUserProfile(creds, session.jwtToken),
@@ -92,22 +112,23 @@ export const AngelData = () => {
         fetchOrderBook(creds, session.jwtToken),
         fetchTradeBook(creds, session.jwtToken),
       ]);
-      setSnapshot({
-        timestamp: new Date().toISOString(),
-        client_code: creds.clientCode,
-        files: {
-          profile: JSON.stringify(profile),
-          rms: JSON.stringify(rms),
-          holdings: JSON.stringify(holdings),
-          positions: JSON.stringify(positions),
-          order_book: JSON.stringify(orderBook),
-          trade_book: JSON.stringify(tradeBook),
+      dispatch({
+        type: 'success',
+        payload: {
+          timestamp: new Date().toISOString(),
+          client_code: creds.clientCode,
+          files: {
+            profile: JSON.stringify(profile),
+            rms: JSON.stringify(rms),
+            holdings: JSON.stringify(holdings),
+            positions: JSON.stringify(positions),
+            order_book: JSON.stringify(orderBook),
+            trade_book: JSON.stringify(tradeBook),
+          },
         },
       });
     } catch (err: any) {
-      setError(err?.message || 'Live refresh failed');
-    } finally {
-      setLoading(false);
+      dispatch({ type: 'error', payload: err?.message || 'Live refresh failed' });
     }
   };
 
@@ -150,7 +171,7 @@ export const AngelData = () => {
       </div>
 
       {loading && (
-        <div className="flex items-center gap-2 text-sm text-stone-500">
+        <div className="flex items-center gap-2 text-sm text-stone-700">
           <RefreshCw size={16} className="animate-spin" /> Loading Angel One data...
         </div>
       )}
@@ -162,7 +183,7 @@ export const AngelData = () => {
       )}
 
       {snapshot && (
-        <div className="text-xs text-stone-500">
+        <div className="text-xs text-stone-700">
           Snapshot: {new Date(snapshot.timestamp).toLocaleString()} · Client: {snapshot.client_code}
         </div>
       )}
@@ -175,14 +196,14 @@ export const AngelData = () => {
           </div>
           {profile?.data ? (
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-stone-500">Name</span><span className="font-medium">{profile.data.name}</span></div>
-              <div className="flex justify-between"><span className="text-stone-500">Client Code</span><span className="font-medium">{profile.data.clientcode}</span></div>
-              <div className="flex justify-between"><span className="text-stone-500">Email</span><span className="font-medium">{profile.data.email}</span></div>
-              <div className="flex justify-between"><span className="text-stone-500">Exchanges</span><span className="font-medium">{profile.data.exchanges?.join(', ')}</span></div>
-              <div className="flex justify-between"><span className="text-stone-500">Products</span><span className="font-medium">{profile.data.products?.join(', ')}</span></div>
+              <div className="flex justify-between"><span className="text-stone-700">Name</span><span className="font-medium">{profile.data.name}</span></div>
+              <div className="flex justify-between"><span className="text-stone-700">Client Code</span><span className="font-medium">{profile.data.clientcode}</span></div>
+              <div className="flex justify-between"><span className="text-stone-700">Email</span><span className="font-medium">{profile.data.email}</span></div>
+              <div className="flex justify-between"><span className="text-stone-700">Exchanges</span><span className="font-medium">{profile.data.exchanges?.join(', ')}</span></div>
+              <div className="flex justify-between"><span className="text-stone-700">Products</span><span className="font-medium">{profile.data.products?.join(', ')}</span></div>
             </div>
           ) : (
-            <p className="text-sm text-stone-500">No profile data available.</p>
+            <p className="text-sm text-stone-700">No profile data available.</p>
           )}
         </Card>
 
@@ -193,14 +214,14 @@ export const AngelData = () => {
           </div>
           {rms?.data ? (
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-stone-500">Net</span><span className="font-medium">{formatCurrency(rms.data.net)}</span></div>
-              <div className="flex justify-between"><span className="text-stone-500">Available Cash</span><span className="font-medium">{formatCurrency(rms.data.availablecash)}</span></div>
-              <div className="flex justify-between"><span className="text-stone-500">Available Margin</span><span className="font-medium">{formatCurrency(rms.data.availablemargin)}</span></div>
-              <div className="flex justify-between"><span className="text-stone-500">Collateral</span><span className="font-medium">{formatCurrency(rms.data.collateral)}</span></div>
-              <div className="flex justify-between"><span className="text-stone-500">Utilised Debits</span><span className="font-medium">{formatCurrency(rms.data.utiliseddebits)}</span></div>
+              <div className="flex justify-between"><span className="text-stone-700">Net</span><span className="font-medium">{formatCurrency(rms.data.net)}</span></div>
+              <div className="flex justify-between"><span className="text-stone-700">Available Cash</span><span className="font-medium">{formatCurrency(rms.data.availablecash)}</span></div>
+              <div className="flex justify-between"><span className="text-stone-700">Available Margin</span><span className="font-medium">{formatCurrency(rms.data.availablemargin)}</span></div>
+              <div className="flex justify-between"><span className="text-stone-700">Collateral</span><span className="font-medium">{formatCurrency(rms.data.collateral)}</span></div>
+              <div className="flex justify-between"><span className="text-stone-700">Utilised Debits</span><span className="font-medium">{formatCurrency(rms.data.utiliseddebits)}</span></div>
             </div>
           ) : (
-            <p className="text-sm text-stone-500">No RMS data available.</p>
+            <p className="text-sm text-stone-700">No RMS data available.</p>
           )}
         </Card>
       </div>
@@ -212,10 +233,10 @@ export const AngelData = () => {
           <Badge variant="outline">{holdingList.length}</Badge>
         </div>
         {holdingList.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
+            <table className="w-full min-w-[540px] text-sm">
               <thead>
-                <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-500">
+                <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-700">
                   <th className="py-2 pr-4">Symbol</th>
                   <th className="py-2 pr-4 text-right">Qty</th>
                   <th className="py-2 pr-4 text-right">Avg Price</th>
@@ -232,14 +253,14 @@ export const AngelData = () => {
                     <td className="py-2 pr-4 text-right">{formatCurrency(h.averageprice)}</td>
                     <td className="py-2 pr-4 text-right">{formatCurrency(h.ltp)}</td>
                     <td className="py-2 pr-4 text-right">{formatCurrency(h.totalHoldingValue || h.quantity * h.ltp)}</td>
-                    <td className={`py-2 pr-4 text-right ${(h.pnl || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(h.pnl)}</td>
+                    <td className={`py-2 pr-4 text-right ${(h.pnl || 0) >= 0 ? 'text-green-700' : 'text-red-600'}`}>{formatCurrency(h.pnl)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : (
-          <p className="text-sm text-stone-500">No holdings found.</p>
+          <p className="text-sm text-stone-700">No holdings found.</p>
         )}
       </Card>
 
@@ -250,10 +271,10 @@ export const AngelData = () => {
           <Badge variant="outline">{positionList.length}</Badge>
         </div>
         {positionList.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
+            <table className="w-full min-w-[540px] text-sm">
               <thead>
-                <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-500">
+                <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-700">
                   <th className="py-2 pr-4">Symbol</th>
                   <th className="py-2 pr-4 text-right">Exchange</th>
                   <th className="py-2 pr-4 text-right">Buy Qty</th>
@@ -272,14 +293,14 @@ export const AngelData = () => {
                     <td className="py-2 pr-4 text-right">{p.sellqty}</td>
                     <td className="py-2 pr-4 text-right">{p.netqty}</td>
                     <td className="py-2 pr-4 text-right">{formatCurrency(p.ltp)}</td>
-                    <td className={`py-2 pr-4 text-right ${(p.pnl || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(p.pnl)}</td>
+                    <td className={`py-2 pr-4 text-right ${(p.pnl || 0) >= 0 ? 'text-green-700' : 'text-red-600'}`}>{formatCurrency(p.pnl)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : (
-          <p className="text-sm text-stone-500">No positions found.</p>
+          <p className="text-sm text-stone-700">No positions found.</p>
         )}
       </Card>
 
@@ -290,11 +311,11 @@ export const AngelData = () => {
           <Badge variant="outline">{orderList.length}</Badge>
         </div>
         {orderList.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
+            <table className="w-full min-w-[480px] text-sm">
               <thead>
-                <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-500">
-                  <th className="py-2 pr-4">Time</th>
+                <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-700">
+                  <th className="py-2 pr-4">Order ID</th>
                   <th className="py-2 pr-4">Symbol</th>
                   <th className="py-2 pr-4 text-right">Side</th>
                   <th className="py-2 pr-4 text-right">Qty</th>
@@ -317,7 +338,7 @@ export const AngelData = () => {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-stone-500">No orders found.</p>
+          <p className="text-sm text-stone-700">No orders found.</p>
         )}
       </Card>
 
@@ -328,10 +349,10 @@ export const AngelData = () => {
           <Badge variant="outline">{tradeList.length}</Badge>
         </div>
         {tradeList.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
+            <table className="w-full min-w-[420px] text-sm">
               <thead>
-                <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-500">
+                <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-700">
                   <th className="py-2 pr-4">Time</th>
                   <th className="py-2 pr-4">Symbol</th>
                   <th className="py-2 pr-4 text-right">Side</th>
@@ -353,12 +374,12 @@ export const AngelData = () => {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-stone-500">No trades found.</p>
+          <p className="text-sm text-stone-700">No trades found.</p>
         )}
       </Card>
 
       <WorkflowFooter
-        prev={{ path: '/connect', label: 'Angel One Connect' }}
+        prev={{ path: '/angel-connect', label: 'Angel One Connect' }}
         next={{ path: '/', label: 'Dashboard' }}
         flowHint="Live JSON snapshot logs and market telemetry verifying raw API payloads from Angel One SmartAPI."
       />

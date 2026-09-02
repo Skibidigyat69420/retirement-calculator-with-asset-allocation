@@ -47,6 +47,16 @@ export const RetirementCorpusCalculator = () => {
     showToast('Retirement assumptions applied to Master Plan.', 'success');
   };
 
+  const handleSyncFromPlan = () => {
+    setCurrentAge(inputs.currentAge || 34);
+    setRetirementAge(inputs.retirementAge || 60);
+    setLifeExpectancy(inputs.lifeExpectancy || 85);
+    setMonthlyNeedToday(inputs.swp.monthlyNeedToday || 100000);
+    setInflation(inputs.inflation || 5);
+    setPostRetirementReturn(inputs.swp.postRetirementReturn || 9);
+    showToast('Loaded retirement timeline & assumptions from Master Plan.', 'info');
+  };
+
   return (
     <CalculatorShell
       title="Retirement Corpus Required"
@@ -59,9 +69,14 @@ export const RetirementCorpusCalculator = () => {
           <NumberInput label="Monthly Need Today" value={monthlyNeedToday} onChange={setMonthlyNeedToday} />
           <NumberInput label="Inflation" value={inflation} onChange={setInflation} suffix="%" />
           <NumberInput label="Post-Retirement Return" value={postRetirementReturn} onChange={setPostRetirementReturn} suffix="%" />
-          <Button onClick={handleApply} className="w-full mt-2" variant="outline">
-            Apply to Master Plan
-          </Button>
+          <div className="flex gap-2 mt-2">
+            <Button onClick={handleSyncFromPlan} className="flex-1 text-xs" variant="ghost">
+              Sync from Plan
+            </Button>
+            <Button onClick={handleApply} className="flex-1 text-xs" variant="outline">
+              Apply to Plan
+            </Button>
+          </div>
         </>
       }
       results={
@@ -74,30 +89,30 @@ export const RetirementCorpusCalculator = () => {
           </div>
 
           <Card>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-500 mb-4">Retirement Math</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-700 mb-4">Retirement Math</h4>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-stone-500">Monthly need today</span>
+                <span className="text-stone-700">Monthly need today</span>
                 <span className="font-medium">{formatCurrency(monthlyNeedToday)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-500">Monthly need at retirement ({result.yearsToRetirement} yrs)</span>
+                <span className="text-stone-700">Monthly need at retirement ({result.yearsToRetirement} yrs)</span>
                 <span className="font-medium">{formatCurrency(result.monthlyNeedAtRetirement)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-500">Annual need at retirement</span>
+                <span className="text-stone-700">Annual need at retirement</span>
                 <span className="font-medium">{formatCurrency(result.annualNeedAtRetirement)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-500">Retirement years</span>
+                <span className="text-stone-700">Retirement years</span>
                 <span className="font-medium">{result.retirementYears}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-500">Required corpus</span>
+                <span className="text-stone-700">Required corpus</span>
                 <span className="font-medium text-navy">{formatCurrency(result.requiredCorpus)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-500">Inflation-adjusted sustainable monthly draw</span>
+                <span className="text-stone-700">Inflation-adjusted sustainable monthly draw</span>
                 <span className="font-medium">{formatCurrency(result.sustainableMonthlyWithdrawal)}</span>
               </div>
             </div>

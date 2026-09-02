@@ -31,6 +31,14 @@ export const STPCalculator = () => {
     showToast('STP settings applied to Master Plan.', 'success');
   };
 
+  const handleSyncFromPlan = () => {
+    setLumpsum(inputs.stp.lumpsum || 1000000);
+    setMonthlyTransfer(inputs.stp.monthlyTransfer || 50000);
+    setLiquidReturn(inputs.stp.liquidReturn || 6);
+    setTargetReturn(inputs.sip.equityReturn || 12);
+    showToast(`Loaded STP settings (${formatCurrency(inputs.stp.monthlyTransfer || 50000)}/mo) from Master Plan.`, 'info');
+  };
+
   return (
     <CalculatorShell
       title="STP Calculator"
@@ -41,9 +49,14 @@ export const STPCalculator = () => {
           <NumberInput label="Monthly Transfer" value={monthlyTransfer} onChange={setMonthlyTransfer} />
           <NumberInput label="Liquid Fund Return" value={liquidReturn} onChange={setLiquidReturn} suffix="%" />
           <NumberInput label="Target Portfolio Return" value={targetReturn} onChange={setTargetReturn} suffix="%" />
-          <Button onClick={handleApply} className="w-full mt-2" variant="outline">
-            Apply to Master Plan
-          </Button>
+          <div className="flex gap-2 mt-2">
+            <Button onClick={handleSyncFromPlan} className="flex-1 text-xs" variant="ghost">
+              Sync from Plan
+            </Button>
+            <Button onClick={handleApply} className="flex-1 text-xs" variant="outline">
+              Apply to Plan
+            </Button>
+          </div>
         </>
       }
       results={
@@ -56,22 +69,22 @@ export const STPCalculator = () => {
           </div>
 
           <Card>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-500 mb-4">Deployment Summary</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-700 mb-4">Deployment Summary</h4>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-stone-500">Lumpsum deployed</span>
+                <span className="text-stone-700">Lumpsum deployed</span>
                 <span className="font-medium">{formatCurrency(lumpsum)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-500">Monthly transfer</span>
+                <span className="text-stone-700">Monthly transfer</span>
                 <span className="font-medium">{formatCurrency(monthlyTransfer)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-500">Un deployed liquid left</span>
+                <span className="text-stone-700">Un deployed liquid left</span>
                 <span className="font-medium">{formatCurrency(result.liquid)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-500">Wealth gained vs idle cash</span>
+                <span className="text-stone-700">Wealth gained vs idle cash</span>
                 <span className="font-medium">{formatCurrency(result.total - lumpsum)}</span>
               </div>
             </div>

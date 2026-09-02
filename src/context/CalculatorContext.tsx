@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef, useDeferredValue } from 'react';
 import type { MasterPlanInputs, Scenario, Goal, RiskProfile, RiskAnswers, AssetCategory, ClientProfile } from '../types';
 import { defaultClientInputs, defaultScenarios } from '../lib/scenarios';
 import { loadAssumptions, type AssumptionSet } from '../lib/assumptions';
@@ -263,9 +263,20 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     setInputs(scenario.inputs);
   }, []);
 
+  // Defer the heavy Monte Carlo recomputation so keystrokes stay responsive.
+  // Memoize the profile object first so useDeferredValue can actually defer it.
+  const riskProfileBundle = useMemo(
+    () => ({ profile: riskProfile, score: riskScore }),
+    [riskProfile, riskScore],
+  );
+  const deferredInputs = useDeferredValue(inputs);
+  const deferredAssumptions = useDeferredValue(assumptions);
+  const deferredProfile = useDeferredValue(riskProfileBundle);
+  const deferredManualTargets = useDeferredValue(manualTargets);
+
   const wealthResult = useMemo(
-    () => runWealthEngine(inputs, assumptions, { profile: riskProfile, score: riskScore }),
-    [inputs, assumptions, riskProfile, riskScore],
+    () => runWealthEngine(deferredInputs, deferredAssumptions, deferredProfile, deferredManualTargets),
+    [deferredInputs, deferredAssumptions, deferredProfile, deferredManualTargets],
   );
 
   return (
@@ -324,7 +335,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
             <div className="flex-1 font-medium leading-snug">{t.message}</div>
             <button
               onClick={() => removeToast(t.id)}
-              className="text-stone-400 hover:text-white shrink-0 ml-1"
+              className="text-stone-300 hover:text-white shrink-0 ml-1"
               aria-label="Close notification"
             >
               <X size={14} />
@@ -336,6 +347,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
   );
 };
 
+// oxlint-disable-next-line react/only-export-components
 export const useCalculator = () => {
   const ctx = useContext(CalculatorContext);
   if (!ctx) throw new Error('useCalculator must be used within CalculatorProvider');

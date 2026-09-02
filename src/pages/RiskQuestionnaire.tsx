@@ -103,7 +103,7 @@ export const RiskQuestionnaire = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-1 bg-navy text-white">
             <div className="text-[10px] font-bold uppercase tracking-widest text-gold">Profile</div>
-            <div className="text-3xl font-serif mt-2">{riskProfile.label}</div>
+            <h3 className="text-3xl font-serif mt-2">{riskProfile.label}</h3>
             <p className="text-sm text-stone-200 mt-3 leading-relaxed">{riskProfile.description}</p>
             <div className="mt-6 space-y-3">
               <div className="flex justify-between text-sm">
@@ -163,7 +163,7 @@ export const RiskQuestionnaire = () => {
             <Card>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-serif text-navy">Dimension Scores</h3>
-                <span className="text-xs text-stone-500">Weighted 0–100</span>
+                <span className="text-xs text-stone-700">Weighted 0–100</span>
               </div>
               <div className="space-y-4">
                 {Object.entries(categoryScores).map(([category, scorePct]) => (
@@ -264,7 +264,7 @@ export const RiskQuestionnaire = () => {
                 ))}
               </svg>
             </div>
-            <div className="flex items-center justify-center gap-4 mt-2 text-xs text-stone-500">
+            <div className="flex items-center justify-center gap-4 mt-2 text-xs text-stone-700">
               <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm" style={{ backgroundColor: ASSET_COLORS.equity }} /> Equity</span>
               <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm" style={{ backgroundColor: ASSET_COLORS.debt }} /> Debt</span>
             </div>
@@ -308,7 +308,7 @@ export const RiskQuestionnaire = () => {
 
       <Card className="max-w-3xl mx-auto">
         <div className="mb-6">
-          <div className="flex items-center justify-between text-xs text-stone-500 mb-2">
+          <div className="flex items-center justify-between text-xs text-stone-700 mb-2">
             <span>Question {step + 1} of {RISK_QUESTIONS.length}</span>
             <span>{Math.round(progress)}% complete</span>
           </div>
@@ -330,14 +330,16 @@ export const RiskQuestionnaire = () => {
                 <button
                   key={q.id}
                   onClick={() => setStep(idx)}
-                  className={`w-7 h-7 rounded-lg text-xs font-semibold flex items-center justify-center transition-all ${
+                  className={`w-7 h-7 rounded-lg text-xs font-semibold flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-navy/30 ${
                     isCurrent
                       ? 'bg-navy text-white shadow-xs scale-105'
                       : isAnswered
                       ? 'bg-gold/20 text-stone-800 hover:bg-gold/30'
-                      : 'bg-stone-100 text-stone-400 hover:bg-stone-200'
+                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
                   }`}
                   title={`Question ${idx + 1}: ${q.text.slice(0, 30)}...`}
+                  aria-label={`Go to question ${idx + 1}: ${q.text}`}
+                  type="button"
                 >
                   {idx + 1}
                 </button>
@@ -381,7 +383,7 @@ export const RiskQuestionnaire = () => {
                       {selected && <CheckCircle2 size={18} className="text-gold" />}
                     </div>
                     {option.description && (
-                      <p className="text-xs text-stone-500 mt-1">{option.description}</p>
+                      <p className="text-xs text-stone-700 mt-1">{option.description}</p>
                     )}
                   </button>
                 );
@@ -417,7 +419,7 @@ export const RiskQuestionnaire = () => {
         </div>
       </Card>
 
-      <div className="max-w-3xl mx-auto text-center text-xs text-stone-500">
+      <div className="max-w-3xl mx-auto text-center text-xs text-stone-700">
         <AlertTriangle size={14} className="inline mr-1" />
         This questionnaire is for planning purposes. It does not constitute investment advice.
       </div>

@@ -16,6 +16,7 @@ import { SWPCalculator } from '../components/calculators/SWPCalculator';
 import { STPCalculator } from '../components/calculators/STPCalculator';
 import { GoalCalculator } from '../components/calculators/GoalCalculator';
 import { RetirementCorpusCalculator } from '../components/calculators/RetirementCorpusCalculator';
+import { RetirementIncomeCalculator } from '../components/calculators/RetirementIncomeCalculator';
 import { EMICalculator } from '../components/calculators/EMICalculator';
 
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
@@ -27,6 +28,7 @@ const tabs = [
   { id: 'stp', label: 'STP', icon: <ArrowRightLeft size={16} /> },
   { id: 'goal', label: 'Target Corpus', icon: <Target size={16} /> },
   { id: 'retirement', label: 'Retirement Corpus', icon: <Calculator size={16} /> },
+  { id: 'retirement-income', label: 'Retirement Income', icon: <Umbrella size={16} /> },
   { id: 'emi', label: 'EMI', icon: <Banknote size={16} /> },
 ];
 
@@ -49,11 +51,12 @@ export const Calculators = () => {
       {activeTab === 'stp' && <STPCalculator />}
       {activeTab === 'goal' && <GoalCalculator />}
       {activeTab === 'retirement' && <RetirementCorpusCalculator />}
+      {activeTab === 'retirement-income' && <RetirementIncomeCalculator />}
       {activeTab === 'emi' && <EMICalculator />}
 
       <WorkflowFooter
-        prev={{ path: '/ips', label: 'Investment Policy Statement' }}
-        next={{ path: '/connect', label: 'Angel One Connect' }}
+        prev={{ path: '/ips', label: 'IPS' }}
+        next={{ path: '/angel-connect', label: 'Angel Connect' }}
         flowHint="Standalone calculators allow quick what-if simulations before committing parameters to the master plan."
       />
     </div>

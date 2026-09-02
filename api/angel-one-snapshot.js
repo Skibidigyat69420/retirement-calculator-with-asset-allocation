@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync } from 'fs';
+import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -24,6 +24,10 @@ export default function handler(req, res) {
 
   try {
     const baseDir = resolve(PROJECT_ROOT, 'data', 'angel_one');
+    if (!existsSync(baseDir)) {
+      return res.status(404).json({ error: 'No Angel One snapshot found. Run npm run fetch:angel:all first.' });
+    }
+
     const entries = readdirSync(baseDir)
       .map((name) => ({ name, path: resolve(baseDir, name) }))
       .filter((entry) => statSync(entry.path).isDirectory())
@@ -44,6 +48,23 @@ export default function handler(req, res) {
 
     const raw = readFileSync(filePath, 'utf8');
     const data = JSON.parse(raw);
+
+    // When serving the index snapshot, inline referenced file contents so the
+    // frontend can JSON.parse them directly (it expects stringified JSON values).
+    if (file === 'snapshot.json' && data.files && typeof data.files === 'object') {
+      for (const [key, relativePath] of Object.entries(data.files)) {
+        if (typeof relativePath !== 'string' || relativePath.includes('/')) continue;
+        try {
+          const childPath = resolve(latestDir, relativePath);
+          if (childPath.startsWith(latestDir) && existsSync(childPath)) {
+            data.files[key] = readFileSync(childPath, 'utf8');
+          }
+        } catch {
+          // Leave the path as-is if the referenced file cannot be read.
+        }
+      }
+    }
+
     return res.status(200).json(data);
   } catch (err) {
     console.error('Angel One snapshot API error:', err);

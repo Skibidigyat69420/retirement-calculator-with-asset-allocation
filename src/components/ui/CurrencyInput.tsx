@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useId } from 'react';
+import { useState, useCallback, useId } from 'react';
 import { Plus, Minus, AlertCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -44,11 +44,10 @@ export const CurrencyInput = ({
   const [isEditing, setIsEditing] = useState(false);
   const inputId = useId();
 
-  useEffect(() => {
-    if (!isEditing) {
-      setLocalValue(formatDisplay(value));
-    }
-  }, [value, isEditing]);
+  // Derive the displayed value during render so we never need an effect to sync
+  // the input with the prop. While editing we show the raw draft; otherwise we
+  // show the canonical formatted prop value.
+  const displayValue = isEditing ? localValue : formatDisplay(value);
 
   const clamp = useCallback(
     (val: number) => {
@@ -81,22 +80,25 @@ export const CurrencyInput = ({
       {label && (
         <label
           htmlFor={inputId}
-          className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500"
+          className="block text-[11px] font-semibold uppercase tracking-wider text-stone-700"
         >
           {label}
         </label>
       )}
 
       <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-stone-400">₹</span>
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-stone-600">₹</span>
 
         <input
           id={inputId}
           type="text"
           inputMode="numeric"
-          value={localValue}
+          value={displayValue}
           disabled={disabled}
-          onFocus={() => setIsEditing(true)}
+          onFocus={() => {
+            setIsEditing(true);
+            setLocalValue(formatDisplay(value));
+          }}
           onBlur={(e) => commit(e.currentTarget.value)}
           onChange={(e) => setLocalValue(e.currentTarget.value)}
           onKeyDown={(e) => {
@@ -105,7 +107,7 @@ export const CurrencyInput = ({
             if (e.key === 'ArrowDown') { e.preventDefault(); adjust(-step); }
           }}
           className={cn(
-            'w-full bg-white border rounded-xl pl-8 pr-10 py-2.5 text-sm font-medium text-navy placeholder:text-stone-400 transition-all',
+            'w-full bg-white border rounded-xl pl-8 pr-10 py-2.5 text-sm font-medium text-navy placeholder:text-stone-600 transition-all',
             'focus:border-gold focus:ring-2 focus:ring-gold/10 focus:outline-none',
             'hover:border-stone-300 disabled:opacity-50 disabled:cursor-not-allowed',
             hasError ? 'border-rose-300' : 'border-stone-200',
@@ -117,8 +119,9 @@ export const CurrencyInput = ({
             type="button"
             onClick={() => adjust(step)}
             disabled={disabled || (max !== undefined && value >= max)}
-            className="p-0.5 text-stone-400 hover:text-navy disabled:opacity-30"
+            className="p-0.5 text-stone-600 hover:text-navy disabled:opacity-30"
             tabIndex={-1}
+            aria-label={`Increase ${label || 'value'}`}
           >
             <Plus size={12} />
           </button>
@@ -126,8 +129,9 @@ export const CurrencyInput = ({
             type="button"
             onClick={() => adjust(-step)}
             disabled={disabled || (min !== undefined && value <= min)}
-            className="p-0.5 text-stone-400 hover:text-navy disabled:opacity-30"
+            className="p-0.5 text-stone-600 hover:text-navy disabled:opacity-30"
             tabIndex={-1}
+            aria-label={`Decrease ${label || 'value'}`}
           >
             <Minus size={12} />
           </button>
@@ -146,7 +150,7 @@ export const CurrencyInput = ({
                 'px-2 py-0.5 text-[10px] font-medium rounded-md border transition-colors',
                 value === p.value
                   ? 'bg-navy text-white border-navy'
-                  : 'bg-white text-stone-500 border-stone-200 hover:border-navy',
+                  : 'bg-white text-stone-700 border-stone-200 hover:border-navy',
                 'disabled:opacity-50',
               )}
             >
@@ -159,7 +163,7 @@ export const CurrencyInput = ({
       {(helper || error || hasError) && (
         <div className="flex items-start gap-1">
           {hasError && <AlertCircle size={12} className="text-rose-500 mt-0.5 shrink-0" />}
-          <p className={cn('text-[10px]', hasError ? 'text-rose-500' : 'text-stone-400')}>
+          <p className={cn('text-[10px]', hasError ? 'text-rose-500' : 'text-stone-600')}>
             {error || (hasError ? `Value must be between ₹${formatDisplay(min || 0)} and ₹${formatDisplay(max || 0)}` : helper)}
           </p>
         </div>

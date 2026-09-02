@@ -16,6 +16,18 @@ interface MonteCarloFanChartProps {
   data: MonteCarloYearlyPercentile[];
 }
 
+const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 };
+
+const TOOLTIP_STYLE = {
+  borderRadius: '12px',
+  border: 'none',
+  boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+};
+
+const LEGEND_WRAPPER_STYLE = { fontSize: '11px', paddingBottom: '8px' };
+
+const XAXIS_LABEL = { value: 'Age', position: 'insideBottom' as const, offset: -5, fill: '#78716c', fontSize: 12 };
+
 export const MonteCarloFanChart = ({ data }: MonteCarloFanChartProps) => {
   const chartData = data.map((d) => ({
     age: d.age,
@@ -29,7 +41,7 @@ export const MonteCarloFanChart = ({ data }: MonteCarloFanChartProps) => {
   return (
     <div className="h-80 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <AreaChart data={chartData} margin={CHART_MARGIN}>
           <defs>
             <linearGradient id="colorFan90" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={COLORS.gold} stopOpacity={0.12} />
@@ -47,7 +59,7 @@ export const MonteCarloFanChart = ({ data }: MonteCarloFanChartProps) => {
             axisLine={false}
             tickLine={false}
             tickMargin={10}
-            label={{ value: 'Age', position: 'insideBottom', offset: -5, fill: '#78716c', fontSize: 12 }}
+            label={XAXIS_LABEL}
           />
           <YAxis
             tickFormatter={formatCurrencyCompact}
@@ -57,17 +69,13 @@ export const MonteCarloFanChart = ({ data }: MonteCarloFanChartProps) => {
           />
           <Tooltip
             formatter={(value: any, name: any) => [formatCurrencyCompact(typeof value === 'number' ? value : Number(value)), name]}
-            contentStyle={{
-              borderRadius: '12px',
-              border: 'none',
-              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-            }}
+            contentStyle={TOOLTIP_STYLE}
           />
           <Legend
             verticalAlign="top"
             align="right"
             iconType="circle"
-            wrapperStyle={{ fontSize: '11px', paddingBottom: '8px' }}
+            wrapperStyle={LEGEND_WRAPPER_STYLE}
           />
           <Area
             type="monotone"

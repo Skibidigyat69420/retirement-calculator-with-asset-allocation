@@ -131,15 +131,17 @@ export const MasterPlan = () => {
   const terminalSnapshot = wealthResult.snapshots[wealthResult.snapshots.length - 1];
   const allocationData = useMemo(() => {
     if (!terminalSnapshot) return [];
+    const total = terminalSnapshot.total;
+    const alloc = wealthResult.projectedAllocation;
     return [
-      { name: 'Equity', value: terminalSnapshot.values.equity, color: ASSET_COLORS.equity },
-      { name: 'Debt', value: terminalSnapshot.values.debt, color: ASSET_COLORS.debt },
-      { name: 'Gold', value: terminalSnapshot.values.gold, color: ASSET_COLORS.gold },
-      { name: 'Real Estate', value: terminalSnapshot.values.realestate, color: ASSET_COLORS.realestate },
-      { name: 'Liquid', value: terminalSnapshot.values.liquid, color: ASSET_COLORS.liquid },
-      { name: 'Other', value: terminalSnapshot.values.other, color: ASSET_COLORS.other },
+      { name: 'Equity', value: total * alloc.equity, color: ASSET_COLORS.equity },
+      { name: 'Debt', value: total * alloc.debt, color: ASSET_COLORS.debt },
+      { name: 'Gold', value: total * alloc.gold, color: ASSET_COLORS.gold },
+      { name: 'Real Estate', value: total * alloc.realestate, color: ASSET_COLORS.realestate },
+      { name: 'Liquid', value: total * alloc.liquid, color: ASSET_COLORS.liquid },
+      { name: 'Other', value: total * alloc.other, color: ASSET_COLORS.other },
     ].filter((d) => d.value > 0);
-  }, [terminalSnapshot]);
+  }, [terminalSnapshot, wealthResult.projectedAllocation]);
 
   const monthlyNeedAtRetirement = useMemo(() => {
     const years = Math.max(0, inputs.retirementAge - inputs.currentAge);
@@ -163,9 +165,9 @@ export const MasterPlan = () => {
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
-        
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-stone-500">Load Scenario:</span>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto min-w-0">
+          <span className="text-xs font-semibold uppercase tracking-wider text-stone-700 shrink-0">Load Scenario:</span>
           <Select
             value=""
             onChange={(scenarioId) => {
@@ -177,6 +179,8 @@ export const MasterPlan = () => {
               { value: '', label: 'Select a scenario...' },
               ...scenarios.map((s) => ({ value: s.id, label: s.name }))
             ]}
+            className="w-full sm:w-48 min-w-0"
+            aria-label="Load scenario"
           />
         </div>
       </div>
@@ -197,6 +201,13 @@ export const MasterPlan = () => {
                   placeholder="e.g. Vikram & Ananya Sharma"
                 />
                 <Input
+                  label="Client Email"
+                  type="email"
+                  value={inputs.client?.email || ''}
+                  onChange={(e) => updateClient({ email: e.target.value })}
+                  placeholder="e.g. client@example.com"
+                />
+                <Input
                   label="Wealth Advisor / Firm"
                   value={inputs.client?.advisor || ''}
                   onChange={(e) => updateClient({ advisor: e.target.value })}
@@ -208,12 +219,14 @@ export const MasterPlan = () => {
                   value={inputs.client?.reviewDate || ''}
                   onChange={(e) => updateClient({ reviewDate: e.target.value })}
                 />
-                <Input
-                  label="Advisory Focus / Mandate"
-                  value={inputs.client?.notes || ''}
-                  onChange={(e) => updateClient({ notes: e.target.value })}
-                  placeholder="Primary planning objective"
-                />
+                <div className="sm:col-span-2">
+                  <Input
+                    label="Advisory Focus / Mandate"
+                    value={inputs.client?.notes || ''}
+                    onChange={(e) => updateClient({ notes: e.target.value })}
+                    placeholder="Primary planning objective"
+                  />
+                </div>
               </div>
 
               <div className="border-t border-stone-100 pt-6 mt-6">
@@ -232,27 +245,27 @@ export const MasterPlan = () => {
               <h3 className="text-lg font-serif text-navy mb-4">Profile Snapshot</h3>
               <div className="space-y-4">
                 <div className="flex justify-between text-sm">
-                  <span className="text-stone-500">Client</span>
+                  <span className="text-stone-700">Client</span>
                   <span className="font-medium text-navy truncate max-w-[150px]">{inputs.client?.name || '—'}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-stone-500">Years to retirement</span>
+                  <span className="text-stone-700">Years to retirement</span>
                   <span className="font-medium text-navy">{Math.max(0, inputs.retirementAge - inputs.currentAge)} yrs</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-stone-500">Distribution years</span>
+                  <span className="text-stone-700">Distribution years</span>
                   <span className="font-medium text-navy">{Math.max(0, inputs.lifeExpectancy - inputs.retirementAge)} yrs</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-stone-500">Current net worth</span>
+                  <span className="text-stone-700">Current net worth</span>
                   <span className="font-medium text-navy">{formatCurrency(netWorth)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-stone-500">Net annual savings</span>
+                  <span className="text-stone-700">Net annual savings</span>
                   <span className="font-medium text-navy">{formatCurrency(wealthResult.annualSavings)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-stone-500">Net savings rate</span>
+                  <span className="text-stone-700">Net savings rate</span>
                   <span className="font-medium text-navy">{formatPercent(wealthResult.savingsRate)}</span>
                 </div>
               </div>
@@ -268,7 +281,7 @@ export const MasterPlan = () => {
               <h3 className="text-lg font-serif text-navy flex items-center gap-2">
                 <Building2 size={18} className="text-gold" /> Existing Assets
               </h3>
-              <p className="text-xs text-stone-500 mt-0.5">
+              <p className="text-xs text-stone-700 mt-0.5">
                 Total portfolio value: <strong className="text-navy">{formatCurrency(netWorth)}</strong> across {inputs.assets.length} assets
               </p>
             </div>
@@ -299,7 +312,7 @@ export const MasterPlan = () => {
             </div>
           </div>
           {inputs.assets.length === 0 && (
-            <p className="text-sm text-stone-500">No assets yet. Click <strong>Add Asset</strong> to record your holdings.</p>
+            <p className="text-sm text-stone-700">No assets yet. Click <strong>Add Asset</strong> to record your holdings.</p>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {inputs.assets.map((asset) => (
@@ -309,11 +322,15 @@ export const MasterPlan = () => {
                     type="text"
                     value={asset.name}
                     onChange={(e) => updateAsset(asset.id, { name: e.currentTarget.value })}
+                    aria-label={`Asset name: ${asset.name}`}
                     className="bg-transparent text-sm font-semibold text-navy focus:outline-none w-2/3"
                   />
                   <button
                     onClick={() => removeAsset(asset.id)}
-                    className="text-stone-400 hover:text-red-500 transition-colors"
+                    className="p-1 text-stone-600 hover:text-red-500 transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-red-300"
+                    aria-label={`Remove asset ${asset.name}`}
+                    title={`Remove asset ${asset.name}`}
+                    type="button"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -462,11 +479,11 @@ export const MasterPlan = () => {
               <Plus size={14} className="mr-1" /> Add Goal
             </Button>
           </div>
-          <div className="text-xs text-stone-500 bg-stone-50 p-3 rounded-lg border border-stone-200">
+          <div className="text-xs text-stone-700 bg-stone-50 p-3 rounded-lg border border-stone-200">
             <strong>Note:</strong> During simulation, the wealth engine automatically funds goals in order of priority: <strong>Essential</strong> first, then <strong>Important</strong>, then <strong>Aspirational</strong>.
           </div>
           {inputs.goals.length === 0 && (
-            <p className="text-sm text-stone-500">No goals yet. Click <strong>Add Goal</strong> to create one.</p>
+            <p className="text-sm text-stone-700">No goals yet. Click <strong>Add Goal</strong> to create one.</p>
           )}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {[...inputs.goals].sort((a, b) => {
@@ -479,11 +496,15 @@ export const MasterPlan = () => {
                     type="text"
                     value={goal.name}
                     onChange={(e) => updateGoal(goal.id, { name: e.currentTarget.value })}
+                    aria-label={`Goal name: ${goal.name}`}
                     className="bg-transparent text-sm font-semibold text-navy focus:outline-none w-2/3"
                   />
                   <button
                     onClick={() => removeGoal(goal.id)}
-                    className="text-stone-400 hover:text-red-500 transition-colors"
+                    className="p-1 text-stone-600 hover:text-red-500 transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-red-300"
+                    aria-label={`Remove goal ${goal.name}`}
+                    title={`Remove goal ${goal.name}`}
+                    type="button"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -577,7 +598,7 @@ export const MasterPlan = () => {
                 <h3 className="text-lg font-serif text-navy flex items-center gap-2">
                   <BarChart2 size={18} className="text-gold" /> Monte Carlo Simulation
                 </h3>
-                <p className="text-sm text-stone-500 mt-1">
+                <p className="text-sm text-stone-700 mt-1">
                   {wealthResult.monteCarlo.outcomes.length.toLocaleString()} correlated market paths using current assumptions.
                 </p>
               </div>
@@ -598,10 +619,10 @@ export const MasterPlan = () => {
               <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2">
                 <WalletMinimal size={18} className="text-gold" /> Rebalancing & Implementation
               </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
+                <table className="w-full min-w-[480px] text-sm">
                   <thead>
-                    <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-500">
+                    <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-700">
                       <th className="py-2 pr-4">Asset</th>
                       <th className="py-2 pr-4 text-right">Current</th>
                       <th className="py-2 pr-4 text-right">Target</th>
@@ -621,9 +642,9 @@ export const MasterPlan = () => {
                         <td className="py-2 pr-4 text-right font-medium">{formatCurrency(r.trade)}</td>
                         <td className="py-2 pr-4 text-center">
                           {Math.abs(r.trade) < netWorth * 0.02 ? (
-                            <span className="inline-flex items-center text-stone-500 text-xs"><CheckCircle2 size={12} className="mr-1" /> Hold</span>
+                            <span className="inline-flex items-center text-stone-700 text-xs"><CheckCircle2 size={12} className="mr-1" /> Hold</span>
                           ) : r.trade > 0 ? (
-                            <span className="text-green-600 text-xs font-semibold">Buy</span>
+                            <span className="text-green-700 text-xs font-semibold">Buy</span>
                           ) : (
                             <span className="text-red-600 text-xs font-semibold">Sell</span>
                           )}
@@ -646,7 +667,7 @@ export const MasterPlan = () => {
                       <span className="font-medium text-navy">{c.currency}</span>
                       <Badge variant={c.currency === 'INR' ? 'outline' : 'gold'}>{formatPercent(c.percentage)}</Badge>
                     </div>
-                    <div className="text-xs text-stone-500 mt-1">{formatCurrency(c.amount)}</div>
+                    <div className="text-xs text-stone-700 mt-1">{formatCurrency(c.amount)}</div>
                   </div>
                 ))}
               </div>
@@ -655,10 +676,10 @@ export const MasterPlan = () => {
 
           <Card>
             <h3 className="text-lg font-serif text-navy mb-4">Year-by-Year Projection</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
+              <table className="w-full min-w-[640px] text-sm">
                 <thead>
-                  <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-500">
+                  <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-700">
                     <th className="py-2 pr-4">Year</th>
                     <th className="py-2 pr-4">Age</th>
                     <th className="py-2 pr-4">Phase</th>
@@ -680,7 +701,7 @@ export const MasterPlan = () => {
                           <Badge variant={s.phase === 'accumulation' ? 'navy' : 'gold'}>{s.phase === 'accumulation' ? 'Accumulation' : 'Distribution'}</Badge>
                         </td>
                         <td className="py-2 pr-4 text-right font-medium">{formatCurrencyCompact(s.total)}</td>
-                        <td className="py-2 pr-4 text-right text-stone-500">{formatCurrencyCompact(s.realTotal)}</td>
+                        <td className="py-2 pr-4 text-right text-stone-700">{formatCurrencyCompact(s.realTotal)}</td>
                         <td className="py-2 pr-4 text-right">{monthlyNeed ? formatCurrencyCompact(monthlyNeed) : '-'}</td>
                         <td className="py-2 pr-4 text-right">{formatCurrencyCompact(s.invested)}</td>
                         <td className="py-2 pr-4 text-right">{formatCurrencyCompact(s.withdrawn)}</td>
@@ -695,8 +716,8 @@ export const MasterPlan = () => {
       )}
 
       <WorkflowFooter
-        prev={{ path: '/risk', label: 'Risk Questionnaire' }}
-        next={{ path: '/goal', label: 'Goals Planner' }}
+        prev={{ path: '/risk', label: 'Risk Profile' }}
+        next={{ path: '/goal', label: 'Goals' }}
         flowHint="Master plan assets, cashflows, and life profile parameters power the Monte Carlo simulation engine."
       />
     </div>

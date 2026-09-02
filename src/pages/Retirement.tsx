@@ -53,7 +53,9 @@ export const Retirement = () => {
     return Math.round(requiredMonthlySIPForGoal(shortfall, yearsToRetirement, blendedReturn));
   }, [gap, yearsToRetirement, blendedReturn, shortfall]);
 
-  const recommendedDelayAge = Math.min(inputs.lifeExpectancy - 5, inputs.retirementAge + 3);
+  const maxDelayAge = Math.min(inputs.lifeExpectancy - 5, inputs.retirementAge + 3);
+  const recommendedDelayAge = Math.max(inputs.retirementAge + 1, maxDelayAge);
+  const delayYears = recommendedDelayAge - inputs.retirementAge;
 
   const sustainableMonthlyNeed = useMemo(() => {
     if (gap >= 0 || requiredCorpus <= 0) return inputs.swp.monthlyNeedToday;
@@ -138,7 +140,7 @@ export const Retirement = () => {
                   <Clock size={14} className="text-gold" /> Option 2: Extend Horizon
                 </div>
                 <p className="text-xs text-stone-600">
-                  Delay retirement by 3 years to age <strong>{recommendedDelayAge}</strong> to allow longer compounding.
+                  Delay retirement by {delayYears} year{delayYears === 1 ? '' : 's'} to age <strong>{recommendedDelayAge}</strong> to allow longer compounding.
                 </p>
               </div>
               <Button
@@ -250,12 +252,12 @@ export const Retirement = () => {
             <div className="flex items-start gap-3 mb-4">
               {gap >= 0 && successRate >= riskProfile.goalSuccessThreshold ? (
                 <>
-                  <CheckCircle2 size={20} className="text-green-600 shrink-0 mt-0.5" />
+                  <CheckCircle2 size={20} className="text-green-700 shrink-0 mt-0.5" />
                   <p className="text-stone-600 leading-relaxed">
                     By age <strong>{inputs.retirementAge}</strong>, your monthly expense of{' '}
                     <strong>{formatCurrency(inputs.swp.monthlyNeedToday)}</strong> today will inflate to{' '}
                     <strong>{formatCurrency(monthlyNeedAtRetirement)}</strong>. Your projected corpus of{' '}
-                    <strong className="text-green-600">{formatCurrency(projectedCorpusAtRetirement)}</strong>{' '}
+                    <strong className="text-green-700">{formatCurrency(projectedCorpusAtRetirement)}</strong>{' '}
                     exceeds the required corpus of <strong>{formatCurrency(requiredCorpus)}</strong>.
                   </p>
                 </>
@@ -266,7 +268,7 @@ export const Retirement = () => {
                     By age <strong>{inputs.retirementAge}</strong>, your monthly expense of{' '}
                     <strong>{formatCurrency(inputs.swp.monthlyNeedToday)}</strong> today will inflate to{' '}
                     <strong>{formatCurrency(monthlyNeedAtRetirement)}</strong>. Your projected corpus is{' '}
-                    <strong className={gap >= 0 ? 'text-green-600' : 'text-red-600'}>
+                    <strong className={gap >= 0 ? 'text-green-700' : 'text-red-600'}>
                       {formatCurrency(projectedCorpusAtRetirement)}
                     </strong>{' '}
                     against a required corpus of <strong>{formatCurrency(requiredCorpus)}</strong>.
@@ -301,8 +303,8 @@ export const Retirement = () => {
       </div>
 
       <WorkflowFooter
-        prev={{ path: '/goal', label: 'Goals Planner' }}
-        next={{ path: '/allocation', label: 'Asset Allocation' }}
+        prev={{ path: '/goal', label: 'Goals' }}
+        next={{ path: '/allocation', label: 'Allocation' }}
         flowHint="Accumulated retirement corpus and required drawdowns dictate strategic asset allocation."
       />
     </div>

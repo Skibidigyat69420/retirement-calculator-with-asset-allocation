@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useId } from 'react';
 import {
   BarChart3,
   RefreshCw,
@@ -39,6 +39,10 @@ import { ASSET_COLORS } from '../lib/constants';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import type { AssetCategory } from '../types';
 
+const FRONTIER_MARGIN = { top: 10, right: 20, bottom: 10, left: 0 };
+const FRONTIER_TOOLTIP_STYLE = { borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' };
+const FRONTIER_CURSOR = { strokeDasharray: '3 3' };
+
 const categoryMap: Record<string, AssetCategory> = {
   equity: 'equity',
   index: 'equity',
@@ -48,8 +52,10 @@ const categoryMap: Record<string, AssetCategory> = {
 };
 
 export const MVO = () => {
-  const { addAsset, updateAsset, inputs, riskProfile, setInputs, showToast } = useCalculator();
+  const { addAsset, removeAsset, inputs, riskProfile, setInputs, setManualTargets, showToast } = useCalculator();
   const { data, rawBundle, loading, progress, error, fetchData, loadBackendData } = useMarketData();
+  const baseId = useId();
+  const fieldId = (name: string) => `${baseId}-${name}`;
 
   const maxRange = useMemo(() => getMaxHistoryDateRange(), []);
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>(DEFAULT_ALLOCATION_SYMBOLS);
@@ -74,14 +80,13 @@ export const MVO = () => {
     }
   }, [data, rawBundle, selectedSymbols]);
 
-  const equityMask = useMemo(() => {
-    return (alignedData?.instruments || []).map((inst) =>
-      inst?.category === 'index' || inst?.category === 'equity',
-    );
-  }, [alignedData]);
+  // Compute MVO results only when inputs actually change.
+  const { result: mvoResult, error: mvoError, equityMask } = useMemo(() => {
+    if (!alignedData || alignedData.symbols.length < 2) return { result: null, error: null, equityMask: [] as boolean[] };
 
-  const mvoComputation = useMemo(() => {
-    if (!alignedData || alignedData.symbols.length < 2) return { result: null, error: null };
+    const equityMask = alignedData.instruments.map(
+      (inst) => inst?.category === 'index' || inst?.category === 'equity',
+    );
 
     // Input validation: reject non-finite or implausible statistics before optimizing.
     const invalidStat = alignedData.stats.find(
@@ -97,6 +102,7 @@ export const MVO = () => {
       return {
         result: null,
         error: `Invalid statistics for ${invalidStat.symbol}: volatility is missing/above 100% or the annualized return is implausible (beyond ±100%). Re-fetch the data or remove this asset from the selection.`,
+        equityMask,
       };
     }
 
@@ -108,6 +114,7 @@ export const MVO = () => {
           return {
             result: null,
             error: `Singular covariance matrix: ${alignedData.symbols[i]} and ${alignedData.symbols[j]} are ~100% correlated. Remove one of them or pick less-correlated assets.`,
+            equityMask,
           };
         }
       }
@@ -131,19 +138,18 @@ export const MVO = () => {
         return {
           result: null,
           error: `No feasible solution: no portfolio satisfies the ${formatPercent(riskProfile.targetVolatility)} volatility cap with this asset mix. Raise the volatility target in your risk profile or add lower-risk assets.`,
+          equityMask,
         };
       }
-      return { result, error: null };
+      return { result, error: null, equityMask };
     } catch (err: any) {
       return {
         result: null,
         error: `Optimization failed: ${err?.message || 'singular matrix or no feasible solution'}. Try selecting a different mix of less-correlated assets.`,
+        equityMask,
       };
     }
-  }, [alignedData, maxEquity, riskProfile.riskFreeRate, riskProfile.targetVolatility, equityMask]);
-
-  const mvoResult = mvoComputation.result;
-  const mvoError = mvoComputation.error;
+  }, [alignedData, maxEquity, riskProfile.targetVolatility, riskProfile.riskFreeRate]);
 
   const frontierData = useMemo(() => {
     if (!mvoResult) return [];
@@ -232,7 +238,9 @@ export const MVO = () => {
       (Object.keys(targets) as AssetCategory[]).forEach((cat) => (targets[cat] = (targets[cat] / targetTotal) * 100));
     }
 
-    const equitySplit = Math.round(targets.equity);
+    const equityPlusDebt = targets.equity + targets.debt;
+    const equitySplit = equityPlusDebt > 0 ? Math.round((targets.equity / equityPlusDebt) * 100) : 0;
+    setManualTargets(targets);
     setInputs((prev) => ({
       ...prev,
       sip: { ...prev.sip, equitySplit, debtSplit: 100 - equitySplit },
@@ -240,7 +248,7 @@ export const MVO = () => {
     }));
 
     setAppliedStrategy(`${strategyName}-alloc`);
-    showToast(`Applied ${strategyName} weights to SIP/STP equity split (${equitySplit}%).`, 'success');
+    showToast(`Applied ${strategyName} weights (${equitySplit}% Eq / ${Math.round(targets.debt)}% Debt / ${Math.round(targets.gold)}% Gold) to Strategic Targets & SIP/STP!`, 'success');
     setTimeout(() => setAppliedStrategy(null), 3000);
   };
 
@@ -250,8 +258,9 @@ export const MVO = () => {
       return;
     }
 
-    const existingIds = new Set(inputs.assets.filter((a) => selectedSymbols.includes(a.name)).map((a) => a.id));
-    existingIds.forEach((id) => updateAsset(id as string, { value: 0 }));
+    // Replace any previously imported MVO assets for this strategy family.
+    const existingMvoIds = inputs.assets.filter((a) => a.source === 'mvo').map((a) => a.id);
+    existingMvoIds.forEach((id) => removeAsset(id));
 
     portfolio.weights.forEach((w, idx) => {
       const symbol = alignedData.symbols[idx];
@@ -265,6 +274,7 @@ export const MVO = () => {
         value,
         returnRate: Math.max(0, Math.min(30, returnPct)),
         category,
+        source: 'mvo',
       });
     });
     setAppliedStrategy(strategyName);
@@ -294,26 +304,26 @@ export const MVO = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Risk Profile</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-700">Risk Profile</div>
           <div className="text-xl font-serif text-navy mt-1">{riskProfile.label}</div>
-          <div className="text-xs text-stone-500 mt-1">Max equity {formatPercent(riskProfile.maxEquity)} · Vol target {formatPercent(riskProfile.targetVolatility)}</div>
+          <div className="text-xs text-stone-700 mt-1">Max equity {formatPercent(riskProfile.maxEquity)} · Vol target {formatPercent(riskProfile.targetVolatility)}</div>
         </Card>
         <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Risk-Free Rate</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-700">Risk-Free Rate</div>
           <div className="text-xl font-serif text-navy mt-1">{formatPercent(riskProfile.riskFreeRate)}</div>
-          <div className="text-xs text-stone-500 mt-1">Used for Sharpe ratio calculation</div>
+          <div className="text-xs text-stone-700 mt-1">Used for Sharpe ratio calculation</div>
         </Card>
         <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">History</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-700">History</div>
           <div className="text-xl font-serif text-navy mt-1">{historyDays > 0 ? `${historyDays} days` : '—'}</div>
-          <div className="text-xs text-stone-500 mt-1">{alignedData?.dateRange.from} → {alignedData?.dateRange.to}</div>
+          <div className="text-xs text-stone-700 mt-1">{alignedData?.dateRange.from} → {alignedData?.dateRange.to}</div>
         </Card>
         <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Data Source</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-700">Data Source</div>
           <div className="text-xl font-serif text-navy mt-1 flex items-center gap-2">
             <Database size={16} /> {sourceLabel}
           </div>
-          <div className="text-xs text-stone-500 mt-1">{data?.symbols.length || 0} instruments available</div>
+          <div className="text-xs text-stone-700 mt-1">{data?.symbols.length || 0} instruments available</div>
         </Card>
       </div>
 
@@ -340,17 +350,17 @@ export const MVO = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1 flex items-center gap-1"><Calendar size={12} /> From</label>
-              <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:border-navy" />
+              <label htmlFor={fieldId('from')} className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1 flex items-center gap-1"><Calendar size={12} /> From</label>
+              <input id={fieldId('from')} type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:border-navy" />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1 flex items-center gap-1"><Calendar size={12} /> To</label>
-              <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:border-navy" />
+              <label htmlFor={fieldId('to')} className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1 flex items-center gap-1"><Calendar size={12} /> To</label>
+              <input id={fieldId('to')} type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:border-navy" />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-2">
               Select Assets ({data?.symbols.length || 0} available)
             </label>
             <div className="flex flex-wrap gap-2">
@@ -362,6 +372,8 @@ export const MVO = () => {
                     key={symbol}
                     onClick={() => toggleSymbol(symbol)}
                     title={instrument?.name || symbol}
+                    aria-label={instrument?.name || symbol}
+                    aria-pressed={selected}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${selected ? 'bg-navy text-white border-navy' : 'bg-white text-stone-600 border-stone-200 hover:border-navy'}`}
                   >
                     {instrument?.name || symbol}
@@ -372,10 +384,11 @@ export const MVO = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
+            <label htmlFor={fieldId('maxEquity')} className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-2">
               Max Equity Constraint ({formatPercent(maxEquity)})
             </label>
             <input
+              id={fieldId('maxEquity')}
               type="range"
               min={0}
               max={100}
@@ -384,7 +397,7 @@ export const MVO = () => {
               onChange={(e) => setMaxEquity(Number(e.target.value))}
               className="w-full accent-navy"
             />
-            <div className="flex justify-between text-xs text-stone-500 mt-1">
+            <div className="flex justify-between text-xs text-stone-700 mt-1">
               <span>0%</span>
               <span>Profile default: {formatPercent(riskProfile.maxEquity)}</span>
               <span>100%</span>
@@ -437,11 +450,11 @@ export const MVO = () => {
               <h3 className="text-lg font-serif text-navy mb-6">Efficient Frontier</h3>
               <div className="h-96 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={frontierData} margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
+                  <LineChart data={frontierData} margin={FRONTIER_MARGIN}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
                     <XAxis type="number" dataKey="risk" name="Risk" unit="%" tickFormatter={(v) => `${v.toFixed(1)}%`} tick={{ fontSize: 12, fill: '#78716c' }} axisLine={false} tickLine={false} label={{ value: 'Annualized Volatility', position: 'insideBottom', offset: -5, fill: '#78716c', fontSize: 12 }} />
                     <YAxis type="number" dataKey="return" name="Return" unit="%" tickFormatter={(v) => `${v.toFixed(1)}%`} tick={{ fontSize: 12, fill: '#78716c' }} axisLine={false} tickLine={false} label={{ value: 'Expected Return', angle: -90, position: 'insideLeft', fill: '#78716c', fontSize: 12 }} />
-                    <Tooltip cursor={{ strokeDasharray: '3 3' }} formatter={((value: number) => `${value.toFixed(2)}%`) as any} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                    <Tooltip cursor={FRONTIER_CURSOR} formatter={((value: number) => `${value.toFixed(2)}%`) as any} contentStyle={FRONTIER_TOOLTIP_STYLE} />
                     <Line dataKey="return" stroke="#1A233A" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
                     {highlightedPortfolios.map((p) => (
                       <ReferenceDot key={p.key} x={p.risk} y={p.return} r={6} fill={p.color} stroke="none" label={{ value: p.label, position: 'top', fill: p.color, fontSize: 11, fontWeight: 700 }} />
@@ -453,10 +466,10 @@ export const MVO = () => {
 
             <Card>
               <h3 className="text-lg font-serif text-navy mb-4">Correlation Matrix</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
+              <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
+                <table className="w-full min-w-[360px] text-xs">
                   <thead>
-                    <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-500">
+                    <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-700">
                       <th className="py-2 pr-2">Asset</th>
                       {correlationMatrix.map((row) => (
                         <th key={row.symbol} className="py-2 pr-2 text-right">{row.symbol.slice(0, 6)}</th>
@@ -482,10 +495,10 @@ export const MVO = () => {
 
           <Card>
             <h3 className="text-lg font-serif text-navy mb-4">Risk / Return Profile</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
+              <table className="w-full min-w-[480px] text-sm">
                 <thead>
-                  <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-500">
+                  <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-700">
                     <th className="py-2 pr-4">Asset</th>
                     <th className="py-2 pr-4 text-right">Ann. Return</th>
                     <th className="py-2 pr-4 text-right">Ann. Vol</th>
@@ -529,15 +542,15 @@ export const MVO = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="p-2 bg-stone-50 rounded-lg">
-                      <span className="text-stone-400 block text-[10px]">RETURN</span>
+                      <span className="text-stone-600 block text-[10px]">RETURN</span>
                       <span className="font-semibold text-navy">{formatPercent(strategy.portfolio.expectedReturn * 100)}</span>
                     </div>
                     <div className="p-2 bg-stone-50 rounded-lg">
-                      <span className="text-stone-400 block text-[10px]">VOLATILITY</span>
+                      <span className="text-stone-600 block text-[10px]">VOLATILITY</span>
                       <span className="font-semibold text-navy">{formatPercent(strategy.portfolio.volatility * 100)}</span>
                     </div>
                     <div className="p-2 bg-stone-50 rounded-lg col-span-2">
-                      <span className="text-stone-400 block text-[10px]">SHARPE</span>
+                      <span className="text-stone-600 block text-[10px]">SHARPE</span>
                       <span className="font-semibold text-navy">{strategy.portfolio.sharpe.toFixed(2)}</span>
                     </div>
                   </div>
@@ -581,7 +594,7 @@ export const MVO = () => {
 
       <WorkflowFooter
         prev={{ path: '/allocation', label: 'Asset Allocation' }}
-        next={{ path: '/reports', label: 'Plan Reports' }}
+        next={{ path: '/reports', label: 'Reports' }}
         flowHint="Mean-variance efficient portfolios provide empirically optimal weights to apply to your plan targets."
       />
     </div>

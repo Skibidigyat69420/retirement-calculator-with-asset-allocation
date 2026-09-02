@@ -21,7 +21,7 @@ export const Button = ({
     outline:
       'border border-stone-300 bg-white text-navy hover:border-gold hover:text-gold hover:bg-gold/5 active:scale-[0.98]',
     ghost:
-      'text-stone-500 hover:text-navy hover:bg-stone-100/70 active:scale-[0.98]',
+      'text-stone-700 hover:text-navy hover:bg-stone-100/70 active:scale-[0.98]',
   };
 
   const sizes = {
@@ -35,7 +35,7 @@ export const Button = ({
       type={type}
       {...props}
       className={cn(
-        'inline-flex items-center justify-center rounded-xl font-semibold transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none',
+        'inline-flex items-center justify-center rounded-xl font-semibold transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-navy/40',
         variants[variant],
         sizes[size],
         className,

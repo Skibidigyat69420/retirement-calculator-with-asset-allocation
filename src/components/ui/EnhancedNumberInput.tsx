@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useId } from 'react';
 import { Plus, Minus, AlertCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -16,6 +16,7 @@ interface EnhancedNumberInputProps {
   presets?: { label: string; value: number }[];
   disabled?: boolean;
   className?: string;
+  id?: string;
 }
 
 export const EnhancedNumberInput = ({
@@ -32,15 +33,17 @@ export const EnhancedNumberInput = ({
   presets,
   disabled,
   className,
+  id: idProp,
 }: EnhancedNumberInputProps) => {
   const [localValue, setLocalValue] = useState(String(value));
   const [isEditing, setIsEditing] = useState(false);
+  const generatedId = useId();
+  const inputId = idProp ?? generatedId;
 
-  useEffect(() => {
-    if (!isEditing) {
-      setLocalValue(String(value));
-    }
-  }, [value, isEditing]);
+  // Derive the displayed value during render so we never need an effect to sync
+  // the input with the prop. While editing we show the raw draft; otherwise we
+  // show the canonical prop value.
+  const displayValue = isEditing ? localValue : String(value);
 
   const clamp = useCallback(
     (val: number) => {
@@ -75,24 +78,28 @@ export const EnhancedNumberInput = ({
   return (
     <div className={cn('space-y-1.5', className)}>
       {label && (
-        <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500">
+        <label htmlFor={inputId} className="block text-[11px] font-semibold uppercase tracking-wider text-stone-700">
           {label}
         </label>
       )}
 
       <div className="relative">
         {prefix && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-stone-400">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-stone-600">
             {prefix}
           </span>
         )}
 
         <input
+          id={inputId}
           type="text"
           inputMode="decimal"
-          value={localValue}
+          value={displayValue}
           disabled={disabled}
-          onFocus={() => setIsEditing(true)}
+          onFocus={() => {
+            setIsEditing(true);
+            setLocalValue(String(value));
+          }}
           onBlur={(e) => commit(e.currentTarget.value)}
           onChange={(e) => setLocalValue(e.currentTarget.value)}
           onKeyDown={(e) => {
@@ -101,7 +108,7 @@ export const EnhancedNumberInput = ({
             if (e.key === 'ArrowDown') { e.preventDefault(); adjust(-step); }
           }}
           className={cn(
-            'w-full bg-white border rounded-xl px-3 py-2.5 text-sm font-medium text-navy placeholder:text-stone-400 transition-all',
+            'w-full bg-white border rounded-xl px-3 py-2.5 text-sm font-medium text-navy placeholder:text-stone-600 transition-all',
             'focus:border-gold focus:ring-2 focus:ring-gold/10 focus:outline-none',
             'hover:border-stone-300 disabled:opacity-50 disabled:cursor-not-allowed',
             prefix && 'pl-8',
@@ -111,7 +118,7 @@ export const EnhancedNumberInput = ({
         />
 
         {suffix && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-stone-400">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-stone-600">
             {suffix}
           </span>
         )}
@@ -121,8 +128,9 @@ export const EnhancedNumberInput = ({
             type="button"
             onClick={() => adjust(step)}
             disabled={disabled || (max !== undefined && value >= max)}
-            className="p-0.5 text-stone-400 hover:text-navy disabled:opacity-30"
+            className="p-0.5 text-stone-600 hover:text-navy disabled:opacity-30"
             tabIndex={-1}
+            aria-label={`Increase ${label || 'value'}`}
           >
             <Plus size={12} />
           </button>
@@ -130,8 +138,9 @@ export const EnhancedNumberInput = ({
             type="button"
             onClick={() => adjust(-step)}
             disabled={disabled || (min !== undefined && value <= min)}
-            className="p-0.5 text-stone-400 hover:text-navy disabled:opacity-30"
+            className="p-0.5 text-stone-600 hover:text-navy disabled:opacity-30"
             tabIndex={-1}
+            aria-label={`Decrease ${label || 'value'}`}
           >
             <Minus size={12} />
           </button>
@@ -150,7 +159,7 @@ export const EnhancedNumberInput = ({
                 'px-2 py-0.5 text-[10px] font-medium rounded-md border transition-colors',
                 value === p.value
                   ? 'bg-navy text-white border-navy'
-                  : 'bg-white text-stone-500 border-stone-200 hover:border-navy',
+                  : 'bg-white text-stone-700 border-stone-200 hover:border-navy',
                 'disabled:opacity-50',
               )}
             >
@@ -163,7 +172,7 @@ export const EnhancedNumberInput = ({
       {(helper || error || hasError) && (
         <div className="flex items-start gap-1">
           {hasError && <AlertCircle size={12} className="text-rose-500 mt-0.5 shrink-0" />}
-          <p className={cn('text-[10px]', hasError ? 'text-rose-500' : 'text-stone-400')}>
+          <p className={cn('text-[10px]', hasError ? 'text-rose-500' : 'text-stone-600')}>
             {error || (hasError ? `Value must be between ${min} and ${max}` : helper)}
           </p>
         </div>

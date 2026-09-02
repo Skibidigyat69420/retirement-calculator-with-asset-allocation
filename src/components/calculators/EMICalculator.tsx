@@ -18,7 +18,11 @@ import {
   Legend,
 } from 'recharts';
 
+import { useCalculator } from '../../context/CalculatorContext';
+import { Button } from '../ui/Button';
+
 export const EMICalculator = () => {
+  const { inputs, updateInputs, showToast } = useCalculator();
   const [principal, setPrincipal] = useState(50_00_000);
   const [rate, setRate] = useState(9);
   const [years, setYears] = useState(20);
@@ -31,6 +35,12 @@ export const EMICalculator = () => {
     interest: d.interestPaid,
   }));
 
+  const handleAddEmiToExpenses = () => {
+    const emiRounded = Math.round(result.emi);
+    updateInputs({ monthlyExpenditure: inputs.monthlyExpenditure + emiRounded });
+    showToast(`Added ${formatCurrency(emiRounded)}/mo loan EMI to monthly expenditure (total: ${formatCurrency(inputs.monthlyExpenditure + emiRounded)}/mo)!`, 'success');
+  };
+
   return (
     <CalculatorShell
       title="EMI Calculator"
@@ -40,6 +50,9 @@ export const EMICalculator = () => {
           <NumberInput label="Loan Amount" value={principal} onChange={setPrincipal} />
           <NumberInput label="Interest Rate" value={rate} onChange={setRate} suffix="%" />
           <NumberInput label="Loan Tenure" value={years} onChange={setYears} />
+          <Button onClick={handleAddEmiToExpenses} className="w-full mt-2" variant="outline">
+            Add EMI to Plan Expenses
+          </Button>
         </>
       }
       results={
@@ -51,7 +64,7 @@ export const EMICalculator = () => {
           </div>
 
           <Card>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-500 mb-4">Yearly Amortisation</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-700 mb-4">Yearly Amortisation</h4>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>

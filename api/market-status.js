@@ -46,7 +46,7 @@ export default function handler(req, res) {
     });
   } catch (err) {
     console.error('Market status error:', err);
-    return res.status(500).json({
+    return res.status(404).json({
       ok: false,
       error: 'Market data bundle not found. Run `npm run fetch:data` first.',
     });
