@@ -7,21 +7,17 @@
 import { readdirSync, statSync, existsSync, mkdirSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { errorResponse, handleOptions, jsonResponse } from './_utils.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const IPS_DIR = resolve(__dirname, '..', 'ips');
+const IPS_DIR = resolve(__dirname, '..', '..', 'ips');
 
-export default function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+export default async (request) => {
+  const optionsResponse = handleOptions(request);
+  if (optionsResponse) return optionsResponse;
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (request.method !== 'GET') {
+    return errorResponse('Method not allowed', 405);
   }
 
   try {
@@ -40,9 +36,9 @@ export default function handler(req, res) {
       })
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
-    return res.status(200).json({ files });
+    return jsonResponse({ files });
   } catch (err) {
     console.error('List IPS error:', err);
-    return res.status(500).json({ error: 'Failed to list IPS files' });
+    return errorResponse('Failed to list IPS files', 500);
   }
-}
+};

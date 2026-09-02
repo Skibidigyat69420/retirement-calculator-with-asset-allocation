@@ -6,9 +6,9 @@ import { pathToFileURL } from 'url'
 import { existsSync } from 'fs'
 
 /**
- * Vite dev-server plugin that executes Vercel-style serverless handlers
- * located in the project root `api/` directory. This makes /api/save-ips,
- * /api/list-ips, /api/load-ips and /api/market-data work during local dev.
+ * Vite dev-server plugin that emulates Netlify Functions located in
+ * `netlify/functions/`. This makes /api/* routes work during local dev
+ * without needing the Netlify CLI.
  */
 function apiRoutesPlugin() {
   return {
@@ -16,79 +16,58 @@ function apiRoutesPlugin() {
     configureServer(server: ViteDevServer) {
       const projectRoot = server.config.root
       server.middlewares.use('/api', async (req: any, res: any, next: any) => {
-        // Polyfill Express-style response helpers for Vercel-style handlers.
-        if (!res.status) {
-          res.status = (code: number) => {
-            res.statusCode = code
-            return res
-          }
-        }
-        if (!res.json) {
-          res.json = (data: unknown) => {
-            res.setHeader('Content-Type', 'application/json')
-            res.end(JSON.stringify(data))
-            return res
-          }
-        }
-        if (!res.send) {
-          res.send = (data: unknown) => {
-            res.end(data)
-            return res
-          }
+        // Skip the Angel One proxy (handled by Vite's proxy config).
+        if (req.url?.startsWith('/angelone')) {
+          return next()
         }
 
         const sendError = (status: number, message: string) => {
           if (res.headersSent) return
-          res.status(status).json({ error: message })
+          res.statusCode = status
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: message }))
         }
 
         try {
-          // Skip the Angel One proxy (handled by Vite's proxy config).
-          if (req.url?.startsWith('/angelone')) {
-            return next()
-          }
-
           const url = new URL(req.url || '/', `http://${req.headers.host}`)
           const routeName = url.pathname.replace(/^\/(api\/)?/, '').split('?')[0]
-          req.query = Object.fromEntries(url.searchParams)
-          const handlerPath = resolve(projectRoot, 'api', `${routeName}.js`)
+          const handlerPath = resolve(projectRoot, 'netlify', 'functions', `${routeName}.js`)
 
           if (!routeName || !existsSync(handlerPath)) {
             return sendError(404, 'API handler not found')
           }
 
-          // Append a cache-busting query so edits to api/ files are reloaded per request.
+          const collectBody = () =>
+            new Promise<Buffer>((resolve, reject) => {
+              const chunks: Buffer[] = []
+              req.on('data', (chunk: Buffer) => chunks.push(chunk))
+              req.on('end', () => resolve(Buffer.concat(chunks)))
+              req.on('error', reject)
+            })
+
+          const body = ['GET', 'HEAD'].includes(req.method || 'GET') ? undefined : await collectBody()
+          const request = new Request(url.href, {
+            method: req.method,
+            headers: req.headers as Record<string, string>,
+            body,
+          })
+
+          // Append a cache-busting query so edits to function files are reloaded per request.
           const mod = await import(`${pathToFileURL(handlerPath).href}?t=${Date.now()}`)
           const handler = mod.default
           if (typeof handler !== 'function') {
             return sendError(500, 'API handler not found or invalid')
           }
 
-          // Collect request body for POST requests.
-          if (req.method === 'POST') {
-            let body = ''
-            req.on('data', (chunk: any) => (body += chunk))
-            req.on('end', () => {
-              try {
-                req.body = body ? JSON.parse(body) : {}
-              } catch {
-                return sendError(400, 'Invalid JSON body')
-              }
-              Promise.resolve(handler(req, res)).catch((err) => {
-                console.error('API handler error:', err)
-                sendError(500, 'Internal server error')
-              })
-            })
-            req.on('error', (err: Error) => {
-              console.error('Request body error:', err)
-              sendError(400, 'Failed to read request body')
-            })
-          } else {
-            Promise.resolve(handler(req, res)).catch((err) => {
-              console.error('API handler error:', err)
-              sendError(500, 'Internal server error')
-            })
+          const response = await handler(request)
+          if (!(response instanceof Response)) {
+            return sendError(500, 'API handler did not return a Response')
           }
+
+          res.statusCode = response.status
+          response.headers.forEach((value, key) => res.setHeader(key, value))
+          const data = await response.arrayBuffer()
+          res.end(Buffer.from(data))
         } catch (err) {
           console.error('API route error:', err)
           sendError(500, 'Internal server error')
