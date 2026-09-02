@@ -50,13 +50,10 @@ export interface SmartApiFunds {
 }
 
 export const DEFAULT_NETWORK_INFO = {
-  localIp: '192.168.68.61',
-  publicIp: '122.170.251.47',
-  macAddress: 'b0:22:7a:74:16:ec',
+  localIp: '',
+  publicIp: '',
+  macAddress: '',
 };
-
-const STORAGE_KEY_CREDS = 'soundthesis_angel_creds';
-const STORAGE_KEY_SESSION = 'soundthesis_angel_session';
 
 /**
  * Generate standard 6-digit TOTP from base32 secret
@@ -376,47 +373,32 @@ export async function fetchLTPs(
 
 /**
  * Storage Helpers
+ *
+ * Broker credentials and sessions are intentionally NOT persisted in the browser.
+ * API keys, PINs, TOTP secrets, JWTs, refresh tokens, and feed tokens live only
+ * in memory for the current session. This prevents any script or XSS payload from
+ * exfiltrating secrets from localStorage and limits blast radius if a device is
+ * shared or lost. In a future server-side redesign, the frontend will hold only
+ * an opaque application session reference.
  */
-export function saveCredentials(creds: SmartApiCredentials) {
-  // Persist only non-sensitive fields. PIN/TOTP secret must be re-entered each session.
-  const safeCreds: SmartApiCredentials = {
-    apiKey: creds.apiKey,
-    clientCode: creds.clientCode,
-    pin: '',
-    totpSecret: '',
-    localIp: creds.localIp,
-    publicIp: creds.publicIp,
-    macAddress: creds.macAddress,
-  };
-  localStorage.setItem(STORAGE_KEY_CREDS, JSON.stringify(safeCreds));
+export function saveCredentials(_creds: SmartApiCredentials) {
+  // No-op: credentials are session-only.
 }
 
 export function loadCredentials(): SmartApiCredentials | null {
-  const raw = localStorage.getItem(STORAGE_KEY_CREDS);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
+  return null;
 }
 
-export function saveSession(session: SmartApiSession) {
-  localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(session));
+export function saveSession(_session: SmartApiSession) {
+  // No-op: broker sessions are session-only.
 }
 
 export function loadSession(): SmartApiSession | null {
-  const raw = localStorage.getItem(STORAGE_KEY_SESSION);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
+  return null;
 }
 
 export function clearSession() {
-  localStorage.removeItem(STORAGE_KEY_SESSION);
+  // No-op: there is no client-side session storage to clear.
 }
 
 export interface CandleDataRequest {
@@ -461,18 +443,17 @@ export async function fetchCandleData(
  * so deployments can inject it without touching committed source code.
  */
 export function buildDefaultCredentials(partial?: Partial<SmartApiCredentials>): SmartApiCredentials {
-  const saved = loadCredentials();
-  const envKey = typeof import.meta.env !== 'undefined' ? (import.meta.env.VITE_ANGEL_API_KEY as string | undefined) : undefined;
-
+  // No API key is injected at build time (VITE_* variables are exposed to the
+  // browser bundle) and no credentials are loaded from storage. Everything must
+  // be entered by the user each session.
   return {
-    apiKey: envKey || saved?.apiKey || '',
-    clientCode: saved?.clientCode || '',
-    pin: saved?.pin || '',
-    totpSecret: saved?.totpSecret || '',
+    apiKey: '',
+    clientCode: '',
+    pin: '',
+    totpSecret: '',
     localIp: DEFAULT_NETWORK_INFO.localIp,
     publicIp: DEFAULT_NETWORK_INFO.publicIp,
     macAddress: DEFAULT_NETWORK_INFO.macAddress,
-    ...saved,
     ...partial,
   };
 }
