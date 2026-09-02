@@ -1,5 +1,6 @@
 import type { AssetCategory, MonteCarloConfig, MonteCarloRun, MonteCarloOutcome, MonteCarloYearlyPercentile } from '../types';
 import { mean } from './returns';
+import { createBoxMuller, createSeededRandom } from './random';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
 
@@ -24,15 +25,12 @@ function cholesky(matrix: number[][]): number[][] {
   return L;
 }
 
-function boxMuller(): number {
-  let u = 0;
-  let v = 0;
-  while (u === 0) u = Math.random();
-  while (v === 0) v = Math.random();
-  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-}
-
-function generateCorrelatedReturns(L: number[][], means: number[]): number[] {
+function generateCorrelatedReturns(
+  L: number[][],
+  means: number[],
+  randomSource: () => number = Math.random,
+): number[] {
+  const boxMuller = createBoxMuller(randomSource);
   const n = L.length;
   const z = Array.from({ length: n }, () => boxMuller());
   const correlated = L.map((row) => row.reduce((sum, l, k) => sum + l * z[k], 0));
@@ -53,6 +51,7 @@ export interface RetirementSimParams {
   simulations: number;
   means: Record<AssetCategory, number>;
   covariance: Record<AssetCategory, Record<AssetCategory, number>>;
+  seed?: string | number | null;
 }
 
 function buildArrays<T>(record: Record<AssetCategory, T>): T[] {
@@ -86,7 +85,11 @@ export function runRetirementMonteCarlo(params: RetirementSimParams): MonteCarlo
     simulations,
     means,
     covariance,
+    seed,
   } = params;
+
+  const seeded = createSeededRandom(seed);
+  const randomSource = seeded ? seeded.random : Math.random;
 
   const accYears = Math.max(0, retirementAge - currentAge);
   const distYears = Math.max(0, lifeExpectancy - retirementAge);
@@ -109,7 +112,7 @@ export function runRetirementMonteCarlo(params: RetirementSimParams): MonteCarlo
 
     // Accumulation phase
     for (let y = 1; y <= accYears; y++) {
-      const returns = generateCorrelatedReturns(L, meanArr);
+      const returns = generateCorrelatedReturns(L, meanArr, randomSource);
       const annualContribution = monthlyContribution * 12;
       const weightedReturn = CATEGORIES.reduce((sum, _, i) => sum + normWeights[CATEGORIES[i]] * returns[i], 0);
 
@@ -128,7 +131,7 @@ export function runRetirementMonteCarlo(params: RetirementSimParams): MonteCarlo
     let corpus = terminalTotal;
 
     for (let y = 1; y <= distYears; y++) {
-      const returns = generateCorrelatedReturns(L, meanArr);
+      const returns = generateCorrelatedReturns(L, meanArr, randomSource);
       const grossAnnualNeed = (monthlyNeed * 12) / taxFactor;
       corpus -= grossAnnualNeed;
 

@@ -27,6 +27,22 @@ describe('calculations', () => {
     assert.ok(cagr > 0 && cagr < 20, `expected positive CAGR, got ${cagr}`);
   });
 
+  it('calculateSIPMonthly matches the golden reference value', () => {
+    // 0 principal, 12% annual, 12 months, 10,000/month.
+    const value = calculateSIPMonthly(0, 12, 12, 10_000);
+    assert.equal(value, 128093.28043328946);
+  });
+
+  it('calculateCAGR matches the golden reference value', () => {
+    // CAGR is returned as a percentage.
+    assert.equal(calculateCAGR(100, 200, 5), 14.869835499703509);
+  });
+
+  it('requiredLumpsumForGoal matches the golden reference value', () => {
+    const pv = requiredLumpsumForGoal(1_000_000, 5, 12);
+    assert.equal(pv, 567426.8557185992);
+  });
+
   it('calculateSIPStandalone returns invested, gained, total and monthlyData', () => {
     const result = calculateSIPStandalone(10_000, 12, 5, 10);
     assert.ok(result.invested > 0);

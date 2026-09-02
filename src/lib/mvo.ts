@@ -1,3 +1,5 @@
+import { createSeededRandom } from './random';
+
 export interface Portfolio {
   weights: number[];
   expectedReturn: number; // annualized decimal
@@ -72,9 +74,14 @@ function isFeasible(w: number[], constraints: Required<ConstraintSet>): boolean 
   return true;
 }
 
-function generateRandomWeights(n: number, minW: number[], maxW: number[]): number[] {
+function generateRandomWeights(
+  n: number,
+  minW: number[],
+  maxW: number[],
+  randomSource: () => number = Math.random,
+): number[] {
   // Generate a random point in the unit simplex, then project to [minW, maxW] box.
-  let w = Array.from({ length: n }, () => Math.random());
+  let w = Array.from({ length: n }, () => randomSource());
   w = normalizeWeights(w);
   // Scale to box then re-normalize repeatedly until feasible.
   for (let iter = 0; iter < 20; iter++) {
@@ -219,10 +226,18 @@ export function runMVO(
   symbols: string[],
   means: number[],
   covariance: number[][],
-  options: { samples?: number; riskFreeRate?: number; constraints?: ConstraintSet } = {},
+  options: {
+    samples?: number;
+    riskFreeRate?: number;
+    constraints?: ConstraintSet;
+    seed?: string | number | null;
+  } = {},
 ): MVOResult {
-  const { samples = 25000, riskFreeRate = 0.06, constraints = {} } = options;
+  const { samples = 25000, riskFreeRate = 0.06, constraints = {}, seed } = options;
   const n = symbols.length;
+
+  const seeded = createSeededRandom(seed);
+  const randomSource = seeded ? seeded.random : Math.random;
 
   const stdDevs = means.map((_, i) => Math.sqrt(Math.max(0, covariance[i][i])));
   const equalWeights = Array.from({ length: n }, () => 1 / n);
@@ -235,7 +250,7 @@ export function runMVO(
   // Generate constrained random portfolios.
   const samplePortfolios: Portfolio[] = [];
   for (let i = 0; i < samples; i++) {
-    let w = generateRandomWeights(n, constraintSet.minWeight, constraintSet.maxWeight);
+    let w = generateRandomWeights(n, constraintSet.minWeight, constraintSet.maxWeight, randomSource);
     if (constraintSet.maxEquity < 1) {
       w = applyEquityCap(w, equityMask, constraintSet.maxEquity);
       w = clipWeights(w, constraintSet.minWeight, constraintSet.maxWeight);

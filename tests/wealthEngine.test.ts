@@ -98,4 +98,15 @@ describe('wealthEngine', () => {
     assert.ok(Array.isArray(result.snapshots));
     assert.ok(result.snapshots.length > 0);
   });
+
+  it('runWealthEngine is deterministic when given the same seed', () => {
+    const inputs = defaultClientInputs();
+    const assumptions = getDefaultAssumptions();
+    const first = runWealthEngine(inputs, assumptions, undefined, null, 'audit-golden-seed');
+    const second = runWealthEngine(inputs, assumptions, undefined, null, 'audit-golden-seed');
+    assert.equal(first.monteCarlo.successRate, second.monteCarlo.successRate);
+    assert.equal(first.monteCarlo.medianTerminal, second.monteCarlo.medianTerminal);
+    assert.equal(first.essentialSuccessRate, second.essentialSuccessRate);
+    assert.equal(first.overallGoalSuccessRate, second.overallGoalSuccessRate);
+  });
 });

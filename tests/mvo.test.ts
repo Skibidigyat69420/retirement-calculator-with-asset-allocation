@@ -66,4 +66,15 @@ describe('mvo', () => {
     const equityWeight = result.maxSharpe.weights[0];
     assert.ok(equityWeight <= 0.5 + 1e-6, `equity weight ${equityWeight} exceeds 0.5 cap`);
   });
+
+  it('runMVO is deterministic when given the same seed', () => {
+    const options = { samples: 2000, seed: 'audit-golden-seed' };
+    const first = runMVO(symbols, means, covariance, options);
+    const second = runMVO(symbols, means, covariance, options);
+    assert.deepEqual(first.maxSharpe.weights, second.maxSharpe.weights);
+    assert.equal(first.maxSharpe.expectedReturn, second.maxSharpe.expectedReturn);
+    assert.equal(first.maxSharpe.volatility, second.maxSharpe.volatility);
+    assert.equal(first.maxSharpe.sharpe, second.maxSharpe.sharpe);
+    assert.equal(first.frontier.length, second.frontier.length);
+  });
 });

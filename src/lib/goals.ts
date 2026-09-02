@@ -1,15 +1,8 @@
 import type { Goal, GoalProbabilityBin, AssetCategory } from '../types';
 import type { AssumptionSet } from './assumptions';
+import { createBoxMuller, createSeededRandom } from './random';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
-
-function boxMuller(): number {
-  let u = 0;
-  let v = 0;
-  while (u === 0) u = Math.random();
-  while (v === 0) v = Math.random();
-  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-}
 
 function choleskyL(cov: number[][]): number[][] {
   const n = cov.length;
@@ -29,7 +22,12 @@ function choleskyL(cov: number[][]): number[][] {
   return L;
 }
 
-function generateCorrelatedReturns(L: number[][], means: number[]): number[] {
+function generateCorrelatedReturns(
+  L: number[][],
+  means: number[],
+  randomSource: () => number = Math.random,
+): number[] {
+  const boxMuller = createBoxMuller(randomSource);
   const z = means.map(() => boxMuller());
   return L.map((row, i) => means[i] + row.reduce((sum, l, k) => sum + l * z[k], 0));
 }
@@ -68,8 +66,12 @@ export function simulateGoal(
   monthlySIP: number,
   portfolioWeights: Record<AssetCategory, number>,
   simulations = 2000,
+  seed?: string | number | null,
 ): GoalSimulationResult {
   const futureValue = goal.targetAmount * Math.pow(1 + goal.inflation / 100, goal.yearsToGoal);
+
+  const seeded = createSeededRandom(seed);
+  const randomSource = seeded ? seeded.random : Math.random;
 
   const means = CATEGORIES.map((c) => assumptions.categories[c].mean);
   const covMatrix = CATEGORIES.map((i) => CATEGORIES.map((j) => assumptions.covariance[i][j]));
@@ -85,7 +87,7 @@ export function simulateGoal(
   for (let s = 0; s < simulations; s++) {
     let corpus = currentPortfolioValue;
     for (let y = 0; y < goal.yearsToGoal; y++) {
-      const returns = generateCorrelatedReturns(L, means);
+      const returns = generateCorrelatedReturns(L, means, randomSource);
       const weightedReturn = normalizedWeights.reduce((sum, w, i) => sum + w * returns[i], 0);
       corpus = (corpus + monthlySIP * 12) * (1 + weightedReturn);
     }
@@ -133,6 +135,7 @@ export function simulateAllGoals(
   currentPortfolioValue: number,
   monthlySIP: number,
   portfolioWeights: Record<AssetCategory, number>,
+  seed?: string | number | null,
 ): GoalSimulationResult[] {
-  return goals.map((goal) => simulateGoal(goal, assumptions, currentPortfolioValue, monthlySIP, portfolioWeights));
+  return goals.map((goal) => simulateGoal(goal, assumptions, currentPortfolioValue, monthlySIP, portfolioWeights, 2000, seed));
 }

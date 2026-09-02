@@ -1,6 +1,7 @@
 import type { AssetCategory, MasterPlanInputs, Goal, GoalPriority, Asset } from '../types';
 import type { AssumptionSet } from './assumptions';
 import type { RiskProfile } from '../types';
+import { createSeededRandom } from './random';
 
 export interface CurrencyExposure {
   currency: string;
@@ -110,11 +111,11 @@ export interface WealthEngineResult {
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
 
-function boxMuller(): number {
+function boxMuller(randomSource: () => number = Math.random): number {
   let u = 0;
   let v = 0;
-  while (u === 0) u = Math.random();
-  while (v === 0) v = Math.random();
+  while (u === 0) u = randomSource();
+  while (v === 0) v = randomSource();
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 }
 
@@ -136,8 +137,8 @@ function choleskyL(cov: number[][]): number[][] {
   return L;
 }
 
-function correlatedReturns(L: number[][], means: number[]): number[] {
-  const z = means.map(() => boxMuller());
+function correlatedReturns(L: number[][], means: number[], randomSource: () => number = Math.random): number[] {
+  const z = means.map(() => boxMuller(randomSource));
   return L.map((row, i) => means[i] + row.reduce((sum, l, k) => sum + l * z[k], 0));
 }
 
@@ -240,11 +241,11 @@ function buildCategoryFXStats(assets: Asset[], fxAssumptions: Record<string, { m
   return stats;
 }
 
-function sampleFXReturn(stats: Record<AssetCategory, CategoryFXStats>): number[] {
+function sampleFXReturn(stats: Record<AssetCategory, CategoryFXStats>, randomSource: () => number = Math.random): number[] {
   return CATEGORIES.map((cat) => {
     const s = stats[cat];
     if (s.std <= 0) return s.mean;
-    return s.mean + s.std * boxMuller();
+    return s.mean + s.std * boxMuller(randomSource);
   });
 }
 
@@ -287,6 +288,7 @@ function simulateOnePath(
   means: number[],
   fxStats: Record<AssetCategory, CategoryFXStats>,
   useMeanReturns: boolean,
+  randomSource: () => number = Math.random,
 ): SimulationState {
   const { currentAge, retirementAge, lifeExpectancy, inflation, assets, sip, stp, swp, goals, annualIncome } = inputs;
   const accYears = Math.max(0, retirementAge - currentAge);
@@ -340,10 +342,10 @@ function simulateOnePath(
 
     const returns = useMeanReturns
       ? means
-      : correlatedReturns(L, means);
+      : correlatedReturns(L, means, randomSource);
     const fxReturns = useMeanReturns
       ? CATEGORIES.map((cat) => fxStats[cat].mean)
-      : sampleFXReturn(fxStats);
+      : sampleFXReturn(fxStats, randomSource);
     CATEGORIES.forEach((c, i) => {
       const mean = customMeans[i];
       state.values[c] = state.values[c] * (1 + returns[i] - means[i] + mean) * (1 + fxReturns[i]);
@@ -490,6 +492,7 @@ function buildGoalDistribution(
   inputs: MasterPlanInputs,
   assumptions: AssumptionSet,
   simulations: number,
+  randomSource: () => number = Math.random,
 ): GoalResult {
   const futureValue = goal.targetAmount * Math.pow(1 + goal.inflation / 100, goal.yearsToGoal);
   const cov = CATEGORIES.map((i) => CATEGORIES.map((j) => assumptions.covariance[i][j]));
@@ -499,7 +502,7 @@ function buildGoalDistribution(
   const outcomes: number[] = [];
 
   for (let s = 0; s < simulations; s++) {
-    const state = simulateOnePath(inputs, L, means, fxStats, false);
+    const state = simulateOnePath(inputs, L, means, fxStats, false, randomSource);
     outcomes.push(state.yearlyValues[goal.yearsToGoal - 1] || 0);
   }
 
@@ -545,6 +548,7 @@ function buildMonteCarlo(
   inputs: MasterPlanInputs,
   assumptions: AssumptionSet,
   simulations: number,
+  randomSource: () => number = Math.random,
 ): WealthEngineResult['monteCarlo'] {
   const { currentAge, lifeExpectancy } = inputs;
   const cov = CATEGORIES.map((i) => CATEGORIES.map((j) => assumptions.covariance[i][j]));
@@ -554,7 +558,7 @@ function buildMonteCarlo(
 
   const outcomes: MonteCarloOutcome[] = [];
   for (let s = 0; s < simulations; s++) {
-    const state = simulateOnePath(inputs, L, means, fxStats, false);
+    const state = simulateOnePath(inputs, L, means, fxStats, false, randomSource);
     outcomes.push({
       terminalValue: state.yearlyValues[state.yearlyValues.length - 1] || 0,
       depletionAge: state.depletionAge,
@@ -602,7 +606,11 @@ export function runWealthEngine(
   assumptions: AssumptionSet,
   riskProfile?: { profile?: RiskProfile; score?: number },
   targetOverrides?: Record<AssetCategory, number> | null,
+  seed?: string | number | null,
 ): WealthEngineResult {
+  const seededRandom = createSeededRandom(seed);
+  const randomSource = seededRandom ? seededRandom.random : Math.random;
+
   const { lifeExpectancy, assets, sip, stp, goals, annualIncome, monthlyExpenditure } = inputs;
   const netWorth = assets.reduce((sum, a) => sum + a.value, 0);
   const annualExpenses = monthlyExpenditure * 12;
@@ -652,7 +660,7 @@ export function runWealthEngine(
   const sustainable = depletionAge === null || (depletionAge !== null && depletionAge > lifeExpectancy);
 
   const simCount = riskProfile?.profile?.monteCarloSimulations || 2000;
-  const goalResults = goals.map((g) => buildGoalDistribution(g, inputs, assumptions, Math.max(500, Math.floor(simCount / 4))));
+  const goalResults = goals.map((g) => buildGoalDistribution(g, inputs, assumptions, Math.max(500, Math.floor(simCount / 4)), randomSource));
 
   const essentialGoals = goalResults.filter((g) => g.goal.priority === 'essential');
   const essentialSuccessRate = essentialGoals.length > 0
@@ -663,7 +671,7 @@ export function runWealthEngine(
     : 1;
   const goalsAtRisk = goalResults.filter((g) => g.successRate < (riskProfile?.profile?.goalSuccessThreshold || 70) / 100);
 
-  const monteCarlo = buildMonteCarlo(inputs, assumptions, simCount);
+  const monteCarlo = buildMonteCarlo(inputs, assumptions, simCount, randomSource);
 
   let maxDrawdownCount = 0;
   monteCarlo.outcomes.forEach((o) => {
