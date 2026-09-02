@@ -102,24 +102,24 @@ export const RiskQuestionnaire = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-1 bg-navy text-white">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-gold">Profile</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-white">Profile</div>
             <h3 className="text-3xl font-serif mt-2">{riskProfile.label}</h3>
-            <p className="text-sm text-stone-200 mt-3 leading-relaxed">{riskProfile.description}</p>
+            <p className="text-sm text-slate-200 mt-3 leading-relaxed">{riskProfile.description}</p>
             <div className="mt-6 space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-stone-300">Risk score</span>
+                <span className="text-slate-300">Risk score</span>
                 <span className="font-medium">{score} / 100</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-stone-300">Max drawdown tolerance</span>
+                <span className="text-slate-300">Max drawdown tolerance</span>
                 <span className="font-medium">{formatPercent(riskProfile.maxDrawdown)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-stone-300">Target volatility</span>
+                <span className="text-slate-300">Target volatility</span>
                 <span className="font-medium">{formatPercent(riskProfile.targetVolatility)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-stone-300">Goal success threshold</span>
+                <span className="text-slate-300">Goal success threshold</span>
                 <span className="font-medium">{formatPercent(riskProfile.goalSuccessThreshold)}</span>
               </div>
             </div>
@@ -148,7 +148,7 @@ export const RiskQuestionnaire = () => {
                 {CATEGORIES.map((cat) => {
                   if (riskProfile.targets[cat] <= 0) return null;
                   return (
-                    <div key={cat} className="p-4 bg-stone-50 rounded-xl border border-stone-100">
+                    <div key={cat} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: ASSET_COLORS[cat] }} />
                         <span className="text-sm font-medium text-navy">{ASSET_LABELS[cat]}</span>
@@ -163,30 +163,30 @@ export const RiskQuestionnaire = () => {
             <Card>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-serif text-navy">Dimension Scores</h3>
-                <span className="text-xs text-stone-700">Weighted 0–100</span>
+                <span className="text-xs text-slate-700">Weighted 0–100</span>
               </div>
               <div className="space-y-4">
                 {Object.entries(categoryScores).map(([category, scorePct]) => (
                   <div key={category}>
                     <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="flex items-center gap-2 text-stone-600">
+                      <span className="flex items-center gap-2 text-slate-600">
                         {categoryIcons[category]} {categoryLabels[category] || category}
                       </span>
                       <span className="font-medium text-navy">{Math.round(scorePct)}%</span>
                     </div>
-                    <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${scorePct}%` }}
-                        className="h-full bg-gold rounded-full"
+                        className="h-full bg-amber-500 rounded-full"
                         transition={{ duration: 0.5 }}
                       />
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="mt-4 p-3 bg-stone-100 rounded-xl border border-stone-200 text-xs text-stone-600 flex items-start gap-2">
-                <Info size={14} className="shrink-0 mt-0.5 text-gold" />
+              <div className="mt-4 p-3 bg-slate-100 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-start gap-2">
+                <Info size={14} className="shrink-0 mt-0.5 text-amber-500" />
                 <p>
                   Risk Tolerance (25%) and Risk Capacity (20%) carry the most weight.
                   A high-risk profile requires both the willingness to accept volatility
@@ -203,7 +203,7 @@ export const RiskQuestionnaire = () => {
             <div className="mb-2 text-2xl font-serif text-navy">
               Gap: {Math.abs(gapAnalysis.gap).toFixed(1)}%
             </div>
-            <p className="text-sm text-stone-600 leading-relaxed">{gapAnalysis.verdict}</p>
+            <p className="text-sm text-slate-600 leading-relaxed">{gapAnalysis.verdict}</p>
           </Card>
           
           <Card>
@@ -211,23 +211,23 @@ export const RiskQuestionnaire = () => {
             {biases.length > 0 ? (
               <div className="space-y-4">
                 {biases.map((b, i) => (
-                  <div key={i} className="border-l-2 border-gold pl-3">
+                  <div key={i} className="border-l-2 border-amber-500 pl-3">
                     <div className="text-sm font-medium text-navy">{b.bias}</div>
-                    <p className="text-xs text-stone-600 mt-1">{b.description}</p>
+                    <p className="text-xs text-slate-600 mt-1">{b.description}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-stone-600">No significant biases detected.</p>
+              <p className="text-sm text-slate-600">No significant biases detected.</p>
             )}
           </Card>
           
           <Card>
             <h3 className="text-lg font-serif text-navy mb-4">Action Checklist</h3>
-            <ul className="space-y-3 text-sm text-stone-600">
+            <ul className="space-y-3 text-sm text-slate-600">
               {actionChecklist.map((item, i) => (
                 <li key={i} className="flex gap-2">
-                  <CheckCircle2 size={16} className="text-gold shrink-0 mt-0.5" />
+                  <CheckCircle2 size={16} className="text-amber-500 shrink-0 mt-0.5" />
                   <span className="leading-tight">{item}</span>
                 </li>
               ))}
@@ -238,9 +238,9 @@ export const RiskQuestionnaire = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <h3 className="text-lg font-serif text-navy mb-4">Investor Persona</h3>
-            <p className="text-stone-600 leading-relaxed">{riskProfile.persona}</p>
-            <div className="mt-4 p-4 bg-gold/10 rounded-xl border border-gold/20">
-              <div className="text-xs font-bold uppercase tracking-wider text-gold mb-1">Recommended Approach</div>
+            <p className="text-slate-600 leading-relaxed">{riskProfile.persona}</p>
+            <div className="mt-4 p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
+              <div className="text-xs font-bold uppercase tracking-wider text-amber-500 mb-1">Recommended Approach</div>
               <p className="text-sm text-navy">{riskProfile.recommendedApproach}</p>
             </div>
           </Card>
@@ -264,7 +264,7 @@ export const RiskQuestionnaire = () => {
                 ))}
               </svg>
             </div>
-            <div className="flex items-center justify-center gap-4 mt-2 text-xs text-stone-700">
+            <div className="flex items-center justify-center gap-4 mt-2 text-xs text-slate-700">
               <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm" style={{ backgroundColor: ASSET_COLORS.equity }} /> Equity</span>
               <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm" style={{ backgroundColor: ASSET_COLORS.debt }} /> Debt</span>
             </div>
@@ -274,17 +274,17 @@ export const RiskQuestionnaire = () => {
         <Card>
           <h3 className="text-lg font-serif text-navy mb-4">How This Connects to Your Plan</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div className="p-4 bg-stone-50 rounded-xl border border-stone-100">
-              <div className="flex items-center gap-2 mb-2"><PieChart size={16} className="text-gold" /><span className="font-medium text-navy">Allocation</span></div>
-              <p className="text-stone-600">Targets will be set to {riskProfile.label.toLowerCase()} weights and can be applied to SIP/STP splits.</p>
+            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="flex items-center gap-2 mb-2"><PieChart size={16} className="text-amber-500" /><span className="font-medium text-navy">Allocation</span></div>
+              <p className="text-slate-600">Targets will be set to {riskProfile.label.toLowerCase()} weights and can be applied to SIP/STP splits.</p>
             </div>
-            <div className="p-4 bg-stone-50 rounded-xl border border-stone-100">
-              <div className="flex items-center gap-2 mb-2"><BarChart2 size={16} className="text-gold" /><span className="font-medium text-navy">MVO</span></div>
-              <p className="text-stone-600">Risk-free rate and portfolio constraints will align with your {formatPercent(riskProfile.targetVolatility)} volatility target.</p>
+            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="flex items-center gap-2 mb-2"><BarChart2 size={16} className="text-amber-500" /><span className="font-medium text-navy">MVO</span></div>
+              <p className="text-slate-600">Risk-free rate and portfolio constraints will align with your {formatPercent(riskProfile.targetVolatility)} volatility target.</p>
             </div>
-            <div className="p-4 bg-stone-50 rounded-xl border border-stone-100">
-              <div className="flex items-center gap-2 mb-2"><Target size={16} className="text-gold" /><span className="font-medium text-navy">Goals</span></div>
-              <p className="text-stone-600">Goal-planner success thresholds use {formatPercent(riskProfile.goalSuccessThreshold)} as the minimum acceptable probability.</p>
+            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="flex items-center gap-2 mb-2"><Target size={16} className="text-amber-500" /><span className="font-medium text-navy">Goals</span></div>
+              <p className="text-slate-600">Goal-planner success thresholds use {formatPercent(riskProfile.goalSuccessThreshold)} as the minimum acceptable probability.</p>
             </div>
           </div>
         </Card>
@@ -308,21 +308,21 @@ export const RiskQuestionnaire = () => {
 
       <Card className="max-w-3xl mx-auto">
         <div className="mb-6">
-          <div className="flex items-center justify-between text-xs text-stone-700 mb-2">
+          <div className="flex items-center justify-between text-xs text-slate-700 mb-2">
             <span>Question {step + 1} of {RISK_QUESTIONS.length}</span>
             <span>{Math.round(progress)}% complete</span>
           </div>
-          <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
+          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
-              className="h-full bg-gold rounded-full"
+              className="h-full bg-amber-500 rounded-full"
               transition={{ duration: 0.3 }}
             />
           </div>
 
           {/* Direct Question Jump Tray */}
-          <div className="flex flex-wrap items-center justify-center gap-1.5 mt-4 pt-3 border-t border-stone-100">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 mt-4 pt-3 border-t border-slate-100">
             {RISK_QUESTIONS.map((q, idx) => {
               const isAnswered = typeof riskAnswers[q.id] === 'number';
               const isCurrent = idx === step;
@@ -334,8 +334,8 @@ export const RiskQuestionnaire = () => {
                     isCurrent
                       ? 'bg-navy text-white shadow-xs scale-105'
                       : isAnswered
-                      ? 'bg-gold/20 text-stone-800 hover:bg-gold/30'
-                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                      ? 'bg-amber-500/20 text-slate-800 hover:bg-amber-500/30'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                   title={`Question ${idx + 1}: ${q.text.slice(0, 30)}...`}
                   aria-label={`Go to question ${idx + 1}: ${q.text}`}
@@ -374,16 +374,16 @@ export const RiskQuestionnaire = () => {
                     onClick={() => handleAnswer(option.score)}
                     className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
                       selected
-                        ? 'border-gold bg-gold/5'
-                        : 'border-stone-100 hover:border-gold/50 hover:bg-stone-50'
+                        ? 'border-amber-500 bg-amber-500/5'
+                        : 'border-slate-100 hover:border-amber-500/50 hover:bg-slate-50'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className={`font-medium ${selected ? 'text-navy' : 'text-stone-700'}`}>{option.label}</span>
-                      {selected && <CheckCircle2 size={18} className="text-gold" />}
+                      <span className={`font-medium ${selected ? 'text-navy' : 'text-slate-700'}`}>{option.label}</span>
+                      {selected && <CheckCircle2 size={18} className="text-amber-500" />}
                     </div>
                     {option.description && (
-                      <p className="text-xs text-stone-700 mt-1">{option.description}</p>
+                      <p className="text-xs text-slate-700 mt-1">{option.description}</p>
                     )}
                   </button>
                 );
@@ -419,7 +419,7 @@ export const RiskQuestionnaire = () => {
         </div>
       </Card>
 
-      <div className="max-w-3xl mx-auto text-center text-xs text-stone-700">
+      <div className="max-w-3xl mx-auto text-center text-xs text-slate-700">
         <AlertTriangle size={14} className="inline mr-1" />
         This questionnaire is for planning purposes. It does not constitute investment advice.
       </div>

@@ -23,16 +23,16 @@ const NavLink = ({ item, onClick, completed }: NavLinkProps) => {
       className={cn(
         'group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150',
         active
-          ? 'bg-navy text-white shadow-md'
-          : 'text-stone-700 hover:bg-white hover:text-navy hover:shadow-sm',
+          ? 'bg-gradient-to-r from-navy to-navy-dark text-white shadow-md'
+          : 'text-slate-700 hover:bg-white hover:text-navy hover:shadow-sm',
       )}
     >
-      <Icon size={18} className={cn('transition-colors', active ? 'text-white' : 'text-stone-600 group-hover:text-ink')} />
+      <Icon size={18} className={cn('transition-colors', active ? 'text-white' : 'text-slate-500 group-hover:text-navy')} />
       <span>{item.label}</span>
       {completed && (
         <Check
           size={14}
-          className={cn('ml-auto', active ? 'text-gold' : 'text-emerald-500')}
+          className={cn('ml-auto', active ? 'text-white' : 'text-emerald-500')}
           aria-label="Completed"
         />
       )}
@@ -97,7 +97,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
     <nav className="flex-1 space-y-6 overflow-y-auto pb-4" style={{ scrollbarWidth: 'none' }}>
       {Object.entries(groupedNavItems).map(([section, items]) => (
         <div key={section} className="space-y-1">
-          <div className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-stone-600">
+          <div className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
             {section}
           </div>
           {items.map((item) => (
@@ -111,47 +111,47 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 border-r border-stone-200/80 bg-cream/95 backdrop-blur-sm px-4 py-6">
+      <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 border-r border-slate-200/80 bg-white/95 backdrop-blur-sm px-4 py-6">
         <Link to="/" className="flex items-center gap-3 px-2 mb-8">
-          <div className="w-9 h-9 bg-navy rounded-xl flex items-center justify-center shadow-sm">
-            <span className="text-gold font-serif font-bold text-lg">S</span>
+          <div className="w-9 h-9 bg-gradient-to-br from-navy to-navy-dark rounded-xl flex items-center justify-center shadow-sm">
+            <span className="text-white font-serif font-bold text-lg">S</span>
           </div>
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-stone-600">Sound Thesis</div>
-            <div className="text-sm font-serif text-navy leading-tight">Wealth Planner</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Sound Thesis</div>
+            <div className="text-sm font-serif text-ink leading-tight">Wealth Planner</div>
           </div>
         </Link>
 
         {renderNavSections()}
 
         {/* Progress & Client Profile summary */}
-        <div className="p-3 my-2 bg-paper/90 rounded-xl border border-stone-200/80">
-          <div className="flex items-center justify-between text-[11px] font-semibold text-stone-700 mb-1.5">
+        <div className="p-3 my-2 bg-slate-50 rounded-xl border border-slate-200/80">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700 mb-1.5">
             <span>Advisor Progress</span>
             <span className="text-navy font-bold">{completedCount}/{workflowSteps.length}</span>
           </div>
-          <div className="w-full h-1.5 bg-stone-200 rounded-full overflow-hidden mb-2.5">
-            <div className="h-full bg-gold rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
+          <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden mb-2.5">
+            <div className="h-full bg-gradient-to-r from-navy to-amber-500 rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
           </div>
           <Link
             to="/master-plan"
             className="flex items-center gap-2 text-left p-1 rounded-lg hover:bg-white transition-colors group"
           >
-            <div className="w-6 h-6 rounded-full bg-navy text-gold text-[10px] font-bold flex items-center justify-center shrink-0">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-navy to-navy-dark text-white text-[10px] font-bold flex items-center justify-center shrink-0">
               {inputs.client?.name?.charAt(0) || 'C'}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-semibold text-navy truncate group-hover:text-gold transition-colors">
+              <div className="text-xs font-semibold text-ink truncate group-hover:text-navy transition-colors">
                 {inputs.client?.name || 'Client Plan'}
               </div>
-              <div className="text-[10px] text-stone-600 truncate">
+              <div className="text-[10px] text-slate-500 truncate">
                 {inputs.client?.advisor || 'Sound Thesis'}
               </div>
             </div>
           </Link>
         </div>
 
-        <div className="pt-2 mt-auto border-t border-stone-200/70">
+        <div className="pt-2 mt-auto border-t border-slate-200/70">
           <NavLink item={utilityItem} />
         </div>
       </aside>
@@ -159,22 +159,22 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Navigation menu">
-          <div className="w-72 bg-cream h-full shadow-elevated px-4 py-6 flex flex-col animate-drawer-in">
+          <div className="w-72 bg-white h-full shadow-elevated px-4 py-6 flex flex-col animate-drawer-in">
             <div className="flex items-center justify-between px-2 mb-8">
               <Link to="/" onClick={onClose} className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-navy rounded-xl flex items-center justify-center shadow-sm">
-                  <span className="text-gold font-serif font-bold text-lg">S</span>
+                <div className="w-9 h-9 bg-gradient-to-br from-navy to-navy-dark rounded-xl flex items-center justify-center shadow-sm">
+                  <span className="text-white font-serif font-bold text-lg">S</span>
                 </div>
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-stone-600">Sound Thesis</div>
-                  <div className="text-sm font-serif text-navy leading-tight">Wealth Planner</div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Sound Thesis</div>
+                  <div className="text-sm font-serif text-ink leading-tight">Wealth Planner</div>
                 </div>
               </Link>
               <button
                 ref={closeButtonRef}
                 onClick={onClose}
                 aria-label="Close menu"
-                className="p-2 text-stone-700 hover:text-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-navy/30"
+                className="p-2 text-slate-500 hover:text-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-navy/30"
               >
                 <X size={20} />
               </button>
@@ -182,12 +182,12 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
 
             {renderNavSections(onClose)}
 
-            <div className="pt-4 mt-auto border-t border-stone-200/70">
+            <div className="pt-4 mt-auto border-t border-slate-200/70">
               <NavLink item={utilityItem} onClick={onClose} />
             </div>
           </div>
           <div
-            className="flex-1 bg-navy/20 backdrop-blur-sm animate-overlay-in"
+            className="flex-1 bg-slate-900/20 backdrop-blur-sm animate-overlay-in"
             onClick={onClose}
           />
         </div>

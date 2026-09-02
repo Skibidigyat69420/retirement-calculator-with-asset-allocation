@@ -85,7 +85,7 @@ export const RetirementIncomeCalculator = () => {
       }
     >
       <Card>
-        <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-700 mb-4">
+        <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-700 mb-4">
           Corpus Drawdown
         </h4>
         <div className="h-72">
@@ -98,10 +98,10 @@ export const RetirementIncomeCalculator = () => {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
-              <XAxis dataKey="year" tick={{ fontSize: 12, fill: '#78716c' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="year" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
               <YAxis
                 tickFormatter={(v) => formatCurrency(Number(v))}
-                tick={{ fontSize: 12, fill: '#78716c' }}
+                tick={{ fontSize: 12, fill: '#64748b' }}
                 axisLine={false}
                 tickLine={false}
                 width={80}
@@ -125,21 +125,21 @@ export const RetirementIncomeCalculator = () => {
       </Card>
 
       <Card>
-        <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-700 mb-4">
+        <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-700 mb-4">
           Year-by-Year Withdrawals
         </h4>
         <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
           <table className="w-full text-sm min-w-[480px]">
             <thead>
-              <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-700">
+              <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-700">
                 <th className="py-2 pr-4">Year</th>
                 <th className="py-2 pr-4 text-right">Annual Withdrawal</th>
                 <th className="py-2 pr-4 text-right">Corpus Left</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-100">
+            <tbody className="divide-y divide-slate-100">
               {result.yearlyData.map((d) => (
-                <tr key={d.year} className="hover:bg-stone-50/80">
+                <tr key={d.year} className="hover:bg-slate-50/80">
                   <td className="py-2 pr-4">Year {d.year}</td>
                   <td className="py-2 pr-4 text-right">{formatCurrency(d.monthlyNeed * 12)}</td>
                   <td className="py-2 pr-4 text-right">{formatCurrency(d.corpusLeft)}</td>

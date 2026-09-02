@@ -25,13 +25,13 @@ export const ProgressBar = ({ value, max = 100, variant = 'default', size = 'md'
   return (
     <div className={className}>
       {label && (
-        <div className="flex justify-between text-xs text-stone-700 mb-1">
+        <div className="flex justify-between text-xs text-slate-700 mb-1">
           <span>{label}</span>
           <span>{pct.toFixed(1)}%</span>
         </div>
       )}
       <div
-        className={cn('w-full bg-stone-200 rounded-full overflow-hidden', heights[size])}
+        className={cn('w-full bg-slate-200 rounded-full overflow-hidden', heights[size])}
         role="progressbar"
         aria-valuenow={Math.round(pct)}
         aria-valuemin={0}

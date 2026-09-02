@@ -361,12 +361,12 @@ export const IPSTemplate = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1 space-y-5">
           <h3 className="text-lg font-serif text-navy flex items-center gap-2">
-            <FileText size={18} className="text-gold" /> IPS Inputs
+            <FileText size={18} className="text-amber-500" /> IPS Inputs
           </h3>
 
           {/* Client profile */}
           <div className="space-y-3">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-stone-700">Client Profile</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-700">Client Profile</div>
             <LabelledInput
               id={fieldId('clientName')}
               label="Client Name"
@@ -399,9 +399,9 @@ export const IPSTemplate = () => {
 
           {/* Objectives */}
           <div className="space-y-3">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-stone-700">Objectives</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-700">Objectives</div>
             <div>
-              <label htmlFor={fieldId('returnObjective')} className="block text-[11px] font-semibold uppercase tracking-wider text-stone-700 mb-1">
+              <label htmlFor={fieldId('returnObjective')} className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
                 Return Objective
               </label>
               <textarea
@@ -409,18 +409,18 @@ export const IPSTemplate = () => {
                 value={state.returnObjective}
                 onChange={(e) => dispatch({ type: 'updateField', payload: { returnObjective: e.target.value } })}
                 rows={3}
-                className="w-full bg-white border border-stone-200 rounded-xl p-3 text-sm text-navy focus:border-gold focus:outline-none"
+                className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm text-navy focus:border-amber-500 focus:outline-none"
               />
             </div>
             <div>
-              <label htmlFor={fieldId('riskTolerance')} className="block text-[11px] font-semibold uppercase tracking-wider text-stone-700 mb-1">
+              <label htmlFor={fieldId('riskTolerance')} className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
                 Risk Tolerance
               </label>
               <select
                 id={fieldId('riskTolerance')}
                 value={state.riskTolerance}
                 onChange={(e) => dispatch({ type: 'updateField', payload: { riskTolerance: e.target.value as IPSState['riskTolerance'] } })}
-                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-sm"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm"
               >
                 <option value="low">Low</option>
                 <option value="moderate">Moderate</option>
@@ -432,7 +432,7 @@ export const IPSTemplate = () => {
 
           {/* Allocation */}
           <div className="space-y-3">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-stone-700">Strategic Asset Allocation</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-700">Strategic Asset Allocation</div>
             {(Object.keys(categoryLabels) as AssetCategory[]).map((cat) => (
               <NumberInput
                 key={cat}
@@ -453,7 +453,7 @@ export const IPSTemplate = () => {
           {/* Current allocation */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-stone-700">Current Allocation</div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-700">Current Allocation</div>
               <Button
                 variant="ghost"
                 size="sm"
@@ -487,7 +487,7 @@ export const IPSTemplate = () => {
           />
           <NumberInput label="Foreign Exposure Limit" value={state.foreignExposure} onChange={(v) => dispatch({ type: 'updateField', payload: { foreignExposure: v } })} suffix="%" min={0} max={100} />
           <div>
-            <label htmlFor={fieldId('hedgePolicy')} className="block text-[11px] font-semibold uppercase tracking-wider text-stone-700 mb-1">
+            <label htmlFor={fieldId('hedgePolicy')} className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
               Hedging Policy
             </label>
             <textarea
@@ -495,13 +495,13 @@ export const IPSTemplate = () => {
               value={state.hedgePolicy}
               onChange={(e) => dispatch({ type: 'updateField', payload: { hedgePolicy: e.target.value } })}
               rows={2}
-              className="w-full bg-white border border-stone-200 rounded-xl p-3 text-sm text-navy focus:border-gold focus:outline-none"
+              className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm text-navy focus:border-amber-500 focus:outline-none"
             />
           </div>
 
           {/* Implementation & Review */}
           <div>
-            <label htmlFor={fieldId('implementationReview')} className="block text-[11px] font-semibold uppercase tracking-wider text-stone-700 mb-1">
+            <label htmlFor={fieldId('implementationReview')} className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
               Implementation & Review Policy
             </label>
             <textarea
@@ -509,13 +509,13 @@ export const IPSTemplate = () => {
               value={state.implementationReview}
               onChange={(e) => dispatch({ type: 'updateField', payload: { implementationReview: e.target.value } })}
               rows={3}
-              className="w-full bg-white border border-stone-200 rounded-xl p-3 text-sm text-navy focus:border-gold focus:outline-none"
+              className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm text-navy focus:border-amber-500 focus:outline-none"
             />
           </div>
 
           {/* Notes */}
           <div>
-            <label htmlFor={fieldId('notes')} className="block text-[11px] font-semibold uppercase tracking-wider text-stone-700 mb-1">
+            <label htmlFor={fieldId('notes')} className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
               Special Notes
             </label>
             <textarea
@@ -523,39 +523,39 @@ export const IPSTemplate = () => {
               value={state.notes}
               onChange={(e) => dispatch({ type: 'updateField', payload: { notes: e.target.value } })}
               rows={2}
-              className="w-full bg-white border border-stone-200 rounded-xl p-3 text-sm text-navy focus:border-gold focus:outline-none"
+              className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm text-navy focus:border-amber-500 focus:outline-none"
             />
           </div>
 
           {/* Goals editor */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-stone-700">Goals & Liabilities</div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-700">Goals & Liabilities</div>
               <Button variant="outline" size="sm" className="text-xs py-1 h-auto" onClick={() => dispatch({ type: 'addGoal' })}>
                 <Plus size={14} className="mr-1" /> Add Goal
               </Button>
             </div>
             <div className="space-y-2">
               {state.goals.map((g) => (
-                <div key={g.id} className="grid grid-cols-12 gap-2 items-end bg-stone-50 rounded-xl p-2.5">
+                <div key={g.id} className="grid grid-cols-12 gap-2 items-end bg-slate-50 rounded-xl p-2.5">
                   <div className="col-span-4">
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`goal-name-${g.id}`}>Name</label>
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-700 mb-1" htmlFor={`goal-name-${g.id}`}>Name</label>
                     <input
                       id={`goal-name-${g.id}`}
                       type="text"
                       value={g.name}
                       onChange={(e) => dispatch({ type: 'updateGoal', id: g.id, payload: { name: e.target.value } })}
-                      className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm"
                       aria-label="Goal name"
                     />
                   </div>
                   <div className="col-span-3">
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`goal-priority-${g.id}`}>Priority</label>
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-700 mb-1" htmlFor={`goal-priority-${g.id}`}>Priority</label>
                     <select
                       id={`goal-priority-${g.id}`}
                       value={g.priority}
                       onChange={(e) => dispatch({ type: 'updateGoal', id: g.id, payload: { priority: e.target.value as IPSGoal['priority'] } })}
-                      className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm"
                       aria-label="Goal priority"
                     >
                       <option value="essential">Essential</option>
@@ -564,26 +564,26 @@ export const IPSTemplate = () => {
                     </select>
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`goal-years-${g.id}`}>Years</label>
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-700 mb-1" htmlFor={`goal-years-${g.id}`}>Years</label>
                     <input
                       id={`goal-years-${g.id}`}
                       type="number"
                       min={0}
                       value={g.yearsToGoal}
                       onChange={(e) => dispatch({ type: 'updateGoal', id: g.id, payload: { yearsToGoal: Number(e.target.value) } })}
-                      className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm"
                       aria-label="Years to goal"
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`goal-target-${g.id}`}>Target</label>
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-700 mb-1" htmlFor={`goal-target-${g.id}`}>Target</label>
                     <input
                       id={`goal-target-${g.id}`}
                       type="number"
                       min={0}
                       value={g.targetAmount}
                       onChange={(e) => dispatch({ type: 'updateGoal', id: g.id, payload: { targetAmount: Number(e.target.value) } })}
-                      className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm"
                       aria-label="Goal target amount"
                     />
                   </div>
@@ -591,7 +591,7 @@ export const IPSTemplate = () => {
                     <button
                       type="button"
                       onClick={() => dispatch({ type: 'removeGoal', id: g.id })}
-                      className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                       aria-label="Remove goal"
                     >
                       <Trash2 size={16} />
@@ -599,39 +599,39 @@ export const IPSTemplate = () => {
                   </div>
                 </div>
               ))}
-              {state.goals.length === 0 && <p className="text-sm text-stone-500 italic">No goals added yet.</p>}
+              {state.goals.length === 0 && <p className="text-sm text-slate-500 italic">No goals added yet.</p>}
             </div>
           </div>
 
           {/* Assets editor */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-stone-700">Current Holdings</div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-700">Current Holdings</div>
               <Button variant="outline" size="sm" className="text-xs py-1 h-auto" onClick={() => dispatch({ type: 'addAsset' })}>
                 <Plus size={14} className="mr-1" /> Add Asset
               </Button>
             </div>
             <div className="space-y-2">
               {state.assets.map((a) => (
-                <div key={a.id} className="grid grid-cols-12 gap-2 items-end bg-stone-50 rounded-xl p-2.5">
+                <div key={a.id} className="grid grid-cols-12 gap-2 items-end bg-slate-50 rounded-xl p-2.5">
                   <div className="col-span-5">
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`asset-name-${a.id}`}>Name</label>
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-700 mb-1" htmlFor={`asset-name-${a.id}`}>Name</label>
                     <input
                       id={`asset-name-${a.id}`}
                       type="text"
                       value={a.name}
                       onChange={(e) => dispatch({ type: 'updateAsset', id: a.id, payload: { name: e.target.value } })}
-                      className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm"
                       aria-label="Asset name"
                     />
                   </div>
                   <div className="col-span-3">
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`asset-category-${a.id}`}>Category</label>
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-700 mb-1" htmlFor={`asset-category-${a.id}`}>Category</label>
                     <select
                       id={`asset-category-${a.id}`}
                       value={a.category}
                       onChange={(e) => dispatch({ type: 'updateAsset', id: a.id, payload: { category: e.target.value as AssetCategory } })}
-                      className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm"
                       aria-label="Asset category"
                     >
                       {(Object.keys(categoryLabels) as AssetCategory[]).map((cat) => (
@@ -642,14 +642,14 @@ export const IPSTemplate = () => {
                     </select>
                   </div>
                   <div className="col-span-3">
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`asset-value-${a.id}`}>Value</label>
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-700 mb-1" htmlFor={`asset-value-${a.id}`}>Value</label>
                     <input
                       id={`asset-value-${a.id}`}
                       type="number"
                       min={0}
                       value={a.value}
                       onChange={(e) => dispatch({ type: 'updateAsset', id: a.id, payload: { value: Number(e.target.value) } })}
-                      className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm"
                       aria-label="Asset value"
                     />
                   </div>
@@ -657,7 +657,7 @@ export const IPSTemplate = () => {
                     <button
                       type="button"
                       onClick={() => dispatch({ type: 'removeAsset', id: a.id })}
-                      className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                       aria-label="Remove asset"
                     >
                       <Trash2 size={16} />
@@ -665,7 +665,7 @@ export const IPSTemplate = () => {
                   </div>
                 </div>
               ))}
-              {state.assets.length === 0 && <p className="text-sm text-stone-500 italic">No assets added yet.</p>}
+              {state.assets.length === 0 && <p className="text-sm text-slate-500 italic">No assets added yet.</p>}
             </div>
           </div>
 
@@ -696,12 +696,12 @@ export const IPSTemplate = () => {
           </div>
 
           {/* Saved files */}
-          <div className="pt-4 border-t border-stone-200">
+          <div className="pt-4 border-t border-slate-200">
             <h4 className="text-sm font-serif text-navy flex items-center gap-2 mb-3">
-              <FolderOpen size={16} className="text-gold" /> Saved IPS Documents
+              <FolderOpen size={16} className="text-amber-500" /> Saved IPS Documents
             </h4>
             {savedFiles.length === 0 ? (
-              <p className="text-xs text-stone-700">
+              <p className="text-xs text-slate-700">
                 {saveApiAvailable
                   ? 'No saved IPS files yet.'
                   : 'Server-side save/load requires the API (available on the deployed app). Use Download instead.'}
@@ -723,7 +723,7 @@ export const IPSTemplate = () => {
           </div>
 
           {/* Helpers */}
-          <div className="pt-4 border-t border-stone-200 flex gap-2">
+          <div className="pt-4 border-t border-slate-200 flex gap-2">
             <Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={() => dispatch({ type: 'reset', payload: defaultState() })}>
               <RotateCcw size={14} className="mr-1" /> Reset Sample
             </Button>
@@ -735,7 +735,7 @@ export const IPSTemplate = () => {
 
         {/* Preview */}
         <Card className="lg:col-span-2 bg-white print:shadow-none">
-          <div className="prose prose-stone max-w-none prose-headings:font-serif prose-headings:text-navy">
+          <div className="prose prose-slate max-w-none prose-headings:font-serif prose-headings:text-navy">
             <h1>Investment Policy Statement</h1>
             <p>
               <em>CFA Institute Framework — Individual Investor</em>
@@ -828,7 +828,7 @@ export const IPSTemplate = () => {
                 <tbody>
                   {state.goals.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="text-stone-500 italic">
+                      <td colSpan={4} className="text-slate-500 italic">
                         No goals entered.
                       </td>
                     </tr>
@@ -880,7 +880,7 @@ export const IPSTemplate = () => {
                 <tbody>
                   {state.assets.length === 0 && (
                     <tr>
-                      <td colSpan={3} className="text-stone-500 italic">
+                      <td colSpan={3} className="text-slate-500 italic">
                         No assets entered.
                       </td>
                     </tr>
@@ -966,7 +966,7 @@ function LabelledInput({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-[11px] font-semibold uppercase tracking-wider text-stone-700 mb-1">
+      <label htmlFor={id} className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
         {label}
       </label>
       <input
@@ -975,7 +975,7 @@ function LabelledInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-transparent border-b border-stone-300 py-2 text-sm font-medium text-navy focus:border-gold focus:outline-none"
+        className="w-full bg-transparent border-b border-slate-300 py-2 text-sm font-medium text-navy focus:border-amber-500 focus:outline-none"
       />
     </div>
   );
@@ -994,7 +994,7 @@ function LabelledDate({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-[11px] font-semibold uppercase tracking-wider text-stone-700 mb-1">
+      <label htmlFor={id} className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
         {label}
       </label>
       <input
@@ -1002,7 +1002,7 @@ function LabelledDate({
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-transparent border-b border-stone-300 py-2 text-sm font-medium text-navy focus:border-gold focus:outline-none"
+        className="w-full bg-transparent border-b border-slate-300 py-2 text-sm font-medium text-navy focus:border-amber-500 focus:outline-none"
       />
     </div>
   );

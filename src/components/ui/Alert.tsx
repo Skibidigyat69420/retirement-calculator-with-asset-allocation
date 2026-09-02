@@ -9,17 +9,17 @@ interface AlertProps {
 
 export const Alert = ({ children, variant = 'info', icon: Icon, className }: AlertProps) => {
   const variants = {
-    info: 'bg-paper text-textMuted border-warm',
+    info: 'bg-indigo-50 text-indigo-900 border-indigo-200',
     success: 'bg-emerald-50 text-emerald-900 border-emerald-200',
     warning: 'bg-amber-50 text-amber-900 border-amber-200',
-    danger: 'bg-red/8 text-red border-red/20',
+    danger: 'bg-rose-50 text-rose-900 border-rose-200',
   };
 
   const iconColors = {
-    info: 'text-warm-dark',
-    success: 'text-emerald-700',
-    warning: 'text-amber-700',
-    danger: 'text-red',
+    info: 'text-indigo-600',
+    success: 'text-emerald-600',
+    warning: 'text-amber-600',
+    danger: 'text-rose-600',
   };
 
   return (

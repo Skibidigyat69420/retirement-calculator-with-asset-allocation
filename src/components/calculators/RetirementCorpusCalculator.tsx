@@ -89,30 +89,30 @@ export const RetirementCorpusCalculator = () => {
           </div>
 
           <Card>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-700 mb-4">Retirement Math</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-700 mb-4">Retirement Math</h4>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-stone-700">Monthly need today</span>
+                <span className="text-slate-700">Monthly need today</span>
                 <span className="font-medium">{formatCurrency(monthlyNeedToday)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-700">Monthly need at retirement ({result.yearsToRetirement} yrs)</span>
+                <span className="text-slate-700">Monthly need at retirement ({result.yearsToRetirement} yrs)</span>
                 <span className="font-medium">{formatCurrency(result.monthlyNeedAtRetirement)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-700">Annual need at retirement</span>
+                <span className="text-slate-700">Annual need at retirement</span>
                 <span className="font-medium">{formatCurrency(result.annualNeedAtRetirement)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-700">Retirement years</span>
+                <span className="text-slate-700">Retirement years</span>
                 <span className="font-medium">{result.retirementYears}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-700">Required corpus</span>
+                <span className="text-slate-700">Required corpus</span>
                 <span className="font-medium text-navy">{formatCurrency(result.requiredCorpus)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-700">Inflation-adjusted sustainable monthly draw</span>
+                <span className="text-slate-700">Inflation-adjusted sustainable monthly draw</span>
                 <span className="font-medium">{formatCurrency(result.sustainableMonthlyWithdrawal)}</span>
               </div>
             </div>

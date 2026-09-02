@@ -101,22 +101,22 @@ export const Retirement = () => {
       {gap < 0 && (
         <Card className="border-amber-200 bg-amber-50/40">
           <div className="flex items-center gap-2 mb-2">
-            <Sparkles size={20} className="text-gold" />
+            <Sparkles size={20} className="text-amber-500" />
             <h3 className="text-base font-serif font-bold text-navy">
               Advisory Shortfall Solver — How to Close the Gap of {formatCurrency(shortfall)}
             </h3>
           </div>
-          <p className="text-xs text-stone-600 mb-4">
+          <p className="text-xs text-slate-600 mb-4">
             Select any of the three recommended actions to immediately align your plan with full retirement sustainability:
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Lever 1: Increase SIP */}
-            <div className="bg-white p-4 rounded-xl border border-stone-200/80 shadow-xs flex flex-col justify-between space-y-3">
+            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-3">
               <div>
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-navy mb-1">
-                  <DollarSign size={14} className="text-gold" /> Option 1: Increase SIP
+                  <DollarSign size={14} className="text-amber-500" /> Option 1: Increase SIP
                 </div>
-                <p className="text-xs text-stone-600">
+                <p className="text-xs text-slate-600">
                   Boost monthly SIP by <strong>+{formatCurrency(extraSIPNeeded)}</strong> (to <strong>{formatCurrency(inputs.sip.amount + extraSIPNeeded)}</strong>/mo).
                 </p>
               </div>
@@ -134,12 +134,12 @@ export const Retirement = () => {
             </div>
 
             {/* Lever 2: Delay Retirement */}
-            <div className="bg-white p-4 rounded-xl border border-stone-200/80 shadow-xs flex flex-col justify-between space-y-3">
+            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-3">
               <div>
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-navy mb-1">
-                  <Clock size={14} className="text-gold" /> Option 2: Extend Horizon
+                  <Clock size={14} className="text-amber-500" /> Option 2: Extend Horizon
                 </div>
-                <p className="text-xs text-stone-600">
+                <p className="text-xs text-slate-600">
                   Delay retirement by {delayYears} year{delayYears === 1 ? '' : 's'} to age <strong>{recommendedDelayAge}</strong> to allow longer compounding.
                 </p>
               </div>
@@ -157,12 +157,12 @@ export const Retirement = () => {
             </div>
 
             {/* Lever 3: Calibrate Drawdown */}
-            <div className="bg-white p-4 rounded-xl border border-stone-200/80 shadow-xs flex flex-col justify-between space-y-3">
+            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-3">
               <div>
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-navy mb-1">
-                  <Target size={14} className="text-gold" /> Option 3: Calibrate Spend
+                  <Target size={14} className="text-amber-500" /> Option 3: Calibrate Spend
                 </div>
-                <p className="text-xs text-stone-600">
+                <p className="text-xs text-slate-600">
                   Adjust retirement drawdown to sustainable level: <strong>{formatCurrency(sustainableMonthlyNeed)}</strong>/mo today.
                 </p>
               </div>
@@ -185,7 +185,7 @@ export const Retirement = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
           <div className="flex items-center space-x-2 mb-5">
-            <Calculator size={18} className="text-gold" />
+            <Calculator size={18} className="text-amber-500" />
             <h3 className="text-lg font-serif text-navy">Inputs</h3>
           </div>
           <div className="space-y-4">
@@ -235,14 +235,14 @@ export const Retirement = () => {
 
           <Card>
             <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2">
-              <TrendingUp size={18} className="text-gold" /> Wealth Trajectory
+              <TrendingUp size={18} className="text-amber-500" /> Wealth Trajectory
             </h3>
             <NominalRealChart data={chartData} xKey="label" />
           </Card>
 
           <Card>
             <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2">
-              <TrendingUp size={18} className="text-gold" /> Distribution Phase
+              <TrendingUp size={18} className="text-amber-500" /> Distribution Phase
             </h3>
             <SWPDrawdownChart data={drawdownChartData} />
           </Card>
@@ -253,7 +253,7 @@ export const Retirement = () => {
               {gap >= 0 && successRate >= riskProfile.goalSuccessThreshold ? (
                 <>
                   <CheckCircle2 size={20} className="text-green-700 shrink-0 mt-0.5" />
-                  <p className="text-stone-600 leading-relaxed">
+                  <p className="text-slate-600 leading-relaxed">
                     By age <strong>{inputs.retirementAge}</strong>, your monthly expense of{' '}
                     <strong>{formatCurrency(inputs.swp.monthlyNeedToday)}</strong> today will inflate to{' '}
                     <strong>{formatCurrency(monthlyNeedAtRetirement)}</strong>. Your projected corpus of{' '}
@@ -264,7 +264,7 @@ export const Retirement = () => {
               ) : (
                 <>
                   <Target size={20} className="text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-stone-600 leading-relaxed">
+                  <p className="text-slate-600 leading-relaxed">
                     By age <strong>{inputs.retirementAge}</strong>, your monthly expense of{' '}
                     <strong>{formatCurrency(inputs.swp.monthlyNeedToday)}</strong> today will inflate to{' '}
                     <strong>{formatCurrency(monthlyNeedAtRetirement)}</strong>. Your projected corpus is{' '}
@@ -276,7 +276,7 @@ export const Retirement = () => {
                 </>
               )}
             </div>
-            <div className="p-4 bg-stone-50 rounded-xl text-sm text-stone-600 space-y-2">
+            <div className="p-4 bg-slate-50 rounded-xl text-sm text-slate-600 space-y-2">
               <div className="flex justify-between">
                 <span>Success threshold</span>
                 <Badge variant="outline">{formatPercent(riskProfile.goalSuccessThreshold)}</Badge>

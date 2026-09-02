@@ -304,26 +304,26 @@ export const MVO = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-700">Risk Profile</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Risk Profile</div>
           <div className="text-xl font-serif text-navy mt-1">{riskProfile.label}</div>
-          <div className="text-xs text-stone-700 mt-1">Max equity {formatPercent(riskProfile.maxEquity)} · Vol target {formatPercent(riskProfile.targetVolatility)}</div>
+          <div className="text-xs text-slate-700 mt-1">Max equity {formatPercent(riskProfile.maxEquity)} · Vol target {formatPercent(riskProfile.targetVolatility)}</div>
         </Card>
         <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-700">Risk-Free Rate</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Risk-Free Rate</div>
           <div className="text-xl font-serif text-navy mt-1">{formatPercent(riskProfile.riskFreeRate)}</div>
-          <div className="text-xs text-stone-700 mt-1">Used for Sharpe ratio calculation</div>
+          <div className="text-xs text-slate-700 mt-1">Used for Sharpe ratio calculation</div>
         </Card>
         <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-700">History</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">History</div>
           <div className="text-xl font-serif text-navy mt-1">{historyDays > 0 ? `${historyDays} days` : '—'}</div>
-          <div className="text-xs text-stone-700 mt-1">{alignedData?.dateRange.from} → {alignedData?.dateRange.to}</div>
+          <div className="text-xs text-slate-700 mt-1">{alignedData?.dateRange.from} → {alignedData?.dateRange.to}</div>
         </Card>
         <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-700">Data Source</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Data Source</div>
           <div className="text-xl font-serif text-navy mt-1 flex items-center gap-2">
             <Database size={16} /> {sourceLabel}
           </div>
-          <div className="text-xs text-stone-700 mt-1">{data?.symbols.length || 0} instruments available</div>
+          <div className="text-xs text-slate-700 mt-1">{data?.symbols.length || 0} instruments available</div>
         </Card>
       </div>
 
@@ -343,24 +343,24 @@ export const MVO = () => {
         <Card className="lg:col-span-2 space-y-5">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-serif text-navy flex items-center gap-2">
-              <Layers size={18} className="text-gold" /> Universe & Date Range
+              <Layers size={18} className="text-amber-500" /> Universe & Date Range
             </h3>
             <Badge variant="outline">{selectedSymbols.length} assets selected</Badge>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor={fieldId('from')} className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1 flex items-center gap-1"><Calendar size={12} /> From</label>
-              <input id={fieldId('from')} type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:border-navy" />
+              <label htmlFor={fieldId('from')} className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1 flex items-center gap-1"><Calendar size={12} /> From</label>
+              <input id={fieldId('from')} type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-navy" />
             </div>
             <div>
-              <label htmlFor={fieldId('to')} className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1 flex items-center gap-1"><Calendar size={12} /> To</label>
-              <input id={fieldId('to')} type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:border-navy" />
+              <label htmlFor={fieldId('to')} className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1 flex items-center gap-1"><Calendar size={12} /> To</label>
+              <input id={fieldId('to')} type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-navy" />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-2">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
               Select Assets ({data?.symbols.length || 0} available)
             </label>
             <div className="flex flex-wrap gap-2">
@@ -374,7 +374,7 @@ export const MVO = () => {
                     title={instrument?.name || symbol}
                     aria-label={instrument?.name || symbol}
                     aria-pressed={selected}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${selected ? 'bg-navy text-white border-navy' : 'bg-white text-stone-600 border-stone-200 hover:border-navy'}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${selected ? 'bg-navy text-white border-navy' : 'bg-white text-slate-600 border-slate-200 hover:border-navy'}`}
                   >
                     {instrument?.name || symbol}
                   </button>
@@ -384,7 +384,7 @@ export const MVO = () => {
           </div>
 
           <div>
-            <label htmlFor={fieldId('maxEquity')} className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-2">
+            <label htmlFor={fieldId('maxEquity')} className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
               Max Equity Constraint ({formatPercent(maxEquity)})
             </label>
             <input
@@ -397,7 +397,7 @@ export const MVO = () => {
               onChange={(e) => setMaxEquity(Number(e.target.value))}
               className="w-full accent-navy"
             />
-            <div className="flex justify-between text-xs text-stone-700 mt-1">
+            <div className="flex justify-between text-xs text-slate-700 mt-1">
               <span>0%</span>
               <span>Profile default: {formatPercent(riskProfile.maxEquity)}</span>
               <span>100%</span>
@@ -433,12 +433,12 @@ export const MVO = () => {
           <div className="absolute top-0 right-0 p-6 opacity-10">
             <ShieldCheck size={120} />
           </div>
-          <h3 className="text-lg font-serif text-gold mb-4">Why MVO?</h3>
-          <ul className="space-y-3 text-sm text-stone-200">
-            <li className="flex gap-2"><Check size={16} className="text-gold shrink-0 mt-0.5" /> Quantify risk/return trade-offs using real historical daily data.</li>
-            <li className="flex gap-2"><Check size={16} className="text-gold shrink-0 mt-0.5" /> Identify the maximum-Sharpe and minimum-variance strategic portfolios.</li>
-            <li className="flex gap-2"><Check size={16} className="text-gold shrink-0 mt-0.5" /> Export optimized weights directly into the Master Plan.</li>
-            <li className="flex gap-2"><Check size={16} className="text-gold shrink-0 mt-0.5" /> Assumption mode works offline using category mean/variance/correlation.</li>
+          <h3 className="text-lg font-serif text-white mb-4">Why MVO?</h3>
+          <ul className="space-y-3 text-sm text-slate-200">
+            <li className="flex gap-2"><Check size={16} className="text-white shrink-0 mt-0.5" /> Quantify risk/return trade-offs using real historical daily data.</li>
+            <li className="flex gap-2"><Check size={16} className="text-white shrink-0 mt-0.5" /> Identify the maximum-Sharpe and minimum-variance strategic portfolios.</li>
+            <li className="flex gap-2"><Check size={16} className="text-white shrink-0 mt-0.5" /> Export optimized weights directly into the Master Plan.</li>
+            <li className="flex gap-2"><Check size={16} className="text-white shrink-0 mt-0.5" /> Assumption mode works offline using category mean/variance/correlation.</li>
           </ul>
         </Card>
       </div>
@@ -469,7 +469,7 @@ export const MVO = () => {
               <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
                 <table className="w-full min-w-[360px] text-xs">
                   <thead>
-                    <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-700">
+                    <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-700">
                       <th className="py-2 pr-2">Asset</th>
                       {correlationMatrix.map((row) => (
                         <th key={row.symbol} className="py-2 pr-2 text-right">{row.symbol.slice(0, 6)}</th>
@@ -478,7 +478,7 @@ export const MVO = () => {
                   </thead>
                   <tbody>
                     {correlationMatrix.map((row, i) => (
-                      <tr key={row.symbol} className="border-b border-stone-100">
+                      <tr key={row.symbol} className="border-b border-slate-100">
                         <td className="py-2 pr-2 font-medium text-navy">{row.symbol.slice(0, 8)}</td>
                         {row.values.map((cell, j) => (
                           <td key={j} className="py-2 pr-2 text-right font-mono" style={{ color: i === j ? '#1A233A' : cell.value > 0.5 ? '#B68B40' : '#78716c' }}>
@@ -498,7 +498,7 @@ export const MVO = () => {
             <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
               <table className="w-full min-w-[480px] text-sm">
                 <thead>
-                  <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-700">
+                  <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-700">
                     <th className="py-2 pr-4">Asset</th>
                     <th className="py-2 pr-4 text-right">Ann. Return</th>
                     <th className="py-2 pr-4 text-right">Ann. Vol</th>
@@ -506,7 +506,7 @@ export const MVO = () => {
                     <th className="py-2 pr-4 text-right">Max DD</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-100">
+                <tbody className="divide-y divide-slate-100">
                   {alignedData?.stats.map((s, idx) => {
                     const inst = alignedData.instruments[idx];
                     return (
@@ -535,22 +535,22 @@ export const MVO = () => {
               return (
                 <Card key={strategy.key} className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center text-navy">
+                    <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-navy">
                       <Icon size={16} />
                     </div>
                     <h4 className="font-serif text-navy">{strategy.label}</h4>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2 bg-stone-50 rounded-lg">
-                      <span className="text-stone-600 block text-[10px]">RETURN</span>
+                    <div className="p-2 bg-slate-50 rounded-lg">
+                      <span className="text-slate-600 block text-[10px]">RETURN</span>
                       <span className="font-semibold text-navy">{formatPercent(strategy.portfolio.expectedReturn * 100)}</span>
                     </div>
-                    <div className="p-2 bg-stone-50 rounded-lg">
-                      <span className="text-stone-600 block text-[10px]">VOLATILITY</span>
+                    <div className="p-2 bg-slate-50 rounded-lg">
+                      <span className="text-slate-600 block text-[10px]">VOLATILITY</span>
                       <span className="font-semibold text-navy">{formatPercent(strategy.portfolio.volatility * 100)}</span>
                     </div>
-                    <div className="p-2 bg-stone-50 rounded-lg col-span-2">
-                      <span className="text-stone-600 block text-[10px]">SHARPE</span>
+                    <div className="p-2 bg-slate-50 rounded-lg col-span-2">
+                      <span className="text-slate-600 block text-[10px]">SHARPE</span>
                       <span className="font-semibold text-navy">{strategy.portfolio.sharpe.toFixed(2)}</span>
                     </div>
                   </div>

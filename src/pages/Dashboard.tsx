@@ -186,12 +186,12 @@ export const Dashboard = () => {
           <div>
             <Badge variant="gold" className="mb-3">Mandate: {inputs.client?.notes || 'Core Wealth Growth'}</Badge>
             <h3 className="text-2xl md:text-3xl font-serif text-white">Welcome, {inputs.client?.name || 'Vikram & Ananya Sharma'}</h3>
-            <p className="mt-1 text-xs text-gold font-medium">
+            <p className="mt-1 text-xs text-white font-medium">
               Advisor: {inputs.client?.advisor || 'Sound Thesis Wealth Advisory'} · Review Date: {inputs.client?.reviewDate || 'Quarterly'}
             </p>
-            <p className="mt-2 text-stone-200 max-w-xl text-sm">
+            <p className="mt-2 text-slate-200 max-w-xl text-sm">
               You are {inputs.currentAge} years old targeting retirement at {inputs.retirementAge}. Your plan has a{' '}
-              <span className="text-gold font-semibold">{formatPercent(wealthResult.monteCarlo.successRate * 100)}</span>{' '}
+              <span className="text-white font-semibold">{formatPercent(wealthResult.monteCarlo.successRate * 100)}</span>{' '}
               probability of meeting all goals and sustaining withdrawals.
             </p>
           </div>
@@ -207,13 +207,13 @@ export const Dashboard = () => {
       </Card>
 
       {/* 6-Stage Planning Readiness Checklist */}
-      <Card className="border-stone-200">
+      <Card className="border-slate-200">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <div>
             <h3 className="text-base font-serif font-bold text-navy flex items-center gap-2">
-              <ShieldCheck size={18} className="text-gold" /> Advisor Planning Checklist
+              <ShieldCheck size={18} className="text-amber-500" /> Advisor Planning Checklist
             </h3>
-            <p className="text-xs text-stone-700">Track progress through the 6 stages of your institutional financial architecture</p>
+            <p className="text-xs text-slate-700">Track progress through the 6 stages of your institutional financial architecture</p>
           </div>
           <Badge variant="outline" className="self-start sm:self-auto font-medium">
             {completedChecklistCount} of 6 Completed
@@ -227,7 +227,7 @@ export const Dashboard = () => {
               to={item.path}
               className={`p-3 rounded-xl border flex items-start gap-3 transition-all hover:shadow-xs group ${
                 item.completed
-                  ? 'bg-stone-50/50 border-stone-200 hover:border-navy/40'
+                  ? 'bg-slate-50/50 border-slate-200 hover:border-navy/40'
                   : 'bg-amber-50/30 border-amber-200 hover:border-amber-400'
               }`}
             >
@@ -237,11 +237,11 @@ export const Dashboard = () => {
                 {item.completed ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-xs font-semibold text-navy group-hover:text-gold transition-colors flex items-center justify-between">
+                <div className="text-xs font-semibold text-navy group-hover:text-amber-500 transition-colors flex items-center justify-between">
                   <span>{item.label}</span>
-                  <ArrowRight size={12} className="text-stone-300 group-hover:text-gold transition-transform group-hover:translate-x-0.5" />
+                  <ArrowRight size={12} className="text-slate-300 group-hover:text-amber-500 transition-transform group-hover:translate-x-0.5" />
                 </div>
-                <div className="text-[11px] text-stone-700 truncate mt-0.5">{item.subtext}</div>
+                <div className="text-[11px] text-slate-700 truncate mt-0.5">{item.subtext}</div>
               </div>
             </Link>
           ))}
@@ -307,7 +307,7 @@ export const Dashboard = () => {
             <Link
               key={action.path}
               to={action.path}
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-stone-200/80 rounded-xl text-sm font-semibold text-navy hover:border-gold hover:text-gold hover:shadow-sm transition-all"
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200/80 rounded-xl text-sm font-semibold text-navy hover:border-amber-500 hover:text-amber-500 hover:shadow-sm transition-all"
             >
               <Icon size={16} /> {action.label}
             </Link>
@@ -332,9 +332,9 @@ export const Dashboard = () => {
           {allocationData.length > 0 ? (
             <DonutChart data={allocationData} />
           ) : (
-            <div className="h-80 flex flex-col items-center justify-center text-center text-sm text-stone-700">
+            <div className="h-80 flex flex-col items-center justify-center text-center text-sm text-slate-700">
               <p>No assets added yet.</p>
-              <Link to="/master-plan" className="mt-2 text-gold font-semibold hover:underline flex items-center">
+              <Link to="/master-plan" className="mt-2 text-amber-500 font-semibold hover:underline flex items-center">
                 Add assets <ArrowRight size={12} className="ml-1" />
               </Link>
             </div>
@@ -354,21 +354,21 @@ export const Dashboard = () => {
         <Card variant="elevated">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-serif text-navy">Goal Health</h3>
-            <Link to="/goal" className="text-xs text-navy hover:text-gold underline flex items-center font-semibold">
+            <Link to="/goal" className="text-xs text-navy hover:text-amber-500 underline flex items-center font-semibold">
               Open planner <ArrowRight size={12} className="ml-1" />
             </Link>
           </div>
           <div className="space-y-3">
             {wealthResult.goalResults.length === 0 && (
-              <div className="p-6 text-center text-sm text-stone-700">
+              <div className="p-6 text-center text-sm text-slate-700">
                 <p>No goals defined yet.</p>
-                <Link to="/goal" className="mt-2 inline-flex items-center text-gold font-semibold hover:underline">
+                <Link to="/goal" className="mt-2 inline-flex items-center text-amber-500 font-semibold hover:underline">
                   Create a goal <ArrowRight size={12} className="ml-1" />
                 </Link>
               </div>
             )}
             {wealthResult.goalResults.map((g) => (
-              <div key={g.goal.id} className="p-3 bg-stone-50/80 rounded-xl border border-stone-100">
+              <div key={g.goal.id} className="p-3 bg-slate-50/80 rounded-xl border border-slate-100">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     {g.successRate >= riskProfile.goalSuccessThreshold / 100 ? (
@@ -390,7 +390,7 @@ export const Dashboard = () => {
                     {formatPercent(g.successRate * 100)}
                   </Badge>
                 </div>
-                <div className="mt-2 flex items-center justify-between text-xs text-stone-700">
+                <div className="mt-2 flex items-center justify-between text-xs text-slate-700">
                   <span>Future need {formatCurrency(g.futureValue)}</span>
                   <span>Required SIP {formatCurrency(g.requiredSIP)}/mo</span>
                 </div>
@@ -419,17 +419,17 @@ export const Dashboard = () => {
                 to={tool.path}
                 className={cn(
                   'flex items-center p-4 rounded-xl transition-all group',
-                  'bg-stone-50/60 border border-stone-100 hover:bg-white hover:border-gold/30 hover:shadow-sm',
+                  'bg-slate-50/60 border border-slate-100 hover:bg-white hover:border-amber-500/30 hover:shadow-sm',
                 )}
               >
-                <div className="w-10 h-10 rounded-xl bg-white border border-stone-100 flex items-center justify-center mr-3 group-hover:border-gold/30 shadow-sm">
-                  <Icon size={18} className="text-navy group-hover:text-gold transition-colors" />
+                <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center mr-3 group-hover:border-amber-500/30 shadow-sm">
+                  <Icon size={18} className="text-navy group-hover:text-amber-500 transition-colors" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-navy truncate">{tool.label}</div>
-                  <div className="text-xs text-stone-700 truncate">{tool.desc}</div>
+                  <div className="text-xs text-slate-700 truncate">{tool.desc}</div>
                 </div>
-                <ArrowRight size={14} className="text-stone-300 group-hover:text-gold shrink-0 ml-2" />
+                <ArrowRight size={14} className="text-slate-300 group-hover:text-amber-500 shrink-0 ml-2" />
               </Link>
             );
           })}

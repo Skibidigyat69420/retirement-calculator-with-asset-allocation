@@ -8,18 +8,18 @@ interface CardProps {
 
 export const Card = ({ children, className, variant = 'default' }: CardProps) => {
   const variants = {
-    default: 'bg-white/90 border border-stone-200/70 shadow-card',
-    elevated: 'bg-white border border-stone-200/60 shadow-card-hover',
-    navy: 'bg-navy text-white border border-navy shadow-card',
-    gold: 'bg-gradient-to-br from-gold/10 to-gold/5 border border-gold/20',
-    subtle: 'bg-stone-50/80 border border-stone-100',
+    default: 'bg-white border border-slate-200/70 shadow-card',
+    elevated: 'bg-white border border-slate-200/60 shadow-card-hover',
+    navy: 'bg-gradient-to-br from-navy to-navy-dark text-white border border-navy shadow-elevated',
+    gold: 'bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/60',
+    subtle: 'bg-slate-50/80 border border-slate-100',
   };
 
   return (
     <div
       className={cn(
         'rounded-2xl p-5 md:p-6 transition-all duration-200 print:break-inside-avoid',
-        variant === 'default' && 'hover:shadow-card-hover',
+        variant === 'default' && 'hover:shadow-card-hover hover:-translate-y-0.5',
         variants[variant],
         className,
       )}

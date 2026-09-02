@@ -15,7 +15,7 @@ export const Layout = ({ children }: LayoutProps) => {
     <div className="min-h-screen flex bg-cream">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-navy focus:text-white focus:px-4 focus:py-2 focus:rounded-xl focus:outline-none focus:ring-2 focus:ring-gold"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-navy focus:text-white focus:px-4 focus:py-2 focus:rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
       >
         Skip to main content
       </a>

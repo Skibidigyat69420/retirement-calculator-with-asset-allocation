@@ -66,9 +66,9 @@ export const GoalPlanner = () => {
       <div className="space-y-6">
         <SectionTitle title="Goal Planner" subtitle="Probability-based goal planning with PV, success rate, and distribution analysis." badge="Monte Carlo" />
         <Card className="flex flex-col items-center justify-center py-12 text-center">
-          <Target size={48} className="text-stone-200 mb-4" />
+          <Target size={48} className="text-slate-200 mb-4" />
           <h3 className="text-lg font-serif text-navy mb-2">No Goals Defined</h3>
-          <p className="text-stone-700 mb-6 max-w-md">Create your first financial goal to see Monte Carlo simulations, success probabilities, and required SIP amounts.</p>
+          <p className="text-slate-700 mb-6 max-w-md">Create your first financial goal to see Monte Carlo simulations, success probabilities, and required SIP amounts.</p>
           <Button onClick={() => addGoal()} className="flex items-center gap-2">
             <Plus size={16} /> Create your first goal
           </Button>
@@ -89,7 +89,7 @@ export const GoalPlanner = () => {
         <Card className="lg:col-span-1">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-serif text-navy flex items-center gap-2">
-              <Target size={18} className="text-gold" /> Goals
+              <Target size={18} className="text-amber-500" /> Goals
             </h3>
             <Button variant="outline" size="sm" onClick={() => addGoal()} aria-label="Add goal">
               <Plus size={14} />
@@ -101,7 +101,7 @@ export const GoalPlanner = () => {
                 key={g.goal.id}
                 onClick={() => setSelectedGoalId(g.goal.id)}
                 className={`w-full text-left p-3 rounded-xl border transition-colors ${
-                  selectedGoalId === g.goal.id ? 'bg-navy text-white border-navy' : 'bg-white border-stone-200 hover:bg-stone-50'
+                  selectedGoalId === g.goal.id ? 'bg-navy text-white border-navy' : 'bg-white border-slate-200 hover:bg-slate-50'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -113,7 +113,7 @@ export const GoalPlanner = () => {
                     {g.goal.priority}
                   </Badge>
                 </div>
-                <div className={`text-xs mt-1 ${selectedGoalId === g.goal.id ? 'text-white/70' : 'text-stone-700'}`}>
+                <div className={`text-xs mt-1 ${selectedGoalId === g.goal.id ? 'text-white/80' : 'text-slate-700'}`}>
                   {formatPercent(g.successRate * 100)} success · {formatCurrency(g.goal.targetAmount)}
                 </div>
               </button>
@@ -126,14 +126,14 @@ export const GoalPlanner = () => {
             <Card variant="subtle" className="min-w-0">
               <div className="flex justify-between items-start">
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-stone-700">Selected Goal</div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Selected Goal</div>
                   <div className="flex items-center gap-2 mt-1">
                     <input
                       type="text"
                       value={selectedGoal.name}
                       onChange={(e) => updateGoal(selectedGoal.id, { name: e.target.value })}
                       aria-label={`Goal name: ${selectedGoal.name}`}
-                      className="text-xl font-serif text-navy bg-transparent border-b border-transparent hover:border-stone-300 focus:border-gold focus:outline-none transition-colors w-full min-w-0"
+                      className="text-xl font-serif text-navy bg-transparent border-b border-transparent hover:border-slate-300 focus:border-amber-500 focus:outline-none transition-colors w-full min-w-0"
                     />
                     {confirmDeleteId === selectedGoal.id ? (
                       <div className="flex items-center gap-1">
@@ -151,7 +151,7 @@ export const GoalPlanner = () => {
                         <button
                           type="button"
                           onClick={() => setConfirmDeleteId(null)}
-                          className="px-2 py-0.5 bg-stone-200 text-stone-700 rounded text-[11px] hover:bg-stone-300"
+                          className="px-2 py-0.5 bg-slate-200 text-slate-700 rounded text-[11px] hover:bg-slate-300"
                         >
                           Cancel
                         </button>
@@ -159,7 +159,7 @@ export const GoalPlanner = () => {
                     ) : (
                       <button
                         onClick={() => setConfirmDeleteId(selectedGoal.id)}
-                        className="text-stone-600 hover:text-red-600 transition-colors p-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-300"
+                        className="text-slate-600 hover:text-red-600 transition-colors p-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-300"
                         aria-label="Delete selected goal"
                         title="Delete goal"
                         type="button"
@@ -184,7 +184,7 @@ export const GoalPlanner = () => {
                       type="checkbox"
                       checked={selectedGoal.recurring}
                       onChange={(e) => updateGoal(selectedGoal.id, { recurring: e.target.checked })}
-                      className="accent-gold"
+                      className="accent-amber-500"
                     />
                     Recurring goal
                   </label>
@@ -215,9 +215,9 @@ export const GoalPlanner = () => {
             <Card>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-serif text-navy flex items-center gap-2">
-                  <BarChart3 size={18} className="text-gold" /> Outcome Distribution
+                  <BarChart3 size={18} className="text-amber-500" /> Outcome Distribution
                 </h3>
-                <div className="text-xs text-stone-700">{wealthResult.monteCarlo.outcomes.length.toLocaleString()} paths</div>
+                <div className="text-xs text-slate-700">{wealthResult.monteCarlo.outcomes.length.toLocaleString()} paths</div>
               </div>
               <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -249,7 +249,7 @@ export const GoalPlanner = () => {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex items-center justify-center gap-4 mt-2 text-xs text-stone-700">
+              <div className="flex items-center justify-center gap-4 mt-2 text-xs text-slate-700">
                 <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm" style={{ backgroundColor: ASSET_COLORS.equity }} /> Success region</span>
                 <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-slate-400" /> Shortfall region</span>
               </div>
@@ -257,10 +257,10 @@ export const GoalPlanner = () => {
 
             <Card>
               <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2">
-                <TrendingUp size={18} className="text-gold" /> Goal Insights
+                <TrendingUp size={18} className="text-amber-500" /> Goal Insights
               </h3>
               <div className="space-y-4">
-                <div className="p-4 bg-stone-50 rounded-xl border border-stone-100">
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
                   <div className="flex items-start gap-3">
                     {simulation.successRate >= riskProfile.goalSuccessThreshold / 100 ? (
                       <CheckCircle2 size={20} className="text-green-700 shrink-0" />
@@ -275,7 +275,7 @@ export const GoalPlanner = () => {
                             ? 'Needs attention — consider increasing SIP or extending horizon'
                             : 'Significant shortfall risk — revise plan'}
                       </div>
-                      <p className="text-xs text-stone-700 mt-1">
+                      <p className="text-xs text-slate-700 mt-1">
                         With the current portfolio and SIP, the model estimates a {formatPercent(simulation.successRate * 100)} probability of fully funding this goal.
                       </p>
                     </div>
@@ -283,14 +283,14 @@ export const GoalPlanner = () => {
                 </div>
 
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-stone-700">Goal target (today's ₹)</span><span className="font-medium text-navy">{formatCurrency(selectedGoal.targetAmount)}</span></div>
-                  <div className="flex justify-between"><span className="text-stone-700">Inflation-adjusted target</span><span className="font-medium text-navy">{formatCurrency(simulation.futureValue)}</span></div>
-                  <div className="flex justify-between"><span className="text-stone-700">PV needed today</span><span className="font-medium text-navy">{formatCurrency(simulation.pvNeeded)}</span></div>
-                  <div className="flex justify-between"><span className="text-stone-700">Required monthly SIP</span><span className="font-medium text-navy">{formatCurrency(simulation.requiredSIP)}</span></div>
-                  <div className="flex justify-between"><span className="text-stone-700">Total Portfolio SIP</span><span className="font-medium text-navy">{formatCurrency(wealthResult.monthlySIP)}</span></div>
-                  <div className="flex justify-between"><span className="text-stone-700">Required SIP (all goals)</span><span className="font-medium text-navy">{formatCurrency(totalRequiredSIP)}</span></div>
-                  <div className="flex justify-between"><span className="text-stone-700">Allocated SIP (proportional share)</span><span className="font-medium text-navy">{formatCurrency(allocatedSIP)}</span></div>
-                  <div className="flex justify-between"><span className="text-stone-700">SIP gap / surplus</span><span className={`font-medium ${simulation.requiredSIP > allocatedSIP ? 'text-red-600' : 'text-green-700'}`}>{formatCurrency(simulation.requiredSIP - allocatedSIP)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-700">Goal target (today's ₹)</span><span className="font-medium text-navy">{formatCurrency(selectedGoal.targetAmount)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-700">Inflation-adjusted target</span><span className="font-medium text-navy">{formatCurrency(simulation.futureValue)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-700">PV needed today</span><span className="font-medium text-navy">{formatCurrency(simulation.pvNeeded)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-700">Required monthly SIP</span><span className="font-medium text-navy">{formatCurrency(simulation.requiredSIP)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-700">Total Portfolio SIP</span><span className="font-medium text-navy">{formatCurrency(wealthResult.monthlySIP)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-700">Required SIP (all goals)</span><span className="font-medium text-navy">{formatCurrency(totalRequiredSIP)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-700">Allocated SIP (proportional share)</span><span className="font-medium text-navy">{formatCurrency(allocatedSIP)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-700">SIP gap / surplus</span><span className={`font-medium ${simulation.requiredSIP > allocatedSIP ? 'text-red-600' : 'text-green-700'}`}>{formatCurrency(simulation.requiredSIP - allocatedSIP)}</span></div>
                 </div>
               </div>
             </Card>
@@ -298,12 +298,12 @@ export const GoalPlanner = () => {
 
           <Card>
             <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2">
-              <PieChart size={18} className="text-gold" /> All Goals Summary
+              <PieChart size={18} className="text-amber-500" /> All Goals Summary
             </h3>
             <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-700">
+                  <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-700">
                     <th className="py-2 pr-4">Goal</th>
                     <th className="py-2 pr-4">Priority</th>
                     <th className="py-2 pr-4 text-right">Future Value</th>
@@ -315,7 +315,7 @@ export const GoalPlanner = () => {
                 </thead>
                 <tbody>
                   {wealthResult.goalResults.map((g) => (
-                    <tr key={g.goal.id} className="border-b border-stone-100 hover:bg-stone-50">
+                    <tr key={g.goal.id} className="border-b border-slate-100 hover:bg-slate-50">
                       <td className="py-2 pr-4 font-medium text-navy">{g.goal.name}</td>
                       <td className="py-2 pr-4">
                         <Badge variant={g.goal.priority === 'essential' ? 'danger' : g.goal.priority === 'important' ? 'default' : 'outline'}>{g.goal.priority}</Badge>

@@ -79,26 +79,26 @@ export const GoalCalculator = () => {
           </div>
 
           <Card>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-700 mb-4">Goal Funding Options</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-700 mb-4">Goal Funding Options</h4>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-stone-700">Target (today's value)</span>
+                <span className="text-slate-700">Target (today's value)</span>
                 <span className="font-medium">{formatCurrency(result.target)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-700">Inflation-adjusted target</span>
+                <span className="text-slate-700">Inflation-adjusted target</span>
                 <span className="font-medium">{formatCurrency(result.futureValue)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-700">Invest lumpsum today</span>
+                <span className="text-slate-700">Invest lumpsum today</span>
                 <span className="font-medium">{formatCurrency(result.requiredLumpsum)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-700">OR monthly SIP</span>
+                <span className="text-slate-700">OR monthly SIP</span>
                 <span className="font-medium">{formatCurrency(result.requiredSIP)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-stone-700">OR step-up SIP (growing {stepUp}%/yr)</span>
+                <span className="text-slate-700">OR step-up SIP (growing {stepUp}%/yr)</span>
                 <span className="font-medium">{formatCurrency(result.requiredSIPWithStepUp)}</span>
               </div>
             </div>

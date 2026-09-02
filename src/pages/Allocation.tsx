@@ -213,43 +213,43 @@ export const Allocation = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-700">Current Equity</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Current Equity</div>
           <div className="text-2xl font-serif text-navy mt-1">{formatPercent(wealthResult.currentAllocation.equity * 100)}</div>
         </Card>
         <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-700">Target Equity</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Target Equity</div>
           <div className="text-2xl font-serif text-navy mt-1">{formatPercent(targets.equity)}</div>
         </Card>
         <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-700">Median Terminal Value (MC)</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Median Terminal Value (MC)</div>
           <div className="text-2xl font-serif text-navy mt-1">{formatCurrency(projectedTotal)}</div>
-          <div className="text-[10px] text-stone-600 mt-0.5">Median of simulated paths under target mix</div>
+          <div className="text-[10px] text-slate-600 mt-0.5">Median of simulated paths under target mix</div>
         </Card>
         <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-stone-700">Success Under Target Mix</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Success Under Target Mix</div>
           <div className={`text-2xl font-serif mt-1 ${projection && projection.probabilityOfSuccess >= riskProfile.goalSuccessThreshold ? 'text-green-700' : projection && projection.probabilityOfSuccess >= riskProfile.goalSuccessThreshold * 0.6 ? 'text-amber-600' : 'text-red-600'}`}>
             {projection ? formatPercent(projection.probabilityOfSuccess) : '—'}
           </div>
-          <div className="text-[10px] text-stone-600 mt-0.5">All goals funded, target allocation</div>
+          <div className="text-[10px] text-slate-600 mt-0.5">All goals funded, target allocation</div>
         </Card>
       </div>
 
       {wealthResult.currencyExposure.length > 1 && (
         <Card>
           <div className="flex items-center gap-2 mb-4">
-            <DollarSign size={18} className="text-gold" />
+            <DollarSign size={18} className="text-amber-500" />
             <h3 className="text-lg font-serif text-navy">Currency Exposure</h3>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {wealthResult.currencyExposure.map((ce) => (
-              <div key={ce.currency} className="p-3 bg-stone-50 rounded-xl border border-stone-100">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-stone-700">{ce.currency}</div>
+              <div key={ce.currency} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-700">{ce.currency}</div>
                 <div className="text-lg font-serif text-navy mt-1">{formatPercent(ce.percentage)}</div>
-                <div className="text-xs text-stone-700">{formatCurrency(ce.amount)}</div>
+                <div className="text-xs text-slate-700">{formatCurrency(ce.amount)}</div>
               </div>
             ))}
           </div>
-          <p className="text-xs text-stone-700 mt-3">
+          <p className="text-xs text-slate-700 mt-3">
             Foreign-currency assets get an additional FX return drift ({wealthResult.currencyExposure.find((c) => c.currency !== 'INR')?.currency || 'USD'} ≈ 4% p.a. vs INR) and volatility in Monte Carlo projections.
           </p>
         </Card>
@@ -257,15 +257,15 @@ export const Allocation = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
-          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><PieChart size={18} className="text-gold" /> Current</h3>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><PieChart size={18} className="text-amber-500" /> Current</h3>
           <DonutChart data={currentData} />
         </Card>
         <Card>
-          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><Target size={18} className="text-gold" /> Target</h3>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><Target size={18} className="text-amber-500" /> Target</h3>
           <DonutChart data={targetData} />
         </Card>
         <Card>
-          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-gold" /> Projected (Terminal)</h3>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-amber-500" /> Projected (Terminal)</h3>
           <DonutChart data={projectedData} />
         </Card>
       </div>
@@ -273,8 +273,8 @@ export const Allocation = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-serif text-navy flex items-center gap-2"><Shield size={18} className="text-gold" /> Strategic Target</h3>
-            <Link to="/risk" className="text-xs text-navy hover:text-gold underline">{riskProfile.label}</Link>
+            <h3 className="text-lg font-serif text-navy flex items-center gap-2"><Shield size={18} className="text-amber-500" /> Strategic Target</h3>
+            <Link to="/risk" className="text-xs text-navy hover:text-amber-500 underline">{riskProfile.label}</Link>
           </div>
             {CATEGORIES.map((cat) => {
               return (
@@ -291,7 +291,7 @@ export const Allocation = () => {
             })}
           <div className="mt-4 flex items-center justify-between">
             <span className="flex items-center text-xs">
-              <span className="text-stone-700">Total: {formatPercent(Object.values(targets).reduce((a, b) => a + b, 0))}</span>
+              <span className="text-slate-700">Total: {formatPercent(Object.values(targets).reduce((a, b) => a + b, 0))}</span>
               {Math.abs(Object.values(targets).reduce((a, b) => a + b, 0) - 100) > 0.1 && (
                 <span className="ml-2 inline-flex items-center text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full font-medium">
                   <AlertTriangle size={12} className="mr-1" /> Does not equal 100%
@@ -303,16 +303,16 @@ export const Allocation = () => {
               <button
                 onClick={syncTargetsToCashflows}
                 title="Sync these weights to your monthly SIP & STP allocations in Master Plan"
-                className="text-xs flex items-center text-stone-600 hover:text-navy hover:underline"
+                className="text-xs flex items-center text-slate-600 hover:text-navy hover:underline"
               >
-                <TrendingUp size={12} className="mr-1 text-gold" /> Sync to SIP/STP
+                <TrendingUp size={12} className="mr-1 text-amber-500" /> Sync to SIP/STP
               </button>
               <button
                 onClick={() => {
                   setManualTargets(null);
                   showToast(`Reset targets to ${riskProfile.label} profile.`, 'info');
                 }}
-                className="text-xs flex items-center text-navy hover:text-gold underline"
+                className="text-xs flex items-center text-navy hover:text-amber-500 underline"
               >
                 <RotateCcw size={12} className="mr-1" /> Reset to {riskProfile.label}
               </button>
@@ -330,13 +330,13 @@ export const Allocation = () => {
         <Card>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-serif text-navy flex items-center gap-2">
-              <BarChart3 size={18} className="text-gold" /> Market-Optimized Targets
+              <BarChart3 size={18} className="text-amber-500" /> Market-Optimized Targets
             </h3>
-            <Link to="/mvo" className="text-xs text-navy hover:text-gold underline flex items-center">
+            <Link to="/mvo" className="text-xs text-navy hover:text-amber-500 underline flex items-center">
               Open MVO <ArrowRight size={12} className="ml-1" />
             </Link>
           </div>
-          <p className="text-sm text-stone-600 mb-4">
+          <p className="text-sm text-slate-600 mb-4">
             Targets derived from the mean-variance efficient frontier using the longest available history. These respect your risk profile's max equity constraint.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -344,10 +344,10 @@ export const Allocation = () => {
               { key: 'maxSharpe', label: 'Max Sharpe', targets: mvoTargets.maxSharpe, portfolio: mvoResult?.maxSharpe },
               { key: 'minVariance', label: 'Min Variance', targets: mvoTargets.minVariance, portfolio: mvoResult?.minVariance },
             ].map((item) => (
-              <div key={item.key} className="p-4 bg-stone-50 rounded-xl border border-stone-100 space-y-3">
+              <div key={item.key} className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-serif text-navy flex items-center gap-2"><Zap size={16} className="text-gold" /> {item.label}</span>
-                  <span className="text-xs font-mono text-stone-700">Sharpe {item.portfolio?.sharpe.toFixed(2)}</span>
+                  <span className="font-serif text-navy flex items-center gap-2"><Zap size={16} className="text-amber-500" /> {item.label}</span>
+                  <span className="text-xs font-mono text-slate-700">Sharpe {item.portfolio?.sharpe.toFixed(2)}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-xs">
                   {CATEGORIES.filter((c) => item.targets[c] > 0.5).map((cat) => (
@@ -359,7 +359,7 @@ export const Allocation = () => {
                 </div>
                 <button
                   onClick={() => item.portfolio && applyMvoTargets(item.portfolio, item.label)}
-                  className="w-full py-2 px-3 bg-navy text-white rounded-lg text-xs font-medium hover:bg-stone-800 transition-colors flex items-center justify-center gap-1"
+                  className="w-full py-2 px-3 bg-navy text-white rounded-lg text-xs font-medium hover:bg-slate-800 transition-colors flex items-center justify-center gap-1"
                 >
                   {appliedMvo === item.label ? <><CheckCircle2 size={14} /> Applied</> : <>Apply to Target Mix</>}
                 </button>
@@ -374,7 +374,7 @@ export const Allocation = () => {
         <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-stone-200 text-left text-[10px] uppercase tracking-wider text-stone-700">
+              <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-700">
                 <th className="py-2 pr-4">Asset Class</th>
                 <th className="py-2 pr-4 text-right">Current</th>
                 <th className="py-2 pr-4 text-right">Current %</th>
@@ -388,7 +388,7 @@ export const Allocation = () => {
               {dynamicRebalancingTrades.map((r) => {
                 const projectedPct = (projectedWeights[r.category] || 0) * 100;
                 return (
-                  <tr key={r.category} className="border-b border-stone-100 hover:bg-stone-50">
+                  <tr key={r.category} className="border-b border-slate-100 hover:bg-slate-50">
                     <td className="py-2 pr-4 flex items-center">
                       <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: ASSET_COLORS[r.category] }} />
                       {ASSET_LABELS[r.category]}
@@ -400,7 +400,7 @@ export const Allocation = () => {
                     <td className="py-2 pr-4 text-right font-medium">{formatCurrency(r.trade)}</td>
                     <td className="py-2 pr-4 text-center">
                       {r.action === 'Hold' ? (
-                        <span className="inline-flex items-center text-stone-700 text-xs"><CheckCircle2 size={12} className="mr-1" /> Hold</span>
+                        <span className="inline-flex items-center text-slate-700 text-xs"><CheckCircle2 size={12} className="mr-1" /> Hold</span>
                       ) : r.action === 'Buy' ? (
                         <span className="text-green-700 text-xs font-semibold">Buy</span>
                       ) : (
@@ -419,7 +419,7 @@ export const Allocation = () => {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-serif text-navy">Glide Path Reference</h3>
         </div>
-        <p className="text-sm text-stone-600 mb-4">
+        <p className="text-sm text-slate-600 mb-4">
           The default glide path reduces equity as you approach retirement, shifting to capital preservation.
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -431,8 +431,8 @@ export const Allocation = () => {
           ].map((point) => {
             const glide = getTargetGlideAllocation(point.age, inputs.retirementAge);
             return (
-              <div key={point.label} className="p-4 bg-stone-50 rounded-xl border border-stone-100">
-                <div className="text-xs font-bold uppercase tracking-wider text-stone-700">{point.label} (Age {point.age})</div>
+              <div key={point.label} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-700">{point.label} (Age {point.age})</div>
                 <div className="mt-2 space-y-1 text-sm">
                   <div className="flex justify-between"><span>Equity</span><span className="font-medium">{formatPercent(glide.equity * 100)}</span></div>
                   <div className="flex justify-between"><span>Debt</span><span className="font-medium">{formatPercent(glide.debt * 100)}</span></div>

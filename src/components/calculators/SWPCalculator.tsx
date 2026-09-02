@@ -99,7 +99,7 @@ export const SWPCalculator = () => {
 
           <Card>
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-700">Drawdown Trajectory</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-700">Drawdown Trajectory</h4>
               <Badge variant={result.sustainable ? 'success' : 'danger'}>
                 {result.sustainable ? 'Sustainable' : `Depletes in Y${result.years}`}
               </Badge>
@@ -114,10 +114,10 @@ export const SWPCalculator = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
-                  <XAxis dataKey="year" tick={{ fontSize: 12, fill: '#78716c' }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="year" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
                   <YAxis
                     tickFormatter={formatCurrencyCompact}
-                    tick={{ fontSize: 12, fill: '#78716c' }}
+                    tick={{ fontSize: 12, fill: '#64748b' }}
                     axisLine={false}
                     tickLine={false}
                   />
