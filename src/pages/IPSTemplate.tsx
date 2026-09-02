@@ -53,6 +53,7 @@ interface IPSState {
   riskTolerance: 'low' | 'moderate' | 'high';
   maxDrawdown: number;
   allocation: Record<AssetCategory, number>;
+  currentAllocation: Record<AssetCategory, number>;
   baseCurrency: string;
   foreignExposure: number;
   hedgePolicy: string;
@@ -93,6 +94,14 @@ const defaultState = (): IPSState => ({
     liquid: 5,
     other: 5,
   },
+  currentAllocation: {
+    equity: 52.6,
+    debt: 31.6,
+    gold: 10.5,
+    realestate: 0,
+    liquid: 5.3,
+    other: 0,
+  },
   baseCurrency: 'INR',
   foreignExposure: 0,
   hedgePolicy: 'Unhedged — foreign exposure, if any, will be reviewed quarterly.',
@@ -116,6 +125,8 @@ type IPSAction =
   | { type: 'updateClient'; payload: Partial<IPSState['client']> }
   | { type: 'updateField'; payload: Partial<Omit<IPSState, 'client' | 'allocation' | 'goals' | 'assets'>> }
   | { type: 'updateAllocation'; category: AssetCategory; value: number }
+  | { type: 'updateCurrentAllocation'; category: AssetCategory; value: number }
+  | { type: 'syncCurrentAllocationFromAssets' }
   | { type: 'addGoal' }
   | { type: 'updateGoal'; id: string; payload: Partial<IPSGoal> }
   | { type: 'removeGoal'; id: string }
@@ -133,6 +144,17 @@ function ipsReducer(state: IPSState, action: IPSAction): IPSState {
       return { ...state, ...action.payload };
     case 'updateAllocation':
       return { ...state, allocation: { ...state.allocation, [action.category]: action.value } };
+    case 'updateCurrentAllocation':
+      return { ...state, currentAllocation: { ...state.currentAllocation, [action.category]: action.value } };
+    case 'syncCurrentAllocationFromAssets': {
+      const net = state.assets.reduce((sum, a) => sum + a.value, 0);
+      const next: Record<AssetCategory, number> = { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 };
+      for (const cat of Object.keys(categoryLabels) as AssetCategory[]) {
+        const sum = state.assets.filter((a) => a.category === cat).reduce((s, a) => s + a.value, 0);
+        next[cat] = net > 0 ? parseFloat(((sum / net) * 100).toFixed(1)) : 0;
+      }
+      return { ...state, currentAllocation: next };
+    }
     case 'addGoal': {
       const nextId = `g${Date.now()}`;
       return {
@@ -318,12 +340,6 @@ export const IPSTemplate = () => {
     setShowToast({ message: 'Exported IPS markdown document.', type: 'success' });
   };
 
-  const currentAllocationPct = (category: AssetCategory) => {
-    if (netWorth <= 0) return 0;
-    const sum = state.assets.filter((a) => a.category === category).reduce((s, a) => s + a.value, 0);
-    return (sum / netWorth) * 100;
-  };
-
   return (
     <div className="space-y-6">
       <SectionTitle
@@ -434,6 +450,33 @@ export const IPSTemplate = () => {
             </div>
           </div>
 
+          {/* Current allocation */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-stone-700">Current Allocation</div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs py-1 h-auto"
+                onClick={() => dispatch({ type: 'syncCurrentAllocationFromAssets' })}
+                title="Compute current allocation from the holdings below"
+              >
+                Sync from holdings
+              </Button>
+            </div>
+            {(Object.keys(categoryLabels) as AssetCategory[]).map((cat) => (
+              <NumberInput
+                key={`current-${cat}`}
+                label={categoryLabels[cat]}
+                value={state.currentAllocation[cat]}
+                onChange={(v) => dispatch({ type: 'updateCurrentAllocation', category: cat, value: v })}
+                suffix="%"
+                min={0}
+                max={100}
+              />
+            ))}
+          </div>
+
           {/* Currency */}
           <LabelledInput
             id={fieldId('baseCurrency')}
@@ -482,6 +525,148 @@ export const IPSTemplate = () => {
               rows={2}
               className="w-full bg-white border border-stone-200 rounded-xl p-3 text-sm text-navy focus:border-gold focus:outline-none"
             />
+          </div>
+
+          {/* Goals editor */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-stone-700">Goals & Liabilities</div>
+              <Button variant="outline" size="sm" className="text-xs py-1 h-auto" onClick={() => dispatch({ type: 'addGoal' })}>
+                <Plus size={14} className="mr-1" /> Add Goal
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {state.goals.map((g) => (
+                <div key={g.id} className="grid grid-cols-12 gap-2 items-end bg-stone-50 rounded-xl p-2.5">
+                  <div className="col-span-4">
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`goal-name-${g.id}`}>Name</label>
+                    <input
+                      id={`goal-name-${g.id}`}
+                      type="text"
+                      value={g.name}
+                      onChange={(e) => dispatch({ type: 'updateGoal', id: g.id, payload: { name: e.target.value } })}
+                      className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
+                      aria-label="Goal name"
+                    />
+                  </div>
+                  <div className="col-span-3">
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`goal-priority-${g.id}`}>Priority</label>
+                    <select
+                      id={`goal-priority-${g.id}`}
+                      value={g.priority}
+                      onChange={(e) => dispatch({ type: 'updateGoal', id: g.id, payload: { priority: e.target.value as IPSGoal['priority'] } })}
+                      className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
+                      aria-label="Goal priority"
+                    >
+                      <option value="essential">Essential</option>
+                      <option value="important">Important</option>
+                      <option value="aspirational">Aspirational</option>
+                    </select>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`goal-years-${g.id}`}>Years</label>
+                    <input
+                      id={`goal-years-${g.id}`}
+                      type="number"
+                      min={0}
+                      value={g.yearsToGoal}
+                      onChange={(e) => dispatch({ type: 'updateGoal', id: g.id, payload: { yearsToGoal: Number(e.target.value) } })}
+                      className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
+                      aria-label="Years to goal"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`goal-target-${g.id}`}>Target</label>
+                    <input
+                      id={`goal-target-${g.id}`}
+                      type="number"
+                      min={0}
+                      value={g.targetAmount}
+                      onChange={(e) => dispatch({ type: 'updateGoal', id: g.id, payload: { targetAmount: Number(e.target.value) } })}
+                      className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
+                      aria-label="Goal target amount"
+                    />
+                  </div>
+                  <div className="col-span-1 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => dispatch({ type: 'removeGoal', id: g.id })}
+                      className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                      aria-label="Remove goal"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {state.goals.length === 0 && <p className="text-sm text-stone-500 italic">No goals added yet.</p>}
+            </div>
+          </div>
+
+          {/* Assets editor */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-stone-700">Current Holdings</div>
+              <Button variant="outline" size="sm" className="text-xs py-1 h-auto" onClick={() => dispatch({ type: 'addAsset' })}>
+                <Plus size={14} className="mr-1" /> Add Asset
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {state.assets.map((a) => (
+                <div key={a.id} className="grid grid-cols-12 gap-2 items-end bg-stone-50 rounded-xl p-2.5">
+                  <div className="col-span-5">
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`asset-name-${a.id}`}>Name</label>
+                    <input
+                      id={`asset-name-${a.id}`}
+                      type="text"
+                      value={a.name}
+                      onChange={(e) => dispatch({ type: 'updateAsset', id: a.id, payload: { name: e.target.value } })}
+                      className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
+                      aria-label="Asset name"
+                    />
+                  </div>
+                  <div className="col-span-3">
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`asset-category-${a.id}`}>Category</label>
+                    <select
+                      id={`asset-category-${a.id}`}
+                      value={a.category}
+                      onChange={(e) => dispatch({ type: 'updateAsset', id: a.id, payload: { category: e.target.value as AssetCategory } })}
+                      className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
+                      aria-label="Asset category"
+                    >
+                      {(Object.keys(categoryLabels) as AssetCategory[]).map((cat) => (
+                        <option key={cat} value={cat}>
+                          {categoryLabels[cat]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-span-3">
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`asset-value-${a.id}`}>Value</label>
+                    <input
+                      id={`asset-value-${a.id}`}
+                      type="number"
+                      min={0}
+                      value={a.value}
+                      onChange={(e) => dispatch({ type: 'updateAsset', id: a.id, payload: { value: Number(e.target.value) } })}
+                      className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
+                      aria-label="Asset value"
+                    />
+                  </div>
+                  <div className="col-span-1 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => dispatch({ type: 'removeAsset', id: a.id })}
+                      className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                      aria-label="Remove asset"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {state.assets.length === 0 && <p className="text-sm text-stone-500 italic">No assets added yet.</p>}
+            </div>
           </div>
 
           {/* Actions */}
@@ -675,7 +860,7 @@ export const IPSTemplate = () => {
                     <tr key={cat}>
                       <td>{categoryLabels[cat]}</td>
                       <td>{state.allocation[cat]}%</td>
-                      <td>{currentAllocationPct(cat).toFixed(1)}%</td>
+                      <td>{state.currentAllocation[cat].toFixed(1)}%</td>
                     </tr>
                   ))}
                 </tbody>
@@ -755,149 +940,6 @@ export const IPSTemplate = () => {
         </Card>
       </div>
 
-      {/* Inline editors for goals and assets */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:hidden">
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-serif text-navy">Goals & Liabilities</h3>
-            <Button variant="outline" size="sm" onClick={() => dispatch({ type: 'addGoal' })}>
-              <Plus size={14} className="mr-1" /> Add Goal
-            </Button>
-          </div>
-          <div className="space-y-3">
-            {state.goals.map((g) => (
-              <div key={g.id} className="grid grid-cols-12 gap-2 items-end bg-stone-50 rounded-xl p-3">
-                <div className="col-span-4">
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`goal-name-${g.id}`}>Name</label>
-                  <input
-                    id={`goal-name-${g.id}`}
-                    type="text"
-                    value={g.name}
-                    onChange={(e) => dispatch({ type: 'updateGoal', id: g.id, payload: { name: e.target.value } })}
-                    className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
-                    aria-label="Goal name"
-                  />
-                </div>
-                <div className="col-span-3">
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`goal-priority-${g.id}`}>Priority</label>
-                  <select
-                    id={`goal-priority-${g.id}`}
-                    value={g.priority}
-                    onChange={(e) => dispatch({ type: 'updateGoal', id: g.id, payload: { priority: e.target.value as IPSGoal['priority'] } })}
-                    className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
-                    aria-label="Goal priority"
-                  >
-                    <option value="essential">Essential</option>
-                    <option value="important">Important</option>
-                    <option value="aspirational">Aspirational</option>
-                  </select>
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`goal-years-${g.id}`}>Years</label>
-                  <input
-                    id={`goal-years-${g.id}`}
-                    type="number"
-                    min={0}
-                    value={g.yearsToGoal}
-                    onChange={(e) => dispatch({ type: 'updateGoal', id: g.id, payload: { yearsToGoal: Number(e.target.value) } })}
-                    className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
-                    aria-label="Years to goal"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`goal-target-${g.id}`}>Target</label>
-                  <input
-                    id={`goal-target-${g.id}`}
-                    type="number"
-                    min={0}
-                    value={g.targetAmount}
-                    onChange={(e) => dispatch({ type: 'updateGoal', id: g.id, payload: { targetAmount: Number(e.target.value) } })}
-                    className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
-                    aria-label="Goal target amount"
-                  />
-                </div>
-                <div className="col-span-1 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => dispatch({ type: 'removeGoal', id: g.id })}
-                    className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                    aria-label="Remove goal"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
-            {state.goals.length === 0 && <p className="text-sm text-stone-500 italic">No goals added yet.</p>}
-          </div>
-        </Card>
-
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-serif text-navy">Current Holdings</h3>
-            <Button variant="outline" size="sm" onClick={() => dispatch({ type: 'addAsset' })}>
-              <Plus size={14} className="mr-1" /> Add Asset
-            </Button>
-          </div>
-          <div className="space-y-3">
-            {state.assets.map((a) => (
-              <div key={a.id} className="grid grid-cols-12 gap-2 items-end bg-stone-50 rounded-xl p-3">
-                <div className="col-span-5">
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`asset-name-${a.id}`}>Name</label>
-                  <input
-                    id={`asset-name-${a.id}`}
-                    type="text"
-                    value={a.name}
-                    onChange={(e) => dispatch({ type: 'updateAsset', id: a.id, payload: { name: e.target.value } })}
-                    className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
-                    aria-label="Asset name"
-                  />
-                </div>
-                <div className="col-span-3">
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`asset-category-${a.id}`}>Category</label>
-                  <select
-                    id={`asset-category-${a.id}`}
-                    value={a.category}
-                    onChange={(e) => dispatch({ type: 'updateAsset', id: a.id, payload: { category: e.target.value as AssetCategory } })}
-                    className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
-                    aria-label="Asset category"
-                  >
-                    {(Object.keys(categoryLabels) as AssetCategory[]).map((cat) => (
-                      <option key={cat} value={cat}>
-                        {categoryLabels[cat]}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="col-span-3">
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-stone-700 mb-1" htmlFor={`asset-value-${a.id}`}>Value</label>
-                  <input
-                    id={`asset-value-${a.id}`}
-                    type="number"
-                    min={0}
-                    value={a.value}
-                    onChange={(e) => dispatch({ type: 'updateAsset', id: a.id, payload: { value: Number(e.target.value) } })}
-                    className="w-full bg-white border border-stone-200 rounded-lg px-2 py-1.5 text-sm"
-                    aria-label="Asset value"
-                  />
-                </div>
-                <div className="col-span-1 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => dispatch({ type: 'removeAsset', id: a.id })}
-                    className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                    aria-label="Remove asset"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
-            {state.assets.length === 0 && <p className="text-sm text-stone-500 italic">No assets added yet.</p>}
-          </div>
-        </Card>
-      </div>
-
       <div className="print:hidden">
         <WorkflowFooter
           prev={{ path: '/reports', label: 'Reports' }}
@@ -967,11 +1009,6 @@ function LabelledDate({
 }
 
 function generateIPSMarkdown(state: IPSState, netWorth: number): string {
-  const currentPct = (cat: AssetCategory) => {
-    if (netWorth <= 0) return '0.0';
-    const sum = state.assets.filter((a) => a.category === cat).reduce((s, a) => s + a.value, 0);
-    return ((sum / netWorth) * 100).toFixed(1);
-  };
 
   const goalsMd =
     state.goals.length === 0
@@ -1022,12 +1059,12 @@ ${goalsMd}
 
 | Asset Class | Target | Current |
 |-------------|--------|---------|
-| Equity | ${state.allocation.equity}% | ${currentPct('equity')}% |
-| Debt | ${state.allocation.debt}% | ${currentPct('debt')}% |
-| Gold | ${state.allocation.gold}% | ${currentPct('gold')}% |
-| Real Estate | ${state.allocation.realestate}% | ${currentPct('realestate')}% |
-| Liquid | ${state.allocation.liquid}% | ${currentPct('liquid')}% |
-| Other | ${state.allocation.other}% | ${currentPct('other')}% |
+| Equity | ${state.allocation.equity}% | ${state.currentAllocation.equity.toFixed(1)}% |
+| Debt | ${state.allocation.debt}% | ${state.currentAllocation.debt.toFixed(1)}% |
+| Gold | ${state.allocation.gold}% | ${state.currentAllocation.gold.toFixed(1)}% |
+| Real Estate | ${state.allocation.realestate}% | ${state.currentAllocation.realestate.toFixed(1)}% |
+| Liquid | ${state.allocation.liquid}% | ${state.currentAllocation.liquid.toFixed(1)}% |
+| Other | ${state.allocation.other}% | ${state.currentAllocation.other.toFixed(1)}% |
 
 ## Current Holdings
 
@@ -1092,21 +1129,39 @@ function parseIPSMarkdown(md: string): IPSState {
   if (inflation !== null) next.client.inflation = inflation;
 
   const row = (label: string) => {
-    const m = md.match(new RegExp(`^\\s*\\|\\s*${label}\\s*\\|\\s*([\\d.]+)%`, 'm'));
-    return m ? parseFloat(m[1]) : null;
+    const m = md.match(new RegExp(`^\\s*\\|\\s*${label}\\s*\\|\\s*([\\d.]+)%\\s*\\|\\s*([\\d.]+)%`, 'm'));
+    return m ? { target: parseFloat(m[1]), current: parseFloat(m[2]) } : null;
   };
   const equity = row('Equity');
-  if (equity !== null) next.allocation.equity = equity;
+  if (equity) {
+    next.allocation.equity = equity.target;
+    next.currentAllocation.equity = equity.current;
+  }
   const debt = row('Debt');
-  if (debt !== null) next.allocation.debt = debt;
+  if (debt) {
+    next.allocation.debt = debt.target;
+    next.currentAllocation.debt = debt.current;
+  }
   const gold = row('Gold');
-  if (gold !== null) next.allocation.gold = gold;
+  if (gold) {
+    next.allocation.gold = gold.target;
+    next.currentAllocation.gold = gold.current;
+  }
   const realestate = row('Real Estate');
-  if (realestate !== null) next.allocation.realestate = realestate;
+  if (realestate) {
+    next.allocation.realestate = realestate.target;
+    next.currentAllocation.realestate = realestate.current;
+  }
   const liquid = row('Liquid');
-  if (liquid !== null) next.allocation.liquid = liquid;
+  if (liquid) {
+    next.allocation.liquid = liquid.target;
+    next.currentAllocation.liquid = liquid.current;
+  }
   const other = row('Other');
-  if (other !== null) next.allocation.other = other;
+  if (other) {
+    next.allocation.other = other.target;
+    next.currentAllocation.other = other.current;
+  }
 
   const foreignExposure = num(field('Foreign exposure limit'));
   if (foreignExposure !== null) next.foreignExposure = foreignExposure;
