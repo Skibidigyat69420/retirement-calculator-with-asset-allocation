@@ -77,3 +77,32 @@ To export a complete snapshot of the entire platform and all sections as a publi
   ```
   This generates `sound-thesis-portfolio-dossier.pdf` (7-page institutional dossier) directly in your project root.
 
+### 10. Multi-Asset Class Portfolio Return Projection Calculator 🌐
+Located in `/calculators` (Tab: "Asset Class Projection"):
+- **Dynamic Asset Universe**: Add, rename, remove custom asset classes (e.g. US Tech Equities, Indian Equities, Sovereign Debt, Physical Gold, Private Real Estate).
+- **Custom Return & Weights Matrix**: Interactive inputs for target weight (%) and nominal expected return (%).
+- **Multi-Currency & Inflation Adjustments**: Toggle currency base (INR, USD, EUR, GBP) with automatic FX depreciation and inflation subtraction to display both **Nominal INR Return** and **Real Purchasing Power CAGR**.
+- **Dual Rebalancing Modes**: Compare **Annual Rebalancing** vs. **Buy & Hold (Drift)** with multi-decade compounding projections and year-by-year trajectory tables.
+
+### 11. Institutional Adviser Operating System (OS) 🏛️
+Implemented the full end-to-end framework from `sound_thesis_product_flow_ideas.md`:
+- **Adviser Command Center (`/`)**:
+  - **Adviser Mode vs. Client Mode Toggle**: Seamlessly switch between detailed institutional metrics and a simplified, goal-focused client presentation.
+  - **Plan Health Scorecard (0–100)**: Quantitative health rating across 7 pillars (*Retirement Readiness, Goal Funding, Liquidity, Risk Alignment, Asset Allocation, Debt & Solvency, Tax Efficiency*) with transparent rationale and improvement advice.
+  - **Central Decision & Recommendation Engine**: Prioritized (P1–P4) tactical actions with explainable "Why?" audit trails and 1-click execution (`Apply +₹25k SIP`, `Set Retirement to 47`, `Rebalance to 53% Equity`).
+- **Retirement & SWP Lab (`/retirement`)**:
+  - **Monte Carlo Failure Mode Diagnosis**: Breakdown of shortfall risk into root causes (*Sequence of Returns, High Inflation, Milestone Shocks, Longevity*) with de-risking pathways.
+  - **Scenario Lab (Trade-Off Solver)**: Side-by-side what-if matrix testing Early/Delayed Retirement, +₹25k SIP, -30% Equity Crash, 8% Inflation, and ₹2Cr Real Estate Outlay with 1-click scenario adoption.
+- **Portfolio Allocation & Execution (`/allocation`)**:
+  - **Plan vs. Reality Drift Governance**: Real-time comparison of current holdings vs. strategic policy weights with calculated retirement longevity consequences.
+  - **Implementation Transition Plan**: Trade sheet with exact Buy/Sell/Redirect amounts, capital shift volume, and tax drag estimates.
+- **Goal Conflict Matrix (`/goal`)**:
+  - Simultaneous multi-goal affordability view with interactive priority rank overrides.
+  - 4-stage monthly surplus cash flow waterfall (*Emergency Reserve, Priority Goals SIP, Core Retirement SIP, Discretionary Growth*).
+
+### 12. Verification & Test Suite
+- **41/41 Unit Tests Passing**: 100% test pass rate across `adviserEngines`, `calculations`, `formatters`, `mvo`, `portfolioProjection`, `stressTest`, and `wealthEngine`.
+- **Zero Lint or Build Errors**: `npm run lint && npm run build` compiles with 0 warnings/errors in 2.1s.
+- **Headless Browser Audit**: Verified 0 runtime or console errors across all 9 pages.
+
+
