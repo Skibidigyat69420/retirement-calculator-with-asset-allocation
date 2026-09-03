@@ -15,9 +15,9 @@
   --color-textMain: #0f172a;
   --color-textMuted: #64748b;
 
-  --font-serif: "Playfair Display", Georgia, ui-serif, serif;
-  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-serif: Calibri, Carlito, "Segoe UI", Candara, Arial, sans-serif;
+  --font-sans: Calibri, Carlito, "Segoe UI", Candara, Arial, sans-serif;
+  --font-mono: Consolas, "Courier New", monospace;
 
   --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 14px rgba(15, 23, 42, 0.03);
   --shadow-card-hover: 0 4px 8px rgba(15, 23, 42, 0.04), 0 12px 28px rgba(15, 23, 42, 0.07);
@@ -26,11 +26,13 @@
 
 @layer base {
   body {
-    @apply bg-slate-50 font-sans text-textMain min-h-screen antialiased;
+    font-family: Calibri, Carlito, "Segoe UI", Candara, Arial, sans-serif;
+    @apply bg-slate-50 text-textMain min-h-screen antialiased;
     background-color: #f8fafc;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif text-ink tracking-tight;
+    font-family: Calibri, Carlito, "Segoe UI", Candara, Arial, sans-serif;
+    @apply text-ink tracking-tight font-bold;
   }
   input[type="range"] {
     -webkit-appearance: none;
@@ -116,6 +118,10 @@
   html, body {
     background: white !important;
     color: #0f172a !important;
+    font-family: Calibri, Carlito, "Segoe UI", Candara, Arial, sans-serif !important;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: Calibri, Carlito, "Segoe UI", Candara, Arial, sans-serif !important;
   }
   aside, header, footer, nav, .no-print, .print-hidden {
     display: none !important;
