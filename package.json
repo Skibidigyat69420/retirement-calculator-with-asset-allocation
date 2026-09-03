@@ -16,7 +16,8 @@
     "fetch:angel": ".venv/bin/python scripts/fetch_angel_historical.py",
     "fetch:angel:all": ".venv/bin/python scripts/fetch_angel_all.py",
     "build:market-db": ".venv/bin/python scripts/build_market_database.py",
-    "live:angel": ".venv/bin/python scripts/angel_live_feed.py"
+    "live:angel": ".venv/bin/python scripts/angel_live_feed.py",
+    "export:pdf": "node scripts/export-pdf.js"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

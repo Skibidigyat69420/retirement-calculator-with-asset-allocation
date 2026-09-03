@@ -37,6 +37,7 @@ const MVO = lazyNamed(() => import('./pages/MVO'), 'MVO');
 const IPSTemplate = lazyNamed(() => import('./pages/IPSTemplate'), 'IPSTemplate');
 const RiskQuestionnaire = lazyNamed(() => import('./pages/RiskQuestionnaire'), 'RiskQuestionnaire');
 const Reports = lazyNamed(() => import('./pages/Reports'), 'Reports');
+const Dossier = lazyNamed(() => import('./pages/Dossier'), 'Dossier');
 const AngelData = lazyNamed(() => import('./pages/AngelData'), 'AngelData');
 const Calculators = lazyNamed(() => import('./pages/Calculators'), 'Calculators');
 
@@ -55,6 +56,7 @@ function App() {
               <Route path="/allocation" element={<Allocation />} />
               <Route path="/mvo" element={<MVO />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/dossier" element={<Dossier />} />
               <Route path="/calculators" element={<Calculators />} />
               <Route path="/ips" element={<IPSTemplate />} />
               <Route path="/angel-connect" element={<AngelConnect />} />

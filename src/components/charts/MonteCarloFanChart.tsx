@@ -14,6 +14,7 @@ import type { MonteCarloYearlyPercentile } from '../../types';
 
 interface MonteCarloFanChartProps {
   data: MonteCarloYearlyPercentile[];
+  className?: string;
 }
 
 const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 };
@@ -31,7 +32,7 @@ const LEGEND_WRAPPER_STYLE = { fontSize: '11px', paddingBottom: '8px' };
 
 const XAXIS_LABEL = { value: 'Age', position: 'insideBottom' as const, offset: -5, fill: '#78716c', fontSize: 12 };
 
-export const MonteCarloFanChart = ({ data }: MonteCarloFanChartProps) => {
+export const MonteCarloFanChart = ({ data, className }: MonteCarloFanChartProps) => {
   const chartData = data.map((d) => ({
     age: d.age,
     p5: d.p5,
@@ -42,7 +43,7 @@ export const MonteCarloFanChart = ({ data }: MonteCarloFanChartProps) => {
   }));
 
   return (
-    <div className="h-80 w-full">
+    <div className={className || "h-80 w-full"}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={chartData} margin={CHART_MARGIN}>
           <defs>

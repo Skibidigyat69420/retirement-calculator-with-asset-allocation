@@ -1,5 +1,6 @@
-import { FileText, TrendingUp, Target, PieChart, ShieldCheck, AlertTriangle, CheckCircle2, Globe, Wallet, Printer } from 'lucide-react';
+import { FileText, TrendingUp, Target, PieChart, ShieldCheck, AlertTriangle, CheckCircle2, Globe, Wallet, Printer, FileDown } from 'lucide-react';
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCalculator } from '../context/CalculatorContext';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { Card } from '../components/ui/Card';
@@ -16,6 +17,7 @@ import type { AssetCategory } from '../types';
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
 
 export const Reports = () => {
+  const navigate = useNavigate();
   const { inputs, riskProfile, wealthResult, manualTargets } = useCalculator();
 
   const handlePrint = () => {
@@ -58,10 +60,16 @@ export const Reports = () => {
           subtitle="A consolidated view of your financial plan: net worth, allocation, goals, Monte Carlo outcomes, tax, and currency exposure."
           badge="Comprehensive"
         />
-        <Button onClick={handlePrint} className="flex items-center gap-2">
-          <Printer size={16} />
-          Print Report
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => navigate('/dossier?autoPrint=true')} variant="primary" className="flex items-center gap-2">
+            <FileDown size={16} />
+            Export Full Dossier (PDF)
+          </Button>
+          <Button onClick={handlePrint} variant="outline" className="flex items-center gap-2">
+            <Printer size={16} />
+            Print Page
+          </Button>
+        </div>
       </div>
 
       {/* Executive Client Header Banner */}

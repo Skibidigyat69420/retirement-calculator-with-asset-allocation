@@ -67,3 +67,13 @@ npm run build
 npm run build
 npx wrangler pages deploy dist
 ```
+
+### 9. One-Click Full-Site PDF Export 📄
+To export a complete snapshot of the entire platform and all sections as a publication-ready PDF:
+- **In Browser (1-Click)**: Click the green **"Export PDF"** button in the top navigation bar from any page (or navigate to `/dossier`). This stitches together all 7 sections with vector SVG charts, clean A4 print margins, and opens the native print/save-as-PDF dialog.
+- **Via CLI / Terminal**: Run the headless Puppeteer script with one command:
+  ```bash
+  npm run export:pdf
+  ```
+  This generates `sound-thesis-portfolio-dossier.pdf` (7-page institutional dossier) directly in your project root.
+

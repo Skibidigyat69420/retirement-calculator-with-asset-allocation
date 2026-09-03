@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Menu, ChevronRight, CheckCircle2, AlertTriangle, RotateCcw, Printer, Wallet, User, ShieldCheck } from 'lucide-react';
+import { Menu, ChevronRight, CheckCircle2, AlertTriangle, RotateCcw, Wallet, User, ShieldCheck, FileDown } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import { navItems, utilityItem } from './navItems';
 import { useCalculator } from '../../context/CalculatorContext';
@@ -20,12 +20,6 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
     (utilityItem.path === location.pathname ? utilityItem : null);
   const label = current?.label || 'Overview';
   const section = current?.section || 'Advisory';
-
-  const isPrintablePage = location.pathname === '/reports' || location.pathname === '/ips';
-
-  const handlePrint = () => {
-    window.print();
-  };
 
   const confirmReset = () => {
     resetToDefaults();
@@ -129,18 +123,16 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
               <span className="truncate max-w-[90px] sm:max-w-none">{formatCurrencyCompact(wealthResult.netWorth)}</span>
             </div>
 
-            {/* Print button on Reports/IPS */}
-            {isPrintablePage && (
-              <button
-                onClick={handlePrint}
-                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-navy text-slate-600 hover:text-navy text-xs font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-navy/30"
-                title="Print or export as PDF"
-                aria-label="Print or export as PDF"
-              >
-                <Printer size={13} />
-                <span className="hidden md:inline">Print</span>
-              </button>
-            )}
+            {/* Export Complete PDF Button */}
+            <Link
+              to="/dossier?autoPrint=true"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-colors shadow-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30 shrink-0"
+              title="Export complete snapshot of all pages as a PDF"
+              aria-label="Export complete snapshot of all pages as a PDF"
+            >
+              <FileDown size={13} />
+              <span className="hidden sm:inline">Export PDF</span>
+            </Link>
 
             {/* Quick Reset Plan Button */}
             <button

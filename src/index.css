@@ -103,11 +103,42 @@
   animation: overlay-fade-in 0.2s ease-out;
 }
 
-@media print {
-  body { background: white !important; }
-  aside, header, footer, nav, .no-print { display: none !important; }
-  main { margin: 0 !important; padding: 0 !important; max-width: 100% !important; width: 100% !important; }
-  h1, h2, h3, h4, h5, h6 { font-family: Georgia, "Times New Roman", ui-serif, serif !important; }
-  table, thead, tr { break-inside: avoid; }
-  .print-keep { break-inside: avoid; }
+@page {
+  size: A4 portrait;
+  margin: 10mm 12mm 12mm 12mm;
 }
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  html, body {
+    background: white !important;
+    color: #0f172a !important;
+  }
+  aside, header, footer, nav, .no-print, .print-hidden {
+    display: none !important;
+  }
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  .page-break {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+  .avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  table, thead, tr {
+    break-inside: avoid !important;
+  }
+  .print-keep {
+    break-inside: avoid !important;
+  }
+}
+

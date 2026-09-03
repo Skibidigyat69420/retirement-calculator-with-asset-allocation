@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Database,
   PiggyBank,
+  Printer,
 } from 'lucide-react';
 
 export const navItems = [
@@ -23,6 +24,7 @@ export const navItems = [
   { path: '/mvo', label: 'MVO', icon: BarChart2, section: 'Portfolio' },
   { path: '/reports', label: 'Reports', icon: BarChart3, section: 'Reports' },
   { path: '/ips', label: 'IPS', icon: FileText, section: 'Reports' },
+  { path: '/dossier', label: 'Full Dossier (PDF)', icon: Printer, section: 'Reports' },
   { path: '/calculators', label: 'Calculators', icon: Calculator, section: 'Tools' },
   { path: '/angel-data', label: 'Angel Data', icon: Database, section: 'Data' },
 ];
