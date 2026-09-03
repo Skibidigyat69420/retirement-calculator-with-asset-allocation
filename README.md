@@ -173,40 +173,36 @@ curl -s http://127.0.0.1:5173/api/market-status | python3 -m json.tool
 
 The status endpoint returns symbol count, source, full date range, default MVO basket range, and whether covariance/correlation matrices are present. You can also open the MVO page and check the **Data Source** card: it should show the number of instruments available and the history length.
 
-## API Routes
+## API Routes & Endpoints
 
-The `api/` folder contains Vercel-style serverless functions. During local development they are served by a custom Vite plugin in `vite.config.ts`.
+Static routing and API proxying are handled by `public/_redirects` (for Cloudflare Pages) and Vite proxy (for local development).
 
-- `GET /api/market-data` — serve the bundled market data
+- `GET /api/market-data` — serve the bundled 10-year market data
 - `GET /api/market-status` — bundle metadata and health check
-- `POST /api/market-data` — refresh the bundle by running the Python fetcher
-- `POST /api/save-ips` — save an IPS Markdown document to `./ips/`
-- `GET /api/list-ips` — list saved IPS documents
-- `GET /api/load-ips?filename=...` — load a saved IPS document
-- `GET /api/angel-one-snapshot` — serve the latest Angel One snapshot
-
-`/api/angelone/*` is proxied to `https://apiconnect.angelone.in` for SmartAPI calls from the browser.
+- `/api/angelone/*` — proxied to `https://apiconnect.angelone.in` for SmartAPI calls from the browser
 
 ## Project Structure
 
 ```
-├── api/                    # Vercel serverless functions
+├── public/                 # Static assets, _redirects, and _headers for Cloudflare Pages
+│   ├── _headers            # Cloudflare Pages security & caching headers
+│   ├── _redirects          # Cloudflare Pages SPA fallback and Angel One proxy
+│   └── data/               # Bundled market data served to the frontend
 ├── data/                   # Generated price CSVs and Angel One snapshots
-├── public/data/            # Bundled market data served to the frontend
 ├── scripts/                # Python fetchers and Node test scripts
 ├── smartapi_connector.py   # Standalone Python SmartAPI reference
 ├── src/
 │   ├── components/         # Reusable UI, charts, layout
 │   ├── context/            # CalculatorContext — global plan state
 │   ├── hooks/              # useMarketData, useLiveFeed
-│   ├── lib/                # Calculation engines and utilities
+│   ├── lib/                # Calculation engines, wealth simulator, MVO
 │   ├── pages/              # Route-level pages
 │   ├── types/              # TypeScript types
 │   ├── App.tsx             # Router
 │   └── main.tsx            # Entry point
 ├── ips-template/           # CFA-aligned IPS reference template
 ├── .env.example            # Environment variable template
-├── vercel.json             # Vercel rewrite rules
+├── wrangler.json           # Cloudflare Pages / Workers configuration
 └── README.md
 ```
 
@@ -218,9 +214,9 @@ The `api/` folder contains Vercel-style serverless functions. During local devel
 - Recharts
 - Framer Motion
 - Oxlint
-- Angel One SmartAPI (optional live refresh)
+- Angel One SmartAPI (optional live feed)
 - Python 3 + yfinance/pandas/numpy (data fetchers)
-- Vercel serverless functions
+- Cloudflare Pages (hosting & edge CDN)
 
 ## Getting Started
 
@@ -277,18 +273,26 @@ npm run lint
 
 ## Deployment
 
-The project is configured for static hosting on Vercel.
+The project is configured for seamless static hosting on **Cloudflare Pages**.
 
+### Deploy via Cloudflare Dashboard (Git-Connected)
+1. In Cloudflare Dashboard, go to **Workers & Pages** > **Create application** > **Pages** > **Connect to Git**.
+2. Select repository `Skibidigyat69420/retirement-calculator-with-asset-allocation`.
+3. Build configuration:
+   - **Framework preset**: `Vite`
+   - **Build command**: `npm run build`
+   - **Build output directory**: `dist`
+4. Click **Save and Deploy**.
+
+### Deploy via Wrangler CLI
 ```bash
-npm i -g vercel
-vercel --prod
+npm run build
+npx wrangler pages deploy dist
 ```
 
-`vercel.json` routes `/api/angelone/*` to Angel One and all other paths to `index.html` for client-side routing.
+`public/_redirects` routes `/api/angelone/*` to Angel One SmartAPI and all other paths to `/index.html` for single-page client routing. `public/_headers` configures immutable asset caching and modern security headers.
 
-## Important Notes and Limitations
-
-- **IPS persistence on Vercel is ephemeral.** The `/api/save-ips` endpoint writes to the local filesystem, which disappears after each serverless request. For persistent IPS storage, run the app locally or on a long-running server, or use the **Export MD** download button.
+- **IPS persistence and plan saving:** Plans and questionnaire answers are saved directly in browser local storage for instant access across sessions. You can also export full markdown reports using the **Export MD** download button.
 - **Currency display is INR-first.** `formatCurrency` always formats numbers as ₹. If you hold USD assets, the value is still shown in ₹ unless you mentally apply the FX assumption. The engine does model FX drift and volatility for foreign-currency assets in Monte Carlo projections.
 - **MVO weights applied to assets use a fixed ₹1 crore notional.** When you click "Add to Assets" from the MVO page, the optimizer's weights are multiplied by a constant base value to create proxy asset entries. This is meant for visualisation, not as a literal rebalancing instruction.
 - **Advanced Allocation page.** The Allocation page links to `/advanced-allocation` for Black-Litterman, risk parity, and tactical overlays, but that route is not yet implemented.

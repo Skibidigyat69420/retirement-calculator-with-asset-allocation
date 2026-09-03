@@ -99,7 +99,7 @@ export async function fetchMarketDataFromBackend(
   if (to) params.set('to', to);
   const query = params.toString();
 
-  // Try the Vercel serverless endpoint first, then fall back to the static bundle.
+  // Try the API endpoint first, then fall back to the static bundle.
   const urls = [
     `/api/market-data${query ? `?${query}` : ''}`,
     `/data/market-data.json`,

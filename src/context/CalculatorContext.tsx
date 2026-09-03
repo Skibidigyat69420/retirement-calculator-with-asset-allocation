@@ -6,7 +6,6 @@ import { runWealthEngine, type WealthEngineResult } from '../lib/wealthEngine';
 import { calculateRiskScore, getRiskProfile } from '../lib/riskQuestionnaire';
 import { loadClientData, saveClientData, resetClientData } from '../lib/persistenceUtils';
 import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
-import { useNetlifyIdentity, type IdentityState } from '../hooks/useNetlifyIdentity';
 import type { StoredPlan } from '../lib/store';
 import { savePlan, loadPlan, listPlans, deletePlan } from '../lib/planStorage';
 
@@ -44,7 +43,6 @@ interface CalculatorContextType {
   setManualTargets: React.Dispatch<React.SetStateAction<Record<AssetCategory, number> | null>>;
   resetToDefaults: () => void;
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
-  identity: IdentityState;
   savedPlans: StoredPlan[];
   refreshSavedPlans: () => Promise<void>;
   saveCurrentPlan: (name?: string) => Promise<void>;
@@ -90,7 +88,6 @@ function generateId(prefix: string): string {
 }
 
 export const CalculatorProvider = ({ children }: { children: React.ReactNode }) => {
-  const identity = useNetlifyIdentity();
   const [savedPlans, setSavedPlans] = useState<StoredPlan[]>([]);
 
   const [inputs, setInputs] = useState<MasterPlanInputs>(() => loadClientData() ?? defaultClientInputs());
@@ -230,13 +227,11 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     }
   }, [showToast, refreshSavedPlans]);
 
-  // Synchronize the local plan list with the active identity user.
+  // Load saved plans from local storage on mount
   useEffect(() => {
-    if (!identity.isReady) return;
-    // Defer so this effect does not synchronously trigger another render.
     const timer = setTimeout(() => refreshSavedPlans(), 0);
     return () => clearTimeout(timer);
-  }, [identity.isReady, identity.user, refreshSavedPlans]);
+  }, [refreshSavedPlans]);
 
   const updateInputs = useCallback((patch: Partial<MasterPlanInputs>) => {
     setInputs((prev) => ({ ...prev, ...patch }));
@@ -379,7 +374,6 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         setManualTargets,
         resetToDefaults,
         showToast,
-        identity,
         savedPlans,
         refreshSavedPlans,
         saveCurrentPlan,

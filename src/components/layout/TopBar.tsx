@@ -4,7 +4,6 @@ import { useLocation, Link } from 'react-router-dom';
 import { navItems, utilityItem } from './navItems';
 import { useCalculator } from '../../context/CalculatorContext';
 import { formatCurrencyCompact } from '../../lib/formatters';
-import { IdentityStatus } from '../identity/IdentityStatus';
 
 interface TopBarProps {
   onMenuClick: () => void;
@@ -123,11 +122,6 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
                   : `Depletion: Age ${wealthResult.depletionAge ?? '—'}`}
               </span>
             </Link>
-
-            {/* Identity */}
-            <div className="hidden lg:flex">
-              <IdentityStatus />
-            </div>
 
             {/* Net Worth Chip */}
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 text-white text-xs font-semibold shadow-xs min-w-0">

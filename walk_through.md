@@ -4,9 +4,9 @@ I've completely upgraded the system from a single HTML file into a modern, insti
 
 ## What's Inside?
 
-### 1. Modern Architecture (Vercel-Ready)
+### 1. Modern Architecture (Cloudflare Pages Ready)
 - **Framework:** Scaffolded a lightning-fast React application using Vite + TypeScript.
-- **Vercel Native:** The folder structure and `package.json` are standard. You can connect this repository straight to Vercel and it will automatically run `npm run build` to deploy it to the world.
+- **Cloudflare Native:** The project is configured with `wrangler.json`, `public/_redirects`, and `public/_headers`. Connect this repository directly to Cloudflare Pages or deploy via Wrangler with zero configuration.
 
 ### 2. The Master Plan Engine 🏆
 Everything feeds into a single unified timeline:
@@ -50,26 +50,20 @@ To build for production:
 npm run build
 ```
 
-### 8. Deploy to Vercel 🚀
-
-**Option A: Vercel Git Integration (Recommended)**
-1. Go to [vercel.com](https://vercel.com) and sign in.
-2. Click **Add New Project** → Import Git Repository.
+### 8. Deploy to Cloudflare Pages 🚀
+ 
+**Option A: Cloudflare Pages Git Integration (Recommended)**
+1. Log in to your [Cloudflare Dashboard](https://dash.cloudflare.com).
+2. Navigate to **Workers & Pages** > **Create application** > **Pages** > **Connect to Git**.
 3. Select `Skibidigyat69420/retirement-calculator-with-asset-allocation`.
-4. Add environment variable `VITE_ANGEL_API_KEY` with value `7mnk8SRp`.
-5. Click **Deploy**.
+4. Build settings:
+   - Framework preset: `Vite`
+   - Build command: `npm run build`
+   - Build output directory: `dist`
+5. Click **Save and Deploy**.
 
-**Option B: GitHub Actions Auto-Deploy**
-A workflow is included at `.github/workflows/deploy-vercel.yml`. Add these GitHub secrets in your repository settings:
-- `VERCEL_TOKEN` — from [vercel.com/account/tokens](https://vercel.com/account/tokens)
-- `VERCEL_ORG_ID` — from your Vercel project settings
-- `VERCEL_PROJECT_ID` — from your Vercel project settings
-- `VITE_ANGEL_API_KEY` — `7mnk8SRp`
-
-After setting secrets, every push to `main` will automatically build and deploy to Vercel.
-
-**Option C: Vercel CLI**
+**Option B: Deploy via Wrangler CLI**
 ```bash
-npm i -g vercel
-vercel --prod
+npm run build
+npx wrangler pages deploy dist
 ```

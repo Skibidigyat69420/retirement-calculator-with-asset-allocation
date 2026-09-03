@@ -1,2 +1,11 @@
-# Cloudflare Pages: SPA fallback for React Router
-/* /index.html 200
+# Cloudflare Pages Redirects & Rewrites
+
+# Proxy Angel One SmartAPI requests to avoid browser CORS restrictions
+/api/angelone/*  https://apiconnect.angelone.in/:splat  200
+
+# Market data endpoint fallbacks
+/api/market-data    /data/market-data.json  200
+/api/market-status  /data/market-data.json  200
+
+# SPA fallback: route all client paths to index.html with 200 OK
+/*  /index.html  200

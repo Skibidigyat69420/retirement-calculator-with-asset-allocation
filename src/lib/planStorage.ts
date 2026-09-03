@@ -1,7 +1,6 @@
 import type { MasterPlanInputs, RiskAnswers, AssetCategory } from '../types';
 import type { AssumptionSet } from './assumptions';
 import { createStore, localStorageStore, type StoredPlan } from './store';
-import { getIdentityToken } from '../hooks/useNetlifyIdentity';
 
 export interface PlanBundle {
   inputs: MasterPlanInputs;
@@ -30,7 +29,7 @@ function buildStoredPlan(bundle: PlanBundle, id?: string, name?: string): Stored
 }
 
 export function getActiveStore() {
-  return createStore(getIdentityToken);
+  return createStore();
 }
 
 export async function listPlans() {

@@ -1,8 +1,0 @@
-.git
-node_modules
-.env
-.env.local
-.env.*.local
-.github
-README.md
-*.log

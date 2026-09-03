@@ -2,8 +2,8 @@
  * Persistence abstraction for the application.
  *
  * The frontend never writes directly to a database; it talks to a DataStore.
- * This lets the same codebase run with local browser storage during local dev
- * and with a Netlify-backed store in production, without changing page code.
+ * This lets the codebase run with local browser storage during development
+ * and production, without depending on external proprietary backends.
  */
 
 export interface StoredPlan {
