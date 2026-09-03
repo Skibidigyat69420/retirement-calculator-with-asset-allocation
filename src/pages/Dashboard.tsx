@@ -18,8 +18,13 @@ import {
   Database,
   PiggyBank,
 } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useCalculator } from '../context/CalculatorContext';
+import { computePlanHealthScore } from '../lib/planHealthScore';
+import { generatePlanRecommendations } from '../lib/recommendationEngine';
+import { PlanHealthScoreCard } from '../components/dashboard/PlanHealthScoreCard';
+import { RecommendationsList } from '../components/dashboard/RecommendationsList';
+import { WhatChangedPanel } from '../components/dashboard/WhatChangedPanel';
 import { MetricCard } from '../components/ui/MetricCard';
 import { Card } from '../components/ui/Card';
 import { SectionTitle } from '../components/ui/SectionTitle';
@@ -103,6 +108,16 @@ export const Dashboard = () => {
 
 
 
+  const [viewMode, setViewMode] = useState<'adviser' | 'client'>('adviser');
+
+  const planHealth = useMemo(() => {
+    return computePlanHealthScore(inputs, wealthResult, riskScore);
+  }, [inputs, wealthResult, riskScore]);
+
+  const recommendations = useMemo(() => {
+    return generatePlanRecommendations(inputs, wealthResult, planHealth, riskScore);
+  }, [inputs, wealthResult, planHealth, riskScore]);
+
   const checklistItems = [
     {
       label: '1. Risk Profile',
@@ -145,11 +160,52 @@ export const Dashboard = () => {
 
   return (
     <div className="space-y-8">
-      <SectionTitle
-        title="Executive Dashboard"
-        subtitle="Your complete wealth plan — risk profile, master plan, allocation, goals, and reports in one place."
-        badge="Wealth OS"
-      />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <SectionTitle
+          title={viewMode === 'adviser' ? 'Adviser Command Center' : 'Client Wealth Summary'}
+          subtitle={
+            viewMode === 'adviser'
+              ? 'Multi-dimensional plan governance, algorithmic decisions, stress testing, and action orchestration.'
+              : 'Clear, transparent view of your wealth trajectory, retirement peace of mind, and funded goals.'
+          }
+          badge={viewMode === 'adviser' ? 'Adviser Operating System' : 'Client Portal'}
+        />
+
+        {/* Global View Toggle */}
+        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0 self-start sm:self-center">
+          <button
+            onClick={() => setViewMode('adviser')}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              viewMode === 'adviser'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Adviser View
+          </button>
+          <button
+            onClick={() => setViewMode('client')}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              viewMode === 'client'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Client View
+          </button>
+        </div>
+      </div>
+
+      {/* Real-Time Portfolio Dynamics Bar */}
+      <WhatChangedPanel />
+
+      {/* Plan Health Score Card */}
+      <PlanHealthScoreCard health={planHealth} />
+
+      {/* Central Prioritized Action Engine */}
+      {viewMode === 'adviser' && (
+        <RecommendationsList recommendations={recommendations} />
+      )}
 
       {!hasPlanData && (
         <Alert variant="info" icon={Sparkles}>

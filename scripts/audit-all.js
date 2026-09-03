@@ -38,8 +38,9 @@ async function main() {
 
   for (const r of routes) {
     console.log(`Auditing ${r.url}...`);
-    await page.goto(r.url, { waitUntil: 'networkidle2', timeout: 20000 });
-    await new Promise((res) => setTimeout(res, 800));
+    await page.goto(r.url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForFunction(() => !document.querySelector('.animate-pulse'), { timeout: 15000 }).catch(() => {});
+    await new Promise((res) => setTimeout(res, 1200));
 
     // Test interactivity on retirement page
     if (r.url.includes('/retirement')) {

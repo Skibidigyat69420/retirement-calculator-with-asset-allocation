@@ -22,6 +22,7 @@ import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/for
 import { useCalculator } from '../context/CalculatorContext';
 import { ASSET_COLORS } from '../lib/constants';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
+import { GoalConflictMatrix } from '../components/analytics/GoalConflictMatrix';
 import type { GoalPriority } from '../types';
 
 const priorityOptions: { value: GoalPriority; label: string }[] = [
@@ -362,6 +363,9 @@ export const GoalPlanner = () => {
           </Card>
         </div>
       </div>
+
+      {/* Simultaneous Goal Affordability & Cash Flow Waterfall */}
+      <GoalConflictMatrix />
 
       <WorkflowFooter
         prev={{ path: '/master-plan', label: 'Master Plan' }}

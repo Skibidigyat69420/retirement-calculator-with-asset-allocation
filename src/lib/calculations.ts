@@ -187,6 +187,26 @@ export const sumAssetsByCategory = (
   return sums;
 };
 
+export const getCategoryBreakdown = (
+  assets: Asset[],
+): {
+  sums: Record<AssetCategory, number>;
+  percentages: Record<AssetCategory, number>;
+  total: number;
+} => {
+  const sums = sumAssetsByCategory(assets);
+  const total = Object.values(sums).reduce((s, v) => s + v, 0) || 1;
+  const percentages: Record<AssetCategory, number> = {
+    equity: (sums.equity / total) * 100,
+    debt: (sums.debt / total) * 100,
+    gold: (sums.gold / total) * 100,
+    realestate: (sums.realestate / total) * 100,
+    liquid: (sums.liquid / total) * 100,
+    other: (sums.other / total) * 100,
+  };
+  return { sums, percentages, total };
+};
+
 export const calculateCAGR = (
   start: number,
   end: number,

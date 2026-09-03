@@ -17,6 +17,8 @@ import type { AssetCategory } from '../types';
 import { Link } from 'react-router-dom';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import { StressTestSimulator } from '../components/analytics/StressTestSimulator';
+import { PlanVsReality } from '../components/analytics/PlanVsReality';
+import { ImplementationTransitionPlan } from '../components/analytics/ImplementationTransitionPlan';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
 
@@ -454,6 +456,12 @@ export const Allocation = () => {
 
       {/* CRISIS & MACRO STRESS TEST ENGINE */}
       <StressTestSimulator />
+
+      {/* PLAN VS REALITY PORTFOLIO GOVERNANCE */}
+      <PlanVsReality />
+
+      {/* PORTFOLIO TRANSITION & TRADE IMPLEMENTATION PLAN */}
+      <ImplementationTransitionPlan />
 
       <WorkflowFooter
         prev={{ path: '/retirement', label: 'Retirement & SWP' }}

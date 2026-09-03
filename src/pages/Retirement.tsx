@@ -16,6 +16,8 @@ import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/for
 import { requiredMonthlySIPForGoal } from '../lib/goals';
 import { RetirementSensitivityMatrix } from '../components/analytics/RetirementSensitivityMatrix';
 import { StressTestSimulator } from '../components/analytics/StressTestSimulator';
+import { MonteCarloFailureAnalysis } from '../components/analytics/MonteCarloFailureAnalysis';
+import { ScenarioLab } from '../components/analytics/ScenarioLab';
 
 export const Retirement = () => {
   const { inputs, wealthResult, riskProfile, updateInputs, updateSIP, updateSWP, showToast } = useCalculator();
@@ -488,6 +490,12 @@ export const Retirement = () => {
 
       {/* SECTION D: CRISIS & MACRO STRESS TESTING */}
       <StressTestSimulator />
+
+      {/* SECTION E: MONTE CARLO TAIL-RISK & FAILURE MODE DIAGNOSIS */}
+      <MonteCarloFailureAnalysis />
+
+      {/* SECTION F: SCENARIO LABORATORY & TRADE-OFF MATRIX */}
+      <ScenarioLab />
 
       <WorkflowFooter
         prev={{ path: '/goal', label: 'Goals' }}
