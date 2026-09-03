@@ -16,6 +16,7 @@ import { runMVO, type ConstraintSet, type Portfolio } from '../lib/mvo';
 import type { AssetCategory } from '../types';
 import { Link } from 'react-router-dom';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
+import { StressTestSimulator } from '../components/analytics/StressTestSimulator';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
 
@@ -450,6 +451,9 @@ export const Allocation = () => {
           })}
         </div>
       </Card>
+
+      {/* CRISIS & MACRO STRESS TEST ENGINE */}
+      <StressTestSimulator />
 
       <WorkflowFooter
         prev={{ path: '/retirement', label: 'Retirement & SWP' }}

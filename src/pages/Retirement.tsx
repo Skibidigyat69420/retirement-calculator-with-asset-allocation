@@ -14,6 +14,8 @@ import { useCalculator } from '../context/CalculatorContext';
 import { calculateSWP, calculateSustainableSWP } from '../lib/calculators';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { requiredMonthlySIPForGoal } from '../lib/goals';
+import { RetirementSensitivityMatrix } from '../components/analytics/RetirementSensitivityMatrix';
+import { StressTestSimulator } from '../components/analytics/StressTestSimulator';
 
 export const Retirement = () => {
   const { inputs, wealthResult, riskProfile, updateInputs, updateSIP, updateSWP, showToast } = useCalculator();
@@ -480,6 +482,12 @@ export const Retirement = () => {
           )}
         </Card>
       </div>
+
+      {/* SECTION C: SENSITIVITY & SCENARIO MATRIX */}
+      <RetirementSensitivityMatrix />
+
+      {/* SECTION D: CRISIS & MACRO STRESS TESTING */}
+      <StressTestSimulator />
 
       <WorkflowFooter
         prev={{ path: '/goal', label: 'Goals' }}

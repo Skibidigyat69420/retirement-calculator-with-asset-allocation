@@ -18,6 +18,7 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
+import { CRISIS_PRESETS, runStressTest } from '../lib/stressTest';
 import type { AssetCategory } from '../types';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
@@ -28,6 +29,11 @@ export const Dossier = () => {
   const { inputs, riskProfile, riskScore, wealthResult, manualTargets } = useCalculator();
 
   const autoPrint = searchParams.get('autoPrint') === 'true';
+
+  const gfcTest = useMemo(() => {
+    const gfc = CRISIS_PRESETS.find((p) => p.id === 'gfc-2008') || CRISIS_PRESETS[0];
+    return runStressTest(inputs, gfc);
+  }, [inputs]);
 
   useEffect(() => {
     if (autoPrint) {
@@ -562,6 +568,38 @@ export const Dossier = () => {
               structure between asset classes. The portfolio recommended for the {riskProfile.label} mandate balances
               maximum return per unit of volatility while adhering to liquidity and concentration caps.
             </p>
+          </div>
+
+          {/* Tail-Risk Stress Test Audit */}
+          <div className="mt-6 p-4 rounded-xl border border-slate-200 bg-slate-50/50 avoid-break space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                Tail-Risk Stress Test: 2008 Global Financial Crisis Simulation
+              </h3>
+              <span className="text-xs font-mono font-bold text-slate-900">
+                Resilience Score: {gfcTest.resilienceScore}/100
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-3 text-xs">
+              <div>
+                <span className="text-slate-500 block">Simulated Drawdown</span>
+                <span className="font-mono font-bold text-rose-600">
+                  {formatPercent(gfcTest.drawdownPercent)} ({formatCurrencyCompact(gfcTest.drawdownAmount)})
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500 block">Shocked Net Worth</span>
+                <span className="font-mono font-semibold text-slate-900">
+                  {formatCurrencyCompact(gfcTest.shockedNetWorth)}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500 block">Longevity Impact</span>
+                <span className="font-semibold text-slate-900">
+                  {gfcTest.shockedSustainable ? `Survives to Age ${inputs.lifeExpectancy}` : `Depletes at Age ${gfcTest.shockedDepletionAge}`}
+                </span>
+              </div>
+            </div>
           </div>
         </section>
 
