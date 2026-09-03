@@ -14,9 +14,12 @@ interface DonutChartProps {
 }
 
 const TOOLTIP_STYLE = {
-  borderRadius: '12px',
-  border: 'none',
-  boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+  borderRadius: '14px',
+  border: '1px solid rgba(226, 232, 240, 0.9)',
+  backgroundColor: 'rgba(255, 255, 255, 0.96)',
+  backdropFilter: 'blur(10px)',
+  boxShadow: '0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04)',
+  padding: '10px 14px',
 };
 
 const LEGEND_WRAPPER_STYLE = { fontSize: '11px', lineHeight: '16px', width: '100%', overflow: 'hidden' };

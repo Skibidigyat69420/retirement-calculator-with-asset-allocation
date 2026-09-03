@@ -1,13 +1,14 @@
 import { useMemo, useState, useEffect } from 'react';
 import { PieChart, TrendingUp, Target, ArrowRight, AlertTriangle, CheckCircle2, Shield, RotateCcw, BarChart3, Zap, DollarSign } from 'lucide-react';
 import { Card } from '../components/ui/Card';
+import { MetricCard } from '../components/ui/MetricCard';
 import { Slider } from '../components/ui/Slider';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { DonutChart } from '../components/charts/DonutChart';
 import { AssetEvolutionChart } from '../components/charts/AssetEvolutionChart';
 import { useCalculator } from '../context/CalculatorContext';
 import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
-import { formatCurrency, formatPercent } from '../lib/formatters';
+import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { projectAssetAllocation, getTargetGlideAllocation } from '../lib/projections';
 import { useMarketData } from '../hooks/useMarketData';
 import { DEFAULT_ALLOCATION_SYMBOLS } from '../lib/instruments';
@@ -211,27 +212,33 @@ export const Allocation = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Current Equity</div>
-          <div className="text-2xl font-serif text-navy mt-1">{formatPercent(wealthResult.currentAllocation.equity * 100)}</div>
-        </Card>
-        <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Target Equity</div>
-          <div className="text-2xl font-serif text-navy mt-1">{formatPercent(targets.equity)}</div>
-        </Card>
-        <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Median Terminal Value (MC)</div>
-          <div className="text-2xl font-serif text-navy mt-1">{formatCurrency(projectedTotal)}</div>
-          <div className="text-[10px] text-slate-600 mt-0.5">Median of simulated paths under target mix</div>
-        </Card>
-        <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Success Under Target Mix</div>
-          <div className={`text-2xl font-serif mt-1 ${projection && projection.probabilityOfSuccess >= riskProfile.goalSuccessThreshold ? 'text-green-700' : projection && projection.probabilityOfSuccess >= riskProfile.goalSuccessThreshold * 0.6 ? 'text-amber-600' : 'text-red-600'}`}>
-            {projection ? formatPercent(projection.probabilityOfSuccess) : '—'}
-          </div>
-          <div className="text-[10px] text-slate-600 mt-0.5">All goals funded, target allocation</div>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          label="Current Equity"
+          value={formatPercent(wealthResult.currentAllocation.equity * 100)}
+          subtext="Portfolio weight today"
+          icon={<PieChart size={16} />}
+        />
+        <MetricCard
+          label="Target Equity"
+          value={formatPercent(targets.equity)}
+          subtext="Strategic target mix"
+          icon={<Target size={16} />}
+        />
+        <MetricCard
+          label="Median Terminal Value"
+          value={formatCurrencyCompact(projectedTotal)}
+          subtext="Simulated paths under target mix"
+          icon={<TrendingUp size={16} />}
+          variant="gold"
+        />
+        <MetricCard
+          label="Target Mix Success"
+          value={projection ? formatPercent(projection.probabilityOfSuccess) : '—'}
+          subtext="All goals funded"
+          icon={<CheckCircle2 size={16} />}
+          variant={projection && projection.probabilityOfSuccess >= riskProfile.goalSuccessThreshold ? 'success' : projection && projection.probabilityOfSuccess >= riskProfile.goalSuccessThreshold * 0.6 ? 'default' : 'danger'}
+        />
       </div>
 
       {wealthResult.currencyExposure.length > 1 && (

@@ -8,7 +8,7 @@ import { Badge } from '../components/ui/Badge';
 import { DonutChart } from '../components/charts/DonutChart';
 import { MonteCarloFanChart } from '../components/charts/MonteCarloFanChart';
 import { Button } from '../components/ui/Button';
-import { formatCurrency, formatPercent } from '../lib/formatters';
+import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import type { AssetCategory } from '../types';
@@ -85,11 +85,34 @@ export const Reports = () => {
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <MetricCard label="Net Worth" value={formatCurrency(wealthResult.netWorth)} subtext="Current assets" variant="navy" />
-        <MetricCard label="Net Annual Savings" value={formatCurrency(wealthResult.annualSavings)} subtext={`${formatPercent(wealthResult.savingsRate)} of income`} variant="gold" />
-        <MetricCard label="Terminal Corpus" value={formatCurrency(wealthResult.terminalValue)} subtext={`At age ${inputs.lifeExpectancy}`} />
-        <MetricCard label="Plan Success Rate" value={formatPercent(wealthResult.monteCarlo.successRate * 100)} subtext="All goals + SWP sustainable" variant={wealthResult.monteCarlo.successRate * 100 >= riskProfile.goalSuccessThreshold ? 'success' : 'danger'} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          label="Net Worth"
+          value={formatCurrencyCompact(wealthResult.netWorth)}
+          subtext={formatCurrency(wealthResult.netWorth)}
+          icon={<Wallet size={16} />}
+          variant="navy"
+        />
+        <MetricCard
+          label="Net Annual Savings"
+          value={formatCurrencyCompact(wealthResult.annualSavings)}
+          subtext={`${formatPercent(wealthResult.savingsRate)} of income`}
+          icon={<TrendingUp size={16} />}
+          variant="gold"
+        />
+        <MetricCard
+          label="Terminal Corpus"
+          value={formatCurrencyCompact(wealthResult.terminalValue)}
+          subtext={`At age ${inputs.lifeExpectancy}`}
+          icon={<Target size={16} />}
+        />
+        <MetricCard
+          label="Plan Success Rate"
+          value={formatPercent(wealthResult.monteCarlo.successRate * 100)}
+          subtext="All goals + SWP sustainable"
+          icon={<CheckCircle2 size={16} />}
+          variant={wealthResult.monteCarlo.successRate * 100 >= riskProfile.goalSuccessThreshold ? 'success' : 'danger'}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

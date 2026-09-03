@@ -25,6 +25,7 @@ import {
 } from 'recharts';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { Card } from '../components/ui/Card';
+import { MetricCard } from '../components/ui/MetricCard';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Alert } from '../components/ui/Alert';
@@ -40,7 +41,14 @@ import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import type { AssetCategory } from '../types';
 
 const FRONTIER_MARGIN = { top: 10, right: 20, bottom: 10, left: 0 };
-const FRONTIER_TOOLTIP_STYLE = { borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' };
+const FRONTIER_TOOLTIP_STYLE = {
+  borderRadius: '14px',
+  border: '1px solid rgba(226, 232, 240, 0.9)',
+  backgroundColor: 'rgba(255, 255, 255, 0.96)',
+  backdropFilter: 'blur(10px)',
+  boxShadow: '0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04)',
+  padding: '10px 14px',
+};
 const FRONTIER_CURSOR = { strokeDasharray: '3 3' };
 
 const categoryMap: Record<string, AssetCategory> = {
@@ -302,29 +310,32 @@ export const MVO = () => {
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Risk Profile</div>
-          <div className="text-xl font-serif text-navy mt-1">{riskProfile.label}</div>
-          <div className="text-xs text-slate-700 mt-1">Max equity {formatPercent(riskProfile.maxEquity)} · Vol target {formatPercent(riskProfile.targetVolatility)}</div>
-        </Card>
-        <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Risk-Free Rate</div>
-          <div className="text-xl font-serif text-navy mt-1">{formatPercent(riskProfile.riskFreeRate)}</div>
-          <div className="text-xs text-slate-700 mt-1">Used for Sharpe ratio calculation</div>
-        </Card>
-        <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">History</div>
-          <div className="text-xl font-serif text-navy mt-1">{historyDays > 0 ? `${historyDays} days` : '—'}</div>
-          <div className="text-xs text-slate-700 mt-1">{alignedData?.dateRange.from} → {alignedData?.dateRange.to}</div>
-        </Card>
-        <Card>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Data Source</div>
-          <div className="text-xl font-serif text-navy mt-1 flex items-center gap-2">
-            <Database size={16} /> {sourceLabel}
-          </div>
-          <div className="text-xs text-slate-700 mt-1">{data?.symbols.length || 0} instruments available</div>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          label="Risk Profile"
+          value={riskProfile.label}
+          subtext={`Max Eq ${formatPercent(riskProfile.maxEquity)} · Vol ${formatPercent(riskProfile.targetVolatility)}`}
+          icon={<ShieldCheck size={16} />}
+        />
+        <MetricCard
+          label="Risk-Free Rate"
+          value={formatPercent(riskProfile.riskFreeRate)}
+          subtext="Used for Sharpe calculation"
+          icon={<TrendingUp size={16} />}
+        />
+        <MetricCard
+          label="Historical Horizon"
+          value={historyDays > 0 ? `${historyDays} Days` : '—'}
+          subtext={alignedData ? `${alignedData.dateRange.from} → ${alignedData.dateRange.to}` : 'Default universe history'}
+          icon={<Calendar size={16} />}
+          variant="gold"
+        />
+        <MetricCard
+          label="Data Engine"
+          value={sourceLabel}
+          subtext={`${data?.symbols.length || 0} instruments available`}
+          icon={<Database size={16} />}
+        />
       </div>
 
       {mvoError && (

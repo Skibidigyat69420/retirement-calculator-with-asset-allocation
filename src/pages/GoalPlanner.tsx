@@ -1,7 +1,14 @@
 import { useState, useMemo } from 'react';
 
 const HISTOGRAM_MARGIN = { top: 10, right: 10, left: 0, bottom: 40 };
-const HISTOGRAM_TOOLTIP_STYLE = { borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' };
+const HISTOGRAM_TOOLTIP_STYLE = {
+  borderRadius: '14px',
+  border: '1px solid rgba(226, 232, 240, 0.9)',
+  backgroundColor: 'rgba(255, 255, 255, 0.96)',
+  backdropFilter: 'blur(10px)',
+  boxShadow: '0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04)',
+  padding: '10px 14px',
+};
 import { Target, TrendingUp, PieChart, Plus, AlertTriangle, CheckCircle2, BarChart3, Trash2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
 import { Card } from '../components/ui/Card';
@@ -197,6 +204,7 @@ export const GoalPlanner = () => {
                 label="Probability of Success"
                 value={formatPercent(simulation.successRate * 100)}
                 subtext="Monte Carlo simulation"
+                icon={<CheckCircle2 size={16} />}
                 variant={
                   simulation.successRate >= riskProfile.goalSuccessThreshold / 100
                     ? 'success'
@@ -205,9 +213,26 @@ export const GoalPlanner = () => {
                       : 'danger'
                 }
               />
-              <MetricCard label="Future Value Needed" value={formatCurrency(simulation.futureValue)} subtext={`In ${selectedGoal.yearsToGoal} years`} variant="navy" />
-              <MetricCard label="PV Needed Today" value={formatCurrency(simulation.pvNeeded)} subtext="Discounted at portfolio mean" variant="gold" />
-              <MetricCard label="Required SIP" value={formatCurrency(simulation.requiredSIP)} subtext="Per month, real terms" />
+              <MetricCard
+                label="Future Value Needed"
+                value={formatCurrencyCompact(simulation.futureValue)}
+                subtext={`In ${selectedGoal.yearsToGoal}y (${formatCurrency(simulation.futureValue)})`}
+                icon={<Target size={16} />}
+                variant="navy"
+              />
+              <MetricCard
+                label="PV Needed Today"
+                value={formatCurrencyCompact(simulation.pvNeeded)}
+                subtext={`Discounted (${formatCurrency(simulation.pvNeeded)})`}
+                icon={<TrendingUp size={16} />}
+                variant="gold"
+              />
+              <MetricCard
+                label="Required Monthly SIP"
+                value={formatCurrencyCompact(simulation.requiredSIP)}
+                subtext={`Monthly (${formatCurrency(simulation.requiredSIP)})`}
+                icon={<PieChart size={16} />}
+              />
             </div>
           </div>
 
