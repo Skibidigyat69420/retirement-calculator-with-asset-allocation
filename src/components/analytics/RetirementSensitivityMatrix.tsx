@@ -16,17 +16,16 @@ interface MatrixCell {
   sustainable: boolean;
 }
 
+const AGE_OFFSETS = [-3, -1, 0, 2, 5];
+const EXPENSE_MULTIPLIERS = [0.75, 0.9, 1.0, 1.15, 1.3];
+
 export const RetirementSensitivityMatrix = () => {
   const { inputs, wealthResult, updateInputs, showToast } = useCalculator();
 
   const [selectedCell, setSelectedCell] = useState<MatrixCell | null>(null);
 
-  // Generate 5 retirement ages around target retirement age
-  const ageOffsets = [-3, -1, 0, 2, 5];
-  const expenseMultipliers = [0.75, 0.9, 1.0, 1.15, 1.3];
-
   const retirementAges = useMemo(() => {
-    return ageOffsets
+    return AGE_OFFSETS
       .map((offset) => inputs.retirementAge + offset)
       .filter((age) => age > inputs.currentAge && age < inputs.lifeExpectancy);
   }, [inputs.retirementAge, inputs.currentAge, inputs.lifeExpectancy]);
@@ -48,7 +47,7 @@ export const RetirementSensitivityMatrix = () => {
         (wealthResult.netWorth * Math.pow(1.08, yearsToRet) +
           (inputs.sip.amount * 12 * (Math.pow(1.08, yearsToRet) - 1)) / 0.08);
 
-      return expenseMultipliers.map((mult) => {
+      return EXPENSE_MULTIPLIERS.map((mult) => {
         const monthlyToday = inputs.swp.monthlyNeedToday * mult;
         const monthlyAtRet = monthlyToday * Math.pow(1 + infl, yearsToRet);
         const annualGross = (monthlyAtRet * 12) / taxFactor;
@@ -74,7 +73,7 @@ export const RetirementSensitivityMatrix = () => {
         };
       });
     });
-  }, [retirementAges, expenseMultipliers, inputs, wealthResult]);
+  }, [retirementAges, inputs, wealthResult]);
 
   const handleApplyScenario = (cell: MatrixCell) => {
     updateInputs({
@@ -130,7 +129,7 @@ export const RetirementSensitivityMatrix = () => {
               <th className="p-2.5 text-left font-bold text-slate-500 uppercase tracking-wider bg-slate-50/80 border border-slate-200">
                 Retirement Age
               </th>
-              {expenseMultipliers.map((m) => (
+              {EXPENSE_MULTIPLIERS.map((m) => (
                 <th
                   key={m}
                   className="p-2.5 font-bold text-slate-700 bg-slate-50/80 border border-slate-200"
