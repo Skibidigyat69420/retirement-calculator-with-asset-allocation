@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef, useDeferredValue } from 'react';
-import type { MasterPlanInputs, Scenario, Goal, RiskProfile, RiskAnswers, AssetCategory, ClientProfile } from '../types';
-import { defaultClientInputs, defaultScenarios } from '../lib/scenarios';
+import type { MasterPlanInputs, Goal, RiskProfile, RiskAnswers, AssetCategory, ClientProfile } from '../types';
+import { defaultClientInputs } from '../lib/scenarios';
 import { loadAssumptions, type AssumptionSet } from '../lib/assumptions';
 import { runWealthEngine, type WealthEngineResult } from '../lib/wealthEngine';
 import { calculateRiskScore, getRiskProfile } from '../lib/riskQuestionnaire';
@@ -30,8 +30,6 @@ interface CalculatorContextType {
   updateGoal: (id: string, patch: Partial<Goal>) => void;
   removeGoal: (id: string) => void;
   wealthResult: WealthEngineResult;
-  scenarios: Scenario[];
-  loadScenario: (scenario: Scenario) => void;
   assumptions: AssumptionSet;
   setAssumptions: React.Dispatch<React.SetStateAction<AssumptionSet>>;
   riskAnswers: RiskAnswers;
@@ -91,7 +89,6 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
   const [savedPlans, setSavedPlans] = useState<StoredPlan[]>([]);
 
   const [inputs, setInputs] = useState<MasterPlanInputs>(() => loadClientData() ?? defaultClientInputs());
-  const [scenarios] = useState<Scenario[]>(defaultScenarios());
   const [assumptions, setAssumptions] = useState<AssumptionSet>(() => loadAssumptions());
   const [riskAnswers, setRiskAnswersState] = useState<RiskAnswers>(() => loadRiskAnswers());
   const [manualTargets, setManualTargetsState] = useState<Record<AssetCategory, number> | null>(() => loadManualTargets());
@@ -324,10 +321,6 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     }));
   }, []);
 
-  const loadScenario = useCallback((scenario: Scenario) => {
-    setInputs(scenario.inputs);
-  }, []);
-
   // Defer the heavy Monte Carlo recomputation so keystrokes stay responsive.
   // Memoize the profile object first so useDeferredValue can actually defer it.
   const riskProfileBundle = useMemo(
@@ -361,8 +354,6 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         updateGoal,
         removeGoal,
         wealthResult,
-        scenarios,
-        loadScenario,
         assumptions,
         setAssumptions,
         riskAnswers,

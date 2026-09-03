@@ -81,8 +81,6 @@ export const MasterPlan = () => {
     removeGoal,
     wealthResult,
     riskProfile,
-    scenarios,
-    loadScenario,
     showToast,
   } = useCalculator();
 
@@ -163,26 +161,8 @@ export const MasterPlan = () => {
         badge="Core Engine"
       />
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between">
         <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
-
-        <div className="flex items-center gap-2 w-full sm:w-auto min-w-0">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 shrink-0">Load Scenario:</span>
-          <Select
-            value=""
-            onChange={(scenarioId) => {
-              if (!scenarioId) return;
-              const scenario = scenarios.find((s) => s.id === scenarioId);
-              if (scenario) loadScenario(scenario);
-            }}
-            options={[
-              { value: '', label: 'Select a scenario...' },
-              ...scenarios.map((s) => ({ value: s.id, label: s.name }))
-            ]}
-            className="w-full sm:w-48 min-w-0"
-            aria-label="Load scenario"
-          />
-        </div>
       </div>
 
       {activeTab === 'profile' && (

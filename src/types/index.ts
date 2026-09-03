@@ -155,13 +155,6 @@ export interface MasterPlanResult {
   monthlyNeedAtRetirement: number;
 }
 
-export interface Scenario {
-  id: string;
-  name: string;
-  description: string;
-  inputs: MasterPlanInputs;
-}
-
 export interface MonteCarloConfig {
   simulations: number;
   equityReturnMean: number;

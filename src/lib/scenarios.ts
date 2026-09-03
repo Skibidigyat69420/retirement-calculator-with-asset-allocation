@@ -1,4 +1,4 @@
-import type { MasterPlanInputs, Scenario } from '../types';
+import type { MasterPlanInputs } from '../types';
 import { DEFAULT_RATES, DEFAULT_ALLOCATION } from './constants';
 
 export const defaultClientInputs = (): MasterPlanInputs => ({
@@ -135,50 +135,3 @@ export const defaultClientInputs = (): MasterPlanInputs => ({
     },
   ],
 });
-
-export const scenarioA = (): Scenario => {
-  const base = defaultClientInputs();
-  return {
-    id: 'scenario-a',
-    name: 'Scenario A — Capital Deployment via STP',
-    description:
-      'Retain land. Deploy idle cash via Systematic Transfer Plan into an 85/15 equity/debt portfolio. ₹10L retained as emergency liquid buffer.',
-    inputs: {
-      ...base,
-      stp: {
-        ...base.stp,
-        active: true,
-        source: 'idle-cash',
-        lumpsum: 3500000,
-        monthlyTransfer: 200000,
-      },
-    },
-  };
-};
-
-export const scenarioB = (): Scenario => {
-  const base = defaultClientInputs();
-  return {
-    id: 'scenario-b',
-    name: 'Scenario B — Maximum Growth via STP',
-    description:
-      'Sell land (₹1.12 Cr) when market conditions are favourable. Deploy the entire proceeds via STP into an 85/15 equity/debt portfolio, maximising long-term compounding.',
-    inputs: {
-      ...base,
-      assets: base.assets.map((a) =>
-        a.id === 're-plots'
-          ? { ...a, value: 0, liquidateAtRetirement: true }
-          : a,
-      ),
-      stp: {
-        ...base.stp,
-        active: true,
-        source: 'land-sale',
-        lumpsum: 14700000, // 35L idle cash + 112L land sale
-        monthlyTransfer: 600000,
-      },
-    },
-  };
-};
-
-export const defaultScenarios = (): Scenario[] => [scenarioA(), scenarioB()];
