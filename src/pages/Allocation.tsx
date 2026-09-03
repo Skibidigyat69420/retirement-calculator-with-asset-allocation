@@ -244,19 +244,19 @@ export const Allocation = () => {
       {wealthResult.currencyExposure.length > 1 && (
         <Card>
           <div className="flex items-center gap-2 mb-4">
-            <DollarSign size={18} className="text-amber-500" />
+            <DollarSign size={18} className="text-slate-500" />
             <h3 className="text-lg font-serif text-navy">Currency Exposure</h3>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {wealthResult.currencyExposure.map((ce) => (
               <div key={ce.currency} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-700">{ce.currency}</div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{ce.currency}</div>
                 <div className="text-lg font-serif text-navy mt-1">{formatPercent(ce.percentage)}</div>
-                <div className="text-xs text-slate-700">{formatCurrency(ce.amount)}</div>
+                <div className="text-xs text-slate-500">{formatCurrency(ce.amount)}</div>
               </div>
             ))}
           </div>
-          <p className="text-xs text-slate-700 mt-3">
+          <p className="text-xs text-slate-500 mt-3">
             Foreign-currency assets get an additional FX return drift ({wealthResult.currencyExposure.find((c) => c.currency !== 'INR')?.currency || 'USD'} ≈ 4% p.a. vs INR) and volatility in Monte Carlo projections.
           </p>
         </Card>
@@ -264,15 +264,15 @@ export const Allocation = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
-          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><PieChart size={18} className="text-amber-500" /> Current</h3>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><PieChart size={18} className="text-slate-500" /> Current</h3>
           <DonutChart data={currentData} />
         </Card>
         <Card>
-          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><Target size={18} className="text-amber-500" /> Target</h3>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><Target size={18} className="text-slate-500" /> Target</h3>
           <DonutChart data={targetData} />
         </Card>
         <Card>
-          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-amber-500" /> Projected (Terminal)</h3>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-slate-500" /> Projected (Terminal)</h3>
           <DonutChart data={projectedData} />
         </Card>
       </div>
@@ -280,8 +280,8 @@ export const Allocation = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-serif text-navy flex items-center gap-2"><Shield size={18} className="text-amber-500" /> Strategic Target</h3>
-            <Link to="/risk" className="text-xs text-navy hover:text-amber-500 underline">{riskProfile.label}</Link>
+            <h3 className="text-lg font-serif text-navy flex items-center gap-2"><Shield size={18} className="text-slate-500" /> Strategic Target</h3>
+            <Link to="/risk" className="text-xs text-navy hover:text-slate-900 underline">{riskProfile.label}</Link>
           </div>
             {CATEGORIES.map((cat) => {
               return (
@@ -300,9 +300,9 @@ export const Allocation = () => {
             <span className="flex items-center text-xs">
               <span className="text-slate-700">Total: {formatPercent(Object.values(targets).reduce((a, b) => a + b, 0))}</span>
               {Math.abs(Object.values(targets).reduce((a, b) => a + b, 0) - 100) > 0.1 && (
-                <span className="ml-2 inline-flex items-center text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full font-medium">
+                <span className="ml-2 inline-flex items-center text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full font-medium border border-amber-200/60">
                   <AlertTriangle size={12} className="mr-1" /> Does not equal 100%
-                  <button onClick={normalizeTargets} className="ml-1.5 underline hover:text-amber-800">Normalize</button>
+                  <button onClick={normalizeTargets} className="ml-1.5 underline hover:text-amber-950">Normalize</button>
                 </span>
               )}
             </span>
@@ -312,14 +312,14 @@ export const Allocation = () => {
                 title="Sync these weights to your monthly SIP & STP allocations in Master Plan"
                 className="text-xs flex items-center text-slate-600 hover:text-navy hover:underline"
               >
-                <TrendingUp size={12} className="mr-1 text-amber-500" /> Sync to SIP/STP
+                <TrendingUp size={12} className="mr-1 text-slate-500" /> Sync to SIP/STP
               </button>
               <button
                 onClick={() => {
                   setManualTargets(null);
                   showToast(`Reset targets to ${riskProfile.label} profile.`, 'info');
                 }}
-                className="text-xs flex items-center text-navy hover:text-amber-500 underline"
+                className="text-xs flex items-center text-slate-600 hover:text-slate-900 underline"
               >
                 <RotateCcw size={12} className="mr-1" /> Reset to {riskProfile.label}
               </button>
@@ -337,9 +337,9 @@ export const Allocation = () => {
         <Card>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-serif text-navy flex items-center gap-2">
-              <BarChart3 size={18} className="text-amber-500" /> Market-Optimized Targets
+              <BarChart3 size={18} className="text-slate-500" /> Market-Optimized Targets
             </h3>
-            <Link to="/mvo" className="text-xs text-navy hover:text-amber-500 underline flex items-center">
+            <Link to="/mvo" className="text-xs text-slate-600 hover:text-slate-900 underline flex items-center">
               Open MVO <ArrowRight size={12} className="ml-1" />
             </Link>
           </div>
@@ -353,7 +353,7 @@ export const Allocation = () => {
             ].map((item) => (
               <div key={item.key} className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-serif text-navy flex items-center gap-2"><Zap size={16} className="text-amber-500" /> {item.label}</span>
+                  <span className="font-serif text-navy flex items-center gap-2"><Zap size={16} className="text-slate-500" /> {item.label}</span>
                   <span className="text-xs font-mono text-slate-700">Sharpe {item.portfolio?.sharpe.toFixed(2)}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-xs">

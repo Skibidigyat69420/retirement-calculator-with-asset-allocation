@@ -414,7 +414,7 @@ export const AngelConnect = () => {
                   className="w-full flex items-center justify-between text-xs font-semibold text-navy uppercase tracking-wider"
                 >
                   <span className="flex items-center gap-2">
-                    <Sliders size={14} className="text-amber-500" /> System Network Headers (Auto-Detected)
+                    <Sliders size={14} className="text-slate-500" /> System Network Headers (Auto-Detected)
                   </span>
                   <span className="text-slate-600 text-[11px]">
                     {showAdvancedNetwork ? 'Hide ▲' : 'Show Details ▼'}
@@ -610,7 +610,7 @@ export const AngelConnect = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="space-y-5">
             <h3 className="text-lg font-serif text-navy flex items-center gap-2">
-              <Key size={20} className="text-amber-500" /> Step 1: Create App on Angel One Portal
+              <Key size={20} className="text-slate-500" /> Step 1: Create App on Angel One Portal
             </h3>
 
             <div className="space-y-3 text-xs text-slate-600">
@@ -622,7 +622,7 @@ export const AngelConnect = () => {
                     href="https://smartapi.angelone.in/"
                     target="_blank"
                     rel="noreferrer"
-                    className="text-amber-500 font-semibold hover:underline"
+                    className="text-slate-900 font-semibold hover:underline"
                   >
                     smartapi.angelone.in
                   </a>{' '}
@@ -662,7 +662,7 @@ export const AngelConnect = () => {
 
           <Card className="space-y-5">
             <h3 className="text-lg font-serif text-navy flex items-center gap-2">
-              <ShieldCheck size={20} className="text-amber-500" /> Step 2: Enable Automated TOTP
+              <ShieldCheck size={20} className="text-slate-500" /> Step 2: Enable Automated TOTP
             </h3>
 
             <div className="space-y-3 text-xs text-slate-600">
@@ -674,7 +674,7 @@ export const AngelConnect = () => {
                     href="https://smartapi.angelone.in/enable-totp"
                     target="_blank"
                     rel="noreferrer"
-                    className="text-amber-500 font-semibold hover:underline"
+                    className="text-slate-900 font-semibold hover:underline"
                   >
                     smartapi.angelone.in/enable-totp
                   </a>{' '}
@@ -776,7 +776,7 @@ export const AngelConnect = () => {
                   {holdings.map((h, idx) => (
                     <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
                       <td className="py-3 font-semibold text-navy flex items-center gap-2">
-                        <TrendingUp size={14} className="text-amber-500" />
+                        <TrendingUp size={14} className="text-slate-500" />
                         <div>
                           <div>{h.tradingsymbol}</div>
                           <span className="text-[10px] text-slate-600 font-normal">{h.exchange}</span>
@@ -804,7 +804,7 @@ export const AngelConnect = () => {
           <Card className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-serif text-navy flex items-center gap-2">
-                <Terminal size={18} className="text-amber-500" /> Node.js Standalone Script
+                <Terminal size={18} className="text-slate-500" /> Node.js Standalone Script
               </h3>
               <Badge variant="outline">scripts/test-smartapi.js</Badge>
             </div>
@@ -832,7 +832,7 @@ export const AngelConnect = () => {
           <Card className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-serif text-navy flex items-center gap-2">
-                <Terminal size={18} className="text-amber-500" /> Python Connector Script
+                <Terminal size={18} className="text-slate-500" /> Python Connector Script
               </h3>
               <Badge variant="outline">smartapi_connector.py</Badge>
             </div>

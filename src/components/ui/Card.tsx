@@ -8,11 +8,11 @@ interface CardProps {
 
 export const Card = ({ children, className, variant = 'default' }: CardProps) => {
   const variants = {
-    default: 'bg-white/95 backdrop-blur-xs border border-slate-200/80 shadow-xs hover:shadow-card hover:border-slate-300/80',
+    default: 'bg-white border border-slate-200/80 shadow-2xs hover:shadow-card hover:border-slate-300/80',
     elevated: 'bg-white border border-slate-200/80 shadow-card hover:shadow-card-hover',
-    navy: 'bg-gradient-to-br from-navy via-navy to-navy-dark text-white border border-navy/40 shadow-elevated',
-    gold: 'bg-gradient-to-br from-amber-50/90 to-amber-100/40 border border-amber-200/80 shadow-xs',
-    subtle: 'bg-slate-50/90 border border-slate-200/60',
+    navy: 'bg-slate-900 text-white border border-slate-800 shadow-sm',
+    gold: 'bg-amber-50/30 border border-amber-200/50 text-slate-900',
+    subtle: 'bg-slate-50 border border-slate-200/60',
   };
 
   return (

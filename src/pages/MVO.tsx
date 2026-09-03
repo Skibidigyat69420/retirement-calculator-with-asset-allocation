@@ -354,7 +354,7 @@ export const MVO = () => {
         <Card className="lg:col-span-2 space-y-5">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-serif text-navy flex items-center gap-2">
-              <Layers size={18} className="text-amber-500" /> Universe & Date Range
+              <Layers size={18} className="text-slate-500" /> Universe & Date Range
             </h3>
             <Badge variant="outline">{selectedSymbols.length} assets selected</Badge>
           </div>

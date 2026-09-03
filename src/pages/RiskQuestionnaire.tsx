@@ -178,15 +178,15 @@ export const RiskQuestionnaire = () => {
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${scorePct}%` }}
-                        className="h-full bg-amber-500 rounded-full"
+                        className="h-full bg-slate-900 rounded-full"
                         transition={{ duration: 0.5 }}
                       />
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="mt-4 p-3 bg-slate-100 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-start gap-2">
-                <Info size={14} className="shrink-0 mt-0.5 text-amber-500" />
+              <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-start gap-2">
+                <Info size={14} className="shrink-0 mt-0.5 text-slate-500" />
                 <p>
                   Risk Tolerance (25%) and Risk Capacity (20%) carry the most weight.
                   A high-risk profile requires both the willingness to accept volatility
@@ -211,7 +211,7 @@ export const RiskQuestionnaire = () => {
             {biases.length > 0 ? (
               <div className="space-y-4">
                 {biases.map((b, i) => (
-                  <div key={i} className="border-l-2 border-amber-500 pl-3">
+                  <div key={i} className="border-l-2 border-slate-400 pl-3">
                     <div className="text-sm font-medium text-navy">{b.bias}</div>
                     <p className="text-xs text-slate-600 mt-1">{b.description}</p>
                   </div>
@@ -227,7 +227,7 @@ export const RiskQuestionnaire = () => {
             <ul className="space-y-3 text-sm text-slate-600">
               {actionChecklist.map((item, i) => (
                 <li key={i} className="flex gap-2">
-                  <CheckCircle2 size={16} className="text-amber-500 shrink-0 mt-0.5" />
+                  <CheckCircle2 size={16} className="text-slate-500 shrink-0 mt-0.5" />
                   <span className="leading-tight">{item}</span>
                 </li>
               ))}
@@ -239,8 +239,8 @@ export const RiskQuestionnaire = () => {
           <Card>
             <h3 className="text-lg font-serif text-navy mb-4">Investor Persona</h3>
             <p className="text-slate-600 leading-relaxed">{riskProfile.persona}</p>
-            <div className="mt-4 p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
-              <div className="text-xs font-bold uppercase tracking-wider text-amber-500 mb-1">Recommended Approach</div>
+            <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Recommended Approach</div>
               <p className="text-sm text-navy">{riskProfile.recommendedApproach}</p>
             </div>
           </Card>
@@ -275,15 +275,15 @@ export const RiskQuestionnaire = () => {
           <h3 className="text-lg font-serif text-navy mb-4">How This Connects to Your Plan</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-              <div className="flex items-center gap-2 mb-2"><PieChart size={16} className="text-amber-500" /><span className="font-medium text-navy">Allocation</span></div>
+              <div className="flex items-center gap-2 mb-2"><PieChart size={16} className="text-slate-500" /><span className="font-medium text-navy">Allocation</span></div>
               <p className="text-slate-600">Targets will be set to {riskProfile.label.toLowerCase()} weights and can be applied to SIP/STP splits.</p>
             </div>
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-              <div className="flex items-center gap-2 mb-2"><BarChart2 size={16} className="text-amber-500" /><span className="font-medium text-navy">MVO</span></div>
+              <div className="flex items-center gap-2 mb-2"><BarChart2 size={16} className="text-slate-500" /><span className="font-medium text-navy">MVO</span></div>
               <p className="text-slate-600">Risk-free rate and portfolio constraints will align with your {formatPercent(riskProfile.targetVolatility)} volatility target.</p>
             </div>
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-              <div className="flex items-center gap-2 mb-2"><Target size={16} className="text-amber-500" /><span className="font-medium text-navy">Goals</span></div>
+              <div className="flex items-center gap-2 mb-2"><Target size={16} className="text-slate-500" /><span className="font-medium text-navy">Goals</span></div>
               <p className="text-slate-600">Goal-planner success thresholds use {formatPercent(riskProfile.goalSuccessThreshold)} as the minimum acceptable probability.</p>
             </div>
           </div>
@@ -316,7 +316,7 @@ export const RiskQuestionnaire = () => {
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
-              className="h-full bg-amber-500 rounded-full"
+              className="h-full bg-slate-900 rounded-full"
               transition={{ duration: 0.3 }}
             />
           </div>
@@ -330,12 +330,12 @@ export const RiskQuestionnaire = () => {
                 <button
                   key={q.id}
                   onClick={() => setStep(idx)}
-                  className={`w-7 h-7 rounded-lg text-xs font-semibold flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-navy/30 ${
+                  className={`w-7 h-7 rounded-lg text-xs font-semibold flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-slate-400 ${
                     isCurrent
-                      ? 'bg-navy text-white shadow-xs scale-105'
-                      : isAnswered
-                      ? 'bg-amber-500/20 text-slate-800 hover:bg-amber-500/30'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                       ? 'bg-slate-900 text-white shadow-2xs scale-105'
+                       : isAnswered
+                       ? 'bg-slate-200 text-slate-800 hover:bg-slate-300'
+                       : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                   }`}
                   title={`Question ${idx + 1}: ${q.text.slice(0, 30)}...`}
                   aria-label={`Go to question ${idx + 1}: ${q.text}`}
@@ -372,18 +372,18 @@ export const RiskQuestionnaire = () => {
                   <button
                     key={option.label}
                     onClick={() => handleAnswer(option.score)}
-                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                    className={`w-full text-left p-4 rounded-xl border transition-all ${
                       selected
-                        ? 'border-amber-500 bg-amber-500/5'
-                        : 'border-slate-100 hover:border-amber-500/50 hover:bg-slate-50'
+                        ? 'border-slate-900 bg-slate-50/80 shadow-2xs'
+                        : 'border-slate-200/80 hover:border-slate-400 hover:bg-slate-50/40'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className={`font-medium ${selected ? 'text-navy' : 'text-slate-700'}`}>{option.label}</span>
-                      {selected && <CheckCircle2 size={18} className="text-amber-500" />}
+                      <span className={`font-medium ${selected ? 'text-slate-900 font-semibold' : 'text-slate-700'}`}>{option.label}</span>
+                      {selected && <CheckCircle2 size={18} className="text-slate-900" />}
                     </div>
                     {option.description && (
-                      <p className="text-xs text-slate-700 mt-1">{option.description}</p>
+                      <p className="text-xs text-slate-500 mt-1">{option.description}</p>
                     )}
                   </button>
                 );

@@ -50,13 +50,13 @@ export const WorkflowFooter = ({ prev, next, flowHint }: WorkflowFooterProps) =>
           {next ? (
             <Link
               to={next.path}
-              className="inline-flex items-center justify-end gap-3 px-5 py-2.5 rounded-xl bg-gradient-to-r from-navy via-navy to-navy-dark text-white hover:shadow-md hover:-translate-y-0.5 text-sm font-medium transition-all group w-full sm:w-auto"
+              className="inline-flex items-center justify-end gap-3 px-5 py-2.5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 hover:shadow-xs text-sm font-medium transition-all group w-full sm:w-auto"
             >
               <div className="text-right">
-                <span className="block text-[10px] uppercase font-bold tracking-wider text-indigo-200">Next Step</span>
+                <span className="block text-[10px] uppercase font-bold tracking-wider text-slate-400">Next Step</span>
                 <span className="font-semibold text-white">{next.label}</span>
               </div>
-              <div className="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center group-hover:bg-white/25 transition-colors">
+              <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
                 <ArrowRight size={14} className="text-white group-hover:translate-x-0.5 transition-transform" />
               </div>
             </Link>

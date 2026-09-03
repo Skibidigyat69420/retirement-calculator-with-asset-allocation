@@ -60,7 +60,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
               <Menu size={22} />
             </button>
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 bg-gradient-to-br from-navy to-navy-dark rounded-lg flex items-center justify-center shrink-0 shadow-sm">
+              <div className="w-7 h-7 bg-slate-900 rounded-lg flex items-center justify-center shrink-0 shadow-xs">
                 <span className="text-white font-serif font-bold text-xs">S</span>
               </div>
               <span className="text-sm font-serif text-ink font-semibold truncate max-w-[120px] sm:max-w-[200px]">{label}</span>
@@ -71,7 +71,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
           <div className="hidden lg:flex items-center gap-2 text-xs min-w-0">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{section}</span>
             <ChevronRight size={14} className="text-slate-300" />
-            <span className="font-serif text-navy font-semibold text-sm">{label}</span>
+            <span className="font-serif text-slate-900 font-semibold text-sm">{label}</span>
           </div>
 
           {/* Desktop & Mobile Top Badges */}
@@ -81,9 +81,9 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
               to="/master-plan"
               title="Click to edit client profile in Master Plan"
               aria-label={`Client profile: ${inputs.client?.name || 'Client Plan'}`}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-navy/40 text-xs font-medium text-slate-700 hover:text-navy transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-navy/30"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-slate-400 text-xs font-medium text-slate-700 hover:text-slate-900 transition-all shadow-2xs focus:outline-none focus:ring-2 focus:ring-slate-400"
             >
-              <User size={13} className="text-navy shrink-0" />
+              <User size={13} className="text-slate-500 shrink-0" />
               <span className="hidden sm:inline max-w-[120px] sm:max-w-[160px] truncate">
                 {inputs.client?.name || 'Client Plan'}
               </span>
@@ -94,9 +94,9 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
               to="/risk"
               title={`Risk Score: ${riskScore}/100. Click to view Questionnaire`}
               aria-label={`Risk profile: ${riskProfile.label} (${riskScore})`}
-              className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-navy/40 text-xs font-medium text-slate-700 transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-navy/30"
+              className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-slate-400 text-xs font-medium text-slate-700 transition-all shadow-2xs focus:outline-none focus:ring-2 focus:ring-slate-400"
             >
-              <ShieldCheck size={13} className="text-navy shrink-0" />
+              <ShieldCheck size={13} className="text-slate-500 shrink-0" />
               <span className="capitalize">{riskProfile.label}</span>
               <span className="text-[10px] text-slate-500 font-mono">({riskScore})</span>
             </Link>
@@ -106,16 +106,16 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
               to="/retirement"
               title={wealthResult.sustainable ? 'Plan sustainable through life expectancy' : `Plan depletes at age ${wealthResult.depletionAge}`}
               aria-label={wealthResult.sustainable ? 'Plan sustainable through life expectancy' : `Plan depletes at age ${wealthResult.depletionAge}`}
-              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-navy/30 ${
+              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-all shadow-2xs focus:outline-none focus:ring-2 focus:ring-slate-400 ${
                 wealthResult.sustainable
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                  : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                  ? 'bg-emerald-50/80 text-emerald-800 border-emerald-200/70 hover:bg-emerald-100/80'
+                  : 'bg-amber-50/80 text-amber-800 border-amber-200/70 hover:bg-amber-100/80'
               }`}
             >
               {wealthResult.sustainable ? (
                 <CheckCircle2 size={13} className="text-emerald-700 shrink-0" />
               ) : (
-                <AlertTriangle size={13} className="text-amber-600 shrink-0" />
+                <AlertTriangle size={13} className="text-amber-700 shrink-0" />
               )}
               <span>
                 {wealthResult.sustainable
@@ -130,8 +130,8 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
             </div>
 
             {/* Net Worth Chip */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-navy to-navy-dark text-white text-xs font-semibold shadow-sm min-w-0">
-              <Wallet size={13} className="text-white/80 shrink-0" />
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 text-white text-xs font-semibold shadow-xs min-w-0">
+              <Wallet size={13} className="text-white/70 shrink-0" />
               <span className="truncate max-w-[90px] sm:max-w-none">{formatCurrencyCompact(wealthResult.netWorth)}</span>
             </div>
 

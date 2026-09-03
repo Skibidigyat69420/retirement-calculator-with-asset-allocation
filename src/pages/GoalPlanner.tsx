@@ -96,7 +96,7 @@ export const GoalPlanner = () => {
         <Card className="lg:col-span-1">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-serif text-navy flex items-center gap-2">
-              <Target size={18} className="text-amber-500" /> Goals
+              <Target size={18} className="text-slate-500" /> Goals
             </h3>
             <Button variant="outline" size="sm" onClick={() => addGoal()} aria-label="Add goal">
               <Plus size={14} />
@@ -240,24 +240,24 @@ export const GoalPlanner = () => {
             <Card>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-serif text-navy flex items-center gap-2">
-                  <BarChart3 size={18} className="text-amber-500" /> Outcome Distribution
+                  <BarChart3 size={18} className="text-slate-500" /> Outcome Distribution
                 </h3>
-                <div className="text-xs text-slate-700">{wealthResult.monteCarlo.outcomes.length.toLocaleString()} paths</div>
+                <div className="text-xs text-slate-500">{wealthResult.monteCarlo.outcomes.length.toLocaleString()} paths</div>
               </div>
               <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={histogramData} margin={HISTOGRAM_MARGIN}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                     <XAxis
                       dataKey="midpoint"
                       tickFormatter={(v) => formatCurrencyCompact(Number(v))}
-                      tick={{ fontSize: 10, fill: '#78716c' }}
+                      tick={{ fontSize: 10, fill: '#64748b' }}
                       angle={-45}
                       textAnchor="end"
                       axisLine={false}
                       tickLine={false}
                     />
-                    <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12, fill: '#78716c' }} axisLine={false} tickLine={false} />
+                    <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
                     <Tooltip
                       formatter={(value: any, _name: any, props: any) => {
                         const p = props?.payload;
@@ -265,7 +265,7 @@ export const GoalPlanner = () => {
                       }}
                       contentStyle={HISTOGRAM_TOOLTIP_STYLE}
                     />
-                    <ReferenceLine x={simulation.futureValue} stroke="#B68B40" strokeDasharray="4 4" label={{ value: 'Target', position: 'top', fill: '#B68B40', fontSize: 10 }} />
+                    <ReferenceLine x={simulation.futureValue} stroke="#b45309" strokeDasharray="4 4" label={{ value: 'Target', position: 'top', fill: '#b45309', fontSize: 10 }} />
                     <Bar dataKey="probability" name="Probability">
                       {histogramData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.isSuccess ? ASSET_COLORS.equity : '#94a3b8'} />
@@ -274,23 +274,23 @@ export const GoalPlanner = () => {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex items-center justify-center gap-4 mt-2 text-xs text-slate-700">
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm" style={{ backgroundColor: ASSET_COLORS.equity }} /> Success region</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-slate-400" /> Shortfall region</span>
+              <div className="flex items-center justify-center gap-4 mt-2 text-xs text-slate-500">
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-xs" style={{ backgroundColor: ASSET_COLORS.equity }} /> Success region</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-xs bg-slate-400" /> Shortfall region</span>
               </div>
             </Card>
 
             <Card>
               <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2">
-                <TrendingUp size={18} className="text-amber-500" /> Goal Insights
+                <TrendingUp size={18} className="text-slate-500" /> Goal Insights
               </h3>
               <div className="space-y-4">
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
                   <div className="flex items-start gap-3">
                     {simulation.successRate >= riskProfile.goalSuccessThreshold / 100 ? (
-                      <CheckCircle2 size={20} className="text-green-700 shrink-0" />
+                      <CheckCircle2 size={20} className="text-emerald-700 shrink-0" />
                     ) : (
-                      <AlertTriangle size={20} className="text-amber-500 shrink-0" />
+                      <AlertTriangle size={20} className="text-amber-700 shrink-0" />
                     )}
                     <div>
                       <div className="text-sm font-medium text-navy">
@@ -300,7 +300,7 @@ export const GoalPlanner = () => {
                             ? 'Needs attention — consider increasing SIP or extending horizon'
                             : 'Significant shortfall risk — revise plan'}
                       </div>
-                      <p className="text-xs text-slate-700 mt-1">
+                      <p className="text-xs text-slate-500 mt-1">
                         With the current portfolio and SIP, the model estimates a {formatPercent(simulation.successRate * 100)} probability of fully funding this goal.
                       </p>
                     </div>
@@ -308,14 +308,14 @@ export const GoalPlanner = () => {
                 </div>
 
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-slate-700">Goal target (today's ₹)</span><span className="font-medium text-navy">{formatCurrency(selectedGoal.targetAmount)}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-700">Inflation-adjusted target</span><span className="font-medium text-navy">{formatCurrency(simulation.futureValue)}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-700">PV needed today</span><span className="font-medium text-navy">{formatCurrency(simulation.pvNeeded)}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-700">Required monthly SIP</span><span className="font-medium text-navy">{formatCurrency(simulation.requiredSIP)}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-700">Total Portfolio SIP</span><span className="font-medium text-navy">{formatCurrency(wealthResult.monthlySIP)}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-700">Required SIP (all goals)</span><span className="font-medium text-navy">{formatCurrency(totalRequiredSIP)}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-700">Allocated SIP (proportional share)</span><span className="font-medium text-navy">{formatCurrency(allocatedSIP)}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-700">SIP gap / surplus</span><span className={`font-medium ${simulation.requiredSIP > allocatedSIP ? 'text-red-600' : 'text-green-700'}`}>{formatCurrency(simulation.requiredSIP - allocatedSIP)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Goal target (today's ₹)</span><span className="font-medium text-navy">{formatCurrency(selectedGoal.targetAmount)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Inflation-adjusted target</span><span className="font-medium text-navy">{formatCurrency(simulation.futureValue)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">PV needed today</span><span className="font-medium text-navy">{formatCurrency(simulation.pvNeeded)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Required monthly SIP</span><span className="font-medium text-navy">{formatCurrency(simulation.requiredSIP)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Total Portfolio SIP</span><span className="font-medium text-navy">{formatCurrency(wealthResult.monthlySIP)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Required SIP (all goals)</span><span className="font-medium text-navy">{formatCurrency(totalRequiredSIP)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Allocated SIP (proportional share)</span><span className="font-medium text-navy">{formatCurrency(allocatedSIP)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">SIP gap / surplus</span><span className={`font-medium ${simulation.requiredSIP > allocatedSIP ? 'text-rose-700' : 'text-emerald-700'}`}>{formatCurrency(simulation.requiredSIP - allocatedSIP)}</span></div>
                 </div>
               </div>
             </Card>
@@ -323,7 +323,7 @@ export const GoalPlanner = () => {
 
           <Card>
             <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2">
-              <PieChart size={18} className="text-amber-500" /> All Goals Summary
+              <PieChart size={18} className="text-slate-500" /> All Goals Summary
             </h3>
             <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
               <table className="w-full text-sm">

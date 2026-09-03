@@ -30,8 +30,8 @@ export const Tabs = ({ tabs, active, onChange }: TabsProps) => {
           className={cn(
             'flex items-center px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl whitespace-nowrap transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy/30 cursor-pointer',
             active === tab.id
-              ? 'bg-gradient-to-r from-navy via-navy to-navy-dark text-white shadow-sm scale-[1.02]'
-              : 'text-slate-600 hover:text-navy hover:bg-slate-100/70',
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100',
           )}
         >
           {tab.icon && (

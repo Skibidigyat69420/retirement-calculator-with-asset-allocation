@@ -211,9 +211,9 @@ export const Dashboard = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <div>
             <h3 className="text-base font-serif font-bold text-navy flex items-center gap-2">
-              <ShieldCheck size={18} className="text-amber-500" /> Advisor Planning Checklist
+              <ShieldCheck size={18} className="text-slate-500" /> Advisor Planning Checklist
             </h3>
-            <p className="text-xs text-slate-700">Track progress through the 6 stages of your institutional financial architecture</p>
+            <p className="text-xs text-slate-500">Track progress through the 6 stages of your institutional financial architecture</p>
           </div>
           <Badge variant="outline" className="self-start sm:self-auto font-medium">
             {completedChecklistCount} of 6 Completed
@@ -225,23 +225,23 @@ export const Dashboard = () => {
             <Link
               key={item.label}
               to={item.path}
-              className={`p-3 rounded-xl border flex items-start gap-3 transition-all hover:shadow-xs group ${
+              className={`p-3 rounded-xl border flex items-start gap-3 transition-all hover:shadow-2xs group ${
                 item.completed
-                  ? 'bg-slate-50/50 border-slate-200 hover:border-navy/40'
-                  : 'bg-amber-50/30 border-amber-200 hover:border-amber-400'
+                  ? 'bg-slate-50/50 border-slate-200 hover:border-slate-300'
+                  : 'bg-amber-50/20 border-amber-200/60 hover:border-amber-300'
               }`}
             >
               <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                item.completed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                item.completed ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
               }`}>
                 {item.completed ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-xs font-semibold text-navy group-hover:text-amber-500 transition-colors flex items-center justify-between">
+                <div className="text-xs font-semibold text-navy group-hover:text-slate-900 transition-colors flex items-center justify-between">
                   <span>{item.label}</span>
-                  <ArrowRight size={12} className="text-slate-300 group-hover:text-amber-500 transition-transform group-hover:translate-x-0.5" />
+                  <ArrowRight size={12} className="text-slate-300 group-hover:text-slate-700 transition-transform group-hover:translate-x-0.5" />
                 </div>
-                <div className="text-[11px] text-slate-700 truncate mt-0.5">{item.subtext}</div>
+                <div className="text-[11px] text-slate-500 truncate mt-0.5">{item.subtext}</div>
               </div>
             </Link>
           ))}
@@ -307,7 +307,7 @@ export const Dashboard = () => {
             <Link
               key={action.path}
               to={action.path}
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200/80 rounded-xl text-sm font-semibold text-navy hover:border-amber-500 hover:text-amber-500 hover:shadow-sm transition-all"
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200/80 rounded-xl text-sm font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900 hover:shadow-2xs transition-all"
             >
               <Icon size={16} /> {action.label}
             </Link>
@@ -334,7 +334,7 @@ export const Dashboard = () => {
           ) : (
             <div className="h-80 flex flex-col items-center justify-center text-center text-sm text-slate-700">
               <p>No assets added yet.</p>
-              <Link to="/master-plan" className="mt-2 text-amber-500 font-semibold hover:underline flex items-center">
+              <Link to="/master-plan" className="mt-2 text-slate-800 font-semibold hover:underline flex items-center">
                 Add assets <ArrowRight size={12} className="ml-1" />
               </Link>
             </div>
@@ -354,7 +354,7 @@ export const Dashboard = () => {
         <Card variant="elevated">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-serif text-navy">Goal Health</h3>
-            <Link to="/goal" className="text-xs text-navy hover:text-amber-500 underline flex items-center font-semibold">
+            <Link to="/goal" className="text-xs text-slate-600 hover:text-slate-900 underline flex items-center font-semibold">
               Open planner <ArrowRight size={12} className="ml-1" />
             </Link>
           </div>
@@ -362,7 +362,7 @@ export const Dashboard = () => {
             {wealthResult.goalResults.length === 0 && (
               <div className="p-6 text-center text-sm text-slate-700">
                 <p>No goals defined yet.</p>
-                <Link to="/goal" className="mt-2 inline-flex items-center text-amber-500 font-semibold hover:underline">
+                <Link to="/goal" className="mt-2 inline-flex items-center text-slate-800 font-semibold hover:underline">
                   Create a goal <ArrowRight size={12} className="ml-1" />
                 </Link>
               </div>
@@ -419,17 +419,17 @@ export const Dashboard = () => {
                 to={tool.path}
                 className={cn(
                   'flex items-center p-4 rounded-xl transition-all group',
-                  'bg-slate-50/60 border border-slate-100 hover:bg-white hover:border-amber-500/30 hover:shadow-sm',
+                  'bg-slate-50/60 border border-slate-100 hover:bg-white hover:border-slate-300 hover:shadow-2xs',
                 )}
               >
-                <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center mr-3 group-hover:border-amber-500/30 shadow-sm">
-                  <Icon size={18} className="text-navy group-hover:text-amber-500 transition-colors" />
+                <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center mr-3 group-hover:border-slate-300 shadow-2xs">
+                  <Icon size={18} className="text-slate-600 group-hover:text-slate-900 transition-colors" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-navy truncate">{tool.label}</div>
-                  <div className="text-xs text-slate-700 truncate">{tool.desc}</div>
+                  <div className="text-sm font-semibold text-slate-900 truncate">{tool.label}</div>
+                  <div className="text-xs text-slate-500 truncate">{tool.desc}</div>
                 </div>
-                <ArrowRight size={14} className="text-slate-300 group-hover:text-amber-500 shrink-0 ml-2" />
+                <ArrowRight size={14} className="text-slate-300 group-hover:text-slate-700 shrink-0 ml-2" />
               </Link>
             );
           })}

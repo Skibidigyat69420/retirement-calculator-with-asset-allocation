@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 @theme {
-  /* Modern professional palette */
+  /* Refined, understated institutional palette */
   --color-cream: #f8fafc;
   --color-paper: #ffffff;
   --color-warm: #e2e8f0;
   --color-warm-dark: #94a3b8;
-  --color-navy: #4f46e5;
-  --color-navy-dark: #3730a3;
-  --color-gold: #f59e0b;
-  --color-red: #e11d48;
+  --color-navy: #0f172a;
+  --color-navy-dark: #020617;
+  --color-gold: #b45309;
+  --color-red: #be123c;
   --color-ink: #0f172a;
-  --color-accent: #e2e8f0;
+  --color-accent: #f1f5f9;
   --color-textMain: #0f172a;
   --color-textMuted: #64748b;
 
@@ -26,12 +26,8 @@
 
 @layer base {
   body {
-    @apply bg-cream font-sans text-textMain min-h-screen antialiased;
+    @apply bg-slate-50 font-sans text-textMain min-h-screen antialiased;
     background-color: #f8fafc;
-    background-image: 
-      radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.025) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(245, 158, 11, 0.025) 0px, transparent 50%);
-    background-attachment: fixed;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif text-ink tracking-tight;
@@ -39,19 +35,19 @@
   input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
-    height: 6px;
+    height: 5px;
     background: #e2e8f0;
     border-radius: 999px;
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 18px;
-    height: 18px;
-    background: #4f46e5;
+    width: 16px;
+    height: 16px;
+    background: #0f172a;
     border: 2px solid #fff;
     border-radius: 50%;
-    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
     cursor: pointer;
     transition: transform 0.15s ease;
   }
@@ -59,12 +55,12 @@
     transform: scale(1.15);
   }
   input[type="range"]::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
-    background: #4f46e5;
+    width: 16px;
+    height: 16px;
+    background: #0f172a;
     border: 2px solid #fff;
     border-radius: 50%;
-    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
     cursor: pointer;
   }
 }

@@ -117,61 +117,61 @@ export const Reports = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><FileText size={18} className="text-amber-500" /> Plan Summary</h3>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><FileText size={18} className="text-slate-500" /> Plan Summary</h3>
           <div className="space-y-3 text-sm">
-            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-700">Client age</span><span className="font-medium text-navy">{inputs.currentAge}</span></div>
-            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-700">Retirement age</span><span className="font-medium text-navy">{inputs.retirementAge}</span></div>
-            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-700">Life expectancy</span><span className="font-medium text-navy">{inputs.lifeExpectancy}</span></div>
-            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-700">Annual income</span><span className="font-medium text-navy">{formatCurrency(wealthResult.annualIncome)}</span></div>
-            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-700">Monthly expenditure</span><span className="font-medium text-navy">{formatCurrency(inputs.monthlyExpenditure)}</span></div>
-            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-700">Annual expenses (today)</span><span className="font-medium text-navy">{formatCurrency(wealthResult.annualExpenses)}</span></div>
-            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-700">Net annual savings</span><span className="font-medium text-navy">{formatCurrency(wealthResult.annualSavings)} ({formatPercent(wealthResult.savingsRate)})</span></div>
-            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-700">Invested / deployed</span><span className="font-medium text-navy">{formatCurrency(wealthResult.annualInvested)} ({formatPercent(wealthResult.investmentRate)})</span></div>
-            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-700">Monthly SIP</span><span className="font-medium text-navy">{formatCurrency(wealthResult.monthlySIP)}</span></div>
-            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-700">Total invested (projected)</span><span className="font-medium text-navy">{formatCurrency(wealthResult.totalInvested)}</span></div>
-            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-700">CAGR nominal</span><span className="font-medium text-navy">{formatPercent(wealthResult.cagrNominal)}</span></div>
-            <div className="flex justify-between py-2"><span className="text-slate-700">CAGR real</span><span className="font-medium text-navy">{formatPercent(wealthResult.cagrReal)}</span></div>
+            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">Client age</span><span className="font-medium text-navy">{inputs.currentAge}</span></div>
+            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">Retirement age</span><span className="font-medium text-navy">{inputs.retirementAge}</span></div>
+            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">Life expectancy</span><span className="font-medium text-navy">{inputs.lifeExpectancy}</span></div>
+            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">Annual income</span><span className="font-medium text-navy">{formatCurrency(wealthResult.annualIncome)}</span></div>
+            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">Monthly expenditure</span><span className="font-medium text-navy">{formatCurrency(inputs.monthlyExpenditure)}</span></div>
+            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">Annual expenses (today)</span><span className="font-medium text-navy">{formatCurrency(wealthResult.annualExpenses)}</span></div>
+            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">Net annual savings</span><span className="font-medium text-navy">{formatCurrency(wealthResult.annualSavings)} ({formatPercent(wealthResult.savingsRate)})</span></div>
+            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">Invested / deployed</span><span className="font-medium text-navy">{formatCurrency(wealthResult.annualInvested)} ({formatPercent(wealthResult.investmentRate)})</span></div>
+            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">Monthly SIP</span><span className="font-medium text-navy">{formatCurrency(wealthResult.monthlySIP)}</span></div>
+            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">Total invested (projected)</span><span className="font-medium text-navy">{formatCurrency(wealthResult.totalInvested)}</span></div>
+            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">CAGR nominal</span><span className="font-medium text-navy">{formatPercent(wealthResult.cagrNominal)}</span></div>
+            <div className="flex justify-between py-2"><span className="text-slate-500">CAGR real</span><span className="font-medium text-navy">{formatPercent(wealthResult.cagrReal)}</span></div>
           </div>
         </Card>
 
         <Card>
-          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><ShieldCheck size={18} className="text-amber-500" /> Risk Profile</h3>
-          <div className="p-4 bg-navy text-white rounded-xl mb-4">
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><ShieldCheck size={18} className="text-slate-500" /> Risk Profile</h3>
+          <div className="p-4 bg-slate-900 text-white rounded-xl mb-4">
             <div className="text-2xl font-serif">{riskProfile.label}</div>
-            <p className="text-sm text-slate-200 mt-1">{riskProfile.description}</p>
+            <p className="text-sm text-slate-300 mt-1">{riskProfile.description}</p>
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="p-3 bg-slate-50 rounded-xl"><div className="text-xs text-slate-700">Max drawdown</div><div className="font-medium text-navy">{formatPercent(riskProfile.maxDrawdown)}</div></div>
-            <div className="p-3 bg-slate-50 rounded-xl"><div className="text-xs text-slate-700">Volatility target</div><div className="font-medium text-navy">{formatPercent(riskProfile.targetVolatility)}</div></div>
-            <div className="p-3 bg-slate-50 rounded-xl"><div className="text-xs text-slate-700">Goal threshold</div><div className="font-medium text-navy">{formatPercent(riskProfile.goalSuccessThreshold)}</div></div>
-            <div className="p-3 bg-slate-50 rounded-xl"><div className="text-xs text-slate-700">Max drawdown prob</div><div className="font-medium text-navy">{formatPercent(wealthResult.maxDrawdownProbability * 100)}</div></div>
+            <div className="p-3 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500">Max drawdown</div><div className="font-medium text-navy">{formatPercent(riskProfile.maxDrawdown)}</div></div>
+            <div className="p-3 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500">Volatility target</div><div className="font-medium text-navy">{formatPercent(riskProfile.targetVolatility)}</div></div>
+            <div className="p-3 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500">Goal threshold</div><div className="font-medium text-navy">{formatPercent(riskProfile.goalSuccessThreshold)}</div></div>
+            <div className="p-3 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500">Max drawdown prob</div><div className="font-medium text-navy">{formatPercent(wealthResult.maxDrawdownProbability * 100)}</div></div>
           </div>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><PieChart size={18} className="text-amber-500" /> Current vs Target Allocation</h3>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><PieChart size={18} className="text-slate-500" /> Current vs Target Allocation</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-xs text-slate-700 mb-2 text-center">Current</div>
+              <div className="text-xs text-slate-500 mb-2 text-center">Current</div>
               <DonutChart data={currentAllocationData} innerRadius={40} outerRadius={70} />
             </div>
             <div>
-              <div className="text-xs text-slate-700 mb-2 text-center">Target</div>
+              <div className="text-xs text-slate-500 mb-2 text-center">Target</div>
               <DonutChart data={targetAllocationData} innerRadius={40} outerRadius={70} />
             </div>
           </div>
         </Card>
 
         <Card>
-          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-amber-500" /> Monte Carlo Fan Chart</h3>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-slate-500" /> Monte Carlo Fan Chart</h3>
           <MonteCarloFanChart data={wealthResult.monteCarlo.yearlyPercentiles} />
         </Card>
       </div>
 
       <Card>
-        <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><Target size={18} className="text-amber-500" /> Goal Probability Summary</h3>
+        <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><Target size={18} className="text-slate-500" /> Goal Probability Summary</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
             <div className="text-xs text-slate-700">Essential goals</div>
@@ -227,18 +227,18 @@ export const Reports = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><Wallet size={18} className="text-amber-500" /> Tax Summary</h3>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><Wallet size={18} className="text-slate-500" /> Tax Summary</h3>
           <div className="space-y-3 text-sm">
-            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-700">Annual income</span><span className="font-medium text-navy">{formatCurrency(wealthResult.annualIncome)}</span></div>
-            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-700">Estimated tax</span><span className="font-medium text-navy">{formatCurrency(wealthResult.taxSummary.annualTax)}</span></div>
-            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-700">Effective tax rate</span><span className="font-medium text-navy">{formatPercent(wealthResult.taxSummary.effectiveRate * 100)}</span></div>
-            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-700">Post-tax income</span><span className="font-medium text-navy">{formatCurrency(wealthResult.taxSummary.postTaxIncome)}</span></div>
-            <div className="flex justify-between py-2"><span className="text-slate-700">Recommended tax saving</span><span className="font-medium text-navy">{formatCurrency(wealthResult.taxSummary.recommendedTaxSaving)}</span></div>
+            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">Annual income</span><span className="font-medium text-navy">{formatCurrency(wealthResult.annualIncome)}</span></div>
+            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">Estimated tax</span><span className="font-medium text-navy">{formatCurrency(wealthResult.taxSummary.annualTax)}</span></div>
+            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">Effective tax rate</span><span className="font-medium text-navy">{formatPercent(wealthResult.taxSummary.effectiveRate * 100)}</span></div>
+            <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">Post-tax income</span><span className="font-medium text-navy">{formatCurrency(wealthResult.taxSummary.postTaxIncome)}</span></div>
+            <div className="flex justify-between py-2"><span className="text-slate-500">Recommended tax saving</span><span className="font-medium text-navy">{formatCurrency(wealthResult.taxSummary.recommendedTaxSaving)}</span></div>
           </div>
         </Card>
 
         <Card>
-          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><Globe size={18} className="text-amber-500" /> Currency Exposure</h3>
+          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><Globe size={18} className="text-slate-500" /> Currency Exposure</h3>
           <div className="space-y-3">
             {wealthResult.currencyExposure.map((c) => (
               <div key={c.currency} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
