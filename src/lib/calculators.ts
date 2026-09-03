@@ -148,6 +148,43 @@ export function calculateSWP(
   };
 }
 
+export interface SustainableSWPResult {
+  /** Maximum first-year monthly withdrawal the corpus can sustain. */
+  monthlyWithdrawal: number;
+  /** Gross first-year withdrawal as a percentage of the corpus. */
+  withdrawalRate: number;
+}
+
+/**
+ * Reverse SWP: the largest level (inflation-indexed) monthly withdrawal a
+ * corpus can sustain for `years` distribution years.
+ *
+ * Closed-form annuity solve on the real return: with withdrawals growing at
+ * inflation, only the real return erodes the corpus. Tax is applied to the
+ * gross withdrawal, so the net monthly figure divides by (1 − taxRate).
+ */
+export function calculateSustainableSWP(
+  corpus: number,
+  annualReturn: number,
+  inflation: number,
+  taxRate: number,
+  years: number,
+): SustainableSWPResult {
+  if (corpus <= 0 || years <= 0) {
+    return { monthlyWithdrawal: 0, withdrawalRate: 0 };
+  }
+  const realReturn = (1 + annualReturn / 100) / (1 + inflation / 100) - 1;
+  const sustainableGrossAnnual =
+    realReturn > 0
+      ? (corpus * realReturn) / (1 - Math.pow(1 + realReturn, -years))
+      : corpus / years;
+  const monthlyWithdrawal = (sustainableGrossAnnual * (1 - taxRate / 100)) / 12;
+  return {
+    monthlyWithdrawal: round2(monthlyWithdrawal),
+    withdrawalRate: round2((sustainableGrossAnnual / corpus) * 100),
+  };
+}
+
 export interface STPResult {
   months: number;
   total: number;

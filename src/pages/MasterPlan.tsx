@@ -16,6 +16,7 @@ import {
   Banknote,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useCalculator } from '../context/CalculatorContext';
 import { Card } from '../components/ui/Card';
 import { NumberInput } from '../components/ui/NumberInput';
@@ -75,7 +76,6 @@ export const MasterPlan = () => {
     removeAsset,
     updateSIP,
     updateSTP,
-    updateSWP,
     addGoal,
     updateGoal,
     removeGoal,
@@ -457,13 +457,19 @@ export const MasterPlan = () => {
             <Card className="border-l-4 border-l-amber-500">
               <div className="flex items-center space-x-2 mb-4">
                 <Wallet size={18} className="text-amber-500" />
-                <h3 className="text-lg font-serif text-navy">Distribution (SWP)</h3>
+                <h3 className="text-lg font-serif text-navy">Post-Retirement Income (SWP)</h3>
               </div>
-              <div className="space-y-4">
-                <CurrencyInput label="Target Monthly Income (Today's ₹)" value={inputs.swp.monthlyNeedToday} onChange={(v) => updateSWP({ monthlyNeedToday: v })} />
-                <NumberInput label="Post-Retirement Return" value={inputs.swp.postRetirementReturn} onChange={(v) => updateSWP({ postRetirementReturn: v })} suffix="%" />
-                <NumberInput label="SWP Tax Rate" value={inputs.swp.taxRate} onChange={(v) => updateSWP({ taxRate: v })} suffix="%" />
+              <div className="space-y-2 text-sm text-slate-600">
+                <div className="flex justify-between"><span>Target monthly income (today's ₹)</span><span className="font-medium text-navy">{formatCurrency(inputs.swp.monthlyNeedToday)}</span></div>
+                <div className="flex justify-between"><span>Post-retirement return</span><span className="font-medium text-navy">{formatPercent(inputs.swp.postRetirementReturn)}</span></div>
+                <div className="flex justify-between"><span>SWP tax rate</span><span className="font-medium text-navy">{formatPercent(inputs.swp.taxRate)}</span></div>
               </div>
+              <p className="text-xs text-slate-700 mt-4 bg-slate-50 border border-slate-100 rounded-lg p-3">
+                Decumulation is planned in the next step.{' '}
+                <Link to="/retirement" className="font-semibold text-amber-600 hover:underline">
+                  Plan your SWP in Retirement &amp; SWP →
+                </Link>
+              </p>
             </Card>
           </div>
         </div>

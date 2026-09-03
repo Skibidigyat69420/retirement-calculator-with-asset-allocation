@@ -445,7 +445,7 @@ export const Allocation = () => {
       </Card>
 
       <WorkflowFooter
-        prev={{ path: '/retirement', label: 'Retirement' }}
+        prev={{ path: '/retirement', label: 'Retirement & SWP' }}
         next={{ path: '/mvo', label: 'MVO' }}
         flowHint="Strategic targets guide rebalancing trade suggestions and MVO constraint envelopes."
       />

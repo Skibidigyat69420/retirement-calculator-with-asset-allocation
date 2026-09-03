@@ -593,7 +593,7 @@ export const MVO = () => {
       )}
 
       <WorkflowFooter
-        prev={{ path: '/allocation', label: 'Asset Allocation' }}
+        prev={{ path: '/allocation', label: 'Allocation' }}
         next={{ path: '/reports', label: 'Reports' }}
         flowHint="Mean-variance efficient portfolios provide empirically optimal weights to apply to your plan targets."
       />

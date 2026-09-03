@@ -260,7 +260,7 @@ export const Reports = () => {
       <div className="print:hidden">
         <WorkflowFooter
           prev={{ path: '/mvo', label: 'MVO' }}
-          next={{ path: '/ips', label: 'Investment Policy Statement' }}
+          next={{ path: '/ips', label: 'IPS' }}
           flowHint="Executive plan summaries, tax analyses, and Monte Carlo curves feed into your formal CFA-aligned IPS document."
         />
       </div>

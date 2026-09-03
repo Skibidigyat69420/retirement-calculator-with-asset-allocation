@@ -340,7 +340,7 @@ export const GoalPlanner = () => {
 
       <WorkflowFooter
         prev={{ path: '/master-plan', label: 'Master Plan' }}
-        next={{ path: '/retirement', label: 'Retirement' }}
+        next={{ path: '/retirement', label: 'Retirement & SWP' }}
         flowHint="Goal targets and time horizons are funded in priority order (Essential first) by the wealth engine."
       />
     </div>

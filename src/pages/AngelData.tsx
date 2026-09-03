@@ -379,7 +379,7 @@ export const AngelData = () => {
       </Card>
 
       <WorkflowFooter
-        prev={{ path: '/angel-connect', label: 'Angel One Connect' }}
+        prev={{ path: '/angel-connect', label: 'Angel Connect' }}
         next={{ path: '/', label: 'Dashboard' }}
         flowHint="Live JSON snapshot logs and market telemetry verifying raw API payloads from Angel One SmartAPI."
       />

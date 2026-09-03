@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
-import { Calculator, TrendingUp, AlertTriangle, CheckCircle2, Target, Sparkles, Clock, DollarSign } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Calculator, TrendingUp, AlertTriangle, CheckCircle2, Target, Sparkles, Clock, DollarSign, Umbrella, ArrowRight } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { NumberInput } from '../components/ui/NumberInput';
 import { SectionTitle } from '../components/ui/SectionTitle';
@@ -10,11 +11,13 @@ import { NominalRealChart } from '../components/charts/NominalRealChart';
 import { SWPDrawdownChart } from '../components/charts/SWPDrawdownChart';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import { useCalculator } from '../context/CalculatorContext';
-import { formatCurrency, formatPercent } from '../lib/formatters';
+import { calculateSWP, calculateSustainableSWP } from '../lib/calculators';
+import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { requiredMonthlySIPForGoal } from '../lib/goals';
 
 export const Retirement = () => {
   const { inputs, wealthResult, riskProfile, updateInputs, updateSIP, updateSWP, showToast } = useCalculator();
+  const [showAllSchedule, setShowAllSchedule] = useState(false);
 
   const yearsToRetirement = Math.max(0, inputs.retirementAge - inputs.currentAge);
 
@@ -47,6 +50,7 @@ export const Retirement = () => {
   const successRate = wealthResult.monteCarlo.successRate * 100;
   const shortfall = Math.abs(gap);
   const blendedReturn = (inputs.sip.equitySplit * inputs.sip.equityReturn + inputs.sip.debtSplit * inputs.sip.debtReturn) / 100;
+  const distributionYears = Math.max(0, inputs.lifeExpectancy - inputs.retirementAge);
 
   const extraSIPNeeded = useMemo(() => {
     if (gap >= 0 || yearsToRetirement <= 0) return 0;
@@ -57,10 +61,58 @@ export const Retirement = () => {
   const recommendedDelayAge = Math.max(inputs.retirementAge + 1, maxDelayAge);
   const delayYears = recommendedDelayAge - inputs.retirementAge;
 
+  // Annuity-based sustainable drawdown: the largest monthly withdrawal today's
+  // corpus trajectory can support through life expectancy, deflated to today's ₹.
   const sustainableMonthlyNeed = useMemo(() => {
-    if (gap >= 0 || requiredCorpus <= 0) return inputs.swp.monthlyNeedToday;
-    return Math.round(Math.max(10000, (projectedCorpusAtRetirement / requiredCorpus) * inputs.swp.monthlyNeedToday));
-  }, [gap, requiredCorpus, projectedCorpusAtRetirement, inputs.swp.monthlyNeedToday]);
+    const { monthlyWithdrawal } = calculateSustainableSWP(
+      projectedCorpusAtRetirement,
+      inputs.swp.postRetirementReturn,
+      inputs.inflation,
+      inputs.swp.taxRate,
+      distributionYears,
+    );
+    if (projectedCorpusAtRetirement <= 0 || monthlyWithdrawal <= 0) return 0;
+    return Math.round(Math.max(10000, monthlyWithdrawal / Math.pow(1 + inputs.inflation / 100, yearsToRetirement)));
+  }, [projectedCorpusAtRetirement, inputs.swp.postRetirementReturn, inputs.inflation, inputs.swp.taxRate, distributionYears, yearsToRetirement]);
+
+  // Post-retirement SWP plan on the projected corpus at retirement.
+  const swpPlan = useMemo(
+    () =>
+      calculateSWP(
+        projectedCorpusAtRetirement,
+        monthlyNeedAtRetirement,
+        inputs.swp.postRetirementReturn,
+        inputs.inflation,
+        inputs.swp.taxRate,
+        Math.max(distributionYears, 1),
+      ),
+    [projectedCorpusAtRetirement, monthlyNeedAtRetirement, inputs.swp.postRetirementReturn, inputs.inflation, inputs.swp.taxRate, distributionYears],
+  );
+
+  const grossAnnualAtRetirement = (monthlyNeedAtRetirement * 12) / (1 - inputs.swp.taxRate / 100);
+  const swpWithdrawalRate = projectedCorpusAtRetirement > 0 ? (grossAnnualAtRetirement / projectedCorpusAtRetirement) * 100 : 0;
+
+  const sustainableAtRetirement = useMemo(
+    () =>
+      calculateSustainableSWP(
+        projectedCorpusAtRetirement,
+        inputs.swp.postRetirementReturn,
+        inputs.inflation,
+        inputs.swp.taxRate,
+        distributionYears,
+      ),
+    [projectedCorpusAtRetirement, inputs.swp.postRetirementReturn, inputs.inflation, inputs.swp.taxRate, distributionYears],
+  );
+
+  const depletionProbability = useMemo(() => {
+    const outcomes = wealthResult.monteCarlo.outcomes;
+    if (!outcomes.length) return 0;
+    return (outcomes.filter((o) => o.depletionAge !== null).length / outcomes.length) * 100;
+  }, [wealthResult.monteCarlo.outcomes]);
+
+  const scheduleRows = showAllSchedule || swpPlan.yearlyData.length <= 15
+    ? swpPlan.yearlyData
+    : [...swpPlan.yearlyData.slice(0, 10), swpPlan.yearlyData[swpPlan.yearlyData.length - 1]];
 
   const chartData = useMemo(
     () =>
@@ -197,17 +249,28 @@ export const Retirement = () => {
             <NumberInput label="Monthly SIP" value={inputs.sip.amount} onChange={(v) => updateSIP({ amount: v })} />
             <NumberInput label="Inflation" value={inputs.inflation} onChange={(v) => updateInputs({ inflation: v })} suffix="%" />
             <NumberInput label="Post-Retirement Return" value={inputs.swp.postRetirementReturn} onChange={(v) => updateSWP({ postRetirementReturn: v })} suffix="%" />
+            <NumberInput label="SWP Tax Rate" value={inputs.swp.taxRate} onChange={(v) => updateSWP({ taxRate: v })} suffix="%" />
           </div>
         </Card>
 
         <div className="lg:col-span-2 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <MetricCard label="Projected Corpus" value={formatCurrency(projectedCorpusAtRetirement)} variant="navy" />
-            <MetricCard label="Required Corpus" value={formatCurrency(requiredCorpus)} variant="gold" />
+            <MetricCard
+              label="Projected Corpus"
+              value={formatCurrencyCompact(projectedCorpusAtRetirement)}
+              subtext={`Full: ${formatCurrency(projectedCorpusAtRetirement)}`}
+              variant="navy"
+            />
+            <MetricCard
+              label="Required Corpus"
+              value={formatCurrencyCompact(requiredCorpus)}
+              subtext={`Full: ${formatCurrency(requiredCorpus)}`}
+              variant="gold"
+            />
             <MetricCard
               label="Gap"
-              value={formatCurrency(gap)}
-              subtext={gap >= 0 ? 'Surplus' : 'Shortfall'}
+              value={formatCurrencyCompact(gap)}
+              subtext={gap >= 0 ? `Surplus (${formatCurrency(gap)})` : `Shortfall (${formatCurrency(Math.abs(gap))})`}
               variant={gap >= 0 ? 'success' : 'danger'}
             />
             <MetricCard
@@ -302,10 +365,126 @@ export const Retirement = () => {
         </div>
       </div>
 
+      {/* === Section B: Post-Retirement SWP Plan === */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-serif text-navy flex items-center gap-2">
+            <Umbrella size={20} className="text-amber-500" /> Post-Retirement SWP Plan
+          </h3>
+          <Badge variant="navy">Decumulation</Badge>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <MetricCard
+            label="SWP Withdrawal Rate"
+            value={formatPercent(swpWithdrawalRate)}
+            subtext="Gross first-year withdrawal ÷ corpus"
+            variant={swpWithdrawalRate <= 6 ? 'success' : swpWithdrawalRate <= 9 ? 'default' : 'danger'}
+          />
+          <MetricCard
+            label="Sustainable Monthly Drawdown"
+            value={formatCurrency(sustainableAtRetirement.monthlyWithdrawal)}
+            subtext={`${formatCurrency(sustainableMonthlyNeed)}/mo in today's ₹`}
+            variant={sustainableAtRetirement.monthlyWithdrawal >= monthlyNeedAtRetirement ? 'success' : 'danger'}
+          />
+          <MetricCard
+            label="Corpus Longevity"
+            value={swpPlan.sustainable ? `${distributionYears} Yrs (full horizon)` : `${swpPlan.years} Years`}
+            subtext={swpPlan.sustainable ? 'Outlasts life expectancy' : `Needs ${distributionYears} years`}
+            variant={swpPlan.sustainable ? 'success' : 'danger'}
+          />
+          <MetricCard
+            label="Depletion Probability"
+            value={formatPercent(depletionProbability)}
+            subtext="Monte Carlo paths that run dry"
+            variant={depletionProbability <= 20 ? 'success' : depletionProbability <= 50 ? 'default' : 'danger'}
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            onClick={() => {
+              updateSWP({ monthlyNeedToday: sustainableMonthlyNeed });
+              showToast(`SWP set to sustainable level of ${formatCurrency(sustainableMonthlyNeed)}/mo (today's ₹)!`, 'success');
+            }}
+            disabled={sustainableMonthlyNeed <= 0}
+          >
+            <CheckCircle2 size={16} className="mr-2" /> Apply Sustainable SWP
+          </Button>
+          <Link to="/calculators">
+            <Button variant="outline">
+              Open SWP Calculator <ArrowRight size={16} className="ml-2" />
+            </Button>
+          </Link>
+          {sustainableAtRetirement.monthlyWithdrawal < monthlyNeedAtRetirement && (
+            <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              Current drawdown exceeds what the corpus can sustain — apply the sustainable SWP or close the gap above.
+            </span>
+          )}
+        </div>
+
+        <Card>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3">
+              <h3 className="text-lg font-serif text-navy">Year-by-Year SWP Schedule</h3>
+              <Badge variant={swpPlan.sustainable ? 'success' : 'danger'}>
+                {swpPlan.sustainable ? 'Sustains to life expectancy' : `Depletes in year ${swpPlan.depletionYear}`}
+              </Badge>
+            </div>
+            {swpPlan.yearlyData.length > 15 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => setShowAllSchedule((prev) => !prev)}
+              >
+                {showAllSchedule ? 'Show Summary (10 Yrs)' : `Show All ${swpPlan.yearlyData.length} Years`}
+              </Button>
+            )}
+          </div>
+          <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable SWP schedule table">
+            <table className="w-full text-sm min-w-[520px]">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-700">
+                  <th className="py-2 pr-4">Year</th>
+                  <th className="py-2 pr-4">Age</th>
+                  <th className="py-2 pr-4 text-right">Monthly SWP</th>
+                  <th className="py-2 pr-4 text-right">Annual Withdrawal</th>
+                  <th className="py-2 pr-4 text-right">Corpus at Year-End</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-sans">
+                {scheduleRows.map((d) => (
+                  <tr
+                    key={d.year}
+                    className={`hover:bg-slate-50/80 transition-colors ${
+                      d.corpusLeft <= 0 ? 'bg-rose-50/50 text-rose-900' : ''
+                    }`}
+                  >
+                    <td className="py-2 pr-4">{inputs.retirementAge > 0 ? `Ret + ${d.year}` : `Year ${d.year}`}</td>
+                    <td className="py-2 pr-4">{inputs.retirementAge + d.year}</td>
+                    <td className="py-2 pr-4 text-right">{formatCurrency(d.monthlyNeed)}</td>
+                    <td className="py-2 pr-4 text-right">{formatCurrency(d.withdrawn)}</td>
+                    <td className={`py-2 pr-4 text-right font-medium ${d.corpusLeft <= 0 ? 'text-rose-600 font-bold' : ''}`}>
+                      {formatCurrency(d.corpusLeft)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {!showAllSchedule && swpPlan.yearlyData.length > 15 && (
+            <p className="text-xs text-slate-500 mt-3 pt-2 border-t border-slate-100">
+              Showing first 10 years and final year of a {swpPlan.yearlyData.length}-year distribution horizon. Click "Show All" above for the complete table.
+            </p>
+          )}
+        </Card>
+      </div>
+
       <WorkflowFooter
         prev={{ path: '/goal', label: 'Goals' }}
         next={{ path: '/allocation', label: 'Allocation' }}
-        flowHint="Accumulated retirement corpus and required drawdowns dictate strategic asset allocation."
+        flowHint="Retirement corpus and the post-retirement SWP it must fund dictate your strategic asset allocation."
       />
     </div>
   );

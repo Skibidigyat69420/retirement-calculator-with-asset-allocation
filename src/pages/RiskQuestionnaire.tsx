@@ -302,7 +302,7 @@ export const RiskQuestionnaire = () => {
     <div className="space-y-6">
       <SectionTitle
         title="Risk Questionnaire"
-        subtitle="Answer 20 questions across eight dimensions to discover your risk profile. The result drives your strategic allocation, MVO constraints, and goal success thresholds."
+        subtitle={`Answer ${RISK_QUESTIONS.length} questions across eight dimensions to discover your risk profile. The result drives your strategic allocation, MVO constraints, and goal success thresholds.`}
         badge="Behavioural Finance"
       />
 

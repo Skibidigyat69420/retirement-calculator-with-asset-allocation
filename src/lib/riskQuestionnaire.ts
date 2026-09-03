@@ -50,17 +50,17 @@ export interface RiskQuestion {
 }
 
 /**
- * Detailed risk-assessment questionnaire.
+ * Risk-assessment questionnaire.
  *
  * Built from established frameworks: Grable & Lytton Risk Tolerance Scale,
  * CFA Institute risk-profiling guidance, and behavioural-finance research on
- * loss aversion, mental accounting, and recency bias. Twenty questions are
- * grouped into eight dimensions so the final profile reflects both willingness
- * (attitude/behaviour) and ability (capacity/time/liquidity/context) to take
- * risk, and so advisers can spot gaps between the two.
+ * loss aversion and recency bias. Fourteen questions are grouped into eight
+ * dimensions so the final profile reflects both willingness (attitude) and
+ * ability (capacity/horizon/liquidity) to take risk — completable in about
+ * five to seven minutes, the way a wealth manager would run a first-discovery meeting.
  */
 export const RISK_QUESTIONS: RiskQuestion[] = [
-  // === Time Horizon (12%) ===
+  // === Time Horizon (15%) ===
   {
     id: 'time-horizon-main',
     dimension: 'time',
@@ -85,32 +85,8 @@ export const RISK_QUESTIONS: RiskQuestion[] = [
       { label: 'More than 25 years', score: 10 },
     ],
   },
-  {
-    id: 'time-liquidity-milestone',
-    dimension: 'time',
-    text: 'Do you have major capital withdrawals planned within the next 3 to 7 years (e.g., higher education, property purchase, business equity)?',
-    options: [
-      { label: 'Definite major withdrawal within 1–2 years', score: 1, description: 'High near-term liquidity constraint' },
-      { label: 'Probable major withdrawal in 2–4 years', score: 3 },
-      { label: 'Possible withdrawal in 4–7 years', score: 5 },
-      { label: 'Unlikely / minimal capital withdrawals planned', score: 8 },
-      { label: 'No capital withdrawals planned for at least 7–10 years', score: 10, description: 'Unencumbered compounding horizon' },
-    ],
-  },
-  {
-    id: 'time-wealth-legacy',
-    dimension: 'time',
-    text: 'What is your intended horizon for wealth transfer and legacy beyond personal retirement living expenses?',
-    options: [
-      { label: 'Portfolio must be fully consumed during my lifetime', score: 1, description: 'Pure decumulation mandate' },
-      { label: 'Plan to leave a modest residual cushion for heirs', score: 3 },
-      { label: 'Aim to preserve roughly 30–50% of real corpus for legacy', score: 6 },
-      { label: 'Aim to preserve and pass on the majority of the wealth', score: 8 },
-      { label: 'Multi-generational dynasty endowment (horizon extends decades beyond lifetime)', score: 10, description: 'Perpetual horizon' },
-    ],
-  },
 
-  // === Risk Tolerance / Attitude (20%) ===
+  // === Risk Tolerance / Attitude (25%) ===
   {
     id: 'loss-reaction',
     dimension: 'tolerance',
@@ -135,44 +111,8 @@ export const RISK_QUESTIONS: RiskQuestion[] = [
       { label: 'More than 35%', score: 10 },
     ],
   },
-  {
-    id: 'volatility-sleep',
-    dimension: 'tolerance',
-    text: 'How much short-term volatility are you comfortable accepting in exchange for higher long-term returns?',
-    options: [
-      { label: 'Almost none — stable values are essential', score: 1 },
-      { label: 'Small fluctuations are acceptable', score: 3 },
-      { label: 'Moderate ups and downs are fine', score: 5 },
-      { label: 'Significant swings for better growth', score: 8 },
-      { label: 'High volatility is the price of compounding', score: 10 },
-    ],
-  },
-  {
-    id: 'unrealized-loss-anxiety',
-    dimension: 'tolerance',
-    text: 'When your portfolio shows an unrealized (paper) loss below your invested capital, how does it affect your mindset?',
-    options: [
-      { label: 'Causes severe stress; I obsess over it and want to exit', score: 1, description: 'Extreme loss aversion' },
-      { label: 'Makes me anxious and question my asset allocation', score: 3 },
-      { label: 'Noticeable discomfort, but I stay committed to the plan', score: 5 },
-      { label: 'Minor nuisance; I recognize paper losses as normal cycle dynamics', score: 8 },
-      { label: 'Completely unbothered; paper drawdowns create bargain buying opportunities', score: 10, description: 'Contrarian conviction' },
-    ],
-  },
-  {
-    id: 'illiquidity-premium',
-    dimension: 'tolerance',
-    text: 'Would you commit a portion of your portfolio to higher-yielding locked/illiquid investments (e.g. private credit, lock-in funds, real estate) for 3–5 years without early exit options?',
-    options: [
-      { label: 'Absolutely not; daily redemption liquidity is mandatory', score: 1 },
-      { label: 'Only a very small portion (< 10%)', score: 3 },
-      { label: 'Willing to allocate 10–25% if return premium is 3–4% p.a.', score: 6 },
-      { label: 'Comfortable locking 25–40% for superior illiquidity alpha', score: 8 },
-      { label: 'Very comfortable locking a majority of long-term capital', score: 10 },
-    ],
-  },
 
-  // === Risk Capacity (18%) ===
+  // === Risk Capacity (20%) ===
   {
     id: 'income-stability',
     dimension: 'capacity',
@@ -197,32 +137,8 @@ export const RISK_QUESTIONS: RiskQuestion[] = [
       { label: 'More than 12x', score: 10, description: 'Significant capital cushion' },
     ],
   },
-  {
-    id: 'future-income',
-    dimension: 'capacity',
-    text: 'Do you expect large future liabilities or cash outflows (education, property, business investment) in the next 5 years?',
-    options: [
-      { label: 'Several certain large outflows', score: 1 },
-      { label: 'One or two likely large outflows', score: 3 },
-      { label: 'Some possible outflows', score: 5 },
-      { label: 'Few planned outflows', score: 8 },
-      { label: 'No material planned outflows', score: 10 },
-    ],
-  },
-  {
-    id: 'income-replacement-resilience',
-    dimension: 'capacity',
-    text: 'If your primary earning stream ceased abruptly, how long could your household maintain its lifestyle without selling long-term investments?',
-    options: [
-      { label: 'Less than 3 months', score: 1, description: 'Severe financial fragility' },
-      { label: '3 to 6 months', score: 3 },
-      { label: '6 to 12 months', score: 5 },
-      { label: '1 to 2 years from external savings/cash buffers', score: 8 },
-      { label: 'More than 2 years / covered by passive income & rentals', score: 10, description: 'Robust independent cashflow resilience' },
-    ],
-  },
 
-  // === Financial Knowledge & Experience (10%) ===
+  // === Financial Knowledge & Experience (15%) ===
   {
     id: 'experience',
     dimension: 'knowledge',
@@ -247,43 +163,8 @@ export const RISK_QUESTIONS: RiskQuestion[] = [
       { label: 'I actively think about skew, tail risk, and sequence-of-returns risk', score: 10 },
     ],
   },
-  {
-    id: 'market-cycle-experience',
-    dimension: 'knowledge',
-    text: 'Which historical market downturns have you actively invested personal capital through?',
-    options: [
-      { label: 'None / invested only in the recent bull market (< 2 years)', score: 1 },
-      { label: 'Post-2020 COVID recovery phase only', score: 3 },
-      { label: 'Experienced the 2018–2019 midcap correction or 2020 crash', score: 6 },
-      { label: 'Invested through the 2008 Global Financial Crisis', score: 8 },
-      { label: 'Invested through multiple multi-year bear cycles (e.g. 2000 Dotcom & 2008 GFC)', score: 10, description: 'Seasoned market veteran' },
-    ],
-  },
-  {
-    id: 'inflation-purchasing-power',
-    dimension: 'knowledge',
-    text: 'How do you view the trade-off between guaranteed bank fixed deposits and volatile equity over 10+ years?',
-    options: [
-      { label: 'Guaranteed capital is paramount, even if after-tax real purchasing power declines', score: 1 },
-      { label: 'Prefer mostly guaranteed assets with a small token growth sleeve', score: 3 },
-      { label: 'Recognize that pure debt guarantees a long-term erosion of purchasing power', score: 6 },
-      { label: 'Strongly prioritize real inflation-adjusted wealth compounding over nominal stability', score: 10 },
-    ],
-  },
 
   // === Liquidity & Safety Net (10%) ===
-  {
-    id: 'liquidity-buffer',
-    dimension: 'liquidity',
-    text: 'How much of your total portfolio must remain easily accessible (liquid) at all times?',
-    options: [
-      { label: 'More than 40%', score: 1, description: 'High liquidity need' },
-      { label: '25% to 40%', score: 3 },
-      { label: '15% to 25%', score: 5 },
-      { label: '5% to 15%', score: 8 },
-      { label: 'Less than 5%', score: 10, description: 'Long-term capital; liquidity handled elsewhere' },
-    ],
-  },
   {
     id: 'emergency-fund',
     dimension: 'liquidity',
@@ -297,31 +178,19 @@ export const RISK_QUESTIONS: RiskQuestion[] = [
     ],
   },
   {
-    id: 'credit-access-buffer',
+    id: 'liquidity-needs',
     dimension: 'liquidity',
-    text: 'Do you have access to low-cost standby liquidity or borrowing lines (e.g. loan against securities/FD, overdraft) if an emergency occurs?',
+    text: 'What portion of your total portfolio or monthly savings might you need to withdraw for unforeseen expenses over the next 1–2 years?',
     options: [
-      { label: 'No credit facilities; any emergency forces selling portfolio assets', score: 1 },
-      { label: 'Only high-cost credit cards or unsecured personal loans', score: 3 },
-      { label: 'Moderate personal credit facilities or family backup', score: 6 },
-      { label: 'Pre-approved loan-against-mutual-funds/securities with low interest rates', score: 8 },
-      { label: 'Extensive prime credit lines and liquid business facilities', score: 10 },
+      { label: 'More than 40% — high likelihood of near-term cash calls', score: 1 },
+      { label: '20% to 40% — potential significant drawdown needed', score: 3 },
+      { label: '10% to 20% — modest contingency reserve needed', score: 5 },
+      { label: 'Less than 10% — small buffer is sufficient', score: 8 },
+      { label: 'Virtually zero — fully locked for long-term compounding', score: 10 },
     ],
   },
 
-  // === Goal Flexibility (8%) ===
-  {
-    id: 'goals-essential',
-    dimension: 'flexibility',
-    text: 'What portion of your goals are essential (must be met) versus aspirational?',
-    options: [
-      { label: 'Almost all essential', score: 1, description: 'Little room for risk' },
-      { label: 'More essential than aspirational', score: 3 },
-      { label: 'Balanced mix', score: 6 },
-      { label: 'More aspirational than essential', score: 8 },
-      { label: 'Mostly aspirational or legacy', score: 10 },
-    ],
-  },
+  // === Goal Flexibility (5%) ===
   {
     id: 'goal-timing-flexibility',
     dimension: 'flexibility',
@@ -334,19 +203,8 @@ export const RISK_QUESTIONS: RiskQuestion[] = [
       { label: 'Timing is entirely flexible', score: 10 },
     ],
   },
-  {
-    id: 'lifestyle-expenditure-flexibility',
-    dimension: 'flexibility',
-    text: 'During prolonged economic distress or bear markets, how easily could your household reduce discretionary expenditures?',
-    options: [
-      { label: 'Virtually impossible; all costs are fixed commitments and debt service', score: 1 },
-      { label: 'Can trim spending by 5–10% with considerable sacrifice', score: 3 },
-      { label: 'Can comfortably cut 15–25% of discretionary lifestyle spending', score: 6 },
-      { label: 'Highly adaptable; can scale back 30–50% of annual outflows if needed', score: 10 },
-    ],
-  },
 
-  // === Behavioural Stability (10%) ===
+  // === Behavioural Stability (5%) ===
   {
     id: 'past-behavior',
     dimension: 'behavior',
@@ -360,42 +218,18 @@ export const RISK_QUESTIONS: RiskQuestion[] = [
     ],
   },
   {
-    id: 'regret-aversion',
+    id: 'regret-reaction',
     dimension: 'behavior',
-    text: 'Which would bother you more: missing a market rally, or losing money in a downturn?',
+    text: 'When you reflect on market cycles, which scenario causes you greater financial anxiety or regret?',
     options: [
-      { label: 'Losing money is far worse under any circumstance', score: 1 },
-      { label: 'Losing money is somewhat worse', score: 3 },
-      { label: 'Both bother me equally', score: 5 },
-      { label: 'Missing a rally is somewhat worse', score: 8 },
-      { label: 'Missing a rally is far worse', score: 10 },
-    ],
-  },
-  {
-    id: 'monitoring-frequency',
-    dimension: 'behavior',
-    text: 'How often do you check your portfolio value?',
-    options: [
-      { label: 'Multiple times a day', score: 1, description: 'Likely to overreact to noise' },
-      { label: 'Daily', score: 3 },
-      { label: 'Weekly', score: 5 },
-      { label: 'Monthly or quarterly', score: 8 },
-      { label: 'Only when reviewing with my adviser', score: 10 },
-    ],
-  },
-  {
-    id: 'peer-market-noise-reaction',
-    dimension: 'behavior',
-    text: 'When peers, social media, or news headlines aggressively promote hot speculative trends (e.g. crypto, trendy IPOs, micro-caps), how do you react?',
-    options: [
-      { label: 'Intense FOMO; I frequently reallocate capital into the trending assets', score: 1, description: 'High trend-chasing bias' },
-      { label: 'Tempted and occasionally make speculative allocations', score: 3 },
-      { label: 'Curious, but evaluate calmly against long-term risk parameters', score: 6 },
-      { label: 'Completely disciplined; adhere strictly to core asset allocation policy', score: 10, description: 'High emotional discipline' },
+      { label: 'Experiencing a 15–20% paper drop in a market correction', score: 1, description: 'Loss aversion dominates' },
+      { label: 'Holding a volatile asset that fluctuates unpredictably', score: 3 },
+      { label: 'Earning only fixed-deposit returns while equity markets surge 25%', score: 7, description: 'Opportunity cost awareness' },
+      { label: 'Sitting in cash and missing a multi-year bull market', score: 10, description: 'Compounding upside conviction' },
     ],
   },
 
-  // === Portfolio Context, Concentration & Family (12%) ===
+  // === Portfolio Context & Concentration (5%) ===
   {
     id: 'portfolio-concentration',
     dimension: 'context',
@@ -408,53 +242,18 @@ export const RISK_QUESTIONS: RiskQuestion[] = [
       { label: 'Very diversified across assets, geographies, and income sources', score: 10 },
     ],
   },
-  {
-    id: 'insurance-safety-net',
-    dimension: 'context',
-    text: 'How protected are you against large unexpected shocks (health, liability, property, disability)?',
-    options: [
-      { label: 'No meaningful insurance cover', score: 1 },
-      { label: 'Basic cover only', score: 3 },
-      { label: 'Adequate standard cover', score: 5 },
-      { label: 'Comprehensive cover with contingencies', score: 8 },
-      { label: 'Fully insured with umbrella / excess cover', score: 10 },
-    ],
-  },
-  {
-    id: 'dependents-obligations',
-    dimension: 'context',
-    text: 'How many people depend on your income or financial support?',
-    options: [
-      { label: 'Many dependents with limited support network', score: 1 },
-      { label: 'Several dependents', score: 3 },
-      { label: 'A few dependents', score: 5 },
-      { label: 'One dependent or shared support', score: 8 },
-      { label: 'No dependents / fully independent', score: 10 },
-    ],
-  },
-  {
-    id: 'family-alignment-consensus',
-    dimension: 'context',
-    text: 'If managing family or joint household wealth, how aligned are you and key stakeholders/partner on investment risk and drawdowns?',
-    options: [
-      { label: 'High friction / partner has drastically lower risk tolerance and panics in drops', score: 1, description: 'Significant household risk discord' },
-      { label: 'Moderate disagreement on volatility and major capital decisions', score: 3 },
-      { label: 'Generally aligned with mutual consultation', score: 6 },
-      { label: 'Complete alignment on long-term strategy, drawdown acceptance, and goals', score: 10, description: 'Unified advisory mandate' },
-    ],
-  },
 ];
 
 /** Dimension weights — willingness and ability are both required. */
 export const DIMENSION_WEIGHTS: Record<RiskDimension, number> = {
-  time: 0.12,
-  tolerance: 0.20,
-  capacity: 0.18,
-  knowledge: 0.10,
+  time: 0.15,
+  tolerance: 0.25,
+  capacity: 0.20,
+  knowledge: 0.15,
   liquidity: 0.10,
-  flexibility: 0.08,
-  behavior: 0.10,
-  context: 0.12,
+  flexibility: 0.05,
+  behavior: 0.05,
+  context: 0.05,
 };
 
 export const RISK_PROFILES: RiskProfile[] = [
@@ -672,42 +471,22 @@ export interface BehavioralBias {
 export function detectBehavioralBiases(answers: RiskAnswers): BehavioralBias[] {
   const biases: BehavioralBias[] = [];
 
-  const lossReaction = answers['loss-reaction'] || 0;
-  const regret = answers['regret-aversion'] || 0;
-  const monitoring = answers['monitoring-frequency'] || 0;
-  const drawdown = answers['drawdown-tolerance'] || 0;
-  const pastBehavior = answers['past-behavior'] || 0;
-  const experience = answers['experience'] || 0;
-  const knowledge = answers['understanding-risk'] || 0;
-  const unrealizedLoss = answers['unrealized-loss-anxiety'] || 0;
-  const peerNoise = answers['peer-market-noise-reaction'] || 0;
-  const inflationUnderstanding = answers['inflation-purchasing-power'] || 0;
-  const familyAlignment = answers['family-alignment-consensus'] || 0;
-  const illiquidity = answers['illiquidity-premium'] || 0;
-  const liquidityBuffer = answers['liquidity-buffer'] || 0;
+  // Only questions in the 12-question set are used; unanswered questions are
+  // skipped so an incomplete profile never triggers a false bias flag.
+  const has = (id: string) => typeof answers[id] === 'number';
 
-  // Loss aversion: high regret of losses + low drawdown tolerance or high unrealized loss anxiety
-  if ((regret <= 3 && drawdown <= 4) || unrealizedLoss <= 3) {
+  // Loss aversion: would sell in a correction
+  if (has('loss-reaction') && (answers['loss-reaction'] ?? 0) <= 3) {
     biases.push({
-      bias: 'Loss Aversion & Paper Loss Myopia',
+      bias: 'Loss Aversion',
       level: 'high',
-      description: 'You feel paper drops much more acutely than equivalent gains, creating urge to capitulate near cycle bottoms.',
+      description: 'You feel paper drops much more acutely than equivalent gains, creating an urge to capitulate near cycle bottoms.',
       suggestion: 'Keep equity exposure at the lower end of your profile range and maintain substantial debt/gold ballast.',
     });
   }
 
-  // Overconfidence: high knowledge/experience + aggressive past behaviour but low monitoring
-  if (experience >= 8 && knowledge >= 8 && monitoring <= 3) {
-    biases.push({
-      bias: 'Overconfidence / Over-monitoring',
-      level: 'moderate',
-      description: 'High confidence combined with frequent checking can lead to reactive trading and portfolio churn.',
-      suggestion: 'Set a quarterly review calendar and pre-commit to systematic rebalancing rules before market swings.',
-    });
-  }
-
-  // Panic selling risk: past behavior shows selling + low tolerance
-  if (pastBehavior <= 3 && lossReaction <= 3) {
+  // Panic selling risk: sold in the past and would sell again
+  if (has('past-behavior') && has('loss-reaction') && (answers['past-behavior'] ?? 0) <= 3 && (answers['loss-reaction'] ?? 0) <= 3) {
     biases.push({
       bias: 'Panic-selling Tendency',
       level: 'high',
@@ -716,28 +495,18 @@ export function detectBehavioralBiases(answers: RiskAnswers): BehavioralBias[] {
     });
   }
 
-  // Noise sensitivity: checks very frequently
-  if (monitoring <= 3) {
+  // Overconfidence: high knowledge/experience without matching caution
+  if (has('experience') && has('understanding-risk') && (answers['experience'] ?? 0) >= 8 && (answers['understanding-risk'] ?? 0) >= 8) {
     biases.push({
-      bias: 'Noise Sensitivity',
-      level: 'high',
-      description: 'Frequent portfolio checks transform short-term daily volatility into acute emotional stress.',
-      suggestion: 'Limit portfolio checks to monthly or quarterly reviews; disable push price notifications.',
+      bias: 'Overconfidence',
+      level: 'moderate',
+      description: 'High confidence can lead to under-diversification or reactive trading during volatile phases.',
+      suggestion: 'Set a quarterly review calendar and pre-commit to systematic rebalancing rules before market swings.',
     });
   }
 
-  // Trend chasing & FOMO
-  if (peerNoise <= 3) {
-    biases.push({
-      bias: 'Trend-Chasing & FOMO Bias',
-      level: 'high',
-      description: 'Vulnerable to allocating capital into hyped or overextended market rallies out of regret aversion.',
-      suggestion: 'Maintain a strict rule: any new asset class requires a 7-day cooling-off period and advisor review.',
-    });
-  }
-
-  // Inflation illusion
-  if (inflationUnderstanding <= 3) {
+  // Inflation illusion: believes capital should never lose value
+  if (has('understanding-risk') && (answers['understanding-risk'] ?? 0) <= 3) {
     biases.push({
       bias: 'Inflation Illusion / Real Return Neglect',
       level: 'moderate',
@@ -746,33 +515,23 @@ export function detectBehavioralBiases(answers: RiskAnswers): BehavioralBias[] {
     });
   }
 
-  // Household / Family alignment friction
-  if (familyAlignment <= 3 && familyAlignment > 0) {
-    biases.push({
-      bias: 'Household Risk Discord',
-      level: 'high',
-      description: 'Divergent risk tolerances between household co-decision makers can lead to conflict during bear markets.',
-      suggestion: 'Conduct a joint IPS alignment session to agree on an asset allocation both partners can comfortably sleep with.',
-    });
-  }
-
-  // Illiquidity trap
-  if (illiquidity >= 8 && liquidityBuffer <= 3 && liquidityBuffer > 0) {
-    biases.push({
-      bias: 'Illiquidity Mismatch',
-      level: 'moderate',
-      description: 'Eagerness to harvest illiquidity premia while holding thin liquid reserves risks forced selling of liquid assets.',
-      suggestion: 'Build a full 12-month liquid reserve before allocating capital into locked or private market investments.',
-    });
-  }
-
-  // Action bias: wants to do something in declines but also fears them
-  if (lossReaction >= 8 && drawdown <= 5) {
+  // Action bias: wants to buy dips but cannot tolerate drawdowns
+  if (has('loss-reaction') && has('drawdown-tolerance') && (answers['loss-reaction'] ?? 0) >= 8 && (answers['drawdown-tolerance'] ?? 0) <= 5) {
     biases.push({
       bias: 'Action Bias vs Safety Preference',
       level: 'moderate',
       description: 'You want to buy dips but also have low drawdown tolerance — a conflict that can cause whipsawing.',
       suggestion: 'Use a rules-based STP and keep a small "opportunistic" sleeve separate from core assets.',
+    });
+  }
+
+  // Regret Aversion / FOMO bias: fears missing rallies more than corrections
+  if (has('regret-reaction') && (answers['regret-reaction'] ?? 0) >= 8) {
+    biases.push({
+      bias: 'FOMO / Upside Regret Bias',
+      level: 'moderate',
+      description: 'You experience higher anxiety from missing market rallies than from enduring periodic drawdowns, which can tempt buying at market peaks.',
+      suggestion: 'Maintain disciplined systematic SIPs and automatic annual rebalancing rather than chasing surging asset classes.',
     });
   }
 
@@ -794,10 +553,6 @@ export function generateActionChecklist(profile: RiskProfile, gap: RiskGapAnalys
 
   if (biases.some((b) => b.bias === 'Panic-selling Tendency')) {
     actions.push('Automate SIPs and write down a rebalancing policy now to avoid emotion-driven selling later.');
-  }
-
-  if (biases.some((b) => b.bias === 'Noise Sensitivity')) {
-    actions.push('Reduce portfolio-checking frequency to monthly or quarterly.');
   }
 
   if (profile.id === 'conservative' || profile.id === 'moderate') {

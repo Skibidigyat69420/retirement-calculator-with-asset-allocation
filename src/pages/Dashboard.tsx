@@ -3,7 +3,6 @@ import {
   Activity,
   PieChart,
   Target,
-  Calculator,
   ArrowRight,
   ShieldCheck,
   BarChart2,
@@ -42,7 +41,7 @@ const tools = [
   { path: '/risk', label: 'Risk Profile', desc: 'Assess risk tolerance', icon: ShieldCheck },
   { path: '/master-plan', label: 'Master Plan', desc: 'Configure cashflows & assets', icon: Activity },
   { path: '/goal', label: 'Goal Planner', desc: 'Prioritized goal funding', icon: Target },
-  { path: '/retirement', label: 'Retirement Check', desc: 'Longevity & shortfall solver', icon: Calculator },
+  { path: '/retirement', label: 'Retirement & SWP', desc: 'Corpus longevity & withdrawal plan', icon: PiggyBank },
   { path: '/allocation', label: 'Asset Allocation', desc: 'Rebalance portfolio & targets', icon: PieChart },
   { path: '/mvo', label: 'MVO Optimizer', desc: 'Mean-Variance Frontier', icon: BarChart2 },
   { path: '/reports', label: 'Executive Report', desc: 'Comprehensive plan & print', icon: BarChart3 },
@@ -55,7 +54,7 @@ const quickActions = [
   { path: '/risk', label: 'Risk Profile', icon: ShieldCheck },
   { path: '/master-plan', label: 'Update Plan', icon: Activity },
   { path: '/goal', label: 'Check Goals', icon: Target },
-  { path: '/retirement', label: 'Retirement', icon: PiggyBank },
+  { path: '/retirement', label: 'Retirement & SWP', icon: PiggyBank },
   { path: '/allocation', label: 'Rebalance', icon: PieChart },
   { path: '/mvo', label: 'Run MVO', icon: BarChart2 },
   { path: '/reports', label: 'Plan Report', icon: BarChart3 },
@@ -130,7 +129,7 @@ export const Dashboard = () => {
       subtext: `${inputs.goals.length} goals · ${wealthResult.goalsAtRisk.length === 0 ? 'All on track' : `${wealthResult.goalsAtRisk.length} at risk`}`,
     },
     {
-      label: '5. Retirement Solvency',
+      label: '5. Retirement & SWP',
       path: '/retirement',
       completed: wealthResult.sustainable,
       subtext: wealthResult.sustainable ? 'Sustainable > life exp' : `Depletes age ${wealthResult.depletionAge}`,
@@ -252,17 +251,17 @@ export const Dashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <MetricCard
           label="Net Worth"
-          value={formatCurrency(wealthResult.netWorth)}
-          subtext="Current assets"
+          value={formatCurrencyCompact(wealthResult.netWorth)}
+          subtext={`Total assets: ${formatCurrency(wealthResult.netWorth)}`}
           variant="navy"
-          icon={<Wallet size={20} />}
+          icon={<Wallet size={18} />}
         />
         <MetricCard
           label="Annual Income"
-          value={formatCurrency(wealthResult.annualIncome)}
-          subtext={`Net savings ${formatPercent(wealthResult.savingsRate)}`}
+          value={formatCurrencyCompact(wealthResult.annualIncome)}
+          subtext={`Savings ${formatPercent(wealthResult.savingsRate)}`}
           variant="gold"
-          icon={<TrendingUp size={20} />}
+          icon={<TrendingUp size={18} />}
         />
         <Link to="/risk" className="block">
           <MetricCard
