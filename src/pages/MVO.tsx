@@ -9,7 +9,6 @@ import {
   Check,
   Layers,
   ArrowRight,
-  Globe,
   Calendar,
   Database,
   Sliders,
@@ -44,7 +43,6 @@ import {
   findPortfolioByVolatility,
 } from '../lib/mvo';
 import { getMaxHistoryDateRange, alignMarketData } from '../lib/marketData';
-import { loadSession, buildDefaultCredentials } from '../lib/smartapi';
 import { useCalculator } from '../context/CalculatorContext';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { ASSET_COLORS } from '../lib/constants';
@@ -83,7 +81,7 @@ export const MVO = () => {
     wealthResult,
     logDecision,
   } = useCalculator();
-  const { data, rawBundle, loading, progress, error, fetchData, loadBackendData } = useMarketData();
+  const { data, rawBundle, loading, progress, error, loadBackendData } = useMarketData();
   const baseId = useId();
   const fieldId = (name: string) => `${baseId}-${name}`;
 
@@ -285,25 +283,6 @@ export const MVO = () => {
     await loadBackendData(selectedSymbols, from, to);
   };
 
-  const handleAngelFetch = async () => {
-    const session = loadSession();
-    if (!session) {
-      showToast('Please connect to Angel One SmartAPI first via the Angel Connect page.', 'warning');
-      return;
-    }
-    if (!isDateRangeValid) {
-      showToast('Invalid date range: "From" must be earlier than "To".', 'warning');
-      return;
-    }
-    const fetchable = selectedSymbols.filter((s) => !!INSTRUMENTS.find((i) => i.symbol === s)?.token);
-    if (fetchable.length === 0) {
-      showToast('None of the selected symbols can be fetched via SmartAPI. Use backend data.', 'warning');
-      return;
-    }
-    const creds = buildDefaultCredentials();
-    await fetchData(fetchable, from, to, creds, session);
-  };
-
   const openApplyModal = (portfolio: Portfolio, label: string) => {
     setTargetStrategy({ portfolio, label });
     setModalOpen(true);
@@ -466,8 +445,8 @@ export const MVO = () => {
       </div>
 
       {!data && !loading && (
-        <Alert variant="warning" icon={Globe}>
-          Backend market-data bundle not loaded. The optimizer is running in assumption mode. Connect Angel One SmartAPI for live instrument-level data.
+        <Alert variant="warning" icon={AlertCircle}>
+          Backend market-data bundle not loaded. The optimizer is running in assumption mode with built-in asset class benchmarks.
         </Alert>
       )}
 
@@ -622,7 +601,7 @@ export const MVO = () => {
           )}
 
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            <Button onClick={handleBackendFetch} disabled={loading || selectedSymbols.length < 2} className="flex-1 py-2.5">
+            <Button onClick={handleBackendFetch} disabled={loading || selectedSymbols.length < 2} className="w-full py-2.5">
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <RefreshCw size={16} className="animate-spin" /> Fetching ({progress.completed}/{progress.total})
@@ -632,9 +611,6 @@ export const MVO = () => {
                   <BarChart3 size={16} /> Recalibrate Empirical Data
                 </span>
               )}
-            </Button>
-            <Button onClick={handleAngelFetch} variant="outline" disabled={loading || selectedSymbols.length < 2} className="py-2.5">
-              <Globe size={16} className="mr-2" /> Live SmartAPI Fetch
             </Button>
           </div>
         </Card>

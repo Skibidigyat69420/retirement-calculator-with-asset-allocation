@@ -15,7 +15,6 @@ import {
   TrendingUp,
   Sparkles,
   DollarSign,
-  Database,
   PiggyBank,
   Compass,
   Layers,
@@ -60,7 +59,6 @@ const tools = [
   { path: '/reports', label: 'Executive Report', desc: 'Comprehensive plan & print', icon: BarChart3 },
   { path: '/ips', label: 'IPS Document', desc: 'Investment Policy Statement', icon: FileText },
   { path: '/calculators', label: 'Calculators', desc: 'SIP, SWP, lumpsum & retirement tools', icon: TrendingUp },
-  { path: '/angel-data', label: 'Angel Data', desc: 'Live broker snapshot logs', icon: Database },
 ];
 
 const quickActions = [

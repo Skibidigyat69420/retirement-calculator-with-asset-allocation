@@ -8,8 +8,6 @@ import {
   BarChart2,
   BarChart3,
   FileText,
-  ShieldCheck,
-  Database,
   PiggyBank,
   Printer,
   Compass,
@@ -34,8 +32,7 @@ export const navItems = [
   { path: '/ips', label: 'IPS', icon: FileText, section: '6. Deliver' },
   { path: '/dossier', label: 'Full Dossier (PDF)', icon: Printer, section: '6. Deliver' },
   { path: '/calculators', label: 'Calculators', icon: Calculator, section: 'Tools & Data' },
-  { path: '/angel-data', label: 'Angel Data', icon: Database, section: 'Tools & Data' },
 ];
 
-export const utilityItem = { path: '/angel-connect', label: 'Angel Connect', icon: ShieldCheck, section: 'Tools & Data' };
+export const utilityItem = { path: '/dossier', label: 'Full Dossier (PDF)', icon: Printer, section: '6. Deliver' };
 
