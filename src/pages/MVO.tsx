@@ -38,6 +38,7 @@ import { useCalculator } from '../context/CalculatorContext';
 import { formatPercent } from '../lib/formatters';
 import { ASSET_COLORS } from '../lib/constants';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
+import { MvoMonteCarloSimulator } from '../components/analytics/MvoMonteCarloSimulator';
 import type { AssetCategory } from '../types';
 
 const FRONTIER_MARGIN = { top: 10, right: 20, bottom: 10, left: 0 };
@@ -60,7 +61,7 @@ const categoryMap: Record<string, AssetCategory> = {
 };
 
 export const MVO = () => {
-  const { addAsset, removeAsset, inputs, riskProfile, setInputs, setManualTargets, showToast } = useCalculator();
+  const { addAsset, removeAsset, inputs, riskProfile, setInputs, setManualTargets, showToast, wealthResult } = useCalculator();
   const { data, rawBundle, loading, progress, error, fetchData, loadBackendData } = useMarketData();
   const baseId = useId();
   const fieldId = (name: string) => `${baseId}-${name}`;
@@ -71,6 +72,7 @@ export const MVO = () => {
   const [to, setTo] = useState(maxRange.to);
   const [maxEquity, setMaxEquity] = useState(riskProfile.maxEquity);
   const [appliedStrategy, setAppliedStrategy] = useState<string | null>(null);
+  const [selectedSimStrategy, setSelectedSimStrategy] = useState<'maxSharpe' | 'minVariance' | 'equalWeight' | 'riskParity'>('maxSharpe');
 
   // Load the backend bundle once on mount using maximum-history default symbols.
   useEffect(() => {
@@ -92,9 +94,12 @@ export const MVO = () => {
   const { result: mvoResult, error: mvoError, equityMask } = useMemo(() => {
     if (!alignedData || alignedData.symbols.length < 2) return { result: null, error: null, equityMask: [] as boolean[] };
 
-    const equityMask = alignedData.instruments.map(
-      (inst) => inst?.category === 'index' || inst?.category === 'equity',
-    );
+    const equityMask = alignedData.symbols.map((sym) => {
+      const inst = INSTRUMENTS.find((i) => i.symbol === sym);
+      if (inst) return inst.category === 'index' || inst.category === 'equity';
+      const raw = alignedData.instruments.find((i) => i.symbol === sym);
+      return raw?.category === 'index' || raw?.category === 'equity';
+    });
 
     // Input validation: reject non-finite or implausible statistics before optimizing.
     const invalidStat = alignedData.stats.find(
@@ -161,10 +166,12 @@ export const MVO = () => {
 
   const frontierData = useMemo(() => {
     if (!mvoResult) return [];
-    return mvoResult.frontier
-      .filter((p) => p.volatility * 100 <= riskProfile.targetVolatility * 1.2)
-      .map((p) => ({ risk: p.volatility * 100, return: p.expectedReturn * 100, sharpe: p.sharpe }));
-  }, [mvoResult, riskProfile.targetVolatility]);
+    return mvoResult.frontier.map((p) => ({
+      risk: p.volatility * 100,
+      return: p.expectedReturn * 100,
+      sharpe: p.sharpe,
+    }));
+  }, [mvoResult]);
 
   const highlightedPortfolios = useMemo(() => {
     if (!mvoResult) return [];
@@ -236,7 +243,15 @@ export const MVO = () => {
     portfolio.weights.forEach((w, idx) => {
       const symbol = alignedData.symbols[idx];
       const inst = INSTRUMENTS.find((i) => i.symbol === symbol) || alignedData.instruments[idx];
-      const category = (categoryMap[inst?.category || ''] || 'other') as AssetCategory;
+      let category: AssetCategory = 'other';
+      if (inst) {
+        if (inst.category === 'index' || inst.category === 'equity') category = 'equity';
+        else if (inst.category === 'gold') category = 'gold';
+        else if (inst.category === 'debt') {
+          category = symbol.includes('LIQUID') ? 'liquid' : 'debt';
+        } else if (inst.category === 'commodity') category = 'other';
+        else if (categoryMap[inst.category]) category = categoryMap[inst.category];
+      }
       targets[category] += total > 0 ? (w / total) * 100 : 0;
     });
 
@@ -273,9 +288,17 @@ export const MVO = () => {
     portfolio.weights.forEach((w, idx) => {
       const symbol = alignedData.symbols[idx];
       const instrument = INSTRUMENTS.find((i) => i.symbol === symbol) || alignedData.instruments[idx];
-      const category = (categoryMap[instrument?.category || ''] || 'other') as AssetCategory;
+      let category: AssetCategory = 'other';
+      if (instrument) {
+        if (instrument.category === 'index' || instrument.category === 'equity') category = 'equity';
+        else if (instrument.category === 'gold') category = 'gold';
+        else if (instrument.category === 'debt') {
+          category = symbol.includes('LIQUID') ? 'liquid' : 'debt';
+        } else if (instrument.category === 'commodity') category = 'other';
+        else if (categoryMap[instrument.category]) category = categoryMap[instrument.category];
+      }
       const returnPct = (alignedData.stats[idx]?.annualizedReturn || 0.08) * 100;
-      const value = Math.round(w * 10000000);
+      const value = Math.round(w * (wealthResult?.netWorth || 10000000));
       if (value <= 0) return;
       addAsset({
         name: `${instrument?.name || symbol} (${strategyName})`,
@@ -371,9 +394,35 @@ export const MVO = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
-              Select Assets ({data?.symbols.length || 0} available)
-            </label>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                Select Assets ({data?.symbols.length || 0} extracted from historical CSVs)
+              </label>
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="text-slate-600 text-[11px] mr-1">Presets:</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSymbols(DEFAULT_ALLOCATION_SYMBOLS)}
+                  className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-navy text-[11px] font-medium transition-colors"
+                >
+                  India Classic
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSymbols(['NIFTY50', 'SPY', 'QQQ', 'GOLDBEES', 'BND', 'LIQUIDBEES'].filter((s) => (data?.symbols || []).includes(s)))}
+                  className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-navy text-[11px] font-medium transition-colors"
+                >
+                  Global Multi-Asset
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSymbols(data?.symbols || DEFAULT_ALLOCATION_SYMBOLS)}
+                  className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-navy text-[11px] font-medium transition-colors"
+                >
+                  All Available
+                </button>
+              </div>
+            </div>
             <div className="flex flex-wrap gap-2">
               {(data?.symbols || DEFAULT_ALLOCATION_SYMBOLS).map((symbol) => {
                 const instrument = INSTRUMENTS.find((i) => i.symbol === symbol);
@@ -599,6 +648,56 @@ export const MVO = () => {
                 </Card>
               );
             })}
+          </div>
+
+          {/* Monte Carlo Simulation for Asset Allocation */}
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-navy">
+                  Stress Test Allocation via Monte Carlo:
+                </span>
+                <span className="text-xs text-slate-500">
+                  (Simulated paths using empirical returns & covariance from extracted CSVs)
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { key: 'maxSharpe', label: 'Max Sharpe' },
+                  { key: 'minVariance', label: 'Min Variance' },
+                  { key: 'equalWeight', label: 'Equal Weight' },
+                  { key: 'riskParity', label: 'Risk Parity' },
+                ].map((s) => (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => setSelectedSimStrategy(s.key as any)}
+                    className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
+                      selectedSimStrategy === s.key
+                        ? 'bg-navy text-white shadow-xs'
+                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <MvoMonteCarloSimulator
+              portfolio={mvoResult[selectedSimStrategy]}
+              portfolioName={
+                selectedSimStrategy === 'maxSharpe' ? 'Max Sharpe Portfolio' :
+                selectedSimStrategy === 'minVariance' ? 'Min Variance Portfolio' :
+                selectedSimStrategy === 'equalWeight' ? '1/N Equal Weight Portfolio' :
+                'Risk Parity Portfolio'
+              }
+              symbols={alignedData?.symbols || []}
+              initialWealth={wealthResult?.netWorth || 2500000}
+              initialSip={inputs.sip.amount || 50000}
+              onApplyToPlan={() => applyWeightsToAllocation(mvoResult[selectedSimStrategy], selectedSimStrategy)}
+              applied={appliedStrategy === `${selectedSimStrategy}-alloc`}
+            />
           </div>
         </>
       )}

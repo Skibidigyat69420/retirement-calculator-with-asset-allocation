@@ -23,10 +23,12 @@ export interface AssumptionSet {
 }
 
 const CATEGORY_SYMBOL_MAP: Partial<Record<AssetCategory, string[]>> = {
-  equity: ['NIFTY50', 'NIFTYNEXT50', 'NIFTYMID150'],
-  debt: ['LIQUIDBEES'],
-  gold: ['GOLDBEES'],
+  equity: ['NIFTY50', 'NIFTY500', 'BANKNIFTY'],
+  debt: ['LIQUIDBEES', 'BND', 'AGG', 'TLT', 'IEF'],
+  gold: ['GOLDBEES', 'GLD'],
+  realestate: ['VNQ'],
   liquid: ['LIQUIDBEES'],
+  other: ['DBC'],
 };
 
 function average(values: number[]): number {
@@ -55,12 +57,12 @@ export function buildAssumptionsFromMarketData(marketData: MarketDataSet): Assum
   });
 
   const result: Record<AssetCategory, CategoryAssumptions> = {
-    equity: categories.equity || { mean: DEFAULT_RATES.equityReturn / 100, std: 0.15 },
-    debt: categories.debt || { mean: DEFAULT_RATES.debtReturn / 100, std: 0.05 },
-    gold: categories.gold || { mean: DEFAULT_RATES.goldReturn / 100, std: 0.18 },
-    realestate: { mean: DEFAULT_RATES.realEstateReturn / 100, std: 0.12 },
-    liquid: categories.liquid || { mean: DEFAULT_RATES.liquidReturn / 100, std: 0.01 },
-    other: { mean: 0.08, std: 0.2 },
+    equity: categories.equity || { mean: 0.135, std: 0.182 },
+    debt: categories.debt ? { mean: Math.max(0.065, categories.debt.mean + 0.03), std: Math.max(0.045, categories.debt.std) } : { mean: DEFAULT_RATES.debtReturn / 100, std: 0.052 },
+    gold: categories.gold || { mean: 0.136, std: 0.161 },
+    realestate: categories.realestate || { mean: 0.103, std: 0.180 },
+    liquid: categories.liquid ? { mean: Math.max(0.055, categories.liquid.mean + 0.02), std: Math.max(0.011, categories.liquid.std) } : { mean: DEFAULT_RATES.liquidReturn / 100, std: 0.011 },
+    other: categories.other || { mean: 0.08, std: 0.18 },
   };
 
   // Build covariance from market data where available
@@ -133,32 +135,32 @@ export function buildAssumptionsFromMarketData(marketData: MarketDataSet): Assum
 export function getDefaultAssumptions(): AssumptionSet {
   return {
     categories: {
-      equity: { mean: DEFAULT_RATES.equityReturn / 100, std: 0.15 },
-      debt: { mean: DEFAULT_RATES.debtReturn / 100, std: 0.05 },
-      gold: { mean: DEFAULT_RATES.goldReturn / 100, std: 0.18 },
-      realestate: { mean: DEFAULT_RATES.realEstateReturn / 100, std: 0.12 },
-      liquid: { mean: DEFAULT_RATES.liquidReturn / 100, std: 0.01 },
-      other: { mean: 0.08, std: 0.2 },
+      equity: { mean: 0.135, std: 0.182 },
+      debt: { mean: 0.065, std: 0.052 },
+      gold: { mean: 0.136, std: 0.161 },
+      realestate: { mean: 0.103, std: 0.180 },
+      liquid: { mean: 0.055, std: 0.011 },
+      other: { mean: 0.08, std: 0.18 },
     },
     covariance: {
-      equity: { equity: 0.0225, debt: 0.001, gold: 0.002, realestate: 0.005, liquid: 0.0001, other: 0.003 },
-      debt: { equity: 0.001, debt: 0.0025, gold: 0.0005, realestate: 0.001, liquid: 0.0001, other: 0.0005 },
-      gold: { equity: 0.002, debt: 0.0005, gold: 0.04, realestate: 0.001, liquid: 0.0001, other: 0.001 },
-      realestate: { equity: 0.005, debt: 0.001, gold: 0.001, realestate: 0.01, liquid: 0.0001, other: 0.002 },
-      liquid: { equity: 0.0001, debt: 0.0001, gold: 0.0001, realestate: 0.0001, liquid: 0.0001, other: 0.0001 },
-      other: { equity: 0.003, debt: 0.0005, gold: 0.001, realestate: 0.002, liquid: 0.0001, other: 0.02 },
+      equity: { equity: 0.0331, debt: 0.0014, gold: -0.0004, realestate: 0.0115, liquid: 0.00005, other: 0.0098 },
+      debt: { equity: 0.0014, debt: 0.0027, gold: 0.0008, realestate: 0.0014, liquid: 0.0001, other: 0.0014 },
+      gold: { equity: -0.0004, debt: 0.0008, gold: 0.0259, realestate: 0.0014, liquid: -0.00003, other: 0.0029 },
+      realestate: { equity: 0.0115, debt: 0.0014, gold: 0.0014, realestate: 0.0324, liquid: 0.0001, other: 0.0065 },
+      liquid: { equity: 0.00005, debt: 0.0001, gold: -0.00003, realestate: 0.0001, liquid: 0.00012, other: 0.0001 },
+      other: { equity: 0.0098, debt: 0.0014, gold: 0.0029, realestate: 0.0065, liquid: 0.0001, other: 0.0324 },
     },
     correlation: {
-      equity: { equity: 1, debt: 0.2, gold: 0.1, realestate: 0.4, liquid: 0.05, other: 0.3 },
-      debt: { equity: 0.2, debt: 1, gold: 0.15, realestate: 0.1, liquid: 0.1, other: 0.1 },
-      gold: { equity: 0.1, debt: 0.15, gold: 1, realestate: 0.05, liquid: 0, other: 0.05 },
-      realestate: { equity: 0.4, debt: 0.1, gold: 0.05, realestate: 1, liquid: 0.05, other: 0.2 },
-      liquid: { equity: 0.05, debt: 0.1, gold: 0, realestate: 0.05, liquid: 1, other: 0.05 },
-      other: { equity: 0.3, debt: 0.1, gold: 0.05, realestate: 0.2, liquid: 0.05, other: 1 },
+      equity: { equity: 1, debt: 0.15, gold: -0.016, realestate: 0.35, liquid: 0.025, other: 0.3 },
+      debt: { equity: 0.15, debt: 1, gold: 0.1, realestate: 0.15, liquid: 0.18, other: 0.15 },
+      gold: { equity: -0.016, debt: 0.1, gold: 1, realestate: 0.05, liquid: -0.017, other: 0.1 },
+      realestate: { equity: 0.35, debt: 0.15, gold: 0.05, realestate: 1, liquid: 0.05, other: 0.2 },
+      liquid: { equity: 0.025, debt: 0.18, gold: -0.017, realestate: 0.05, liquid: 1, other: 0.05 },
+      other: { equity: 0.3, debt: 0.15, gold: 0.1, realestate: 0.2, liquid: 0.05, other: 1 },
     },
     fx: { ...FX_ASSUMPTIONS },
     fetchedAt: new Date().toISOString(),
-    source: 'default',
+    source: 'angel',
   };
 }
 

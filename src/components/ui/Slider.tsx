@@ -6,6 +6,7 @@ interface SliderProps {
   max?: number;
   step?: number;
   suffix?: string;
+  formatValue?: (val: number) => string;
 }
 
 export const Slider = ({
@@ -16,6 +17,7 @@ export const Slider = ({
   max = 100,
   step = 1,
   suffix = '%',
+  formatValue,
 }: SliderProps) => {
   const percentage = ((value - min) / (max - min)) * 100;
 
@@ -26,8 +28,7 @@ export const Slider = ({
           {label}
         </label>
         <span className="text-sm font-semibold text-navy bg-indigo-50 px-2 py-0.5 rounded-md">
-          {value}
-          {suffix}
+          {formatValue ? formatValue(value) : `${value}${suffix}`}
         </span>
       </div>
       <div className="relative h-1.5 rounded-full bg-slate-200 overflow-hidden">

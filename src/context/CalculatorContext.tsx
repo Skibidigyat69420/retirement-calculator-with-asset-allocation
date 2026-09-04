@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef, useDeferredValue } from 'react';
 import type { MasterPlanInputs, Goal, RiskProfile, RiskAnswers, AssetCategory, ClientProfile } from '../types';
 import { defaultClientInputs } from '../lib/scenarios';
-import { loadAssumptions, type AssumptionSet } from '../lib/assumptions';
+import { loadAssumptions, buildAssumptionsFromMarketData, type AssumptionSet } from '../lib/assumptions';
+import { fetchMarketDataFromBackend } from '../lib/marketData';
 import { runWealthEngine, type WealthEngineResult } from '../lib/wealthEngine';
 import { calculateRiskScore, getRiskProfile } from '../lib/riskQuestionnaire';
 import { loadClientData, saveClientData, resetClientData } from '../lib/persistenceUtils';
@@ -100,6 +101,21 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     saveTimerRef.current = setTimeout(() => saveClientData(inputs), 500);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [inputs]);
+
+  // Auto-calibrate assumptions using extracted historical market-data CSV bundle
+  useEffect(() => {
+    let active = true;
+    fetchMarketDataFromBackend()
+      .then((marketData) => {
+        if (!active || !marketData) return;
+        const empiricalAssumptions = buildAssumptionsFromMarketData(marketData);
+        setAssumptions(empiricalAssumptions);
+      })
+      .catch((err) => {
+        console.warn('Could not auto-calibrate assumptions from CSV bundle:', err);
+      });
+    return () => { active = false; };
+  }, []);
 
   const setManualTargets = useCallback((value: React.SetStateAction<Record<AssetCategory, number> | null>) => {
     setManualTargetsState((prev) => {

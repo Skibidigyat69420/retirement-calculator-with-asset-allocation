@@ -105,4 +105,12 @@ Implemented the full end-to-end framework from `sound_thesis_product_flow_ideas.
 - **Zero Lint or Build Errors**: `npm run lint && npm run build` compiles with 0 warnings/errors in 2.1s.
 - **Headless Browser Audit**: Verified 0 runtime or console errors across all 9 pages.
 
+### 13. Empirical Historical CSV Data Engine (MVO, Efficient Frontier & Monte Carlo) 📈
+- **4,209 Daily Sessions Packaged**: Aligned daily trading data from 2009 to 2026 across 21 domestic and global ETFs/indices (`NIFTY50`, `NIFTY500`, `BANKNIFTY`, `GOLDBEES`, `LIQUIDBEES`, `SPY`, `QQQ`, `BND`, `IEF`, `VWO`, `VEA`, `IJH`, `IJR`, `VNQ`, `DBC`, etc.) bundled into `public/data/market-data.json`.
+- **Data Cleanliness & Volatility Auditing**: Repaired historical 2-day decimal shift typos in raw price files, yielding true empirical annualized volatility (Gold: 16.05%, Nifty 50: 18.17%, Bank Nifty: 24.78%, Liquid: 1.07%).
+- **Empirical MVO & Full Efficient Frontier**: Mean-variance optimizer solves for Max Sharpe (12.2% return, 11.3% vol), Min Variance (3.7% return, 1.2% vol), Equal Weight, and Risk Parity without artificial volatility cutoffs.
+- **Monte Carlo Asset Allocation Simulator**: Interactive multi-path simulator directly on `/mvo` with 500 paths modeling median, P10 bear case, and P90 bull case outcomes using the exact empirical covariance matrix from the extracted CSVs.
+- **Auto-Calibrated Asset Allocation (`/allocation`)**: Auto-loads empirical parameters into the Master Plan wealth engine, showing realistic multi-decade terminal corpus distributions and categorized market-optimized targets.
+
+
 

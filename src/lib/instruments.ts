@@ -62,6 +62,13 @@ export const INSTRUMENTS: Instrument[] = [
   { symbol: 'TLT', name: 'iShares 20+ Year Treasury Bond ETF', exchange: 'NASDAQ', token: '', category: 'debt' },
   { symbol: 'GLD', name: 'SPDR Gold Shares', exchange: 'NYSE', token: '', category: 'gold' },
   { symbol: 'AGG', name: 'iShares Core U.S. Aggregate Bond ETF', exchange: 'NYSE', token: '', category: 'debt' },
+  { symbol: 'IEF', name: 'iShares 7-10 Year Treasury Bond ETF', exchange: 'NASDAQ', token: '', category: 'debt' },
+  { symbol: 'VWO', name: 'Vanguard FTSE Emerging Markets ETF', exchange: 'NYSE', token: '', category: 'equity' },
+  { symbol: 'VEA', name: 'Vanguard FTSE Developed Markets ETF', exchange: 'NYSE', token: '', category: 'equity' },
+  { symbol: 'IJH', name: 'iShares Core S&P Mid-Cap ETF', exchange: 'NYSE', token: '', category: 'equity' },
+  { symbol: 'IJR', name: 'iShares Core S&P Small-Cap ETF', exchange: 'NYSE', token: '', category: 'equity' },
+  { symbol: 'VNQ', name: 'Vanguard Real Estate ETF (REITs)', exchange: 'NYSE', token: '', category: 'equity' },
+  { symbol: 'DBC', name: 'Invesco DB Commodity Tracking', exchange: 'NYSE', token: '', category: 'commodity' },
 ];
 
 export const INSTRUMENT_MAP: Record<string, Instrument> = Object.fromEntries(
