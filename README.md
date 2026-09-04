@@ -233,7 +233,7 @@ Static routing and API proxying are handled by `public/_redirects` (for Cloudfla
 npm install
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r scripts/requirements.txt
 ```
 
 ### Environment Variables

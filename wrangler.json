@@ -3,6 +3,9 @@
   "name": "retirement-calculator-with-asset-allocation",
   "compatibility_date": "2024-09-23",
   "main": "src/worker.ts",
+  "build": {
+    "command": "npm run build"
+  },
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
