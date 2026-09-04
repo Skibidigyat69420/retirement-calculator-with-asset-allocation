@@ -15,6 +15,18 @@ export interface ConstraintSet {
   equityMask?: boolean[]; // true for equity-like assets; used with maxEquity
 }
 
+export interface AssetPoint {
+  symbol: string;
+  expectedReturn: number;
+  volatility: number;
+  sharpe: number;
+}
+
+export interface CMLPoint {
+  volatility: number;
+  expectedReturn: number;
+}
+
 export interface MVOResult {
   symbols: string[];
   means: number[];
@@ -25,6 +37,9 @@ export interface MVOResult {
   equalWeight: Portfolio;
   riskParity: Portfolio;
   constrainedMaxSharpe?: Portfolio; // max Sharpe within risk-profile constraints
+  cml: CMLPoint[];
+  assets: AssetPoint[];
+  riskFreeRate: number;
 }
 
 function dot(a: number[], b: number[]): number {
@@ -259,16 +274,27 @@ export function runMVO(
     samplePortfolios.push(evaluatePortfolio(w, means, covariance, riskFreeRate));
   }
 
+  const assets: AssetPoint[] = symbols.map((sym, i) => {
+    const vol = Math.sqrt(Math.max(0, covariance[i][i]));
+    const ret = means[i];
+    const sharpe = vol > 0 ? (ret - riskFreeRate) / vol : 0;
+    return { symbol: sym, expectedReturn: ret, volatility: vol, sharpe };
+  });
+
   if (samplePortfolios.length === 0) {
+    const fallbackPortfolio = evaluatePortfolio(equalWeights, means, covariance, riskFreeRate);
     return {
       symbols,
       means,
       covariance,
       frontier: [],
-      maxSharpe: evaluatePortfolio(equalWeights, means, covariance, riskFreeRate),
-      minVariance: evaluatePortfolio(equalWeights, means, covariance, riskFreeRate),
-      equalWeight: evaluatePortfolio(equalWeights, means, covariance, riskFreeRate),
+      maxSharpe: fallbackPortfolio,
+      minVariance: fallbackPortfolio,
+      equalWeight: fallbackPortfolio,
       riskParity: evaluatePortfolio(riskParityWeights, means, covariance, riskFreeRate),
+      cml: [],
+      assets,
+      riskFreeRate,
     };
   }
 
@@ -277,17 +303,65 @@ export function runMVO(
 
   const maxSharpe = refineMaxSharpe(rawMaxSharpe, means, covariance, constraintSet, riskFreeRate);
   const minVariance = refineMinVariance(rawMinVariance, means, covariance, constraintSet, riskFreeRate);
+  const frontier = buildFrontier(samplePortfolios, 80, constraintSet.maxVolatility);
+
+  // Capital Market Line (CML) tangent ray through Max Sharpe
+  const cml: CMLPoint[] = [];
+  if (maxSharpe.volatility > 0) {
+    const slope = (maxSharpe.expectedReturn - riskFreeRate) / maxSharpe.volatility;
+    const maxVol = Math.max(
+      ...frontier.map((p) => p.volatility),
+      ...assets.map((a) => a.volatility),
+      maxSharpe.volatility * 1.35,
+    );
+    const steps = 30;
+    for (let s = 0; s <= steps; s++) {
+      const vol = (maxVol / steps) * s;
+      const ret = riskFreeRate + slope * vol;
+      cml.push({ volatility: vol, expectedReturn: ret });
+    }
+  }
 
   return {
     symbols,
     means,
     covariance,
-    frontier: buildFrontier(samplePortfolios, 60, constraintSet.maxVolatility),
+    frontier,
     maxSharpe,
     minVariance,
     equalWeight: evaluatePortfolio(equalWeights, means, covariance, riskFreeRate),
     riskParity: evaluatePortfolio(riskParityWeights, means, covariance, riskFreeRate),
+    cml,
+    assets,
+    riskFreeRate,
   };
+}
+
+export function evaluateCustomWeights(
+  weights: number[],
+  means: number[],
+  covariance: number[][],
+  riskFreeRate = 0.06,
+): Portfolio {
+  const norm = normalizeWeights(weights);
+  return evaluatePortfolio(norm, means, covariance, riskFreeRate);
+}
+
+export function findPortfolioByVolatility(
+  frontier: Portfolio[],
+  targetVol: number,
+): Portfolio | null {
+  if (frontier.length === 0) return null;
+  let closest = frontier[0];
+  let minDiff = Math.abs(frontier[0].volatility - targetVol);
+  for (let i = 1; i < frontier.length; i++) {
+    const diff = Math.abs(frontier[i].volatility - targetVol);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = frontier[i];
+    }
+  }
+  return closest;
 }
 
 export function formatWeight(weight: number): string {

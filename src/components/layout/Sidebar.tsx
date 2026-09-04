@@ -55,13 +55,17 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
     '/master-plan': inputs.assets.length > 0 && inputs.annualIncome > 0,
     '/goal': inputs.goals.length > 0,
     '/retirement': wealthResult.sustainable,
+    '/reverse-planning': true,
     '/allocation': manualTargets !== null || isComplete(riskAnswers),
     '/mvo': true,
+    '/advanced-portfolio': true,
+    '/meeting-workflow': true,
+    '/decision-history': true,
     '/reports': wealthResult.netWorth > 0,
     '/ips': Boolean(inputs.client?.name),
   };
 
-  const workflowSteps = ['/risk', '/master-plan', '/goal', '/retirement', '/allocation', '/mvo', '/reports', '/ips', '/calculators'];
+  const workflowSteps = ['/risk', '/master-plan', '/goal', '/retirement', '/reverse-planning', '/allocation', '/mvo', '/advanced-portfolio', '/meeting-workflow', '/decision-history', '/reports', '/ips', '/calculators'];
   const completedCount = workflowSteps.filter((path) => completionMap[path]).length;
   const progressPercent = Math.round((completedCount / workflowSteps.length) * 100);
 

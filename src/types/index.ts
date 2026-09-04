@@ -370,3 +370,89 @@ export interface AllocationScenario {
   narrative: string;
   createdAt: number;
 }
+
+// Decision Audit Trail
+export interface DecisionLogEntry {
+  id: string;
+  timestamp: string; // ISO string
+  dateFormatted: string;
+  category: 'retirement' | 'allocation' | 'sip' | 'swp' | 'goal' | 'risk' | 'scenario' | 'mvo';
+  actionTitle: string;
+  summary: string;
+  previousValue?: string;
+  newValue: string;
+  rationale: string;
+  author: 'Adviser' | 'Client' | 'Automated System';
+  revertPatch?: Partial<MasterPlanInputs>;
+  reverted?: boolean;
+}
+
+// Client Meeting Workflow
+export type ClientMeetingStageId = 1 | 2 | 3 | 4;
+
+export interface ClientMeetingStageInfo {
+  id: ClientMeetingStageId;
+  name: string;
+  title: string;
+  description: string;
+  checklist: { id: string; label: string; completed: boolean; route: string }[];
+  keyOutputs: string[];
+}
+
+export interface ClientMeetingState {
+  currentStage: ClientMeetingStageId;
+  completedStages: ClientMeetingStageId[];
+  stageChecklists: Record<string, boolean>; // checklistId -> boolean
+  notes: Record<ClientMeetingStageId, string>;
+  lastUpdated: string;
+}
+
+// Return Assumption Architecture
+export type AssumptionMode = 'market' | 'conservative' | 'historical' | 'override';
+
+export interface ReturnAssumptionConfig {
+  mode: AssumptionMode;
+  overrides: Record<AssetCategory, number>; // decimal returns (e.g. 0.12)
+}
+
+// Reverse Planning Architecture
+export interface ReversePlanningParams {
+  targetCorpus: number;
+  targetAge: number;
+  currentAge?: number;
+  currentCorpus?: number;
+  expectedReturnPct?: number;
+  inflationPct?: number;
+  monthlySpendTarget?: number;
+}
+
+export interface ReversePathway {
+  id: 'path-a' | 'path-b' | 'path-c' | 'path-d';
+  name: string;
+  tagline: string;
+  summary: string;
+  primaryAction: string;
+  requiredSipMonthly: number;
+  projectedRetirementAge: number;
+  monthlyRetirementSpending: number;
+  targetCorpus: number;
+  successProbability: number;
+  tradeOffDescription: string;
+  patch: Partial<MasterPlanInputs>;
+}
+
+export interface ReversePlanningResult {
+  targetCorpus: number;
+  targetAge: number;
+  yearsToTarget: number;
+  currentWealth: number;
+  requiredMonthlySip: number;
+  requiredInitialCorpus: number;
+  maxSustainableMonthlySpend: number;
+  requiredAnnualReturnPct: number;
+  feasibleRetirementAge: number;
+  pathways: ReversePathway[];
+}
+
+// MVO Apply Destination
+export type MvoApplyDestination = 'portfolio' | 'sip' | 'stp' | 'investment' | 'targets';

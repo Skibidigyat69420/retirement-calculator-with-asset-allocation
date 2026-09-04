@@ -170,6 +170,63 @@ export function saveAssumptions(assumptions: AssumptionSet): void {
   localStorage.setItem(ASSUMPTIONS_STORAGE_KEY, JSON.stringify(assumptions));
 }
 
+export const CONSERVATIVE_PRESET: Record<AssetCategory, CategoryAssumptions> = {
+  equity: { mean: 0.10, std: 0.16 },
+  debt: { mean: 0.065, std: 0.045 },
+  gold: { mean: 0.08, std: 0.14 },
+  realestate: { mean: 0.085, std: 0.15 },
+  liquid: { mean: 0.05, std: 0.01 },
+  other: { mean: 0.06, std: 0.15 },
+};
+
+export const HISTORICAL_PRESET: Record<AssetCategory, CategoryAssumptions> = {
+  equity: { mean: 0.138, std: 0.185 },
+  debt: { mean: 0.072, std: 0.05 },
+  gold: { mean: 0.118, std: 0.165 },
+  realestate: { mean: 0.105, std: 0.175 },
+  liquid: { mean: 0.06, std: 0.012 },
+  other: { mean: 0.085, std: 0.17 },
+};
+
+export function getAssumptionsForMode(
+  mode: 'market' | 'conservative' | 'historical' | 'override',
+  base: AssumptionSet,
+  overrides?: Partial<Record<AssetCategory, number>>,
+): AssumptionSet {
+  const cloned = { ...base, categories: { ...base.categories } };
+
+  if (mode === 'conservative') {
+    cloned.categories = { ...CONSERVATIVE_PRESET };
+  } else if (mode === 'historical') {
+    cloned.categories = { ...HISTORICAL_PRESET };
+  } else if (mode === 'override' && overrides) {
+    (Object.keys(overrides) as AssetCategory[]).forEach((cat) => {
+      const customVal = overrides[cat];
+      if (customVal !== undefined && Number.isFinite(customVal)) {
+        cloned.categories[cat] = {
+          ...cloned.categories[cat],
+          mean: customVal / 100,
+        };
+      }
+    });
+  }
+
+  return cloned;
+}
+
+export function getAssumptionSourceLabel(mode: 'market' | 'conservative' | 'historical' | 'override'): string {
+  switch (mode) {
+    case 'market':
+      return '10-Year Empirical Daily Market Data';
+    case 'conservative':
+      return 'Conservative Advisory Benchmark (10% Eq / 6.5% Debt)';
+    case 'historical':
+      return 'Long-Term Historical Indian Capital Market Rates';
+    case 'override':
+      return 'Adviser Manual Override';
+  }
+}
+
 export function loadAssumptions(): AssumptionSet {
   try {
     const raw = localStorage.getItem(ASSUMPTIONS_STORAGE_KEY);

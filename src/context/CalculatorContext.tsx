@@ -1,7 +1,24 @@
 import { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef, useDeferredValue } from 'react';
-import type { MasterPlanInputs, Goal, RiskProfile, RiskAnswers, AssetCategory, ClientProfile } from '../types';
+import type {
+  MasterPlanInputs,
+  Goal,
+  RiskProfile,
+  RiskAnswers,
+  AssetCategory,
+  ClientProfile,
+  DecisionLogEntry,
+  ClientMeetingState,
+  ClientMeetingStageId,
+  AssumptionMode,
+} from '../types';
 import { defaultClientInputs } from '../lib/scenarios';
-import { loadAssumptions, buildAssumptionsFromMarketData, type AssumptionSet } from '../lib/assumptions';
+import {
+  loadAssumptions,
+  buildAssumptionsFromMarketData,
+  getAssumptionsForMode,
+  getAssumptionSourceLabel,
+  type AssumptionSet,
+} from '../lib/assumptions';
 import { fetchMarketDataFromBackend } from '../lib/marketData';
 import { runWealthEngine, type WealthEngineResult } from '../lib/wealthEngine';
 import { calculateRiskScore, getRiskProfile } from '../lib/riskQuestionnaire';
@@ -47,12 +64,99 @@ interface CalculatorContextType {
   saveCurrentPlan: (name?: string) => Promise<void>;
   loadSavedPlan: (id: string) => Promise<void>;
   deleteSavedPlan: (id: string) => Promise<void>;
+  decisionHistory: DecisionLogEntry[];
+  logDecision: (entry: Omit<DecisionLogEntry, 'id' | 'timestamp' | 'dateFormatted'>) => void;
+  revertDecision: (id: string) => void;
+  clearDecisionHistory: () => void;
+  meetingState: ClientMeetingState;
+  updateMeetingStage: (stageId: ClientMeetingStageId) => void;
+  toggleMeetingChecklist: (checklistId: string) => void;
+  saveMeetingNotes: (stageId: ClientMeetingStageId, notes: string) => void;
+  assumptionMode: AssumptionMode;
+  setAssumptionMode: (mode: AssumptionMode) => void;
+  customCategoryReturns: Partial<Record<AssetCategory, number>>;
+  setCustomCategoryReturns: React.Dispatch<React.SetStateAction<Partial<Record<AssetCategory, number>>>>;
+  activeAssumptionSourceLabel: string;
 }
 
 const CalculatorContext = createContext<CalculatorContextType | undefined>(undefined);
 
 const RISK_ANSWERS_KEY = 'soundthesis_risk_answers';
 const MANUAL_TARGETS_KEY = 'soundthesis_manual_targets';
+const DECISION_HISTORY_KEY = 'soundthesis_decision_history';
+const MEETING_STATE_KEY = 'soundthesis_meeting_state';
+const ASSUMPTION_MODE_KEY = 'soundthesis_assumption_mode';
+const CUSTOM_RETURNS_KEY = 'soundthesis_custom_returns';
+
+const DEFAULT_DECISIONS: DecisionLogEntry[] = [
+  {
+    id: 'dec-1',
+    timestamp: new Date(Date.now() - 86400000 * 3).toISOString(),
+    dateFormatted: new Date(Date.now() - 86400000 * 3).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+    category: 'retirement',
+    actionTitle: 'Retirement Age Calibrated',
+    summary: 'Adjusted target retirement age from 55 to 58.',
+    previousValue: 'Age 55',
+    newValue: 'Age 58',
+    rationale: 'Moving retirement age allows 3 additional years of compounding and lifts Monte Carlo probability from 82% to 94%.',
+    author: 'Adviser',
+    revertPatch: { retirementAge: 55 },
+  },
+  {
+    id: 'dec-2',
+    timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
+    dateFormatted: new Date(Date.now() - 86400000 * 2).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+    category: 'allocation',
+    actionTitle: 'Strategic Equity Target Trimmed',
+    summary: 'Rebalanced strategic equity allocation from 72% down to 65%.',
+    previousValue: '72% Equity',
+    newValue: '65% Equity',
+    rationale: 'Drawdown stress testing revealed -24% downside vulnerability. Trimming to 65% aligns with Balanced risk tolerance.',
+    author: 'Adviser',
+  },
+  {
+    id: 'dec-3',
+    timestamp: new Date(Date.now() - 86400000).toISOString(),
+    dateFormatted: new Date(Date.now() - 86400000).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+    category: 'sip',
+    actionTitle: 'Education Goal SIP Boost',
+    summary: 'Allocated ₹15,000/month incremental SIP toward Child Foreign Education.',
+    previousValue: '₹35,000/mo',
+    newValue: '₹50,000/mo',
+    rationale: 'Current goal funding probability was only 67%. Increasing monthly SIP ensures 90%+ probability of funding.',
+    author: 'Adviser',
+  },
+];
+
+const DEFAULT_MEETING_STATE: ClientMeetingState = {
+  currentStage: 1,
+  completedStages: [],
+  stageChecklists: {
+    'm1-profile': true,
+    'm1-assets': true,
+    'm1-cashflow': true,
+    'm1-goals': false,
+    'm1-risk': false,
+    'm2-networth': true,
+    'm2-readiness': false,
+    'm2-conflicts': false,
+    'm2-scenarios': false,
+    'm3-allocation': false,
+    'm3-waterfall': false,
+    'm3-rebalance': false,
+    'm3-transition': false,
+    'm4-dossier': false,
+    'm4-ips': false,
+    'm4-actions': false,
+  },
+  notes: {
+    1: 'Client expressed preference for early retirement at 58 with comfortable lifestyle and funding child higher education abroad.',
+    2: 'Identified ₹1.4Cr projected corpus gap under conservative return scenario. Equity allocation is currently overweight by 8%.',
+    3: 'Recommended shifting ₹25,000/mo into diversified debt, rebalancing equity back to 60%, and locking in emergency reserves.',
+    4: 'Delivered customized Investment Policy Statement and 24-month execution trade roadmap.',
+  },
+  lastUpdated: new Date().toISOString(),
+};
 
 function loadRiskAnswers(): RiskAnswers {
   try {
@@ -78,6 +182,48 @@ function loadManualTargets(): Record<AssetCategory, number> | null {
   return null;
 }
 
+function loadDecisionHistory(): DecisionLogEntry[] {
+  try {
+    const raw = localStorage.getItem(DECISION_HISTORY_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // ignore
+  }
+  return DEFAULT_DECISIONS;
+}
+
+function loadMeetingState(): ClientMeetingState {
+  try {
+    const raw = localStorage.getItem(MEETING_STATE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // ignore
+  }
+  return DEFAULT_MEETING_STATE;
+}
+
+function loadAssumptionMode(): AssumptionMode {
+  try {
+    const raw = localStorage.getItem(ASSUMPTION_MODE_KEY);
+    if (raw && ['market', 'conservative', 'historical', 'override'].includes(raw)) {
+      return raw as AssumptionMode;
+    }
+  } catch {
+    // ignore
+  }
+  return 'market';
+}
+
+function loadCustomCategoryReturns(): Partial<Record<AssetCategory, number>> {
+  try {
+    const raw = localStorage.getItem(CUSTOM_RETURNS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // ignore
+  }
+  return {};
+}
+
 /** Generate a unique ID that won't collide on rapid creation */
 function generateId(prefix: string): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -93,6 +239,95 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
   const [assumptions, setAssumptions] = useState<AssumptionSet>(() => loadAssumptions());
   const [riskAnswers, setRiskAnswersState] = useState<RiskAnswers>(() => loadRiskAnswers());
   const [manualTargets, setManualTargetsState] = useState<Record<AssetCategory, number> | null>(() => loadManualTargets());
+  const [decisionHistory, setDecisionHistory] = useState<DecisionLogEntry[]>(() => loadDecisionHistory());
+  const [meetingState, setMeetingState] = useState<ClientMeetingState>(() => loadMeetingState());
+  const [assumptionMode, setAssumptionModeState] = useState<AssumptionMode>(() => loadAssumptionMode());
+  const [customCategoryReturns, setCustomCategoryReturns] = useState<Partial<Record<AssetCategory, number>>>(() => loadCustomCategoryReturns());
+
+  const activeAssumptions = useMemo(() => {
+    return getAssumptionsForMode(assumptionMode, assumptions, customCategoryReturns);
+  }, [assumptionMode, assumptions, customCategoryReturns]);
+
+  const activeAssumptionSourceLabel = useMemo(() => {
+    return getAssumptionSourceLabel(assumptionMode);
+  }, [assumptionMode]);
+
+  const setAssumptionMode = useCallback((mode: AssumptionMode) => {
+    setAssumptionModeState(mode);
+    localStorage.setItem(ASSUMPTION_MODE_KEY, mode);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(CUSTOM_RETURNS_KEY, JSON.stringify(customCategoryReturns));
+  }, [customCategoryReturns]);
+
+  const logDecision = useCallback((entry: Omit<DecisionLogEntry, 'id' | 'timestamp' | 'dateFormatted'>) => {
+    const newEntry: DecisionLogEntry = {
+      ...entry,
+      id: generateId('dec'),
+      timestamp: new Date().toISOString(),
+      dateFormatted: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+    };
+    setDecisionHistory((prev) => {
+      const next = [newEntry, ...prev];
+      localStorage.setItem(DECISION_HISTORY_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const revertDecision = useCallback((id: string) => {
+    setDecisionHistory((prev) => {
+      const target = prev.find((d) => d.id === id);
+      if (!target || !target.revertPatch) return prev;
+      setInputs((curr) => ({ ...curr, ...target.revertPatch }));
+      const next = prev.map((d) => (d.id === id ? { ...d, reverted: true } : d));
+      localStorage.setItem(DECISION_HISTORY_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const clearDecisionHistory = useCallback(() => {
+    setDecisionHistory([]);
+    localStorage.removeItem(DECISION_HISTORY_KEY);
+  }, []);
+
+  const updateMeetingStage = useCallback((stageId: ClientMeetingStageId) => {
+    setMeetingState((prev) => {
+      const next = {
+        ...prev,
+        currentStage: stageId,
+        lastUpdated: new Date().toISOString(),
+      };
+      localStorage.setItem(MEETING_STATE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const toggleMeetingChecklist = useCallback((checklistId: string) => {
+    setMeetingState((prev) => {
+      const isDone = !prev.stageChecklists[checklistId];
+      const nextChecklists = { ...prev.stageChecklists, [checklistId]: isDone };
+      const next = {
+        ...prev,
+        stageChecklists: nextChecklists,
+        lastUpdated: new Date().toISOString(),
+      };
+      localStorage.setItem(MEETING_STATE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const saveMeetingNotes = useCallback((stageId: ClientMeetingStageId, notes: string) => {
+    setMeetingState((prev) => {
+      const next = {
+        ...prev,
+        notes: { ...prev.notes, [stageId]: notes },
+        lastUpdated: new Date().toISOString(),
+      };
+      localStorage.setItem(MEETING_STATE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
   // Debounced persistence for client inputs
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -344,7 +579,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     [riskProfile, riskScore],
   );
   const deferredInputs = useDeferredValue(inputs);
-  const deferredAssumptions = useDeferredValue(assumptions);
+  const deferredAssumptions = useDeferredValue(activeAssumptions);
   const deferredProfile = useDeferredValue(riskProfileBundle);
   const deferredManualTargets = useDeferredValue(manualTargets);
 
@@ -386,6 +621,19 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         saveCurrentPlan,
         loadSavedPlan,
         deleteSavedPlan,
+        decisionHistory,
+        logDecision,
+        revertDecision,
+        clearDecisionHistory,
+        meetingState,
+        updateMeetingStage,
+        toggleMeetingChecklist,
+        saveMeetingNotes,
+        assumptionMode,
+        setAssumptionMode,
+        customCategoryReturns,
+        setCustomCategoryReturns,
+        activeAssumptionSourceLabel,
       }}
     >
       {children}

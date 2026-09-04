@@ -12,6 +12,9 @@ import {
   Globe,
   Calendar,
   Database,
+  Sliders,
+  PieChart,
+  X,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -29,25 +32,33 @@ import { MetricCard } from '../components/ui/MetricCard';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Alert } from '../components/ui/Alert';
+import { Slider } from '../components/ui/Slider';
+import { CurrencyInput } from '../components/ui/CurrencyInput';
 import { useMarketData } from '../hooks/useMarketData';
 import { INSTRUMENTS, DEFAULT_ALLOCATION_SYMBOLS } from '../lib/instruments';
-import { runMVO, type Portfolio, type ConstraintSet } from '../lib/mvo';
+import {
+  runMVO,
+  type Portfolio,
+  type ConstraintSet,
+  evaluateCustomWeights,
+  findPortfolioByVolatility,
+} from '../lib/mvo';
 import { getMaxHistoryDateRange, alignMarketData } from '../lib/marketData';
 import { loadSession, buildDefaultCredentials } from '../lib/smartapi';
 import { useCalculator } from '../context/CalculatorContext';
-import { formatPercent } from '../lib/formatters';
+import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { ASSET_COLORS } from '../lib/constants';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import { MvoMonteCarloSimulator } from '../components/analytics/MvoMonteCarloSimulator';
-import type { AssetCategory } from '../types';
+import type { AssetCategory, MvoApplyDestination } from '../types';
 
-const FRONTIER_MARGIN = { top: 10, right: 20, bottom: 10, left: 0 };
+const FRONTIER_MARGIN = { top: 15, right: 25, bottom: 15, left: 5 };
 const FRONTIER_TOOLTIP_STYLE = {
-  borderRadius: '14px',
-  border: '1px solid rgba(226, 232, 240, 0.9)',
-  backgroundColor: 'rgba(255, 255, 255, 0.96)',
+  borderRadius: '12px',
+  border: '1px solid rgba(226, 232, 240, 0.95)',
+  backgroundColor: 'rgba(255, 255, 255, 0.98)',
   backdropFilter: 'blur(10px)',
-  boxShadow: '0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04)',
+  boxShadow: '0 10px 25px -3px rgba(15, 23, 42, 0.08)',
   padding: '10px 14px',
 };
 const FRONTIER_CURSOR = { strokeDasharray: '3 3' };
@@ -61,7 +72,17 @@ const categoryMap: Record<string, AssetCategory> = {
 };
 
 export const MVO = () => {
-  const { addAsset, removeAsset, inputs, riskProfile, setInputs, setManualTargets, showToast, wealthResult } = useCalculator();
+  const {
+    addAsset,
+    removeAsset,
+    inputs,
+    riskProfile,
+    setInputs,
+    setManualTargets,
+    showToast,
+    wealthResult,
+    logDecision,
+  } = useCalculator();
   const { data, rawBundle, loading, progress, error, fetchData, loadBackendData } = useMarketData();
   const baseId = useId();
   const fieldId = (name: string) => `${baseId}-${name}`;
@@ -74,12 +95,21 @@ export const MVO = () => {
   const [appliedStrategy, setAppliedStrategy] = useState<string | null>(null);
   const [selectedSimStrategy, setSelectedSimStrategy] = useState<'maxSharpe' | 'minVariance' | 'equalWeight' | 'riskParity'>('maxSharpe');
 
-  // Load the backend bundle once on mount using maximum-history default symbols.
+  // Frontier interactive scrub slider
+  const [scrubVolatility, setScrubVolatility] = useState<number | null>(null);
+
+  // Apply MVO Strategy Modal State
+  const [modalOpen, setModalOpen] = useState(false);
+  const [targetStrategy, setTargetStrategy] = useState<{ portfolio: Portfolio; label: string } | null>(null);
+  const [applyDestination, setApplyDestination] = useState<MvoApplyDestination>('targets');
+  const [lumpsumAmount, setLumpsumAmount] = useState<number>(5000000);
+
+  // Load the backend bundle once on mount
   useEffect(() => {
     loadBackendData(DEFAULT_ALLOCATION_SYMBOLS, from, to);
   }, [loadBackendData, from, to]);
 
-  // Re-align data when the user changes the selected symbol set.
+  // Re-align data when selected symbol set changes
   const alignedData = useMemo(() => {
     if (!rawBundle) return data;
     if (selectedSymbols.length < 2) return data;
@@ -90,9 +120,9 @@ export const MVO = () => {
     }
   }, [data, rawBundle, selectedSymbols]);
 
-  // Compute MVO results only when inputs actually change.
-  const { result: mvoResult, error: mvoError, equityMask } = useMemo(() => {
-    if (!alignedData || alignedData.symbols.length < 2) return { result: null, error: null, equityMask: [] as boolean[] };
+  // Compute MVO results
+  const { result: mvoResult, error: mvoError } = useMemo(() => {
+    if (!alignedData || alignedData.symbols.length < 2) return { result: null, error: null };
 
     const equityMask = alignedData.symbols.map((sym) => {
       const inst = INSTRUMENTS.find((i) => i.symbol === sym);
@@ -101,7 +131,6 @@ export const MVO = () => {
       return raw?.category === 'index' || raw?.category === 'equity';
     });
 
-    // Input validation: reject non-finite or implausible statistics before optimizing.
     const invalidStat = alignedData.stats.find(
       (s) =>
         !Number.isFinite(s.annualizedReturn) ||
@@ -114,23 +143,9 @@ export const MVO = () => {
     if (invalidStat) {
       return {
         result: null,
-        error: `Invalid statistics for ${invalidStat.symbol}: volatility is missing/above 100% or the annualized return is implausible (beyond ±100%). Re-fetch the data or remove this asset from the selection.`,
+        error: `Invalid statistics for ${invalidStat.symbol}: volatility is missing/above 100% or annualized return is implausible.`,
         equityMask,
       };
-    }
-
-    // Guard against a singular covariance matrix: (near-)perfectly correlated assets.
-    for (let i = 0; i < alignedData.symbols.length; i++) {
-      for (let j = i + 1; j < alignedData.symbols.length; j++) {
-        const c = alignedData.correlation[i]?.[j];
-        if (Number.isFinite(c) && Math.abs(c) >= 0.9999) {
-          return {
-            result: null,
-            error: `Singular covariance matrix: ${alignedData.symbols[i]} and ${alignedData.symbols[j]} are ~100% correlated. Remove one of them or pick less-correlated assets.`,
-            equityMask,
-          };
-        }
-      }
     }
 
     const means = alignedData.stats.map((s) => s.annualizedReturn);
@@ -143,14 +158,14 @@ export const MVO = () => {
     };
     try {
       const result = runMVO(alignedData.symbols, means, alignedData.covariance, {
-        samples: 30000,
+        samples: 35000,
         riskFreeRate: riskProfile.riskFreeRate / 100,
         constraints,
       });
       if (result.frontier.length === 0) {
         return {
           result: null,
-          error: `No feasible solution: no portfolio satisfies the ${formatPercent(riskProfile.targetVolatility)} volatility cap with this asset mix. Raise the volatility target in your risk profile or add lower-risk assets.`,
+          error: `No feasible solution: no portfolio satisfies the ${formatPercent(riskProfile.targetVolatility)} volatility cap with this asset mix.`,
           equityMask,
         };
       }
@@ -158,30 +173,93 @@ export const MVO = () => {
     } catch (err: any) {
       return {
         result: null,
-        error: `Optimization failed: ${err?.message || 'singular matrix or no feasible solution'}. Try selecting a different mix of less-correlated assets.`,
+        error: `Optimization failed: ${err?.message || 'singular matrix or no feasible solution'}. Try selecting a different mix.`,
         equityMask,
       };
     }
   }, [alignedData, maxEquity, riskProfile.targetVolatility, riskProfile.riskFreeRate]);
 
+  // Frontier chart data points
   const frontierData = useMemo(() => {
     if (!mvoResult) return [];
     return mvoResult.frontier.map((p) => ({
-      risk: p.volatility * 100,
-      return: p.expectedReturn * 100,
+      risk: Math.round(p.volatility * 1000) / 10,
+      return: Math.round(p.expectedReturn * 1000) / 10,
       sharpe: p.sharpe,
+      weights: p.weights,
     }));
   }, [mvoResult]);
+
+  // Current Portfolio Point in same coordinates
+  const currentPortfolioPoint = useMemo(() => {
+    if (!alignedData || alignedData.symbols.length < 2) return null;
+
+    const weights = alignedData.symbols.map((sym) => {
+      const inst = INSTRUMENTS.find((i) => i.symbol === sym);
+      const cat =
+        inst?.category === 'index' || inst?.category === 'equity'
+          ? 'equity'
+          : inst?.category === 'gold'
+          ? 'gold'
+          : sym.includes('LIQUID')
+          ? 'liquid'
+          : 'debt';
+
+      const catFraction = wealthResult.currentAllocation[cat] || 0;
+      const countInCat = alignedData.symbols.filter((s) => {
+        const i2 = INSTRUMENTS.find((x) => x.symbol === s);
+        const c2 =
+          i2?.category === 'index' || i2?.category === 'equity'
+            ? 'equity'
+            : i2?.category === 'gold'
+            ? 'gold'
+            : s.includes('LIQUID')
+            ? 'liquid'
+            : 'debt';
+        return c2 === cat;
+      }).length;
+
+      return countInCat > 0 ? catFraction / countInCat : 0;
+    });
+
+    const sumW = weights.reduce((a, b) => a + b, 0);
+    if (sumW <= 0) return null;
+    const normW = weights.map((w) => w / sumW);
+    const evaluated = evaluateCustomWeights(
+      normW,
+      alignedData.stats.map((s) => s.annualizedReturn),
+      alignedData.covariance,
+      riskProfile.riskFreeRate / 100,
+    );
+
+    return {
+      portfolio: evaluated,
+      risk: Math.round(evaluated.volatility * 1000) / 10,
+      return: Math.round(evaluated.expectedReturn * 1000) / 10,
+      sharpe: evaluated.sharpe,
+    };
+  }, [alignedData, wealthResult.currentAllocation, riskProfile.riskFreeRate]);
+
+  // Active scrubbed portfolio along frontier
+  const activeScrubPortfolio = useMemo(() => {
+    if (!mvoResult || mvoResult.frontier.length === 0) return null;
+    const targetVol = (scrubVolatility ?? mvoResult.maxSharpe.volatility * 100) / 100;
+    return findPortfolioByVolatility(mvoResult.frontier, targetVol);
+  }, [mvoResult, scrubVolatility]);
 
   const highlightedPortfolios = useMemo(() => {
     if (!mvoResult) return [];
     const strategies = [
-      { key: 'maxSharpe', label: 'Max Sharpe', portfolio: mvoResult.maxSharpe, color: '#B68B40' },
-      { key: 'minVariance', label: 'Min Variance', portfolio: mvoResult.minVariance, color: '#1A233A' },
-      { key: 'equalWeight', label: 'Equal Weight', portfolio: mvoResult.equalWeight, color: '#2E7D32' },
-      { key: 'riskParity', label: 'Risk Parity', portfolio: mvoResult.riskParity, color: '#8D6E63' },
+      { key: 'maxSharpe', label: 'Max Sharpe (Tangency)', portfolio: mvoResult.maxSharpe, color: '#B68B40' },
+      { key: 'minVariance', label: 'Min Variance', portfolio: mvoResult.minVariance, color: '#0F172A' },
+      { key: 'equalWeight', label: '1/N Equal Weight', portfolio: mvoResult.equalWeight, color: '#16A34A' },
+      { key: 'riskParity', label: 'Risk Parity', portfolio: mvoResult.riskParity, color: '#9333EA' },
     ];
-    return strategies.map((s) => ({ ...s, risk: s.portfolio.volatility * 100, return: s.portfolio.expectedReturn * 100 }));
+    return strategies.map((s) => ({
+      ...s,
+      risk: Math.round(s.portfolio.volatility * 1000) / 10,
+      return: Math.round(s.portfolio.expectedReturn * 1000) / 10,
+    }));
   }, [mvoResult]);
 
   const correlationMatrix = useMemo(() => {
@@ -217,27 +295,26 @@ export const MVO = () => {
       showToast('Invalid date range: "From" must be earlier than "To".', 'warning');
       return;
     }
-    // US/international instruments have no SmartAPI token and cannot be fetched.
     const fetchable = selectedSymbols.filter((s) => !!INSTRUMENTS.find((i) => i.symbol === s)?.token);
-    const skipped = selectedSymbols.filter((s) => !fetchable.includes(s));
     if (fetchable.length === 0) {
-      showToast(`None of the selected symbols can be fetched via SmartAPI (no token): ${skipped.join(', ')}. Use backend data.`, 'warning');
+      showToast('None of the selected symbols can be fetched via SmartAPI. Use backend data.', 'warning');
       return;
-    }
-    if (skipped.length > 0) {
-      showToast(`Skipping ${skipped.join(', ')} — no SmartAPI token (e.g. US ETFs).`, 'info');
     }
     const creds = buildDefaultCredentials();
     await fetchData(fetchable, from, to, creds, session);
   };
 
-  const applyWeightsToAllocation = (portfolio: Portfolio, strategyName: string) => {
-    if (!alignedData) return;
+  const openApplyModal = (portfolio: Portfolio, label: string) => {
+    setTargetStrategy({ portfolio, label });
+    setModalOpen(true);
+  };
+
+  const executeStrategyApplication = () => {
+    if (!targetStrategy || !alignedData) return;
+    const { portfolio, label } = targetStrategy;
 
     const targets = { ...riskProfile.targets };
     const total = portfolio.weights.reduce((a, b) => a + b, 0);
-
-    // Reset category weights.
     (Object.keys(targets) as AssetCategory[]).forEach((cat) => (targets[cat] = 0));
 
     portfolio.weights.forEach((w, idx) => {
@@ -255,62 +332,111 @@ export const MVO = () => {
       targets[category] += total > 0 ? (w / total) * 100 : 0;
     });
 
-    // Normalize to 100%.
     const targetTotal = Object.values(targets).reduce((a, b) => a + b, 0);
     if (targetTotal > 0) {
       (Object.keys(targets) as AssetCategory[]).forEach((cat) => (targets[cat] = (targets[cat] / targetTotal) * 100));
     }
 
     const equityPlusDebt = targets.equity + targets.debt;
-    const equitySplit = equityPlusDebt > 0 ? Math.round((targets.equity / equityPlusDebt) * 100) : 0;
-    setManualTargets(targets);
-    setInputs((prev) => ({
-      ...prev,
-      sip: { ...prev.sip, equitySplit, debtSplit: 100 - equitySplit },
-      stp: { ...prev.stp, equitySplit, debtSplit: 100 - equitySplit },
-    }));
+    const equitySplit = equityPlusDebt > 0 ? Math.round((targets.equity / equityPlusDebt) * 100) : 50;
 
-    setAppliedStrategy(`${strategyName}-alloc`);
-    showToast(`Applied ${strategyName} weights (${equitySplit}% Eq / ${Math.round(targets.debt)}% Debt / ${Math.round(targets.gold)}% Gold) to Strategic Targets & SIP/STP!`, 'success');
-    setTimeout(() => setAppliedStrategy(null), 3000);
-  };
+    if (applyDestination === 'targets') {
+      setManualTargets(targets);
+      logDecision({
+        category: 'allocation',
+        actionTitle: `Applied ${label} to Strategic Targets`,
+        summary: `Strategic targets updated to ${Math.round(targets.equity)}% Eq / ${Math.round(targets.debt)}% Debt / ${Math.round(targets.gold)}% Gold.`,
+        newValue: `${Math.round(targets.equity)}% Eq / ${Math.round(targets.debt)}% Debt`,
+        rationale: `Applied mathematically optimal weights from ${label} portfolio optimization.`,
+        author: 'Adviser',
+      });
+      showToast(`Applied ${label} weights to Strategic Targets!`, 'success');
+    } else if (applyDestination === 'sip') {
+      setInputs((prev) => ({
+        ...prev,
+        sip: { ...prev.sip, equitySplit, debtSplit: 100 - equitySplit },
+      }));
+      logDecision({
+        category: 'sip',
+        actionTitle: `Applied ${label} to Monthly SIP Split`,
+        summary: `Monthly SIP split updated to ${equitySplit}% Equity and ${100 - equitySplit}% Debt.`,
+        newValue: `${equitySplit}% Eq / ${100 - equitySplit}% Debt`,
+        rationale: `Aligned incremental cash injections with ${label} optimal asset weights.`,
+        author: 'Adviser',
+      });
+      showToast(`Updated Monthly SIP split to ${equitySplit}% Eq / ${100 - equitySplit}% Debt!`, 'success');
+    } else if (applyDestination === 'stp') {
+      setInputs((prev) => ({
+        ...prev,
+        stp: { ...prev.stp, equitySplit, debtSplit: 100 - equitySplit },
+      }));
+      showToast(`Updated STP deployment split to ${equitySplit}% Eq / ${100 - equitySplit}% Debt!`, 'success');
+    } else if (applyDestination === 'portfolio') {
+      const existingMvoIds = inputs.assets.filter((a) => a.source === 'mvo').map((a) => a.id);
+      existingMvoIds.forEach((id) => removeAsset(id));
 
-  const applyWeightsToAssets = (portfolio: Portfolio, strategyName: string) => {
-    if (!alignedData) {
-      showToast('No market data loaded. Load backend or SmartAPI data first.', 'warning');
-      return;
+      portfolio.weights.forEach((w, idx) => {
+        const symbol = alignedData.symbols[idx];
+        const instrument = INSTRUMENTS.find((i) => i.symbol === symbol) || alignedData.instruments[idx];
+        let category: AssetCategory = 'other';
+        if (instrument) {
+          if (instrument.category === 'index' || instrument.category === 'equity') category = 'equity';
+          else if (instrument.category === 'gold') category = 'gold';
+          else if (instrument.category === 'debt') {
+            category = symbol.includes('LIQUID') ? 'liquid' : 'debt';
+          } else if (categoryMap[instrument.category]) category = categoryMap[instrument.category];
+        }
+        const returnPct = (alignedData.stats[idx]?.annualizedReturn || 0.08) * 100;
+        const value = Math.round(w * (wealthResult?.netWorth || 10000000));
+        if (value <= 0) return;
+        addAsset({
+          name: `${instrument?.name || symbol} (${label})`,
+          value,
+          returnRate: Math.max(0, Math.min(30, returnPct)),
+          category,
+          source: 'mvo',
+        });
+      });
+      showToast(`Replaced portfolio holdings with ${label} proxy allocation.`, 'success');
+    } else if (applyDestination === 'investment') {
+      // New Lumpsum Investment with exact calculated amounts
+      portfolio.weights.forEach((w, idx) => {
+        const symbol = alignedData.symbols[idx];
+        const instrument = INSTRUMENTS.find((i) => i.symbol === symbol) || alignedData.instruments[idx];
+        let category: AssetCategory = 'other';
+        if (instrument) {
+          if (instrument.category === 'index' || instrument.category === 'equity') category = 'equity';
+          else if (instrument.category === 'gold') category = 'gold';
+          else if (instrument.category === 'debt') {
+            category = symbol.includes('LIQUID') ? 'liquid' : 'debt';
+          } else if (categoryMap[instrument.category]) category = categoryMap[instrument.category];
+        }
+        const returnPct = (alignedData.stats[idx]?.annualizedReturn || 0.08) * 100;
+        const allocatedValue = Math.round(w * lumpsumAmount);
+        if (allocatedValue <= 0) return;
+
+        addAsset({
+          name: `${instrument?.name || symbol} (${label} Investment)`,
+          value: allocatedValue,
+          returnRate: Math.max(0, Math.min(30, returnPct)),
+          category,
+          source: 'mvo-lumpsum',
+        });
+      });
+
+      logDecision({
+        category: 'allocation',
+        actionTitle: `Deployed ${formatCurrencyCompact(lumpsumAmount)} via ${label}`,
+        summary: `Created ${portfolio.weights.filter((w) => w > 0.01).length} holdings across ${alignedData.symbols.length} instruments according to ${label} weights.`,
+        newValue: formatCurrencyCompact(lumpsumAmount),
+        rationale: `Lumpsum capital deployment executed using quantitative mean-variance weights.`,
+        author: 'Adviser',
+      });
+      showToast(`Successfully deployed ${formatCurrencyCompact(lumpsumAmount)} into household assets!`, 'success');
     }
 
-    // Replace any previously imported MVO assets for this strategy family.
-    const existingMvoIds = inputs.assets.filter((a) => a.source === 'mvo').map((a) => a.id);
-    existingMvoIds.forEach((id) => removeAsset(id));
-
-    portfolio.weights.forEach((w, idx) => {
-      const symbol = alignedData.symbols[idx];
-      const instrument = INSTRUMENTS.find((i) => i.symbol === symbol) || alignedData.instruments[idx];
-      let category: AssetCategory = 'other';
-      if (instrument) {
-        if (instrument.category === 'index' || instrument.category === 'equity') category = 'equity';
-        else if (instrument.category === 'gold') category = 'gold';
-        else if (instrument.category === 'debt') {
-          category = symbol.includes('LIQUID') ? 'liquid' : 'debt';
-        } else if (instrument.category === 'commodity') category = 'other';
-        else if (categoryMap[instrument.category]) category = categoryMap[instrument.category];
-      }
-      const returnPct = (alignedData.stats[idx]?.annualizedReturn || 0.08) * 100;
-      const value = Math.round(w * (wealthResult?.netWorth || 10000000));
-      if (value <= 0) return;
-      addAsset({
-        name: `${instrument?.name || symbol} (${strategyName})`,
-        value,
-        returnRate: Math.max(0, Math.min(30, returnPct)),
-        category,
-        source: 'mvo',
-      });
-    });
-    setAppliedStrategy(strategyName);
-    showToast(`Added ${strategyName} portfolio assets to your plan holdings.`, 'success');
-    setTimeout(() => setAppliedStrategy(null), 3000);
+    setAppliedStrategy(label);
+    setModalOpen(false);
   };
 
   const toggleSymbol = (symbol: string) => {
@@ -321,11 +447,23 @@ export const MVO = () => {
 
   return (
     <div className="space-y-8">
-      <SectionTitle
-        title="Asset Allocation Optimizer"
-        subtitle="Mean-variance optimization using the longest available daily history. The efficient frontier is built from live or bundled market data and filtered by your risk profile."
-        badge="Quant Lab"
-      />
+      {/* Top Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <SectionTitle
+          title="Mean-Variance Portfolio Optimizer"
+          subtitle="Empirical Markowitz optimization built from daily market return histories. Evaluates Capital Market Line (CML) tangency, risk parity, and asset allocation stress testing."
+          badge="Quant Lab"
+        />
+
+        <div className="flex items-center gap-2 self-start sm:self-center">
+          <Badge variant="gold" className="text-xs px-3 py-1 font-mono">
+            Rf Rate: {formatPercent(riskProfile.riskFreeRate)}
+          </Badge>
+          <Badge variant="navy" className="text-xs px-3 py-1 font-mono">
+            {alignedData?.symbols.length || 0} Assets
+          </Badge>
+        </div>
+      </div>
 
       {!data && !loading && (
         <Alert variant="warning" icon={Globe}>
@@ -333,30 +471,31 @@ export const MVO = () => {
         </Alert>
       )}
 
+      {/* Topline Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
-          label="Risk Profile"
+          label="Risk Profile Anchor"
           value={riskProfile.label}
           subtext={`Max Eq ${formatPercent(riskProfile.maxEquity)} · Vol ${formatPercent(riskProfile.targetVolatility)}`}
           icon={<ShieldCheck size={16} />}
         />
         <MetricCard
-          label="Risk-Free Rate"
-          value={formatPercent(riskProfile.riskFreeRate)}
-          subtext="Used for Sharpe calculation"
+          label="Tangency Sharpe Ratio"
+          value={mvoResult ? mvoResult.maxSharpe.sharpe.toFixed(2) : '—'}
+          subtext={`Optimal excess return per unit risk`}
           icon={<TrendingUp size={16} />}
-        />
-        <MetricCard
-          label="Historical Horizon"
-          value={historyDays > 0 ? `${historyDays} Days` : '—'}
-          subtext={alignedData ? `${alignedData.dateRange.from} → ${alignedData.dateRange.to}` : 'Default universe history'}
-          icon={<Calendar size={16} />}
           variant="gold"
         />
         <MetricCard
-          label="Data Engine"
+          label="Historical Daily Horizon"
+          value={historyDays > 0 ? `${historyDays} Days` : '—'}
+          subtext={alignedData ? `${alignedData.dateRange.from} → ${alignedData.dateRange.to}` : 'Default universe'}
+          icon={<Calendar size={16} />}
+        />
+        <MetricCard
+          label="Market Data Engine"
           value={sourceLabel}
-          subtext={`${data?.symbols.length || 0} instruments available`}
+          subtext={`${data?.symbols.length || 0} extracted instruments`}
           icon={<Database size={16} />}
         />
       </div>
@@ -367,62 +506,80 @@ export const MVO = () => {
         </Alert>
       )}
 
-      {mvoResult && mvoResult.maxSharpe.weights.reduce((sum, w, i) => sum + (equityMask[i] ? w : 0), 0) * 100 > maxEquity && (
-        <Alert variant="warning" icon={AlertCircle}>
-          The unconstrained max-Sharpe portfolio exceeds your equity limit. The constrained frontier below respects the max-equity slider.
-        </Alert>
-      )}
-
+      {/* Controls & Universe Card */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 space-y-5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-serif text-navy flex items-center gap-2">
-              <Layers size={18} className="text-slate-500" /> Universe & Date Range
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 className="text-base font-serif font-bold text-slate-900 flex items-center gap-2">
+              <Layers size={18} className="text-slate-500" /> Universe & Constraints
             </h3>
-            <Badge variant="outline">{selectedSymbols.length} assets selected</Badge>
+            <Badge variant="outline">{selectedSymbols.length} Assets Selected</Badge>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor={fieldId('from')} className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1 flex items-center gap-1"><Calendar size={12} /> From</label>
-              <input id={fieldId('from')} type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-navy" />
+              <label htmlFor={fieldId('from')} className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1 flex items-center gap-1">
+                <Calendar size={12} /> From
+              </label>
+              <input
+                id={fieldId('from')}
+                type="date"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-800"
+              />
             </div>
             <div>
-              <label htmlFor={fieldId('to')} className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1 flex items-center gap-1"><Calendar size={12} /> To</label>
-              <input id={fieldId('to')} type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-navy" />
+              <label htmlFor={fieldId('to')} className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1 flex items-center gap-1">
+                <Calendar size={12} /> To
+              </label>
+              <input
+                id={fieldId('to')}
+                type="date"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-800"
+              />
             </div>
           </div>
 
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
-                Select Assets ({data?.symbols.length || 0} extracted from historical CSVs)
+                Asset Universe ({data?.symbols.length || 0} Available)
               </label>
               <div className="flex items-center gap-1.5 text-xs">
-                <span className="text-slate-600 text-[11px] mr-1">Presets:</span>
+                <span className="text-slate-500 text-[11px] mr-1">Presets:</span>
                 <button
                   type="button"
                   onClick={() => setSelectedSymbols(DEFAULT_ALLOCATION_SYMBOLS)}
-                  className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-navy text-[11px] font-medium transition-colors"
+                  className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-medium"
                 >
                   India Classic
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSelectedSymbols(['NIFTY50', 'SPY', 'QQQ', 'GOLDBEES', 'BND', 'LIQUIDBEES'].filter((s) => (data?.symbols || []).includes(s)))}
-                  className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-navy text-[11px] font-medium transition-colors"
+                  onClick={() =>
+                    setSelectedSymbols(
+                      ['NIFTY50', 'SPY', 'QQQ', 'GOLDBEES', 'BND', 'LIQUIDBEES'].filter((s) =>
+                        (data?.symbols || []).includes(s),
+                      ),
+                    )
+                  }
+                  className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-medium"
                 >
                   Global Multi-Asset
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedSymbols(data?.symbols || DEFAULT_ALLOCATION_SYMBOLS)}
-                  className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-navy text-[11px] font-medium transition-colors"
+                  className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-medium"
                 >
                   All Available
                 </button>
               </div>
             </div>
+
             <div className="flex flex-wrap gap-2">
               {(data?.symbols || DEFAULT_ALLOCATION_SYMBOLS).map((symbol) => {
                 const instrument = INSTRUMENTS.find((i) => i.symbol === symbol);
@@ -432,9 +589,11 @@ export const MVO = () => {
                     key={symbol}
                     onClick={() => toggleSymbol(symbol)}
                     title={instrument?.name || symbol}
-                    aria-label={instrument?.name || symbol}
-                    aria-pressed={selected}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${selected ? 'bg-navy text-white border-navy' : 'bg-white text-slate-600 border-slate-200 hover:border-navy'}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                      selected
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
+                    }`}
                   >
                     {instrument?.name || symbol}
                   </button>
@@ -444,24 +603,15 @@ export const MVO = () => {
           </div>
 
           <div>
-            <label htmlFor={fieldId('maxEquity')} className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
-              Max Equity Constraint ({formatPercent(maxEquity)})
-            </label>
-            <input
-              id={fieldId('maxEquity')}
-              type="range"
+            <Slider
+              label={`Maximum Strategic Equity Constraint (${formatPercent(maxEquity)})`}
+              value={maxEquity}
+              onChange={setMaxEquity}
               min={0}
               max={100}
               step={1}
-              value={maxEquity}
-              onChange={(e) => setMaxEquity(Number(e.target.value))}
-              className="w-full accent-navy"
+              suffix="%"
             />
-            <div className="flex justify-between text-xs text-slate-700 mt-1">
-              <span>0%</span>
-              <span>Profile default: {formatPercent(riskProfile.maxEquity)}</span>
-              <span>100%</span>
-            </div>
           </div>
 
           {error && (
@@ -471,194 +621,332 @@ export const MVO = () => {
             </div>
           )}
 
-          <div className="flex flex-col gap-3">
-            <Button onClick={handleBackendFetch} disabled={loading || selectedSymbols.length < 2} className="w-full py-3">
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <Button onClick={handleBackendFetch} disabled={loading || selectedSymbols.length < 2} className="flex-1 py-2.5">
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <RefreshCw size={16} className="animate-spin" /> Fetching {progress.currentSymbol} ({progress.completed}/{progress.total})
+                  <RefreshCw size={16} className="animate-spin" /> Fetching ({progress.completed}/{progress.total})
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
-                  <BarChart3 size={18} /> Reload Backend Data
+                  <BarChart3 size={16} /> Recalibrate Empirical Data
                 </span>
               )}
             </Button>
-            <Button onClick={handleAngelFetch} variant="outline" disabled={loading || selectedSymbols.length < 2} className="w-full py-3">
-              <Globe size={16} className="mr-2" /> Fetch Live from Angel One
+            <Button onClick={handleAngelFetch} variant="outline" disabled={loading || selectedSymbols.length < 2} className="py-2.5">
+              <Globe size={16} className="mr-2" /> Live SmartAPI Fetch
             </Button>
           </div>
         </Card>
 
-        <Card className="bg-navy text-white relative overflow-hidden">
+        {/* Quant Philosophy Card */}
+        <Card className="bg-slate-950 text-white relative overflow-hidden border border-slate-800 flex flex-col justify-between">
           <div className="absolute top-0 right-0 p-6 opacity-10">
-            <ShieldCheck size={120} />
+            <ShieldCheck size={140} />
           </div>
-          <h3 className="text-lg font-serif text-white mb-4">Why MVO?</h3>
-          <ul className="space-y-3 text-sm text-slate-200">
-            <li className="flex gap-2"><Check size={16} className="text-white shrink-0 mt-0.5" /> Quantify risk/return trade-offs using real historical daily data.</li>
-            <li className="flex gap-2"><Check size={16} className="text-white shrink-0 mt-0.5" /> Identify the maximum-Sharpe and minimum-variance strategic portfolios.</li>
-            <li className="flex gap-2"><Check size={16} className="text-white shrink-0 mt-0.5" /> Export optimized weights directly into the Master Plan.</li>
-            <li className="flex gap-2"><Check size={16} className="text-white shrink-0 mt-0.5" /> Assumption mode works offline using category mean/variance/correlation.</li>
-          </ul>
+          <div className="space-y-4">
+            <Badge variant="gold" className="text-[10px] uppercase font-mono">
+              Theoretical Foundation
+            </Badge>
+            <h3 className="text-xl font-serif text-white font-bold">Markowitz Modern Portfolio Theory</h3>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              MVO identifies portfolios that maximize expected return for a given level of risk. The Capital Market Line (CML) defines the optimal combinations of the risk-free asset and the risky tangency portfolio.
+            </p>
+            <ul className="space-y-2.5 text-xs text-slate-300 pt-2 border-t border-slate-800">
+              <li className="flex gap-2">
+                <Check size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                Tangency Portfolio achieves highest Sharpe ratio along the frontier.
+              </li>
+              <li className="flex gap-2">
+                <Check size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                Risk Parity balances marginal risk contribution across all assets.
+              </li>
+              <li className="flex gap-2">
+                <Check size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                Apply weights to SIP, Lumpsum Deployments, or Strategic Targets.
+              </li>
+            </ul>
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] text-slate-400">
+            Calibrated on {alignedData?.symbols.length || 0} assets with {historyDays} daily return rows.
+          </div>
         </Card>
       </div>
 
       {mvoResult && (
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <h3 className="text-lg font-serif text-navy mb-6">Efficient Frontier</h3>
-              <div className="h-96 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={frontierData} margin={FRONTIER_MARGIN}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                    <XAxis type="number" dataKey="risk" name="Risk" unit="%" tickFormatter={(v) => `${v.toFixed(1)}%`} tick={{ fontSize: 12, fill: '#78716c' }} axisLine={false} tickLine={false} label={{ value: 'Annualized Volatility', position: 'insideBottom', offset: -5, fill: '#78716c', fontSize: 12 }} />
-                    <YAxis type="number" dataKey="return" name="Return" unit="%" tickFormatter={(v) => `${v.toFixed(1)}%`} tick={{ fontSize: 12, fill: '#78716c' }} axisLine={false} tickLine={false} label={{ value: 'Expected Return', angle: -90, position: 'insideLeft', fill: '#78716c', fontSize: 12 }} />
-                    <Tooltip cursor={FRONTIER_CURSOR} formatter={((value: number) => `${value.toFixed(2)}%`) as any} contentStyle={FRONTIER_TOOLTIP_STYLE} />
-                    <Line dataKey="return" stroke="#1A233A" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-                    {highlightedPortfolios.map((p) => (
-                      <ReferenceDot key={p.key} x={p.risk} y={p.return} r={6} fill={p.color} stroke="none" label={{ value: p.label, position: 'top', fill: p.color, fontSize: 11, fontWeight: 700 }} />
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
+          {/* Efficient Frontier & Capital Market Line Chart */}
+          <Card className="border border-slate-200/90 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="text-lg font-serif font-bold text-slate-900 flex items-center gap-2">
+                  <Activity size={20} className="text-slate-800" />
+                  Parametric Efficient Frontier & Capital Market Line (CML)
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Interactive risk-return frontier with constituent assets and current client portfolio position.
+                </p>
               </div>
-            </Card>
 
-            <Card>
-              <h3 className="text-lg font-serif text-navy mb-4">Correlation Matrix</h3>
-              <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
-                <table className="w-full min-w-[360px] text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-700">
-                      <th className="py-2 pr-2">Asset</th>
-                      {correlationMatrix.map((row) => (
-                        <th key={row.symbol} className="py-2 pr-2 text-right">{row.symbol.slice(0, 6)}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {correlationMatrix.map((row, i) => (
-                      <tr key={row.symbol} className="border-b border-slate-100">
-                        <td className="py-2 pr-2 font-medium text-navy">{row.symbol.slice(0, 8)}</td>
-                        {row.values.map((cell, j) => (
-                          <td key={j} className="py-2 pr-2 text-right font-mono" style={{ color: i === j ? '#1A233A' : cell.value > 0.5 ? '#B68B40' : '#78716c' }}>
-                            {cell.value.toFixed(2)}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="flex items-center gap-3 text-xs flex-wrap">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-0.5 bg-slate-900 inline-block" />
+                  Frontier
+                </span>
+                <span className="flex items-center gap-1.5 text-amber-700 font-medium">
+                  <span className="w-3 h-0.5 bg-amber-600 border-t border-dashed inline-block" />
+                  CML Tangency Ray
+                </span>
+                {currentPortfolioPoint && (
+                  <span className="flex items-center gap-1.5 text-rose-600 font-bold">
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
+                    Current Portfolio
+                  </span>
+                )}
               </div>
-            </Card>
-          </div>
+            </div>
 
-          <Card>
-            <h3 className="text-lg font-serif text-navy mb-4">Risk / Return Profile</h3>
-            <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
-              <table className="w-full min-w-[480px] text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-700">
-                    <th className="py-2 pr-4">Asset</th>
-                    <th className="py-2 pr-4 text-right">Ann. Return</th>
-                    <th className="py-2 pr-4 text-right">Ann. Vol</th>
-                    <th className="py-2 pr-4 text-right">Sharpe</th>
-                    <th className="py-2 pr-4 text-right">Max DD</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {alignedData?.stats.map((s, idx) => {
-                    const inst = alignedData.instruments[idx];
-                    return (
-                      <tr key={s.symbol}>
-                        <td className="py-2 pr-4 font-medium text-navy">{inst?.name || s.symbol}</td>
-                        <td className="py-2 pr-4 text-right font-mono">{formatPercent(s.annualizedReturn * 100)}</td>
-                        <td className="py-2 pr-4 text-right font-mono">{formatPercent(s.annualizedVolatility * 100)}</td>
-                        <td className="py-2 pr-4 text-right font-mono">{s.sharpeRatio.toFixed(2)}</td>
-                        <td className="py-2 pr-4 text-right font-mono text-rose-600">{formatPercent(s.maxDrawdown * 100)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="h-96 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={frontierData} margin={FRONTIER_MARGIN}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis
+                    type="number"
+                    dataKey="risk"
+                    name="Risk"
+                    unit="%"
+                    tickFormatter={(v) => `${v.toFixed(1)}%`}
+                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    axisLine={false}
+                    tickLine={false}
+                    label={{ value: 'Annualized Volatility (Risk)', position: 'insideBottom', offset: -8, fill: '#64748b', fontSize: 11 }}
+                  />
+                  <YAxis
+                    type="number"
+                    dataKey="return"
+                    name="Return"
+                    unit="%"
+                    tickFormatter={(v) => `${v.toFixed(1)}%`}
+                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    axisLine={false}
+                    tickLine={false}
+                    label={{ value: 'Annualized Expected Return', angle: -90, position: 'insideLeft', fill: '#64748b', fontSize: 11 }}
+                  />
+                  <Tooltip
+                    cursor={FRONTIER_CURSOR}
+                    formatter={((value: number) => `${value.toFixed(2)}%`) as any}
+                    contentStyle={FRONTIER_TOOLTIP_STYLE}
+                  />
+                  <Line dataKey="return" stroke="#0f172a" strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} />
+
+                  {/* Highlighted Strategic Portfolios */}
+                  {highlightedPortfolios.map((p) => (
+                    <ReferenceDot
+                      key={p.key}
+                      x={p.risk}
+                      y={p.return}
+                      r={7}
+                      fill={p.color}
+                      stroke="#ffffff"
+                      strokeWidth={2}
+                      label={{ value: p.label, position: 'top', fill: p.color, fontSize: 10, fontWeight: 700 }}
+                    />
+                  ))}
+
+                  {/* Constituent Assets */}
+                  {mvoResult.assets.map((a) => (
+                    <ReferenceDot
+                      key={a.symbol}
+                      x={Math.round(a.volatility * 1000) / 10}
+                      y={Math.round(a.expectedReturn * 1000) / 10}
+                      r={4}
+                      fill="#94a3b8"
+                      stroke="#ffffff"
+                      strokeWidth={1.5}
+                      label={{ value: a.symbol, position: 'bottom', fill: '#64748b', fontSize: 9 }}
+                    />
+                  ))}
+
+                  {/* Current Portfolio "You Are Here" Marker */}
+                  {currentPortfolioPoint && (
+                    <ReferenceDot
+                      x={currentPortfolioPoint.risk}
+                      y={currentPortfolioPoint.return}
+                      r={8}
+                      fill="#ea580c"
+                      stroke="#ffffff"
+                      strokeWidth={2.5}
+                      label={{ value: 'You Are Here (Current)', position: 'top', fill: '#ea580c', fontSize: 11, fontWeight: 800 }}
+                    />
+                  )}
+
+                  {/* Active Scrubbed Point */}
+                  {activeScrubPortfolio && (
+                    <ReferenceDot
+                      x={Math.round(activeScrubPortfolio.volatility * 1000) / 10}
+                      y={Math.round(activeScrubPortfolio.expectedReturn * 1000) / 10}
+                      r={6}
+                      fill="#2563eb"
+                      stroke="#ffffff"
+                      strokeWidth={2}
+                      label={{ value: 'Target Risk', position: 'bottom', fill: '#2563eb', fontSize: 10, fontWeight: 700 }}
+                    />
+                  )}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Frontier Scrub Slider & Live Inspection */}
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Sliders size={16} className="text-slate-700" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                    Frontier Risk Scrub Slider:
+                  </span>
+                  <span className="text-xs font-mono font-bold text-slate-900">
+                    Target Volatility {scrubVolatility ? `${scrubVolatility.toFixed(1)}%` : `${(mvoResult.maxSharpe.volatility * 100).toFixed(1)}%`}
+                  </span>
+                </div>
+
+                {activeScrubPortfolio && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => openApplyModal(activeScrubPortfolio, `Custom ${scrubVolatility?.toFixed(1) || ''}% Vol`)}
+                    className="text-xs h-7 px-3"
+                  >
+                    Apply Scrubbed Portfolio <ArrowRight size={12} className="ml-1" />
+                  </Button>
+                )}
+              </div>
+
+              <input
+                type="range"
+                min={Math.round(mvoResult.minVariance.volatility * 100)}
+                max={Math.min(25, Math.round(Math.max(...mvoResult.frontier.map((p) => p.volatility)) * 100))}
+                step={0.1}
+                value={scrubVolatility ?? mvoResult.maxSharpe.volatility * 100}
+                onChange={(e) => setScrubVolatility(parseFloat(e.target.value))}
+                className="w-full accent-slate-900"
+              />
+
+              {activeScrubPortfolio && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
+                  <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Expected Return</span>
+                    <span className="text-sm font-bold font-mono text-slate-900">
+                      {formatPercent(activeScrubPortfolio.expectedReturn * 100)}
+                    </span>
+                  </div>
+                  <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Annual Volatility</span>
+                    <span className="text-sm font-bold font-mono text-slate-900">
+                      {formatPercent(activeScrubPortfolio.volatility * 100)}
+                    </span>
+                  </div>
+                  <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Sharpe Ratio</span>
+                    <span className="text-sm font-bold font-mono text-slate-900">
+                      {activeScrubPortfolio.sharpe.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Top Asset Weight</span>
+                    <span className="text-sm font-bold font-mono text-slate-900">
+                      {Math.max(...activeScrubPortfolio.weights.map((w) => Math.round(w * 100)))}%
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
 
+          {/* Strategy Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             {[
-              { key: 'maxSharpe', label: 'Max Sharpe', portfolio: mvoResult.maxSharpe, icon: TrendingUp, color: 'gold' },
-              { key: 'minVariance', label: 'Min Variance', portfolio: mvoResult.minVariance, icon: ShieldCheck, color: 'navy' },
-              { key: 'equalWeight', label: 'Equal Weight', portfolio: mvoResult.equalWeight, icon: Layers, color: 'default' },
-              { key: 'riskParity', label: 'Risk Parity', portfolio: mvoResult.riskParity, icon: Activity, color: 'default' },
+              { key: 'maxSharpe', label: 'Max Sharpe (Tangency)', portfolio: mvoResult.maxSharpe, icon: TrendingUp },
+              { key: 'minVariance', label: 'Min Variance', portfolio: mvoResult.minVariance, icon: ShieldCheck },
+              { key: 'equalWeight', label: '1/N Equal Weight', portfolio: mvoResult.equalWeight, icon: Layers },
+              { key: 'riskParity', label: 'Risk Parity', portfolio: mvoResult.riskParity, icon: Activity },
             ].map((strategy) => {
               const Icon = strategy.icon;
               return (
-                <Card key={strategy.key} className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-navy">
-                      <Icon size={16} />
-                    </div>
-                    <h4 className="font-serif text-navy">{strategy.label}</h4>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2 bg-slate-50 rounded-lg">
-                      <span className="text-slate-600 block text-[10px]">RETURN</span>
-                      <span className="font-semibold text-navy">{formatPercent(strategy.portfolio.expectedReturn * 100)}</span>
-                    </div>
-                    <div className="p-2 bg-slate-50 rounded-lg">
-                      <span className="text-slate-600 block text-[10px]">VOLATILITY</span>
-                      <span className="font-semibold text-navy">{formatPercent(strategy.portfolio.volatility * 100)}</span>
-                    </div>
-                    <div className="p-2 bg-slate-50 rounded-lg col-span-2">
-                      <span className="text-slate-600 block text-[10px]">SHARPE</span>
-                      <span className="font-semibold text-navy">{strategy.portfolio.sharpe.toFixed(2)}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    {strategy.portfolio.weights.map((w, idx) => {
-                      const inst = alignedData?.instruments[idx];
-                      const color = ASSET_COLORS[(categoryMap[inst?.category || ''] || 'other') as keyof typeof ASSET_COLORS];
-                      return (
-                        <div key={idx} className="flex items-center justify-between text-xs">
-                          <span className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-                            {inst?.name || alignedData?.symbols[idx]}
-                          </span>
-                          <span className="font-mono font-medium">{(w * 100).toFixed(1)}%</span>
+                <Card key={strategy.key} className="space-y-4 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-800">
+                          <Icon size={16} />
                         </div>
-                      );
-                    })}
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Button size="sm" variant="outline" className="w-full" onClick={() => applyWeightsToAllocation(strategy.portfolio, strategy.label)}>
-                      {appliedStrategy === `${strategy.label}-alloc` ? (
-                        <><Check size={14} className="mr-1" /> Applied</>
-                      ) : (
-                        <>Apply to Allocation <ArrowRight size={14} className="ml-1" /></>
+                        <h4 className="font-serif font-bold text-slate-900 text-sm">{strategy.label}</h4>
+                      </div>
+                      {appliedStrategy === strategy.label && (
+                        <Badge variant="success" className="text-[9px]">Active</Badge>
                       )}
-                    </Button>
-                    <Button size="sm" variant="outline" className="w-full" onClick={() => applyWeightsToAssets(strategy.portfolio, strategy.label)}>
-                      {appliedStrategy === strategy.label ? (
-                        <><Check size={14} className="mr-1" /> Added</>
-                      ) : (
-                        <>Add to Assets <ArrowRight size={14} className="ml-1" /></>
-                      )}
-                    </Button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="p-2 bg-slate-50 rounded-lg">
+                        <span className="text-slate-500 block text-[10px] uppercase font-bold">Return</span>
+                        <span className="font-semibold font-mono text-slate-900">
+                          {formatPercent(strategy.portfolio.expectedReturn * 100)}
+                        </span>
+                      </div>
+                      <div className="p-2 bg-slate-50 rounded-lg">
+                        <span className="text-slate-500 block text-[10px] uppercase font-bold">Volatility</span>
+                        <span className="font-semibold font-mono text-slate-900">
+                          {formatPercent(strategy.portfolio.volatility * 100)}
+                        </span>
+                      </div>
+                      <div className="p-2 bg-slate-50 rounded-lg col-span-2 flex items-center justify-between">
+                        <span className="text-slate-500 text-[10px] uppercase font-bold">Sharpe Ratio</span>
+                        <span className="font-bold font-mono text-slate-900">
+                          {strategy.portfolio.sharpe.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 pt-1">
+                      {strategy.portfolio.weights.map((w, idx) => {
+                        const inst = alignedData?.instruments[idx];
+                        const color = ASSET_COLORS[(categoryMap[inst?.category || ''] || 'other') as keyof typeof ASSET_COLORS];
+                        return (
+                          <div key={idx} className="flex items-center justify-between text-xs">
+                            <span className="flex items-center gap-1.5 text-slate-700 truncate max-w-[140px]">
+                              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                              {inst?.name || alignedData?.symbols[idx]}
+                            </span>
+                            <span className="font-mono font-semibold text-slate-900">{(w * 100).toFixed(1)}%</span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
+
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    className="w-full mt-3 bg-slate-900 text-white hover:bg-slate-800 text-xs"
+                    onClick={() => openApplyModal(strategy.portfolio, strategy.label)}
+                  >
+                    Apply Strategy <ArrowRight size={13} className="ml-1" />
+                  </Button>
                 </Card>
               );
             })}
           </div>
 
-          {/* Monte Carlo Simulation for Asset Allocation */}
+          {/* Monte Carlo Simulator Integration */}
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-200">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-navy">
-                  Stress Test Allocation via Monte Carlo:
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                  Stochastic Monte Carlo Testing Engine:
                 </span>
                 <span className="text-xs text-slate-500">
-                  (Simulated paths using empirical returns & covariance from extracted CSVs)
+                  (Comparative simulation calibrated from empirical daily CSV data)
                 </span>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -672,9 +960,9 @@ export const MVO = () => {
                     key={s.key}
                     type="button"
                     onClick={() => setSelectedSimStrategy(s.key as any)}
-                    className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
+                    className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
                       selectedSimStrategy === s.key
-                        ? 'bg-navy text-white shadow-xs'
+                        ? 'bg-slate-900 text-white shadow-xs'
                         : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                     }`}
                   >
@@ -687,25 +975,228 @@ export const MVO = () => {
             <MvoMonteCarloSimulator
               portfolio={mvoResult[selectedSimStrategy]}
               portfolioName={
-                selectedSimStrategy === 'maxSharpe' ? 'Max Sharpe Portfolio' :
-                selectedSimStrategy === 'minVariance' ? 'Min Variance Portfolio' :
-                selectedSimStrategy === 'equalWeight' ? '1/N Equal Weight Portfolio' :
-                'Risk Parity Portfolio'
+                selectedSimStrategy === 'maxSharpe'
+                  ? 'Max Sharpe Tangency Portfolio'
+                  : selectedSimStrategy === 'minVariance'
+                  ? 'Minimum Variance Portfolio'
+                  : selectedSimStrategy === 'equalWeight'
+                  ? '1/N Equal Weight Portfolio'
+                  : 'Risk Parity Portfolio'
               }
               symbols={alignedData?.symbols || []}
               initialWealth={wealthResult?.netWorth || 2500000}
               initialSip={inputs.sip.amount || 50000}
-              onApplyToPlan={() => applyWeightsToAllocation(mvoResult[selectedSimStrategy], selectedSimStrategy)}
-              applied={appliedStrategy === `${selectedSimStrategy}-alloc`}
+              currentPortfolio={currentPortfolioPoint?.portfolio}
+              onApplyToPlan={() => openApplyModal(mvoResult[selectedSimStrategy], selectedSimStrategy)}
+              applied={appliedStrategy === selectedSimStrategy}
             />
           </div>
+
+          {/* Correlation Matrix & Stats Table */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <h3 className="text-base font-serif font-bold text-slate-900 mb-4">
+                Empirical Correlation Matrix
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-500">
+                      <th className="py-2 pr-2">Asset</th>
+                      {correlationMatrix.map((row) => (
+                        <th key={row.symbol} className="py-2 pr-2 text-right">
+                          {row.symbol.slice(0, 6)}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {correlationMatrix.map((row, i) => (
+                      <tr key={row.symbol} className="border-b border-slate-100">
+                        <td className="py-2 pr-2 font-bold text-slate-900">{row.symbol.slice(0, 8)}</td>
+                        {row.values.map((cell, j) => (
+                          <td
+                            key={j}
+                            className="py-2 pr-2 text-right font-mono"
+                            style={{
+                              color: i === j ? '#0f172a' : cell.value > 0.5 ? '#b45309' : cell.value < 0 ? '#15803d' : '#64748b',
+                              fontWeight: Math.abs(cell.value) > 0.6 ? 700 : 400,
+                            }}
+                          >
+                            {cell.value.toFixed(2)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+
+            <Card>
+              <h3 className="text-base font-serif font-bold text-slate-900 mb-4">
+                Historical Return & Volatility Spectrum
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-500">
+                      <th className="py-2 pr-4">Asset</th>
+                      <th className="py-2 pr-4 text-right">Ann. Return</th>
+                      <th className="py-2 pr-4 text-right">Ann. Vol</th>
+                      <th className="py-2 pr-4 text-right">Sharpe</th>
+                      <th className="py-2 pr-4 text-right">Max DD</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {alignedData?.stats.map((s, idx) => {
+                      const inst = alignedData.instruments[idx];
+                      return (
+                        <tr key={s.symbol}>
+                          <td className="py-2 pr-4 font-bold text-slate-900">{inst?.name || s.symbol}</td>
+                          <td className="py-2 pr-4 text-right font-mono">{formatPercent(s.annualizedReturn * 100)}</td>
+                          <td className="py-2 pr-4 text-right font-mono">{formatPercent(s.annualizedVolatility * 100)}</td>
+                          <td className="py-2 pr-4 text-right font-mono">{s.sharpeRatio.toFixed(2)}</td>
+                          <td className="py-2 pr-4 text-right font-mono text-rose-600 font-medium">
+                            {formatPercent(s.maxDrawdown * 100)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
         </>
+      )}
+
+      {/* Apply MVO Strategy Multi-Option Modal */}
+      {modalOpen && targetStrategy && alignedData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl border border-slate-200 space-y-5 animate-drawer-in">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-base font-serif font-bold text-slate-900 flex items-center gap-2">
+                  <PieChart size={18} className="text-slate-800" />
+                  Apply {targetStrategy.label} Strategy
+                </h3>
+                <p className="text-xs text-slate-500">Select where to apply these mathematically optimal asset weights.</p>
+              </div>
+              <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-slate-700">
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Destination Options */}
+            <div className="space-y-2.5 text-xs">
+              <label className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer transition-all ${
+                applyDestination === 'targets' ? 'bg-slate-50 border-slate-900 text-slate-900' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+              }`}>
+                <input
+                  type="radio"
+                  name="mvoDest"
+                  checked={applyDestination === 'targets'}
+                  onChange={() => setApplyDestination('targets')}
+                  className="mt-0.5 accent-slate-900"
+                />
+                <div>
+                  <span className="font-bold block text-slate-900">Strategic Allocation Policy Targets</span>
+                  <span className="text-slate-500 text-[11px]">Updates strategic asset weights across the master plan and portfolio governance.</span>
+                </div>
+              </label>
+
+              <label className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer transition-all ${
+                applyDestination === 'sip' ? 'bg-slate-50 border-slate-900 text-slate-900' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+              }`}>
+                <input
+                  type="radio"
+                  name="mvoDest"
+                  checked={applyDestination === 'sip'}
+                  onChange={() => setApplyDestination('sip')}
+                  className="mt-0.5 accent-slate-900"
+                />
+                <div>
+                  <span className="font-bold block text-slate-900">Future Monthly SIP Cashflow Injection</span>
+                  <span className="text-slate-500 text-[11px]">Directs systematic monthly savings into Equity and Debt matching optimal ratios.</span>
+                </div>
+              </label>
+
+              <label className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer transition-all ${
+                applyDestination === 'investment' ? 'bg-slate-50 border-slate-900 text-slate-900' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+              }`}>
+                <input
+                  type="radio"
+                  name="mvoDest"
+                  checked={applyDestination === 'investment'}
+                  onChange={() => setApplyDestination('investment')}
+                  className="mt-0.5 accent-slate-900"
+                />
+                <div className="flex-1">
+                  <span className="font-bold block text-slate-900">Deploy New Lumpsum Investment (Custom ₹)</span>
+                  <span className="text-slate-500 text-[11px]">Calculates exact rupee ticket sizes for each instrument and adds to client holdings.</span>
+                </div>
+              </label>
+            </div>
+
+            {/* Custom Lumpsum Input if Selected */}
+            {applyDestination === 'investment' && (
+              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                <CurrencyInput
+                  label="Lumpsum Deployment Capital"
+                  value={lumpsumAmount}
+                  onChange={setLumpsumAmount}
+                  helper="Enter the rupee amount to deploy into the market"
+                />
+                <div className="flex gap-2">
+                  {[1000000, 2500000, 5000000, 10000000].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => setLumpsumAmount(amt)}
+                      className="px-2.5 py-1 text-[11px] rounded-lg bg-white border border-slate-200 font-semibold text-slate-700 hover:bg-slate-100"
+                    >
+                      {formatCurrencyCompact(amt)}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="max-h-36 overflow-y-auto space-y-1.5 pt-1">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Execution Ticket Breakdown:</span>
+                  {targetStrategy.portfolio.weights.map((w, idx) => {
+                    const inst = alignedData.instruments[idx];
+                    const rupeeVal = Math.round(w * lumpsumAmount);
+                    if (rupeeVal <= 0) return null;
+                    return (
+                      <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-none">
+                        <span className="font-semibold text-slate-800">{inst?.name || alignedData.symbols[idx]}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-500 text-[11px]">{(w * 100).toFixed(1)}%</span>
+                          <span className="font-mono font-bold text-slate-900">{formatCurrency(rupeeVal)}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <Button variant="outline" size="sm" onClick={() => setModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={executeStrategyApplication} className="bg-slate-900 text-white hover:bg-slate-800">
+                Confirm &amp; Apply
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       <WorkflowFooter
         prev={{ path: '/allocation', label: 'Allocation' }}
         next={{ path: '/reports', label: 'Reports' }}
-        flowHint="Mean-variance efficient portfolios provide empirically optimal weights to apply to your plan targets."
+        flowHint="Empirical MVO establishes mathematically robust strategic weights for the client's investment policy."
       />
     </div>
   );

@@ -8,18 +8,20 @@ The main opportunity is to evolve the product from an advanced collection of fin
 
 The product should ultimately guide the adviser/client through:
 
-$$\text{Understand} \longrightarrow \text{Diagnose} \longrightarrow \text{Model} \longrightarrow \text{Decide} \longrightarrow \text{Implement} \longrightarrow \text{Monitor}$$
+> **Understand → Diagnose → Model → Decide → Implement → Monitor**
 
 All recommendations should remain grounded in the same underlying plan state and calculation engines.
 
 ---
 
-## 1. Recommended Overall Product Journey
+# 1. Recommended Overall Product Journey
 
 Instead of organizing the experience primarily around individual calculators/modules, organize it around the client's planning journey.
 
-### Stage 01 — Discover
-**Capture:**
+## Stage 01 — Discover
+
+Capture:
+
 - Personal profile
 - Age / retirement age / life expectancy
 - Income
@@ -32,15 +34,20 @@ Instead of organizing the experience primarily around individual calculators/mod
 - Liquidity requirements
 - Existing investments
 
-**Output:**
-- Automatically generate a **Client Financial Snapshot**.
+### Output
+
+Automatically generate a **Client Financial Snapshot**.
 
 ---
 
-### Stage 02 — Diagnose
-**Answer:** *Where does this client stand today?*
+## Stage 02 — Diagnose
 
-**Show:**
+Answer:
+
+> **Where does this client stand today?**
+
+Show:
+
 - Net worth
 - Investable assets
 - Savings rate
@@ -54,90 +61,121 @@ Instead of organizing the experience primarily around individual calculators/mod
 
 Then surface the most important problems automatically.
 
-#### Example: "3 things require attention"
-1. Retirement corpus projected **₹1.4Cr short**
-2. Equity allocation is **11% above strategic target**
-3. Education goal has only **61% probability of success**
+### Example
 
-*The adviser should not have to manually inspect five different pages to discover these issues.*
+**3 things require attention**
+
+1. Retirement corpus projected ₹1.4Cr short
+2. Equity allocation is 11% above strategic target
+3. Education goal has only 61% probability of success
+
+The adviser should not have to manually inspect five different pages to discover these issues.
 
 ---
 
-## 2. Add a Plan Health Score
+# 2. Add a Plan Health Score
 
 Create a single top-level score:
 
-$$\mathbf{Financial\ Plan\ Health\ —\ 78/100}$$
+## Financial Plan Health — 78/100
 
-Break it into meaningful components:
+Break it into meaningful components.
 
 | Area | Score | Status |
-| :--- | :---: | :--- |
-| **Retirement** | 82 | Strong |
-| **Goals** | 64 | Needs Attention |
-| **Liquidity** | 91 | Strong |
-| **Risk Alignment** | 73 | Review |
-| **Asset Allocation** | 69 | Review |
-| **Debt** | 88 | Strong |
-| **Tax Efficiency** | 71 | Review |
+|---|---:|---|
+| Retirement | 82 | Strong |
+| Goals | 64 | Needs Attention |
+| Liquidity | 91 | Strong |
+| Risk Alignment | 73 | Review |
+| Asset Allocation | 69 | Review |
+| Debt | 88 | Strong |
+| Tax Efficiency | 71 | Review |
 
-### Transparent Explanations
-> [!IMPORTANT]
-> The score should **not** be a black box.
+Every score should have a transparent explanation.
 
-Each component should provide:
-- **Score**
-- **Reason**
-- **Inputs used**
-- **What is driving the score**
-- **How the client can improve it**
+### Important
 
-#### Example
-- **Retirement**: `82/100`
-- *Reason*: Current plan has a 92% Monte Carlo success probability, but early-retirement downside scenarios create a meaningful shortfall risk.
+The score should not be a black box.
+
+Each component should have:
+
+- Score
+- Reason
+- Inputs used
+- What is driving the score
+- How the client can improve it
+
+Example:
+
+> **Retirement: 82/100**
+>
+> Current plan has a 92% Monte Carlo success probability, but early-retirement downside scenarios create a meaningful shortfall risk.
 
 ---
 
-## 3. Turn the Dashboard Into a Command Center
+# 3. Turn the Dashboard Into a Command Center
 
 The dashboard should become the primary decision-making screen.
 
-### Header
-- **Client Name**: Vikram & Ananya Sharma
-- **₹8.42Cr** projected retirement corpus
-- **92%** probability of plan success
-- **Plan Status**: `ON TRACK`
+## Header
 
-### What Changed?
+**Client Name**
+
+**₹8.42Cr projected retirement corpus**
+
+**92% probability of plan success**
+
+### Plan Status
+
+> **ON TRACK**
+
+---
+
+## What Changed?
+
 Show the latest meaningful changes:
-- Portfolio appreciated **₹18.4L**
-- Retirement probability improved **4%**
-- Education funding gap reduced **₹3.2L**
-- Equity allocation drifted **+3.8%**
 
-### Recommended Actions
-1. **Redirect ₹35,000/month SIP toward debt**
-   - *Reason*: Equity allocation is 8% above target.
-2. **Increase education SIP by ₹12,000/month**
-   - *Reason*: Current goal probability is 67%.
-3. **Review retirement age**
-   - *Reason*: Moving retirement from 58 to 60 increases success probability from 82% to 94%.
+- Portfolio appreciated ₹18.4L
+- Retirement probability improved 4%
+- Education funding gap reduced ₹3.2L
+- Equity allocation drifted +3.8%
+
+---
+
+## Recommended Actions
+
+Example:
+
+### 1. Redirect ₹35,000/month SIP toward debt
+
+**Reason:** Equity allocation is 8% above target.
+
+### 2. Increase education SIP by ₹12,000/month
+
+**Reason:** Current goal probability is 67%.
+
+### 3. Review retirement age
+
+**Reason:** Moving retirement from 58 to 60 increases success probability from 82% to 94%.
 
 Each recommendation should have:
+
 - Impact
 - Reason
 - Confidence
 - Supporting calculations
-- **Apply** button
-- **Undo / compare** option
+- Apply button
+- Undo / compare option
 
 ---
 
-## 4. Build a Central Recommendation Engine
+# 4. Build a Central Recommendation Engine
 
 This should become the intelligence layer above the existing calculation engines.
 
-```
+## Inputs
+
+```text
 Risk Profile
       ↓
 Current Assets
@@ -156,116 +194,167 @@ Monte Carlo
       ↓
 Stress Tests
       ↓
-[ RECOMMENDATION ENGINE ]
+Recommendation Engine
 ```
 
-### Outputs Example
-- **Priority 1 — Retirement**: Increase retirement allocation by ₹35L over the next 24 months.
-- **Priority 2 — Education**: Increase SIP by ₹15,000/month.
-- **Priority 3 — Portfolio**: Reduce equity exposure from 72% → 65%.
-- **Priority 4 — Liquidity**: Build ₹18L emergency reserve.
+## Outputs
 
-### Add "Why?" (Explainability)
-Every recommendation should be explainable.
+Example:
 
-*Example: "Why am I being asked to reduce equity?"*
-- Current equity = **72%**
-- Target equity = **65%**
-- Risk profile = **Balanced**
-- Stress-test drawdown = **-24%**
-- Retirement success probability = **87%** at current allocation
-- Retirement success probability = **92%** at target allocation
+### Priority 1 — Retirement
 
-*This creates an auditable decision trail.*
+Increase retirement allocation by ₹35L over the next 24 months.
+
+### Priority 2 — Education
+
+Increase SIP by ₹15,000/month.
+
+### Priority 3 — Portfolio
+
+Reduce equity exposure from 72% → 65%.
+
+### Priority 4 — Liquidity
+
+Build ₹18L emergency reserve.
 
 ---
 
-## 5. Create a Scenario Lab
+## Add "Why?"
+
+Every recommendation should be explainable.
+
+Example:
+
+> **Why am I being asked to reduce equity?**
+
+Show:
+
+- Current equity = 72%
+- Target equity = 65%
+- Risk profile = Balanced
+- Stress-test drawdown = -24%
+- Retirement success probability = 87% at current allocation
+- Retirement success probability = 92% at target allocation
+
+This creates an auditable decision trail.
+
+---
+
+# 5. Create a Scenario Lab
 
 Unify the existing retirement sensitivity and stress-testing concepts into a broader scenario interface.
 
-### Scenario Lab Setup
-Start with **Current Plan**:
-- Retirement: Age 58
+## Scenario Lab
+
+Start with:
+
+**Current Plan**
+
+- Retirement: 58
 - Monthly expenses: ₹2.5L
 - SIP: ₹1.2L
 - Equity: 65%
 
-Then allow 1-click scenarios:
-- *What if I retire at 55?*
-- *What if I increase SIP by ₹25k?*
-- *What if markets fall 30%?*
-- *What if inflation is 8%?*
-- *What if I buy a ₹3Cr house?*
-- *What if I stop working for 2 years?*
-- *What if expenses increase 20%?*
-- *What if life expectancy increases to 100?*
+Then allow one-click scenarios:
 
-### Scenario Comparison Table
-
-| Scenario | Success Prob | Terminal Corpus | Depletion Age |
-| :--- | :---: | :---: | :---: |
-| **Current Plan** | 92% | ₹8.4Cr | >95 |
-| **Retire @55** | 71% | ₹6.2Cr | 82 |
-| **+₹25k SIP** | 95% | ₹9.1Cr | >95 |
-| **-30% Market Crash** | 83% | ₹7.0Cr | 90 |
-| **₹3Cr House Purchase** | 76% | ₹5.8Cr | 86 |
-
-**Synthesis Recommendation:**
-> *Recommended: Increase SIP by ₹25k rather than delaying retirement.*
+- What if I retire at 55?
+- What if I increase SIP by ₹25k?
+- What if markets fall 30%?
+- What if inflation is 8%?
+- What if I buy a ₹3Cr house?
+- What if I stop working for 2 years?
+- What if expenses increase 20%?
+- What if life expectancy increases to 100?
 
 ---
 
-## 6. Add Goal Conflict Detection
+## Scenario Comparison
 
-The goal engine should not only evaluate goals individually. It must answer:
+| Scenario | Success | Corpus | Depletion |
+|---|---:|---:|---:|
+| Current | 92% | ₹8.4Cr | >95 |
+| Retire @55 | 71% | ₹6.2Cr | 82 |
+| +₹25k SIP | 95% | ₹9.1Cr | >95 |
+| -30% crash | 83% | ₹7.0Cr | 90 |
+| ₹3Cr house | 76% | ₹5.8Cr | 86 |
 
-$$\text{Can the client afford all goals simultaneously?}$$
+Then generate a recommendation:
 
-### Example Conflict Analysis
+> **Recommended:** Increase SIP by ₹25k rather than delaying retirement.
+
+---
+
+# 6. Add Goal Conflict Detection
+
+The goal engine should not only evaluate goals individually.
+
+It should answer:
+
+> **Can the client afford all goals simultaneously?**
+
+Example:
 
 | Goal | Required Funding |
-| :--- | :---: |
-| **Retirement** | ₹6.2Cr |
-| **Child Education** | ₹1.4Cr |
-| **House Purchase** | ₹2.5Cr |
-| **Luxury Travel** | ₹40L |
-| **Total Demand** | **₹10.5Cr** |
+|---|---:|
+| Retirement | ₹6.2Cr |
+| Child Education | ₹1.4Cr |
+| House | ₹2.5Cr |
+| Travel | ₹40L |
+| **Total** | **₹10.5Cr** |
 
-- **Projected Available Wealth**: ₹8.7Cr
-- **Funding Shortfall**: **₹1.8Cr**
+Projected available wealth:
 
-### Priority Controls
-Allow the adviser to rank priorities:
+**₹8.7Cr**
+
+### Funding shortfall
+
+**₹1.8Cr**
+
+---
+
+## Priority Controls
+
+Allow the adviser to rank:
+
 1. Retirement
 2. Education
 3. House
 4. Lifestyle
 
-Then dynamically calculate what gets sacrificed when the plan is underfunded, creating a clear trade-off view rather than multiple isolated probabilities.
+Then dynamically calculate what gets sacrificed when the plan is underfunded.
+
+This should create a clear trade-off view rather than simply showing multiple independent probabilities.
 
 ---
 
-## 7. Add a Funding Waterfall
+# 7. Add a Funding Waterfall
 
-Create a visual flow for household monthly surplus:
+Create a visual flow for household surplus.
 
-```
+Example:
+
+```text
 Monthly Surplus
-    ₹2,10,000
-        ↓
-Emergency Reserve (₹25,000)
-        ↓
-Short-Term Goals (₹35,000)
-        ↓
-Education SIP (₹40,000)
-        ↓
-Retirement SIP (₹80,000)
-        ↓
-Wealth Creation Surplus (₹30,000)
+₹2,10,000
+      ↓
+Emergency Reserve
+₹25,000
+      ↓
+Short-Term Goals
+₹35,000
+      ↓
+Education
+₹40,000
+      ↓
+Retirement
+₹80,000
+      ↓
+Wealth Creation
+₹30,000
 ```
 
 The engine should explain why the allocation was chosen based on:
+
 - Goal horizon
 - Goal priority
 - Probability of success
@@ -275,337 +364,545 @@ The engine should explain why the allocation was chosen based on:
 - Retirement shortfall
 - Tax friction
 
-*This connects Goal Planning + Allocation + Retirement into one coherent funding architecture.*
+This connects Goal Planning + Allocation + Retirement into one funding architecture.
 
 ---
 
-## 8. Adviser Mode vs Client Mode
+# 8. Adviser Mode vs Client Mode
 
-The same quantitative engine should support two distinct interface modes.
+The same quantitative engine should support two interfaces.
 
-### Adviser Mode
-Expose full technical depth:
-- MVO Efficient Frontier
-- Covariance & Correlation matrices
-- Sharpe ratio & Sortino ratio
-- Volatility & Beta metrics
-- Maximum drawdown
-- Tax friction & drag
-- Allocation drift & rebalancing bands
-- Monte Carlo distributional assumptions
-- Detailed cash flow ledgers
-- IPS governance
-- Implementation transition plan
+## Adviser Mode
 
-### Client Mode
-Simplify into high-impact, actionable language:
-- *"You're on track for retirement."*
-- *"Your current portfolio has a 92% probability of sustaining your planned lifestyle."*
-- *"Your biggest current risk is your child's education goal."*
-- *"We recommend increasing your monthly investment by ₹18,000."*
-- Include a **"See Methodology"** expandable toggle to reveal the underlying quantitative calculations when asked.
+Expose:
 
----
+- MVO
+- Covariance
+- Correlation
+- Sharpe ratio
+- Volatility
+- Max drawdown
+- Tax friction
+- Allocation drift
+- Rebalancing
+- Monte Carlo assumptions
+- Detailed cashflows
+- IPS
+- Implementation plan
 
-## 9. Add an Implementation Plan
+## Client Mode
 
-Provide a dedicated operational layer between recommendations and documentation.
+Simplify the presentation.
 
-### Portfolio Transition: Current $\to$ Target
+Example:
 
-| Asset Class | Current Value | Target Value | Delta |
-| :--- | :---: | :---: | :---: |
-| **Equity** | ₹1.82Cr | ₹1.63Cr | -₹19L |
-| **Debt** | ₹64L | ₹83L | +₹19L |
-| **Gold** | ₹21L | ₹24L | +₹3L |
-| **Liquid** | ₹9L | ₹12L | +₹3L |
+> **You're on track for retirement.**
+>
+> Your current portfolio has a 92% probability of sustaining your planned lifestyle.
+>
+> Your biggest current risk is your child's education goal.
+>
+> We recommend increasing your monthly investment by ₹18,000.
 
-### Recommended Actions
-- **BUY**: ₹12L Debt, ₹3L Gold
-- **REDIRECT SIP**:
-  - Equity SIP: ₹80k $\to$ ₹55k/month
-  - Debt SIP: ₹30k $\to$ ₹55k/month
-- **SELL**: ₹8L Equity, subject to LTCG tax impact
+Add:
 
-### Friction & Costs
-- Estimated Tax Drag: **₹42,000**
-- Estimated Transaction Costs: **₹8,000**
-- **Expected Post-Implementation Allocation**: `65 / 25 / 7 / 3`
+**See Methodology**
 
-Adviser capabilities:
-- **Apply**
-- **Export**
-- **Save as recommendation**
-- **Compare before / after**
-- **Record audit rationale**
+to reveal the underlying calculations.
 
 ---
 
-## 10. Add Plan vs Reality (Portfolio Governance)
+# 9. Add an Implementation Plan
 
-Connect live broker data with active plan governance:
+There should be a dedicated layer between recommendations and documentation.
 
-| Asset Class | Strategic Plan | Actual Holdings | Drift |
-| :--- | :---: | :---: | :---: |
-| **Equity** | 65% | 73% | **+8% Overweight** |
-| **Debt** | 25% | 18% | **-7% Underweight** |
-| **Gold** | 7% | 6% | **-1% Underweight** |
-| **Cash** | 3% | 3% | **0% On Track** |
+## Portfolio Transition
 
-### Calculated Consequence
-> *If left unchanged, projected retirement success probability falls from **92% $\to$ 87%** due to increased tail-risk volatility.*
+### Current → Target
 
-**Action**: Provide 1-click **"Correct Allocation"** transition trades.
-
----
-
-## 11. Add Monte Carlo Failure Analysis
-
-Do not stop at P10 / P50 / P90 percentiles. Lead with confidence and root-cause analysis:
-
-1. **How confident are we?**
-   - **92% Probability of Success**
-   - **8% Probability of Shortfall**
-2. **Why do failure scenarios occur?**
-   - **42%**: Poor early-retirement returns (Sequence of Returns Risk)
-   - **26%**: Inflation above assumption (>7.5% p.a.)
-   - **18%**: Excessive early goal spending
-   - **9%**: Longevity outlier (Age 95+)
-   - **5%**: Other / Liquidity shock
-3. **How can we mitigate the risk?**
-
-| Action | New Success Probability |
-| :--- | :---: |
-| **Current Plan** | 92% |
-| **Retire 2 years later (Age 60)** | **96%** |
-| **Reduce living expenses by 10%** | **97%** |
-| **Increase SIP by ₹20k/month** | **95%** |
-| **Increase debt allocation by 10%** | **94%** |
+| Asset | Current | Target |
+|---|---:|---:|
+| Equity | ₹1.82Cr | ₹1.63Cr |
+| Debt | ₹64L | ₹83L |
+| Gold | ₹21L | ₹24L |
+| Liquid | ₹9L | ₹12L |
 
 ---
 
-## 12. Add Reverse Planning
+## Recommended Actions
 
-Complement forward projections (*"Given inputs, what happens?"*) with goal-seeking reverse optimization (*"What do I need to achieve my target?"*).
+### BUY
 
-### Example Target
-$$\mathbf{Target:\ ₹10Cr\ retirement\ corpus\ by\ age\ 55}$$
+- ₹12L Debt
+- ₹3L Gold
 
-The engine solves for all feasible combinations:
-- **Path A**: Invest **₹2.1L/month** (Current age 55 retirement preserved).
-- **Path B**: Defer retirement from **55 $\to$ 58** (Current ₹1.2L SIP preserved).
-- **Path C**: Reduce post-retirement lifestyle spending by **13%**.
-- **Path D (Blended)**: Retire at age 57 with a modest 5% spending moderation and ₹1.4L SIP.
+### REDIRECT SIP
+
+- Equity SIP: ₹80k → ₹55k
+- Debt SIP: ₹30k → ₹55k
+
+### SELL
+
+- ₹8L Equity, subject to tax impact
 
 ---
 
-## 13. Add a Client Meeting Workflow
+## Implementation Cost
 
-Structure the adviser engagement as a 4-meeting journey:
+- Estimated tax: ₹42,000
+- Estimated transaction costs: ₹8,000
 
-```
-Meeting 1 — Discovery
+### Expected allocation after implementation
+
+**65 / 25 / 7 / 3**
+
+The adviser should be able to:
+
+- Apply
+- Export
+- Save as recommendation
+- Compare before/after
+- Record rationale
+
+---
+
+# 10. Add Plan vs Reality
+
+This becomes especially important once broker connectivity is available.
+
+## Your Plan
+
+- Equity: 65%
+- Debt: 25%
+- Gold: 7%
+- Cash: 3%
+
+## Actual Portfolio
+
+- Equity: 73%
+- Debt: 18%
+- Gold: 6%
+- Cash: 3%
+
+### Drift
+
+**+8% equity overweight**
+
+Then calculate the consequence:
+
+> If left unchanged, projected retirement success falls from 92% → 87%.
+
+Then provide:
+
+**Correct Allocation**
+
+and implementation actions.
+
+This makes the broker connection useful for portfolio governance rather than simply displaying live holdings.
+
+---
+
+# 11. Add Monte Carlo Failure Analysis
+
+Do not make the primary user experience:
+
+> P10 / P50 / P90
+
+Lead with:
+
+## How confident are we?
+
+**92%**
+
+Then:
+
+> **8% probability of falling short**
+
+Add:
+
+### Why do the failure scenarios occur?
+
+Example:
+
+- 42% — poor early-retirement returns
+- 26% — inflation above assumption
+- 18% — excessive goal spending
+- 9% — longevity
+- 5% — other
+
+Then:
+
+### How can we reduce the risk?
+
+| Action | Success Probability |
+|---|---:|
+| Current plan | 92% |
+| Retire 2 years later | 96% |
+| Reduce expenses 10% | 97% |
+| Increase SIP ₹20k | 95% |
+| Increase debt allocation | 94% |
+
+This converts probability into decision support.
+
+---
+
+# 12. Add Reverse Planning
+
+Current planning mostly answers:
+
+> Given my inputs, what happens?
+
+Add:
+
+> **What do I need to do to achieve my target?**
+
+Example:
+
+## Target
+
+**₹10Cr retirement corpus by age 55**
+
+The engine solves for:
+
+- Required SIP
+- Required current corpus
+- Maximum annual spending
+- Maximum goal spending
+- Required return
+- Retirement age
+- Required allocation
+
+Then present multiple pathways.
+
+### Path A
+
+Invest ₹2.1L/month.
+
+### Path B
+
+Retire at 58.
+
+### Path C
+
+Reduce retirement spending by 13%.
+
+### Path D
+
+Combine later retirement + lower spending.
+
+This is more useful than a static retirement calculator.
+
+---
+
+# 13. Add a Client Meeting Workflow
+
+For adviser usage, create a guided workflow.
+
+## Meeting 1 — Discovery
+
 Profile → Assets → Cashflow → Goals → Risk
-          ↓
-Meeting 2 — Diagnosis
-Current position → Problems → Scenario analysis
-          ↓
-Meeting 3 — Recommendation
-Target allocation → Funding plan → Rebalancing → Implementation
-          ↓
-Meeting 4 — Delivery
-Dossier → IPS → Action list
-```
 
-### Persistent Progress Indicator
-$$\text{Client Planning Progress — 72\%}$$
-- [x] Discovery
-- [x] Risk Profile
-- [x] Goals
-- [x] Master Plan
-- [ ] Implementation Transition
-- [ ] IPS Sign-off
+↓
+
+## Meeting 2 — Diagnosis
+
+Current position → Problems → Scenario analysis
+
+↓
+
+## Meeting 3 — Recommendation
+
+Target allocation → Funding plan → Rebalancing → Implementation
+
+↓
+
+## Meeting 4 — Delivery
+
+Dossier → IPS → Action list
 
 ---
 
-## 14. Add Decision History & Audit Trail
+## Persistent Progress
 
-Record every strategic plan modification with timestamps and rationales:
+Example:
 
-- **03 Sep 2026**: Retirement age changed `55 → 58` *(Reason: Improve retirement probability from 71% to 92%)*.
-- **03 Sep 2026**: Equity allocation changed `70% → 65%` *(Reason: Risk profile alignment and stagflation stress test)*.
+**Client Planning Progress — 72%**
 
-**Benefits:**
-- Institutional compliance audit trail
+- Discovery ✓
+- Risk ✓
+- Goals ✓
+- Plan ✓
+- Implementation ○
+- IPS ○
+
+This gives the application a narrative and makes it usable during actual client meetings.
+
+---
+
+# 14. Add Decision History
+
+Every important plan change should be recorded.
+
+Example:
+
+### 03 Sep 2026
+
+**Retirement age changed**
+
+55 → 58
+
+**Reason:** Improve retirement probability.
+
+---
+
+### 03 Sep 2026
+
+**Equity allocation changed**
+
+70% → 65%
+
+**Reason:** Risk profile + stress test.
+
+---
+
+This provides:
+
+- Audit trail
 - Adviser accountability
 - Client transparency
-- 1-click ability to revert to previous versions
+- Historical comparison
+- Ability to revert decisions
 
 ---
 
-## 15. Improve the Existing MVO Flow
+# 15. Improve the Existing MVO Flow
 
-Replace the static ₹1Cr proxy asset allocation with dynamic capital routing:
+The current MVO "Add to Assets" behavior uses a fixed ₹1Cr notional for proxy assets.
 
-### "Apply MVO Strategy" Dialog
-Ask the adviser: *Where should these weights be applied?*
-1. **Current Portfolio** (Rebalance existing capital)
-2. **Future SIP Inflows** (Direct ongoing cash flows)
-3. **STP Deployment** (Systematic transfer schedule)
-4. **New Lumpsum Investment** (Enter custom amount, e.g. ₹50,00,000, and calculate exact rupee allocations)
+Replace that with:
 
----
+## Apply MVO Strategy
 
-## 16. Resolve SIP Return Assumption Inconsistency
+Ask:
 
-Establish a single, auditable return assumption framework:
+**Apply these weights to:**
 
-### Return Assumption Sourcing
-- **Market-Derived Consensus** (Historical 10-year rolling CAGR)
-- **Conservative Margin-of-Safety** (Lower quartile return)
-- **Manual Adviser Override** (Custom input with recorded rationale)
+- Current Portfolio
+- Future SIP
+- STP deployment
+- New investment
+- Custom amount
 
-**Clear UI Labeling:**
-- *Equity Return*: `11.2% p.a.` (Source: 10-year market-data estimate) `[Override]`
-- If overridden: `9.0% p.a.` (Source: Adviser override — Conservative buffer)
+If the user selects:
 
----
+**New Investment**
 
-## 17. Advanced Allocation Architecture
+then ask:
 
-Explicitly separate Strategic and Tactical overlays:
+> Investment amount: ₹50,00,000
 
-- **Strategic Layer**:
-  - Mean-Variance Optimization (MVO)
-  - Risk Parity
-  - Black-Litterman Model
-- **Tactical Layer**:
-  - Valuation tilt (PE/PB percentile)
-  - Momentum tilt
-  - Macroeconomic regime overlay
-  - Volatility targeting
+and calculate actual rupee allocations.
 
-*(Note: Unfinished models should be clearly badged as "Advanced Portfolio Lab — Coming Soon" to maintain institutional credibility).*
+This is more intuitive than creating ₹1Cr proxy assets.
 
 ---
 
-## 18. Recommended Final Information Architecture
+# 16. Fix the SIP Return Assumption Inconsistency
 
-```
-CLIENT / ADVISER OS
+The current README notes that the Cashflows tab allows manual equity/debt return assumptions, while the wealth engine currently uses category assumptions from market data/defaults instead.
+
+This should be resolved.
+
+Preferred approach:
+
+### Planning Return Assumption
+
+Allow:
+
+- Market-derived assumption
+- Manual override
+- Conservative assumption
+- Historical assumption
+
+Clearly label the active method.
+
+Example:
+
+> **Equity return assumption: 11.2%**
+>
+> Source: 10-year market-data estimate
+>
+> [Override]
+
+If overridden:
+
+> **Equity return assumption: 9.0%**
+>
+> Source: Adviser override
+
+This makes the model auditable.
+
+---
+
+# 17. Improve Advanced Allocation
+
+The current product documentation indicates that Advanced Allocation links to Black-Litterman, risk parity and tactical overlays, but the route is not yet implemented.
+
+Do not expose unfinished functionality as if it were operational.
+
+Either:
+
+- Remove the navigation temporarily, or
+- Show it as **Advanced Portfolio Lab — Coming Soon**
+
+When implemented, it should eventually include:
+
+### Strategic
+
+- MVO
+- Risk Parity
+- Black-Litterman
+
+### Tactical
+
+- Valuation tilt
+- Momentum tilt
+- Macro overlay
+- Volatility targeting
+
+All tactical changes should be explicitly separated from strategic allocation.
+
+---
+
+# 18. Recommended Final Information Architecture
+
+```text
+CLIENT
 │
 ├── Overview
-│   └── Financial Health / Plan Status / Command Center
+│   └── Financial Health / Plan Status
 │
 ├── Discover
-│   ├── Profile & Family
-│   ├── Assets & Balance Sheet
-│   ├── Cash Flow & Inflows
-│   ├── Goals Architecture
-│   └── Risk Tolerance & Capacity
+│   ├── Profile
+│   ├── Assets
+│   ├── Cashflow
+│   ├── Goals
+│   └── Risk
 │
 ├── Diagnose
-│   ├── Net Worth Aggregation
-│   ├── Retirement Readiness
-│   ├── Goal Funding Gap Analysis
-│   ├── Liquidity & Emergency Buffer
-│   └── Risk Alignment Review
+│   ├── Net Worth
+│   ├── Retirement
+│   ├── Goal Funding
+│   ├── Liquidity
+│   └── Risk
 │
 ├── Plan
-│   ├── Master Plan Simulation
-│   ├── Scenario Lab (What-If Analysis)
-│   ├── Goal Conflict & Funding Waterfall
-│   └── Retirement & SWP Longevity
+│   ├── Master Plan
+│   ├── Scenario Lab
+│   ├── Goal Funding
+│   └── Retirement
 │
 ├── Portfolio
-│   ├── Strategic Asset Allocation
-│   ├── MVO Frontier
-│   ├── Rebalancing & Drift Analysis
-│   ├── Plan vs Reality (Broker Holdings)
-│   └── Crisis Stress-Testing
+│   ├── Allocation
+│   ├── MVO
+│   ├── Rebalancing
+│   ├── Plan vs Reality
+│   └── Stress Test
 │
 ├── Implement
-│   ├── Actionable Recommendations
-│   ├── Buy / Sell / Hold Schedule
-│   ├── SIP Redirection
-│   └── Transition Plan with Tax Drag
+│   ├── Recommendations
+│   ├── Buy / Sell / Hold
+│   ├── SIP Changes
+│   └── Transition Plan
 │
 └── Deliver
-    ├── Financial Reports
-    ├── Investment Policy Statement (IPS)
-    └── 7-Page Executive Client Dossier (PDF)
+    ├── Reports
+    ├── IPS
+    └── Client Dossier
 ```
 
 ---
 
-## 19. Core Product Philosophy
+# 19. Core Product Philosophy
 
-> **The application should stop feeling like:**
-> *"Here are 12 financial calculators."*
->
-> **It should feel like:**
-> *"Here is the client's financial situation, here are the risks, here are the possible futures, and here is what we should do."*
+The application should stop feeling like:
 
-The calculators and quantitative engines remain underneath as transparent, rigorous foundations. The UX becomes the **decision layer** above them.
+> **"Here are 12 financial calculators."**
 
----
+It should feel like:
 
-## 20. Development Priority Roadmap
+> **"Here is the client's financial situation, here are the risks, here are the possible futures, and here is what we should do."**
 
-### Tier 1 — Highest Impact (Core Orchestration)
-- [ ] **Plan Health Score** (Transparent 0–100 composite index with explanatory drivers)
-- [ ] **Central Recommendation Engine** (Rule-based decision intelligence layer)
-- [ ] **Scenario Lab** (Interactive what-if comparison matrix)
-- [ ] **Goal Conflict Detection** (Simultaneous affordability & priority sacrifice engine)
-- [ ] **Implementation Plan** (Transition trades, tax drag, and SIP redirection)
-- [ ] **Plan vs. Reality** (Live broker drift detection & corrective actions)
+The calculators and quantitative engines remain underneath.
 
-### Tier 2 — High Value (Adviser Workflows & Experience)
-- [ ] **Monte Carlo Failure Analysis** (Root-cause diagnosis of failure scenarios)
-- [ ] **Reverse Planning** (Goal-seeking solver for required SIP / retirement age)
-- [ ] **Adviser Mode vs. Client Mode** (Dual persona toggles)
-- [ ] **Decision History & Audit Trail** (Logged changes with rationales)
-- [ ] **Guided 4-Meeting Client Flow**
-- [ ] **Surplus Funding Waterfall**
-
-### Tier 3 — Advanced Quantitative Enhancements
-- [ ] **Black-Litterman Model**
-- [ ] **Risk Parity Allocation**
-- [ ] **Tactical Macro Overlays**
-- [ ] **Tax-Lot Specific Harvesting Optimization**
-- [ ] **Continuous Real-Time Broker Synchronization**
+The UX becomes the decision layer above them.
 
 ---
 
-## 21. Target End-State Workflow
+# 20. Development Priority
 
-```
-UNDERSTAND CLIENT
-       ↓
-DISCOVER & PROFILE
-       ↓
+## Tier 1 — Highest Impact
+
+1. Plan Health Score
+2. Recommendation Engine
+3. Scenario Lab
+4. Goal Conflict Detection
+5. Implementation Plan
+6. Plan vs Reality
+
+## Tier 2
+
+7. Failure Analysis
+8. Reverse Planning
+9. Adviser / Client Mode
+10. Decision History
+11. Guided Client Meeting Flow
+12. Funding Waterfall
+
+## Tier 3
+
+13. Black-Litterman
+14. Risk Parity
+15. Tactical overlays
+16. Tax-lot optimization
+17. Continuous broker synchronization
+
+---
+
+# 21. Target End-State
+
+The final platform should operate as:
+
+```text
+UNDERSTAND
+     ↓
+DISCOVER CLIENT
+     ↓
 BUILD FINANCIAL MODEL
-       ↓
-DIAGNOSE PROBLEMS & GAPS
-       ↓
+     ↓
+DIAGNOSE PROBLEMS
+     ↓
 RUN FUTURE SCENARIOS
-       ↓
+     ↓
 IDENTIFY GOAL CONFLICTS
-       ↓
-OPTIMIZE ASSET ALLOCATION
-       ↓
+     ↓
+OPTIMIZE PORTFOLIO
+     ↓
 GENERATE RECOMMENDATIONS
-       ↓
+     ↓
 BUILD IMPLEMENTATION PLAN
-       ↓
-EXECUTE & RECORD DECISIONS
-       ↓
+     ↓
+EXECUTE / TRACK
+     ↓
 COMPARE PLAN VS REALITY
-       ↓
-MONITOR & GOVERN
-       ↓
-UPDATE MASTER PLAN
+     ↓
+MONITOR
+     ↓
+UPDATE PLAN
 ```
 
-**Guiding Rule:**
-*Every input must propagate through the system, but every output must ultimately answer a client decision.*
+The key principle is:
+
+> **Every input should propagate through the system, but every output should ultimately help answer a decision.**
+
+The existing centralized state and calculation architecture is already well suited to this direction. The next major development effort should therefore focus less on adding isolated calculators and more on **orchestration, recommendation logic, scenario comparison, implementation workflows, and adviser UX**.

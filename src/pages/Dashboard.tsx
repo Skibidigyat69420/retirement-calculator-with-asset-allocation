@@ -17,6 +17,10 @@ import {
   DollarSign,
   Database,
   PiggyBank,
+  Compass,
+  Layers,
+  Briefcase,
+  History,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useCalculator } from '../context/CalculatorContext';
@@ -47,8 +51,12 @@ const tools = [
   { path: '/master-plan', label: 'Master Plan', desc: 'Configure cashflows & assets', icon: Activity },
   { path: '/goal', label: 'Goal Planner', desc: 'Prioritized goal funding', icon: Target },
   { path: '/retirement', label: 'Retirement & SWP', desc: 'Corpus longevity & withdrawal plan', icon: PiggyBank },
+  { path: '/reverse-planning', label: 'Reverse Planning', desc: 'Target solver (SIP, corpus, age)', icon: Compass },
   { path: '/allocation', label: 'Asset Allocation', desc: 'Rebalance portfolio & targets', icon: PieChart },
-  { path: '/mvo', label: 'MVO Optimizer', desc: 'Mean-Variance Frontier', icon: BarChart2 },
+  { path: '/mvo', label: 'MVO Optimizer', desc: 'Continuous frontier + CML ray', icon: BarChart2 },
+  { path: '/advanced-portfolio', label: 'Portfolio Lab', desc: 'Black-Litterman, Risk Parity, TAA', icon: Layers },
+  { path: '/meeting-workflow', label: 'Client Meeting', desc: '4-stage agenda & audit tracker', icon: Briefcase },
+  { path: '/decision-history', label: 'Decision Audit', desc: 'Immutable log & 1-click revert', icon: History },
   { path: '/reports', label: 'Executive Report', desc: 'Comprehensive plan & print', icon: BarChart3 },
   { path: '/ips', label: 'IPS Document', desc: 'Investment Policy Statement', icon: FileText },
   { path: '/calculators', label: 'Calculators', desc: 'SIP, SWP, lumpsum & retirement tools', icon: TrendingUp },
@@ -56,16 +64,12 @@ const tools = [
 ];
 
 const quickActions = [
-  { path: '/risk', label: 'Risk Profile', icon: ShieldCheck },
-  { path: '/master-plan', label: 'Update Plan', icon: Activity },
-  { path: '/goal', label: 'Check Goals', icon: Target },
-  { path: '/retirement', label: 'Retirement & SWP', icon: PiggyBank },
-  { path: '/allocation', label: 'Rebalance', icon: PieChart },
+  { path: '/reverse-planning', label: 'Reverse Plan', icon: Compass },
   { path: '/mvo', label: 'Run MVO', icon: BarChart2 },
-  { path: '/reports', label: 'Plan Report', icon: BarChart3 },
-  { path: '/ips', label: 'IPS', icon: FileText },
-  { path: '/calculators', label: 'Calculators', icon: TrendingUp },
-  { path: '/angel-data', label: 'Angel Data', icon: Database },
+  { path: '/advanced-portfolio', label: 'Portfolio Lab', icon: Layers },
+  { path: '/meeting-workflow', label: 'Client Meeting', icon: Briefcase },
+  { path: '/decision-history', label: 'Decision Log', icon: History },
+  { path: '/reports', label: 'Executive PDF', icon: BarChart3 },
 ];
 
 export const Dashboard = () => {
@@ -303,6 +307,105 @@ export const Dashboard = () => {
           ))}
         </div>
       </Card>
+
+      {/* Institutional Advisory Suite Quick Launch */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Link
+          to="/reverse-planning"
+          className="group relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white border border-slate-700/80 shadow-md hover:shadow-xl hover:border-amber-400/50 transition-all duration-200"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+              <Compass size={20} />
+            </div>
+            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-white/10 text-slate-300">
+              Target Solver
+            </span>
+          </div>
+          <h4 className="text-base font-bold text-white mb-1 group-hover:text-amber-300 transition-colors">
+            Reverse Planning
+          </h4>
+          <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">
+            Target ₹10Cr at age 55 or solve for required SIP, capital injection, and safe retirement runway.
+          </p>
+          <div className="mt-4 flex items-center text-xs font-semibold text-amber-300 gap-1 group-hover:translate-x-1 transition-transform">
+            <span>Solve Targets</span>
+            <ArrowRight size={13} />
+          </div>
+        </Link>
+
+        <Link
+          to="/mvo"
+          className="group relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white border border-slate-700/80 shadow-md hover:shadow-xl hover:border-emerald-400/50 transition-all duration-200"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-400/10 border border-emerald-400/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+              <BarChart2 size={20} />
+            </div>
+            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-white/10 text-slate-300">
+              Frontier + CML
+            </span>
+          </div>
+          <h4 className="text-base font-bold text-white mb-1 group-hover:text-emerald-300 transition-colors">
+            MVO & Monte Carlo
+          </h4>
+          <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">
+            Continuous frontier, Capital Market Line tangent ray, constituent asset dots, and dual-path Monte Carlo.
+          </p>
+          <div className="mt-4 flex items-center text-xs font-semibold text-emerald-300 gap-1 group-hover:translate-x-1 transition-transform">
+            <span>Optimize Frontier</span>
+            <ArrowRight size={13} />
+          </div>
+        </Link>
+
+        <Link
+          to="/advanced-portfolio"
+          className="group relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white border border-slate-700/80 shadow-md hover:shadow-xl hover:border-sky-400/50 transition-all duration-200"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-10 h-10 rounded-xl bg-sky-400/10 border border-sky-400/20 flex items-center justify-center text-sky-400 group-hover:scale-110 transition-transform">
+              <Layers size={20} />
+            </div>
+            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-white/10 text-slate-300">
+              Quant SAA & TAA
+            </span>
+          </div>
+          <h4 className="text-base font-bold text-white mb-1 group-hover:text-sky-300 transition-colors">
+            Portfolio Lab
+          </h4>
+          <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">
+            Black-Litterman subjective views, Risk Parity equal risk contribution, and valuation & momentum overlays.
+          </p>
+          <div className="mt-4 flex items-center text-xs font-semibold text-sky-300 gap-1 group-hover:translate-x-1 transition-transform">
+            <span>Explore Models</span>
+            <ArrowRight size={13} />
+          </div>
+        </Link>
+
+        <Link
+          to="/meeting-workflow"
+          className="group relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white border border-slate-700/80 shadow-md hover:shadow-xl hover:border-purple-400/50 transition-all duration-200"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-400/10 border border-purple-400/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+              <Briefcase size={20} />
+            </div>
+            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-white/10 text-slate-300">
+              Advisory Room
+            </span>
+          </div>
+          <h4 className="text-base font-bold text-white mb-1 group-hover:text-purple-300 transition-colors">
+            Client Meeting
+          </h4>
+          <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">
+            Structured 4-stage client meeting workflow, live agenda tracking, and immutable decision audit trail.
+          </p>
+          <div className="mt-4 flex items-center text-xs font-semibold text-purple-300 gap-1 group-hover:translate-x-1 transition-transform">
+            <span>Open Meeting Flow</span>
+            <ArrowRight size={13} />
+          </div>
+        </Link>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <MetricCard

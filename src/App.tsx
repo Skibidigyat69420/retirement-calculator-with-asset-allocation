@@ -40,6 +40,10 @@ const Reports = lazyNamed(() => import('./pages/Reports'), 'Reports');
 const Dossier = lazyNamed(() => import('./pages/Dossier'), 'Dossier');
 const AngelData = lazyNamed(() => import('./pages/AngelData'), 'AngelData');
 const Calculators = lazyNamed(() => import('./pages/Calculators'), 'Calculators');
+const ReversePlanning = lazyNamed(() => import('./pages/ReversePlanningPage'), 'ReversePlanningPage');
+const AdvancedPortfolio = lazyNamed(() => import('./pages/AdvancedPortfolioPage'), 'AdvancedPortfolioPage');
+const ClientMeeting = lazyNamed(() => import('./pages/ClientMeetingPage'), 'ClientMeetingPage');
+const DecisionHistory = lazyNamed(() => import('./pages/DecisionHistoryPage'), 'DecisionHistoryPage');
 
 function App() {
   return (
@@ -53,8 +57,12 @@ function App() {
               <Route path="/master-plan" element={<MasterPlan />} />
               <Route path="/goal" element={<GoalPlanner />} />
               <Route path="/retirement" element={<Retirement />} />
+              <Route path="/reverse-planning" element={<ReversePlanning />} />
               <Route path="/allocation" element={<Allocation />} />
               <Route path="/mvo" element={<MVO />} />
+              <Route path="/advanced-portfolio" element={<AdvancedPortfolio />} />
+              <Route path="/meeting-workflow" element={<ClientMeeting />} />
+              <Route path="/decision-history" element={<DecisionHistory />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/dossier" element={<Dossier />} />
               <Route path="/calculators" element={<Calculators />} />

@@ -17,7 +17,7 @@ interface RecommendationsListProps {
 }
 
 export const RecommendationsList = ({ recommendations }: RecommendationsListProps) => {
-  const { inputs, updateInputs, showToast } = useCalculator();
+  const { inputs, updateInputs, showToast, logDecision } = useCalculator();
   const [expandedWhy, setExpandedWhy] = useState<Record<string, boolean>>({});
   const [appliedRecs, setAppliedRecs] = useState<Record<string, any>>({}); // recId -> previousState
 
@@ -50,6 +50,17 @@ export const RecommendationsList = ({ recommendations }: RecommendationsListProp
     } else if (rec.actionType === 'build_emergency_reserve') {
       showToast(`Action recorded: Top up ${rec.actionPayload.topUpAmount.toLocaleString('en-IN')} in Liquid Funds`, 'info');
     }
+
+    logDecision({
+      category: (rec.category.toLowerCase() === 'retirement' ? 'retirement' : rec.category.toLowerCase() === 'portfolio' ? 'allocation' : 'cashflow') as any,
+      actionTitle: rec.title,
+      summary: rec.reason,
+      previousValue: rec.whyExplainer.current,
+      newValue: rec.whyExplainer.target,
+      rationale: `${rec.whyExplainer.driver}. Benefit: ${rec.whyExplainer.benefit}`,
+      author: 'Automated System',
+      revertPatch: prevState,
+    });
 
     setAppliedRecs((prev) => ({ ...prev, [rec.id]: prevState }));
   };

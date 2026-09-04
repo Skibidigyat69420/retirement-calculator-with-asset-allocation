@@ -37,6 +37,7 @@ import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/for
 import { MonteCarloFanChart } from '../components/charts/MonteCarloFanChart';
 import { Input } from '../components/ui/Input';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
+import { PlanningAssumptionsModal } from '../components/analytics/PlanningAssumptionsModal';
 import type { AssetCategory, GoalPriority } from '../types';
 
 const categoryOptions: { value: AssetCategory; label: string }[] = [
@@ -82,9 +83,12 @@ export const MasterPlan = () => {
     wealthResult,
     riskProfile,
     showToast,
+    assumptionMode,
+    activeAssumptionSourceLabel,
   } = useCalculator();
 
   const [activeTab, setActiveTab] = useState('profile');
+  const [isAssumptionsModalOpen, setIsAssumptionsModalOpen] = useState(false);
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: <User size={16} /> },
@@ -346,6 +350,30 @@ export const MasterPlan = () => {
 
       {activeTab === 'cashflows' && (
         <div className="space-y-6">
+          {/* Active Return Methodology Banner */}
+          <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-slate-900 text-white rounded-2xl border border-slate-800 shadow-md">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Return Engine Configuration</div>
+                <div className="text-sm font-semibold text-white flex items-center gap-2">
+                  <span>{activeAssumptionSourceLabel}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-white/10 text-amber-300 font-mono uppercase font-semibold">
+                    {assumptionMode} mode
+                  </span>
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAssumptionsModalOpen(true)}
+              className="px-3.5 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold transition-colors border border-white/20 flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>Calibrate / Override Assumptions</span>
+              <span>→</span>
+            </button>
+          </div>
+
           <Card>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-2">
@@ -700,6 +728,11 @@ export const MasterPlan = () => {
           </Card>
         </div>
       )}
+
+      <PlanningAssumptionsModal
+        isOpen={isAssumptionsModalOpen}
+        onClose={() => setIsAssumptionsModalOpen(false)}
+      />
 
       <WorkflowFooter
         prev={{ path: '/risk', label: 'Risk Profile' }}
