@@ -191,6 +191,7 @@ export const PortfolioReturnProjectionCalculator = () => {
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-slate-500">Preset:</span>
           <select
+            aria-label="Preset portfolio allocation template"
             onChange={(e) => handleApplyPreset(e.target.value)}
             className="text-xs font-semibold bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
@@ -429,6 +430,7 @@ export const PortfolioReturnProjectionCalculator = () => {
                         <td className="py-2.5 px-2 text-right">
                           <input
                             type="number"
+                            aria-label={`Weight percentage for ${ac.name}`}
                             value={ac.weight}
                             onChange={(e) =>
                               handleUpdateClass(ac.id, { weight: parseFloat(e.target.value) || 0 })
@@ -445,6 +447,7 @@ export const PortfolioReturnProjectionCalculator = () => {
                           <div className="flex items-center justify-end gap-0.5">
                             <input
                               type="number"
+                              aria-label={`Expected local return for ${ac.name}`}
                               value={ac.returnRate}
                               onChange={(e) =>
                                 handleUpdateClass(ac.id, {
@@ -461,6 +464,7 @@ export const PortfolioReturnProjectionCalculator = () => {
                         {/* Currency */}
                         <td className="py-2.5 px-2">
                           <select
+                            aria-label={`Currency for ${ac.name}`}
                             value={ac.currency}
                             onChange={(e) => handleUpdateClass(ac.id, { currency: e.target.value })}
                             className="w-full font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500"
@@ -478,6 +482,7 @@ export const PortfolioReturnProjectionCalculator = () => {
                           <div className="flex items-center justify-end gap-0.5">
                             <input
                               type="number"
+                              aria-label={`FX drift rate for ${ac.name}`}
                               value={ac.fxRate}
                               onChange={(e) =>
                                 handleUpdateClass(ac.id, {
@@ -509,6 +514,7 @@ export const PortfolioReturnProjectionCalculator = () => {
                           {assetClasses.length > 1 && (
                             <button
                               onClick={() => handleRemoveClass(ac.id)}
+                              aria-label={`Delete ${ac.name} asset class`}
                               className="text-slate-400 hover:text-rose-600 transition-colors p-1"
                               title="Delete asset class"
                             >

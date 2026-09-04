@@ -146,6 +146,7 @@ export const GoalConflictMatrix = () => {
                       <select
                         value={g.priorityRank}
                         onChange={(e) => handlePriorityChange(g.id, parseInt(e.target.value))}
+                        aria-label={`Priority rank for ${g.name}`}
                         className="text-xs font-mono font-bold bg-white border border-slate-200 rounded px-1.5 py-0.5 text-slate-800"
                       >
                         {[1, 2, 3, 4, 5].map((r) => (

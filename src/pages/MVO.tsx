@@ -824,6 +824,7 @@ export const MVO = () => {
 
               <input
                 type="range"
+                aria-label="Portfolio volatility scrubber along efficient frontier"
                 min={Math.round(mvoResult.minVariance.volatility * 100)}
                 max={Math.min(25, Math.round(Math.max(...mvoResult.frontier.map((p) => p.volatility)) * 100))}
                 step={0.1}
