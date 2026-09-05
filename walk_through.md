@@ -4,9 +4,9 @@ I've completely upgraded the system from a single HTML file into a modern, insti
 
 ## What's Inside?
 
-### 1. Modern Architecture (Cloudflare Pages Ready)
+### 1. Modern Architecture (Vercel Ready)
 - **Framework:** Scaffolded a lightning-fast React application using Vite + TypeScript.
-- **Cloudflare Native:** The project is configured with `wrangler.json`, `public/_redirects`, and `public/_headers`. Connect this repository directly to Cloudflare Pages or deploy via Wrangler with zero configuration.
+- **Vercel Native:** The project is configured with `vercel.json` for single-page app rewrites, edge caching, and security headers. Connect this repository directly to Vercel or deploy via the Vercel CLI with zero configuration.
 
 ### 2. The Master Plan Engine 🏆
 Everything feeds into a single unified timeline:
@@ -50,22 +50,21 @@ To build for production:
 npm run build
 ```
 
-### 8. Deploy to Cloudflare Pages 🚀
+### 8. Deploy to Vercel 🚀
  
-**Option A: Cloudflare Pages Git Integration (Recommended)**
-1. Log in to your [Cloudflare Dashboard](https://dash.cloudflare.com).
-2. Navigate to **Workers & Pages** > **Create application** > **Pages** > **Connect to Git**.
-3. Select `Skibidigyat69420/retirement-calculator-with-asset-allocation`.
-4. Build settings:
+**Option A: Vercel Git Integration (Recommended)**
+1. Log in to your [Vercel Dashboard](https://vercel.com).
+2. Click **Add New** > **Project** and import `Skibidigyat69420/retirement-calculator-with-asset-allocation`.
+3. Build settings (automatically detected from `vercel.json`):
    - Framework preset: `Vite`
    - Build command: `npm run build`
-   - Build output directory: `dist`
-5. Click **Save and Deploy**.
+   - Output directory: `dist`
+4. Click **Deploy**.
 
-**Option B: Deploy via Wrangler CLI**
+**Option B: Deploy via Vercel CLI**
 ```bash
 npm run build
-npx wrangler pages deploy dist
+npx vercel --prod
 ```
 
 ### 9. One-Click Full-Site PDF Export 📄

@@ -175,7 +175,7 @@ The status endpoint returns symbol count, source, full date range, default MVO b
 
 ## API Routes & Endpoints
 
-Static routing and API proxying are handled by `public/_redirects` (for Cloudflare Pages) and Vite proxy (for local development).
+Static routing is handled by `vercel.json` and Vite proxy (for local development).
 
 - `GET /api/market-data` — serve the bundled 10-year market data
 - `GET /api/market-status` — bundle metadata and health check
@@ -184,9 +184,7 @@ Static routing and API proxying are handled by `public/_redirects` (for Cloudfla
 ## Project Structure
 
 ```
-├── public/                 # Static assets, _redirects, and _headers for Cloudflare Pages
-│   ├── _headers            # Cloudflare Pages security & caching headers
-│   ├── _redirects          # Cloudflare Pages SPA fallback and Angel One proxy
+├── public/                 # Static assets and bundled market data
 │   └── data/               # Bundled market data served to the frontend
 ├── data/                   # Generated price CSVs and Angel One snapshots
 ├── scripts/                # Python fetchers and Node test scripts
@@ -195,14 +193,14 @@ Static routing and API proxying are handled by `public/_redirects` (for Cloudfla
 │   ├── components/         # Reusable UI, charts, layout
 │   ├── context/            # CalculatorContext — global plan state
 │   ├── hooks/              # useMarketData, useLiveFeed
-│   ├── lib/                # Calculation engines, wealth simulator, MVO
+│   ├── lib/                # Calculation engines, wealth simulator
 │   ├── pages/              # Route-level pages
 │   ├── types/              # TypeScript types
 │   ├── App.tsx             # Router
 │   └── main.tsx            # Entry point
 ├── ips-template/           # CFA-aligned IPS reference template
 ├── .env.example            # Environment variable template
-├── wrangler.json           # Cloudflare Pages / Workers configuration
+├── vercel.json             # Vercel deployment, SPA rewrites & security headers
 └── README.md
 ```
 
@@ -216,7 +214,7 @@ Static routing and API proxying are handled by `public/_redirects` (for Cloudfla
 - Oxlint
 - Angel One SmartAPI (optional live feed)
 - Python 3 + yfinance/pandas/numpy (data fetchers)
-- Cloudflare Pages (hosting & edge CDN)
+- Vercel (hosting & edge CDN)
 
 ## Getting Started
 
@@ -273,24 +271,23 @@ npm run lint
 
 ## Deployment
 
-The project is configured for seamless static hosting on **Cloudflare Pages**.
+The project is configured for static hosting on **Vercel**.
 
-### Deploy via Cloudflare Dashboard (Git-Connected)
-1. In Cloudflare Dashboard, go to **Workers & Pages** > **Create application** > **Pages** > **Connect to Git**.
-2. Select repository `Skibidigyat69420/retirement-calculator-with-asset-allocation`.
-3. Build configuration:
+### Deploy via Vercel Dashboard (Git-Connected)
+1. Import repository `Skibidigyat69420/retirement-calculator-with-asset-allocation` into your [Vercel Dashboard](https://vercel.com).
+2. Build configuration (auto-detected via `vercel.json`):
    - **Framework preset**: `Vite`
    - **Build command**: `npm run build`
-   - **Build output directory**: `dist`
-4. Click **Save and Deploy**.
+   - **Output directory**: `dist`
+3. Click **Deploy**.
 
-### Deploy via Wrangler CLI
+### Deploy via Vercel CLI
 ```bash
 npm run build
-npx wrangler pages deploy dist
+npx vercel --prod
 ```
 
-`public/_redirects` routes `/api/angelone/*` to Angel One SmartAPI and all other paths to `/index.html` for single-page client routing. `public/_headers` configures immutable asset caching and modern security headers.
+`vercel.json` handles SPA fallback rewrites (`/*` -> `/index.html`), asset caching headers, and HTTP security headers.
 
 - **IPS persistence and plan saving:** Plans and questionnaire answers are saved directly in browser local storage for instant access across sessions. You can also export full markdown reports using the **Export MD** download button.
 - **Currency display is INR-first.** `formatCurrency` always formats numbers as ₹. If you hold USD assets, the value is still shown in ₹ unless you mentally apply the FX assumption. The engine does model FX drift and volatility for foreign-currency assets in Monte Carlo projections.
