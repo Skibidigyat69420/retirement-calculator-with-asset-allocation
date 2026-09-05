@@ -294,7 +294,17 @@ export const Allocation = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
-          <h3 className="text-lg font-serif font-bold text-zinc-950 mb-4 flex items-center gap-2"><PieChart size={18} className="text-zinc-500" /> Current Allocation</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-serif font-bold text-zinc-950 flex items-center gap-2">
+              <PieChart size={18} className="text-zinc-500" /> Current Allocation
+            </h3>
+            <Link
+              to="/master-plan?tab=assets"
+              className="text-xs font-semibold text-zinc-700 hover:text-zinc-950 px-2 py-0.5 rounded-lg bg-zinc-100 hover:bg-zinc-200/70 border border-zinc-200 transition-colors flex items-center gap-1"
+            >
+              Manage Assets &rarr;
+            </Link>
+          </div>
           <DonutChart data={currentData} />
         </Card>
         <Card>

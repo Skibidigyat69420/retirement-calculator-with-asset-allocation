@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
-import { Target, Coins, TrendingUp, CheckCircle2, Sparkles, RefreshCw } from 'lucide-react';
+import { Target, Coins, TrendingUp, CheckCircle2, Sparkles, RefreshCw, Trash2 } from 'lucide-react';
 import { NumberInput } from '../ui/NumberInput';
 import { MetricCard } from '../ui/MetricCard';
 import { Card } from '../ui/Card';
@@ -13,12 +13,13 @@ import { Select } from '../ui/Select';
 import { Badge } from '../ui/Badge';
 
 export const GoalCalculator = () => {
-  const { inputs, updateGoal, addGoal, showToast } = useCalculator();
+  const { inputs, updateGoal, addGoal, removeGoal, showToast } = useCalculator();
 
   const [selectedGoalId, setSelectedGoalId] = useState<string>(
     inputs.goals[0]?.id || 'scratchpad',
   );
   const [autoSync, setAutoSync] = useState(true);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const goalOptions = useMemo(() => {
     return [
@@ -83,6 +84,7 @@ export const GoalCalculator = () => {
   const handleSelectGoal = (goalId: string) => {
     setSelectedGoalId(goalId);
     lastLoadedGoalIdRef.current = goalId;
+    setConfirmDelete(false);
     if (goalId === 'scratchpad') {
       showToast('Switched to scratchpad mode.', 'info');
       return;
@@ -94,6 +96,16 @@ export const GoalCalculator = () => {
       setYears(found.yearsToGoal);
       setInflation(found.inflation ?? (inputs.inflation || 5));
       showToast(`Connected to "${found.name}" from Master Plan.`, 'info');
+    }
+  };
+
+  const handleDeleteGoal = () => {
+    if (activePlanGoal) {
+      const goalName = activePlanGoal.name;
+      removeGoal(activePlanGoal.id);
+      setSelectedGoalId('scratchpad');
+      setConfirmDelete(false);
+      showToast(`Removed goal "${goalName}" from plan.`, 'info');
     }
   };
 
@@ -235,34 +247,66 @@ export const GoalCalculator = () => {
             suffix="%"
           />
 
-          <div className="flex flex-col sm:flex-row gap-2 mt-3 pt-2 border-t border-zinc-100">
+          <div className="flex flex-col gap-2 mt-3 pt-2 border-t border-zinc-100">
             {activePlanGoal ? (
               <>
-                <Button
-                  type="button"
-                  onClick={handleUpdatePlanGoal}
-                  className="flex-1 text-xs"
-                  variant="primary"
-                >
-                  Update Plan Goal
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleReloadFromPlan}
-                  className="text-xs"
-                  variant="ghost"
-                  title="Reload original goal values from plan"
-                >
-                  <RefreshCw size={13} className="mr-1" /> Revert
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleSaveAsNewGoal}
-                  className="flex-1 text-xs"
-                  variant="outline"
-                >
-                  Save as New Goal
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    type="button"
+                    onClick={handleUpdatePlanGoal}
+                    className="flex-1 text-xs"
+                    variant="primary"
+                  >
+                    Update Plan Goal
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleReloadFromPlan}
+                    className="text-xs"
+                    variant="ghost"
+                    title="Reload original goal values from plan"
+                  >
+                    <RefreshCw size={13} className="mr-1" /> Revert
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleSaveAsNewGoal}
+                    className="flex-1 text-xs"
+                    variant="outline"
+                  >
+                    Save as New Goal
+                  </Button>
+                </div>
+                <div className="flex justify-end pt-1">
+                  {confirmDelete ? (
+                    <div className="flex items-center gap-1.5 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-lg">
+                      <span className="text-[11px] font-medium text-rose-700">Delete this goal?</span>
+                      <button
+                        type="button"
+                        onClick={handleDeleteGoal}
+                        className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[11px] font-semibold transition-colors"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDelete(false)}
+                        className="px-1.5 py-0.5 bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-200 rounded text-[11px] transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDelete(true)}
+                      className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-2 py-1 rounded transition-colors flex items-center gap-1 font-medium"
+                      title="Delete this goal from the plan"
+                    >
+                      <Trash2 size={13} /> Delete Goal
+                    </button>
+                  )}
+                </div>
               </>
             ) : (
               <Button

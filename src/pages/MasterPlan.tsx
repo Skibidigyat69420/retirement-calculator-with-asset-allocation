@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Plus,
   Trash2,
@@ -100,7 +100,46 @@ export const MasterPlan = () => {
     activeAssumptionSourceLabel,
   } = useCalculator();
 
-  const [activeTab, setActiveTab] = useState('profile');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const paramTab = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(paramTab || 'profile');
+
+  useEffect(() => {
+    if (paramTab && paramTab !== activeTab) {
+      setActiveTab(paramTab);
+    }
+  }, [paramTab]);
+
+  const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab);
+    setSearchParams({ tab: newTab });
+  };
+
+  const [confirmDeleteAssetId, setConfirmDeleteAssetId] = useState<string | null>(null);
+  const [confirmDeleteLoanId, setConfirmDeleteLoanId] = useState<string | null>(null);
+  const [confirmDeleteGoalId, setConfirmDeleteGoalId] = useState<string | null>(null);
+
+  const handleDeleteAsset = (id: string) => {
+    const assetToRemove = inputs.assets.find((a) => a.id === id);
+    removeAsset(id);
+    setConfirmDeleteAssetId(null);
+    showToast(`Removed asset "${assetToRemove?.name || 'Asset'}"`, 'info');
+  };
+
+  const handleDeleteLoan = (id: string) => {
+    const loanToRemove = loans.find((l) => l.id === id);
+    removeLoan(id);
+    setConfirmDeleteLoanId(null);
+    showToast(`Removed liability "${loanToRemove?.name || 'Liability'}"`, 'info');
+  };
+
+  const handleDeleteGoal = (id: string) => {
+    const goalToRemove = inputs.goals.find((g) => g.id === id);
+    removeGoal(id);
+    setConfirmDeleteGoalId(null);
+    showToast(`Removed goal "${goalToRemove?.name || 'Goal'}"`, 'info');
+  };
+
   const [isAssumptionsModalOpen, setIsAssumptionsModalOpen] = useState(false);
 
   // Dedicated Loan Liabilities state, synced reactively with monthly expenditure and localStorage
@@ -307,7 +346,7 @@ export const MasterPlan = () => {
       />
 
       <div className="flex items-center justify-between overflow-x-auto pb-1">
-        <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+        <Tabs tabs={tabs} active={activeTab} onChange={handleTabChange} />
       </div>
 
       {/* TAB 1: CLIENT PROFILE */}
@@ -566,7 +605,7 @@ export const MasterPlan = () => {
                 size="sm"
                 onClick={() => {
                   addAsset({
-                    name: 'Commodities (SGB / Gold)',
+                    name: 'Commodities (Gold/Silver)',
                     category: 'gold',
                     value: 300000,
                     returnRate: 8,
@@ -577,6 +616,40 @@ export const MasterPlan = () => {
                 }}
               >
                 + Commodities
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  addAsset({
+                    name: 'Residential Property / Land',
+                    category: 'realestate',
+                    value: 5000000,
+                    returnRate: 9,
+                    currency: 'INR',
+                    liquidateAtRetirement: false,
+                  });
+                  showToast('Added Real Estate holding', 'success');
+                }}
+              >
+                + Real Estate
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  addAsset({
+                    name: 'Emergency Fund / Liquid Cash',
+                    category: 'liquid',
+                    value: 500000,
+                    returnRate: 6,
+                    currency: 'INR',
+                    liquidateAtRetirement: true,
+                  });
+                  showToast('Added Liquid Cash holding', 'success');
+                }}
+              >
+                + Liquid Cash
               </Button>
               <Button size="sm" onClick={() => addAsset()}>
                 <Plus size={14} className="mr-1" /> Add Custom
@@ -591,10 +664,12 @@ export const MasterPlan = () => {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {inputs.assets.map((asset) => (
+            {inputs.assets.map((asset) => {
+              const share = netWorth > 0 ? (asset.value / netWorth) * 100 : 0;
+              return (
               <Card key={asset.id} variant="subtle">
                 <div className="flex justify-between items-start mb-3 border-b border-zinc-200/80 pb-2.5">
-                  <div className="flex items-center gap-2 w-3/4">
+                  <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: ASSET_COLORS[asset.category] }} />
                     <input
                       type="text"
@@ -603,16 +678,38 @@ export const MasterPlan = () => {
                       aria-label={`Asset name: ${asset.name}`}
                       className="bg-transparent text-sm font-bold text-zinc-950 focus:outline-none focus:border-b focus:border-zinc-900 w-full"
                     />
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 border border-zinc-200 shrink-0" title="Share of gross assets">
+                      {formatPercent(share)}
+                    </span>
                   </div>
-                  <button
-                    onClick={() => removeAsset(asset.id)}
-                    className="p-1 text-zinc-400 hover:text-rose-600 transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 cursor-pointer"
-                    aria-label={`Remove asset ${asset.name}`}
-                    title={`Remove asset ${asset.name}`}
-                    type="button"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  {confirmDeleteAssetId === asset.id ? (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteAsset(asset.id)}
+                        className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[11px] font-semibold transition-colors"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteAssetId(null)}
+                        className="px-1.5 py-0.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200 rounded text-[11px] transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDeleteAssetId(asset.id)}
+                      className="p-1 text-zinc-400 hover:text-rose-600 transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 cursor-pointer shrink-0"
+                      aria-label={`Remove asset ${asset.name}`}
+                      title={`Remove asset ${asset.name}`}
+                      type="button"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-3.5">
                   <CurrencyInput
@@ -647,7 +744,8 @@ export const MasterPlan = () => {
                   />
                 </div>
               </Card>
-            ))}
+            );
+            })}
           </div>
         </div>
       )}
@@ -1054,15 +1152,34 @@ export const MasterPlan = () => {
                     />
                     <Badge variant="danger">Liability</Badge>
                   </div>
-                  <button
-                    onClick={() => removeLoan(loan.id)}
-                    className="p-1 text-zinc-400 hover:text-rose-600 transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 cursor-pointer"
-                    aria-label={`Remove loan ${loan.name}`}
-                    title={`Remove loan ${loan.name}`}
-                    type="button"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  {confirmDeleteLoanId === loan.id ? (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteLoan(loan.id)}
+                        className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[11px] font-semibold transition-colors"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteLoanId(null)}
+                        className="px-1.5 py-0.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200 rounded text-[11px] transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDeleteLoanId(loan.id)}
+                      className="p-1 text-zinc-400 hover:text-rose-600 transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 cursor-pointer shrink-0"
+                      aria-label={`Remove loan ${loan.name}`}
+                      title={`Remove loan ${loan.name}`}
+                      type="button"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3.5 mb-4">
@@ -1159,13 +1276,49 @@ export const MasterPlan = () => {
                     targetAmount: 3000000,
                     yearsToGoal: 5,
                     inflation: 6,
-                    priority: 'important',
+                    priority: 'essential',
                     recurring: false,
                   });
                   showToast('Added Home Down Payment goal milestone', 'success');
                 }}
               >
-                + Home Purchase
+                + Home Downpayment
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                onClick={() => {
+                  addGoal({
+                    name: 'Vehicle Upgrade',
+                    targetAmount: 2000000,
+                    yearsToGoal: 3,
+                    inflation: 5,
+                    priority: 'important',
+                    recurring: false,
+                  });
+                  showToast('Added Vehicle Upgrade goal milestone', 'success');
+                }}
+              >
+                + Vehicle
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                onClick={() => {
+                  addGoal({
+                    name: 'Family Vacation',
+                    targetAmount: 1000000,
+                    yearsToGoal: 2,
+                    inflation: 5,
+                    priority: 'aspirational',
+                    recurring: false,
+                  });
+                  showToast('Added Vacation goal milestone', 'success');
+                }}
+              >
+                + Vacation
               </Button>
               <Button
                 size="sm"
@@ -1173,7 +1326,7 @@ export const MasterPlan = () => {
                 onClick={() => {
                   addGoal({
                     name: `Goal ${inputs.goals.length + 1}`,
-                    targetAmount: 1000000,
+                    targetAmount: 2500000,
                     yearsToGoal: 5,
                     priority: 'important',
                     inflation: inputs.inflation || 5,
@@ -1197,7 +1350,63 @@ export const MasterPlan = () => {
 
           {inputs.goals.length === 0 && (
             <div className="p-8 text-center bg-white rounded-2xl border border-zinc-200">
-              <p className="text-sm text-zinc-600">No goals recorded yet. Click <strong>Add Custom Goal</strong> to establish milestone targets.</p>
+              <p className="text-sm text-zinc-600 mb-3">No goals recorded yet. Choose a preset template below or add a custom milestone.</p>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={() => {
+                    addGoal({
+                      name: 'Child Higher Education',
+                      targetAmount: 3500000,
+                      yearsToGoal: 8,
+                      inflation: 8,
+                      priority: 'essential',
+                      recurring: false,
+                    });
+                    showToast('Added Education goal', 'success');
+                  }}
+                >
+                  + Higher Education
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={() => {
+                    addGoal({
+                      name: 'Home Downpayment',
+                      targetAmount: 5000000,
+                      yearsToGoal: 5,
+                      inflation: 6,
+                      priority: 'essential',
+                      recurring: false,
+                    });
+                    showToast('Added Home Downpayment goal', 'success');
+                  }}
+                >
+                  + Home Downpayment
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={() => {
+                    addGoal({
+                      name: 'Vehicle Upgrade',
+                      targetAmount: 2000000,
+                      yearsToGoal: 3,
+                      inflation: 5,
+                      priority: 'important',
+                      recurring: false,
+                    });
+                    showToast('Added Vehicle Upgrade goal', 'success');
+                  }}
+                >
+                  + Vehicle Upgrade
+                </Button>
+              </div>
             </div>
           )}
 
@@ -1232,18 +1441,34 @@ export const MasterPlan = () => {
                           {isFunded ? 'Funded' : 'Shortfall Risk'}
                         </span>
                       )}
-                      <button
-                        onClick={() => {
-                          removeGoal(goal.id);
-                          showToast('Goal removed', 'info');
-                        }}
-                        className="p-1 text-zinc-400 hover:text-rose-600 transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 cursor-pointer"
-                        aria-label={`Remove goal ${goal.name}`}
-                        title={`Remove goal ${goal.name}`}
-                        type="button"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      {confirmDeleteGoalId === goal.id ? (
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteGoal(goal.id)}
+                            className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[11px] font-semibold transition-colors"
+                          >
+                            Delete
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteGoalId(null)}
+                            className="px-1.5 py-0.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200 rounded text-[11px] transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmDeleteGoalId(goal.id)}
+                          className="p-1 text-zinc-400 hover:text-rose-600 transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 cursor-pointer"
+                          aria-label={`Remove goal ${goal.name}`}
+                          title={`Remove goal ${goal.name}`}
+                          type="button"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   </div>
 
