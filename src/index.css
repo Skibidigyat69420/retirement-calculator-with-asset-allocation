@@ -2,7 +2,7 @@
 
 @theme {
   /* Crisp, intentional monochromatic palette with selective green & red accents */
-  --color-cream: #fafafa;
+  --color-cream: #f8fafc;
   --color-paper: #ffffff;
   --color-warm: #f4f4f5;
   --color-warm-dark: #71717a;
@@ -16,9 +16,9 @@
   --color-textMain: #09090b;
   --color-textMuted: #71717a;
 
-  --font-serif: "Inter", system-ui, -apple-system, sans-serif;
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-serif: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -27,44 +27,73 @@
 
 @layer base {
   body {
-    font-family: "Inter", system-ui, -apple-system, sans-serif;
-    @apply bg-zinc-50 text-textMain min-h-screen antialiased;
-    background-color: #fafafa;
+    font-family: var(--font-sans);
+    @apply text-textMain min-h-screen antialiased;
+    background-color: #f8fafc;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 119, 198, 0.06), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(16, 185, 129, 0.04), transparent);
+    background-attachment: fixed;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    font-family: var(--font-sans);
+    text-wrap: balance;
     @apply text-ink tracking-tight font-semibold;
   }
+  p {
+    text-wrap: pretty;
+  }
+
+  .font-mono,
+  .tabular-nums,
+  [data-tabular="true"] {
+    font-family: var(--font-mono);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
+    font-variant-numeric: tabular-nums;
+  }
+
   input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
-    height: 5px;
+    width: 100%;
+    height: 6px;
     background: #e2e8f0;
     border-radius: 999px;
+    outline: none;
+    cursor: pointer;
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 16px;
-    height: 16px;
-    background: #0f172a;
-    border: 2px solid #fff;
+    width: 18px;
+    height: 18px;
+    background: #09090b;
+    border: 2.5px solid #ffffff;
     border-radius: 50%;
-    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05);
     cursor: pointer;
-    transition: transform 0.15s ease;
+    transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   }
   input[type="range"]::-webkit-slider-thumb:hover {
-    transform: scale(1.15);
+    transform: scale(1.18);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 3px rgba(9, 9, 11, 0.08);
+  }
+  input[type="range"]:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3), 0 2px 8px rgba(0, 0, 0, 0.25);
   }
   input[type="range"]::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    background: #0f172a;
-    border: 2px solid #fff;
+    width: 18px;
+    height: 18px;
+    background: #09090b;
+    border: 2.5px solid #ffffff;
     border-radius: 50%;
-    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05);
     cursor: pointer;
+    transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.18);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 3px rgba(9, 9, 11, 0.08);
   }
 }
 
@@ -72,19 +101,45 @@
   .text-balance {
     text-wrap: balance;
   }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
+  }
+  .glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(226, 232, 240, 0.85);
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+  }
+  .glass-header {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+  }
+  .glow-emerald {
+    box-shadow: 0 0 24px -2px rgba(16, 185, 129, 0.22);
+  }
+  .glow-rose {
+    box-shadow: 0 0 24px -2px rgba(244, 63, 94, 0.22);
+  }
 }
 
-/* Custom scrollbar */
+/* Custom sleek scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 4px;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;

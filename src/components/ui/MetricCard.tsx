@@ -1,6 +1,7 @@
+import React from 'react';
 import { cn } from '../../lib/utils';
 
-interface MetricCardProps {
+export interface MetricCardProps {
   label: string;
   value: string;
   subtext?: string;
@@ -18,19 +19,32 @@ export const MetricCard = ({
   icon,
 }: MetricCardProps) => {
   const variants = {
-    default: 'bg-white border border-zinc-200/90 shadow-2xs hover:shadow-card hover:border-zinc-300 text-zinc-900',
-    navy: 'bg-zinc-950 border border-zinc-900 text-white shadow-xs',
-    gold: 'bg-white border border-zinc-200/90 shadow-2xs hover:shadow-card text-zinc-900',
-    success: 'bg-white border border-emerald-200 shadow-2xs hover:shadow-card text-zinc-900',
-    danger: 'bg-white border border-rose-200 shadow-2xs hover:shadow-card text-zinc-900',
+    default:
+      'bg-white/90 backdrop-blur-sm border border-zinc-200/80 shadow-2xs hover:shadow-card hover:border-zinc-300 text-zinc-900',
+    navy:
+      'bg-zinc-950 border border-zinc-900 text-white shadow-xs hover:border-zinc-800 hover:shadow-sm',
+    gold:
+      'bg-white/90 backdrop-blur-sm border border-amber-200/70 shadow-2xs hover:shadow-card hover:border-amber-300/80 text-zinc-900',
+    success:
+      'bg-white/90 backdrop-blur-sm border border-emerald-200/80 shadow-2xs hover:shadow-card hover:border-emerald-300/90 text-zinc-900',
+    danger:
+      'bg-white/90 backdrop-blur-sm border border-rose-200/80 shadow-2xs hover:shadow-card hover:border-rose-300/90 text-zinc-900',
+  };
+
+  const glowColors = {
+    default: 'bg-zinc-400/[0.04]',
+    navy: 'bg-white/[0.04]',
+    gold: 'bg-amber-500/[0.08]',
+    success: 'bg-emerald-500/[0.08]',
+    danger: 'bg-rose-500/[0.08]',
   };
 
   const mutedColors = {
     default: 'text-zinc-500',
     navy: 'text-zinc-400',
-    gold: 'text-zinc-500',
-    success: 'text-emerald-700/80',
-    danger: 'text-rose-700/80',
+    gold: 'text-amber-800/80',
+    success: 'text-emerald-800/80',
+    danger: 'text-rose-800/80',
   };
 
   const valueColors = {
@@ -42,35 +56,74 @@ export const MetricCard = ({
   };
 
   const iconColors = {
-    default: 'text-zinc-700 bg-zinc-100',
-    navy: 'text-white bg-white/10',
-    gold: 'text-zinc-800 bg-zinc-100',
-    success: 'text-emerald-700 bg-emerald-50',
-    danger: 'text-rose-700 bg-rose-50',
+    default: 'text-zinc-700 bg-zinc-100/90 border border-zinc-200/60 shadow-2xs',
+    navy: 'text-zinc-200 bg-zinc-900/90 border border-zinc-800 shadow-2xs',
+    gold: 'text-amber-800 bg-amber-50 border border-amber-200/60 shadow-2xs',
+    success: 'text-emerald-800 bg-emerald-50 border border-emerald-200/60 shadow-2xs',
+    danger: 'text-rose-800 bg-rose-50 border border-rose-200/60 shadow-2xs',
   };
 
   return (
     <div
       className={cn(
-        'rounded-2xl p-4 sm:p-5 relative transition-all duration-200',
+        'rounded-2xl p-4 sm:p-5 relative overflow-hidden transition-all duration-200 hover:-translate-y-0.5 print:break-inside-avoid',
         variants[variant],
         className,
       )}
     >
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <div className={cn('text-[10px] font-semibold uppercase tracking-wider leading-tight truncate', mutedColors[variant])}>
+      {/* Subtle indicator glow */}
+      <div
+        className={cn(
+          'pointer-events-none absolute -top-10 -right-10 w-28 h-28 rounded-full blur-2xl transition-opacity duration-300',
+          glowColors[variant],
+        )}
+        aria-hidden="true"
+      />
+
+      {/* Top row: uppercase label and sleek pill icon container */}
+      <div className="flex items-center justify-between gap-2.5 mb-2.5 relative z-10">
+        <div
+          className={cn(
+            'text-[11px] font-semibold uppercase tracking-wider leading-tight truncate',
+            mutedColors[variant],
+          )}
+        >
           {label}
         </div>
         {icon && (
-          <div className={cn('shrink-0 p-1.5 rounded-lg text-xs transition-colors', iconColors[variant])}>
+          <div
+            className={cn(
+              'shrink-0 p-1.5 rounded-xl transition-all duration-150 flex items-center justify-center',
+              iconColors[variant],
+            )}
+          >
             {icon}
           </div>
         )}
       </div>
-      <div className={cn('text-xl sm:text-2xl font-sans font-semibold tracking-tight tabular-nums truncate leading-tight', valueColors[variant])}>
+
+      {/* Numerical value: large bold monospace tabular numeral */}
+      <div
+        className={cn(
+          'font-mono text-2xl font-bold tracking-tight tabular-nums truncate leading-tight relative z-10',
+          valueColors[variant],
+        )}
+      >
         {value}
       </div>
-      {subtext && <div className={cn('text-xs mt-1.5 leading-snug line-clamp-2', mutedColors[variant])}>{subtext}</div>}
+
+      {/* Formatted subtext */}
+      {subtext && (
+        <div
+          className={cn(
+            'text-xs mt-2 leading-relaxed line-clamp-2 font-medium relative z-10',
+            mutedColors[variant],
+          )}
+        >
+          {subtext}
+        </div>
+      )}
     </div>
   );
 };
+

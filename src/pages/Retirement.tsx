@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calculator, TrendingUp, AlertTriangle, CheckCircle2, Target, Sparkles, Clock, DollarSign, Umbrella, ArrowRight } from 'lucide-react';
+import { Calculator, TrendingUp, AlertTriangle, CheckCircle2, Target, Sparkles, Clock, DollarSign, Umbrella, ArrowRight, ShieldCheck, Flame, Scale, Zap } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { NumberInput } from '../components/ui/NumberInput';
 import { SectionTitle } from '../components/ui/SectionTitle';
@@ -18,6 +18,7 @@ import { RetirementSensitivityMatrix } from '../components/analytics/RetirementS
 import { StressTestSimulator } from '../components/analytics/StressTestSimulator';
 import { MonteCarloFailureAnalysis } from '../components/analytics/MonteCarloFailureAnalysis';
 import { ScenarioLab } from '../components/analytics/ScenarioLab';
+import { cn } from '../lib/utils';
 
 export const Retirement = () => {
   const { inputs, wealthResult, riskProfile, updateInputs, updateSIP, updateSWP, showToast } = useCalculator();
@@ -118,6 +119,39 @@ export const Retirement = () => {
     ? swpPlan.yearlyData
     : [...swpPlan.yearlyData.slice(0, 10), swpPlan.yearlyData[swpPlan.yearlyData.length - 1]];
 
+  const [simulatedInflation, setSimulatedInflation] = useState<number>(inputs.inflation);
+
+  const simulatedMonthlyNeedAtRetirement = useMemo(
+    () => inputs.swp.monthlyNeedToday * Math.pow(1 + simulatedInflation / 100, yearsToRetirement),
+    [inputs.swp.monthlyNeedToday, simulatedInflation, yearsToRetirement],
+  );
+
+  const simulatedSWPPlan = useMemo(
+    () =>
+      calculateSWP(
+        projectedCorpusAtRetirement,
+        simulatedMonthlyNeedAtRetirement,
+        inputs.swp.postRetirementReturn,
+        simulatedInflation,
+        inputs.swp.taxRate,
+        Math.max(distributionYears, 1),
+      ),
+    [projectedCorpusAtRetirement, simulatedMonthlyNeedAtRetirement, inputs.swp.postRetirementReturn, simulatedInflation, inputs.swp.taxRate, distributionYears],
+  );
+
+  // Longevity Gauge calculations
+  const totalLifespanSpan = Math.max(1, inputs.lifeExpectancy - inputs.currentAge);
+  const accumulationSpan = Math.max(0, inputs.retirementAge - inputs.currentAge);
+  const accumulationPct = (accumulationSpan / totalLifespanSpan) * 100;
+  const fundedRetirementSpan = wealthResult.sustainable
+    ? distributionYears
+    : Math.max(0, (wealthResult.depletionAge ?? inputs.retirementAge) - inputs.retirementAge);
+  const fundedRetirementPct = (fundedRetirementSpan / totalLifespanSpan) * 100;
+  const shortfallSpan = wealthResult.sustainable
+    ? 0
+    : Math.max(0, inputs.lifeExpectancy - (wealthResult.depletionAge ?? inputs.retirementAge));
+  const shortfallPct = (shortfallSpan / totalLifespanSpan) * 100;
+
   const chartData = useMemo(
     () =>
       wealthResult.snapshots.map((s) => ({
@@ -129,13 +163,13 @@ export const Retirement = () => {
     [wealthResult.snapshots],
   );
 
-  const drawdownChartData = useMemo(
-    () =>
-      wealthResult.snapshots
-        .filter((s) => s.phase === 'distribution')
-        .map((s) => ({ label: `Age ${s.age}`, corpus: s.total })),
-    [wealthResult.snapshots],
-  );
+  const drawdownChartData = useMemo(() => {
+    return swpPlan.yearlyData.map((d) => ({
+      label: `Age ${inputs.retirementAge + d.year}`,
+      corpus: d.corpusLeft,
+      withdrawal: d.withdrawn,
+    }));
+  }, [swpPlan.yearlyData, inputs.retirementAge]);
 
   return (
     <div className="space-y-6">
@@ -238,6 +272,111 @@ export const Retirement = () => {
         </Card>
       )}
 
+      {/* Longevity & Solvency Horizon Gauge Card */}
+      <Card className="bg-white border border-zinc-200/90 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-zinc-100">
+          <div>
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={18} className="text-zinc-700" />
+              <h3 className="text-base font-bold text-zinc-950">Longevity & Solvency Horizon Gauge</h3>
+            </div>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              Visual lifespan comparison: accumulation vs funded distribution solvency vs early depletion boundary.
+            </p>
+          </div>
+          <Badge variant={wealthResult.sustainable ? 'success' : 'danger'} className="text-xs font-semibold px-2.5 py-1">
+            {wealthResult.sustainable ? 'Fully Solvent' : `Depletes at Age ${wealthResult.depletionAge}`}
+          </Badge>
+        </div>
+
+        {/* Visual Multi-Segment Lifespan Bar */}
+        <div className="space-y-2 mb-6">
+          <div className="flex items-center justify-between text-xs font-mono font-semibold text-zinc-500">
+            <span>Age {inputs.currentAge} (Now)</span>
+            <span>Age {inputs.retirementAge} (Retirement)</span>
+            {!wealthResult.sustainable && wealthResult.depletionAge && (
+              <span className="text-rose-600 font-bold">Age {wealthResult.depletionAge} (Depleted)</span>
+            )}
+            <span>Age {inputs.lifeExpectancy} (Life Exp.)</span>
+          </div>
+
+          <div className="w-full h-4 bg-zinc-100 rounded-full overflow-hidden flex shadow-inner border border-zinc-200/80">
+            {/* Accumulation Phase */}
+            <div
+              className="bg-zinc-800 transition-all relative group flex items-center justify-center text-[10px] font-bold text-zinc-200"
+              style={{ width: `${Math.max(5, accumulationPct)}%` }}
+              title={`Accumulation: Age ${inputs.currentAge} to ${inputs.retirementAge} (${yearsToRetirement} yrs)`}
+            >
+              <span className="truncate px-1">Accumulation ({yearsToRetirement}y)</span>
+            </div>
+
+            {/* Funded Distribution Phase */}
+            <div
+              className="bg-emerald-500 transition-all relative group flex items-center justify-center text-[10px] font-bold text-emerald-950"
+              style={{ width: `${Math.max(5, fundedRetirementPct)}%` }}
+              title={`Funded Retirement: Age ${inputs.retirementAge} to ${wealthResult.sustainable ? inputs.lifeExpectancy : wealthResult.depletionAge} (${fundedRetirementSpan} yrs)`}
+            >
+              <span className="truncate px-1">Funded SWP ({fundedRetirementSpan}y)</span>
+            </div>
+
+            {/* Shortfall Phase (if depleted early) */}
+            {shortfallSpan > 0 && (
+              <div
+                className="bg-rose-500 transition-all relative group flex items-center justify-center text-[10px] font-bold text-white"
+                style={{ width: `${Math.max(5, shortfallPct)}%` }}
+                title={`Unfunded Shortfall: Age ${wealthResult.depletionAge} to ${inputs.lifeExpectancy} (${shortfallSpan} yrs)`}
+              >
+                <span className="truncate px-1">Gap ({shortfallSpan}y)</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between text-xs text-zinc-500 pt-1">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-xs bg-zinc-800 inline-block" />
+              Accumulation Horizon ({yearsToRetirement} yrs)
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500 inline-block" />
+              Funded Distribution ({fundedRetirementSpan} yrs)
+            </span>
+            {shortfallSpan > 0 ? (
+              <span className="flex items-center gap-1.5 text-rose-700 font-semibold">
+                <span className="w-2.5 h-2.5 rounded-xs bg-rose-500 inline-block" />
+                Unfunded Shortfall ({shortfallSpan} yrs)
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-emerald-700 font-semibold">
+                <CheckCircle2 size={12} /> Full {distributionYears}y Solvency Buffer
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* 3 Executive Stat Tiles */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200/70">
+            <div className="text-[10px] uppercase tracking-wider font-bold text-zinc-500">Accumulation Window</div>
+            <div className="text-xl font-bold font-mono text-zinc-950 mt-1">{yearsToRetirement} Years</div>
+            <div className="text-xs text-zinc-500 mt-0.5">SIP & active wealth compounding</div>
+          </div>
+          <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200/70">
+            <div className="text-[10px] uppercase tracking-wider font-bold text-zinc-500">Distribution Horizon</div>
+            <div className="text-xl font-bold font-mono text-zinc-950 mt-1">{distributionYears} Years</div>
+            <div className="text-xs text-zinc-500 mt-0.5">From age {inputs.retirementAge} to {inputs.lifeExpectancy}</div>
+          </div>
+          <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200/70">
+            <div className="text-[10px] uppercase tracking-wider font-bold text-zinc-500">Corpus Longevity Verdict</div>
+            <div className={cn("text-xl font-bold font-mono mt-1", wealthResult.sustainable ? "text-emerald-700" : "text-rose-600")}>
+              {wealthResult.sustainable ? `Solvent (Age ${inputs.lifeExpectancy}+)` : `Depletes Age ${wealthResult.depletionAge}`}
+            </div>
+            <div className="text-xs text-zinc-500 mt-0.5">
+              {wealthResult.sustainable ? `${distributionYears}y full coverage guaranteed` : `${shortfallSpan}y unfunded deficit before life exp.`}
+            </div>
+          </div>
+        </div>
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
           <div className="flex items-center space-x-2 mb-5">
@@ -307,10 +446,15 @@ export const Retirement = () => {
             <NominalRealChart data={chartData} xKey="label" />
           </Card>
 
-          <Card>
-            <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2">
-              <TrendingUp size={18} className="text-zinc-600" /> Distribution Phase
-            </h3>
+          <Card className="bg-white border border-zinc-200/90 shadow-2xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-zinc-100">
+              <h3 className="text-base font-bold text-zinc-950 flex items-center gap-2">
+                <TrendingUp size={18} className="text-zinc-600" /> SWP Cash Flow & Drawdown Horizon
+              </h3>
+              <span className="text-xs font-mono text-zinc-500">
+                Dual-axis: Annual withdrawals (bars) + remaining corpus (area)
+              </span>
+            </div>
             <SWPDrawdownChart data={drawdownChartData} />
           </Card>
 
@@ -425,6 +569,170 @@ export const Retirement = () => {
               Current drawdown exceeds what the corpus can sustain — apply the sustainable SWP or close the gap above.
             </span>
           )}
+        </div>
+
+        {/* Section B.2: Withdrawal Rate Analysis & Step-Up Inflation Simulation */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Card 1: Withdrawal Rate Analysis */}
+          <Card className="bg-white border border-zinc-200/90 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
+                <div className="flex items-center gap-2">
+                  <Scale size={18} className="text-zinc-600" />
+                  <h3 className="text-base font-bold text-zinc-950">Withdrawal Rate Analysis</h3>
+                </div>
+                <Badge
+                  variant={swpWithdrawalRate <= 4.0 ? 'success' : swpWithdrawalRate <= 5.5 ? 'warning' : 'danger'}
+                  className="text-xs font-semibold"
+                >
+                  {swpWithdrawalRate <= 4.0 ? 'Low Risk' : swpWithdrawalRate <= 5.5 ? 'Moderate Risk' : 'Elevated Risk'}
+                </Badge>
+              </div>
+
+              <p className="text-xs text-zinc-600 leading-relaxed mb-4">
+                Evaluating first-year initial withdrawal rate against the empirical Safe Withdrawal Rate (SWR) rules (Trinity 4% and Indian 3.5%–4.5% inflation-adjusted benchmarks).
+              </p>
+
+              <div className="space-y-3 text-xs">
+                {/* Benchmark Comparison Rows */}
+                <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-100 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-zinc-600 font-medium">Your Gross Initial Withdrawal Rate</span>
+                    <span className={cn(
+                      "font-mono font-bold text-sm",
+                      swpWithdrawalRate <= 4.0 ? "text-emerald-700" : swpWithdrawalRate <= 5.5 ? "text-amber-700" : "text-rose-700"
+                    )}>
+                      {formatPercent(swpWithdrawalRate)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-zinc-600 font-medium">Net Withdrawal Rate (Post-Tax)</span>
+                    <span className="font-mono font-semibold text-zinc-900">
+                      {projectedCorpusAtRetirement > 0 ? formatPercent(((monthlyNeedAtRetirement * 12) / projectedCorpusAtRetirement) * 100) : '0%'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-zinc-600 font-medium">Tax Drag on Annual SWP ({inputs.swp.taxRate}%)</span>
+                    <span className="font-mono font-medium text-rose-700">
+                      +{formatCurrency(grossAnnualAtRetirement - monthlyNeedAtRetirement * 12)} / yr
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-1">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">Benchmark Standards</div>
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-zinc-50 border border-zinc-100">
+                    <span className="text-zinc-700">Trinity Study Rule (30-yr US baseline)</span>
+                    <span className="font-mono font-bold text-zinc-900">4.00%</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-zinc-50 border border-zinc-100">
+                    <span className="text-zinc-700">Indian Longevity Benchmark (5–7% infl.)</span>
+                    <span className="font-mono font-bold text-zinc-900">3.50% – 4.50%</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-emerald-50/70 border border-emerald-200">
+                    <span className="text-emerald-950 font-medium">Max Fully Sustainable Rate (This Plan)</span>
+                    <span className="font-mono font-bold text-emerald-700">
+                      {projectedCorpusAtRetirement > 0
+                        ? formatPercent(((sustainableAtRetirement.monthlyWithdrawal * 12) / (1 - inputs.swp.taxRate / 100) / projectedCorpusAtRetirement) * 100)
+                        : '0%'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-zinc-100 text-[11px] text-zinc-500 flex items-center gap-1.5">
+              <Target size={13} className="text-zinc-400 shrink-0" />
+              <span>Withdrawals under 4.5% historically survive 95%+ of 30-year high-inflation sequences.</span>
+            </div>
+          </Card>
+
+          {/* Card 2: Step-Up Inflation Simulation */}
+          <Card className="bg-white border border-zinc-200/90 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
+                <div className="flex items-center gap-2">
+                  <Flame size={18} className="text-zinc-600" />
+                  <h3 className="text-base font-bold text-zinc-950">Step-Up Inflation Simulation</h3>
+                </div>
+                <span className="text-xs font-mono font-bold text-zinc-700 bg-zinc-100 px-2.5 py-1 rounded-md border border-zinc-200">
+                  Active: {simulatedInflation}% p.a.
+                </span>
+              </div>
+
+              <p className="text-xs text-zinc-600 leading-relaxed mb-4">
+                Test how higher annual step-up inflation accelerates SWP drawdowns and shortens portfolio survival age.
+              </p>
+
+              {/* Preset Selector */}
+              <div className="flex items-center gap-2 mb-4">
+                {[5, 6, 7, 8].map((rate) => (
+                  <button
+                    key={rate}
+                    type="button"
+                    onClick={() => setSimulatedInflation(rate)}
+                    className={cn(
+                      "flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold border transition-all text-center",
+                      simulatedInflation === rate
+                        ? "bg-zinc-950 text-white border-zinc-950 shadow-xs"
+                        : "bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100"
+                    )}
+                  >
+                    {rate}% {rate === 5 ? '(Low)' : rate === 6 ? '(Base)' : rate === 7 ? '(High)' : '(Stress)'}
+                  </button>
+                ))}
+              </div>
+
+              {/* Simulation Results */}
+              <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-100 space-y-2 text-xs">
+                <div className="flex justify-between items-center">
+                  <span className="text-zinc-600">Simulated 1st-Year Monthly SWP:</span>
+                  <span className="font-mono font-bold text-zinc-900">
+                    {formatCurrency(simulatedMonthlyNeedAtRetirement)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-zinc-600">Simulated 10th-Year Monthly SWP:</span>
+                  <span className="font-mono font-bold text-zinc-900">
+                    {formatCurrency(simulatedMonthlyNeedAtRetirement * Math.pow(1 + simulatedInflation / 100, 10))}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-zinc-600">Simulated 20th-Year Monthly SWP:</span>
+                  <span className="font-mono font-bold text-zinc-900">
+                    {formatCurrency(simulatedMonthlyNeedAtRetirement * Math.pow(1 + simulatedInflation / 100, 20))}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pt-1 border-t border-zinc-200/80">
+                  <span className="text-zinc-800 font-semibold">Simulated Longevity Outcome:</span>
+                  <span className={cn(
+                    "font-mono font-bold",
+                    simulatedSWPPlan.sustainable ? "text-emerald-700" : "text-rose-600"
+                  )}>
+                    {simulatedSWPPlan.sustainable ? `Sustainable to Age ${inputs.lifeExpectancy}+` : `Depleted in Year ${simulatedSWPPlan.depletionYear} (Age ${inputs.retirementAge + (simulatedSWPPlan.depletionYear || 0)})`}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between gap-2">
+              <span className="text-[11px] text-zinc-500">Plan inflation setting: {inputs.inflation}%</span>
+              {simulatedInflation !== inputs.inflation && (
+                <Button
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                  className="text-xs font-semibold h-8 text-zinc-900 hover:text-zinc-950"
+                  onClick={() => {
+                    updateInputs({ inflation: simulatedInflation });
+                    showToast(`Updated inflation to ${simulatedInflation}% p.a. across the plan`, 'success');
+                  }}
+                >
+                  <Zap size={13} className="mr-1 fill-current" /> Apply {simulatedInflation}% to Plan
+                </Button>
+              )}
+            </div>
+          </Card>
         </div>
 
         <Card>

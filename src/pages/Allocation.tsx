@@ -1,8 +1,10 @@
 import { useMemo, useState, useEffect } from 'react';
-import { PieChart, TrendingUp, Target, ArrowRight, AlertTriangle, CheckCircle2, Shield, RotateCcw, BarChart3, Zap, DollarSign, Layers } from 'lucide-react';
+import { PieChart, TrendingUp, Target, ArrowRight, AlertTriangle, CheckCircle2, Shield, RotateCcw, BarChart3, Zap, DollarSign, Layers, ArrowUpRight, Scale } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { MetricCard } from '../components/ui/MetricCard';
 import { Slider } from '../components/ui/Slider';
+import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { DonutChart } from '../components/charts/DonutChart';
 import { AssetEvolutionChart } from '../components/charts/AssetEvolutionChart';
@@ -20,6 +22,7 @@ import { PortfolioNavTabs } from '../components/layout/PortfolioNavTabs';
 import { StressTestSimulator } from '../components/analytics/StressTestSimulator';
 import { PlanVsReality } from '../components/analytics/PlanVsReality';
 import { ImplementationTransitionPlan } from '../components/analytics/ImplementationTransitionPlan';
+import { cn } from '../lib/utils';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
 
@@ -201,6 +204,16 @@ export const Allocation = () => {
     [dynamicRebalancingTrades],
   );
 
+  const totalBuys = useMemo(
+    () => dynamicRebalancingTrades.filter((t) => t.trade > 0 && t.action === 'Buy').reduce((sum, t) => sum + t.trade, 0),
+    [dynamicRebalancingTrades],
+  );
+
+  const totalSells = useMemo(
+    () => dynamicRebalancingTrades.filter((t) => t.trade < 0 && t.action === 'Sell').reduce((sum, t) => sum + Math.abs(t.trade), 0),
+    [dynamicRebalancingTrades],
+  );
+
   return (
     <div className="space-y-6">
       <SectionTitle
@@ -212,10 +225,11 @@ export const Allocation = () => {
       <PortfolioNavTabs currentPath="/allocation" />
 
       {maxDrift > 10 && (
-        <div className="bg-zinc-100/80 border border-zinc-200/80 rounded-2xl p-4 flex items-start gap-3 text-zinc-900 shadow-2xs">
-          <AlertTriangle size={18} className="shrink-0 mt-0.5 text-zinc-600" />
+        <div className="bg-amber-50/90 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 text-amber-950 shadow-2xs">
+          <AlertTriangle size={18} className="shrink-0 mt-0.5 text-amber-700" />
           <div className="text-sm">
-            <strong className="font-semibold">Rebalancing recommended:</strong> One or more asset classes drift more than 10% away from policy target. Review the rebalancing execution table below.
+            <strong className="font-semibold">Rebalancing Recommended:</strong> One or more asset classes drift by{' '}
+            <span className="font-mono font-bold">{maxDrift.toFixed(1)}%</span> from target policy (exceeding the 10% threshold). Review the execution tickets below to restore optimal portfolio risk efficiency.
           </div>
         </div>
       )}
@@ -292,95 +306,211 @@ export const Allocation = () => {
         </Card>
       )}
 
+      {/* Current vs Target vs Projected Donut Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-serif font-bold text-zinc-950 flex items-center gap-2">
-              <PieChart size={18} className="text-zinc-500" /> Current Allocation
-            </h3>
-            <Link
-              to="/master-plan?tab=assets"
-              className="text-xs font-semibold text-zinc-700 hover:text-zinc-950 px-2 py-0.5 rounded-lg bg-zinc-100 hover:bg-zinc-200/70 border border-zinc-200 transition-colors flex items-center gap-1"
-            >
-              Manage Assets &rarr;
-            </Link>
-          </div>
-          <DonutChart data={currentData} />
-        </Card>
-        <Card>
-          <h3 className="text-lg font-serif font-bold text-zinc-950 mb-4 flex items-center gap-2"><Target size={18} className="text-zinc-500" /> Target Allocation</h3>
-          <DonutChart data={targetData} />
-        </Card>
-        <Card>
-          <h3 className="text-lg font-serif font-bold text-zinc-950 mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-zinc-500" /> Projected Terminal</h3>
-          <DonutChart data={projectedData} />
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-serif font-bold text-zinc-950 flex items-center gap-2"><Shield size={18} className="text-zinc-500" /> Strategic Target Weights</h3>
-            <Link to="/risk" className="text-xs text-zinc-600 hover:text-zinc-950 underline font-medium">{riskProfile.label}</Link>
-          </div>
-            {CATEGORIES.map((cat) => {
-              return (
-                <Slider
-                  key={cat}
-                  label={ASSET_LABELS[cat]}
-                  value={Math.round(targets[cat])}
-                  onChange={(v) => handleTargetChange(cat, v)}
-                  min={0}
-                  max={100}
-                  suffix="%"
-                />
-              );
-            })}
-          <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-zinc-100">
-            <span className="flex items-center text-xs">
-              <span className="text-zinc-700 font-medium">Total: {formatPercent(Object.values(targets).reduce((a, b) => a + b, 0))}</span>
-              {Math.abs(Object.values(targets).reduce((a, b) => a + b, 0) - 100) > 0.1 && (
-                <span className="ml-2 inline-flex items-center text-zinc-800 bg-zinc-100 px-2 py-0.5 rounded-md font-semibold border border-zinc-200/60">
-                  <AlertTriangle size={12} className="mr-1" /> Total ≠ 100%
-                  <button onClick={normalizeTargets} className="ml-1.5 underline hover:text-zinc-950">Normalize</button>
-                </span>
-              )}
-            </span>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={syncTargetsToCashflows}
-                title="Sync these weights to your monthly SIP & STP allocations in Master Plan"
-                className="text-xs flex items-center text-zinc-600 hover:text-zinc-950 hover:underline font-medium"
+        {/* Card 1: Current Allocation */}
+        <Card className="flex flex-col justify-between bg-white border border-zinc-200/90 shadow-2xs">
+          <div>
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
+              <h3 className="text-base font-bold text-zinc-950 flex items-center gap-2">
+                <PieChart size={18} className="text-zinc-500" /> Current Allocation
+              </h3>
+              <Link
+                to="/master-plan?tab=assets"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-zinc-700 hover:text-zinc-950 px-2.5 py-1 rounded-lg bg-zinc-100 hover:bg-zinc-200/80 border border-zinc-200 transition-colors shadow-2xs"
               >
-                <TrendingUp size={12} className="mr-1 text-zinc-500" /> Sync to SIP/STP
-              </button>
-              <button
-                onClick={() => {
-                  setManualTargets(null);
-                  showToast(`Reset targets to ${riskProfile.label} profile.`, 'info');
-                }}
-                className="text-xs flex items-center text-zinc-600 hover:text-zinc-950 underline font-medium"
-              >
-                <RotateCcw size={12} className="mr-1" /> Reset to {riskProfile.label}
-              </button>
+                Manage Assets <ArrowUpRight size={13} />
+              </Link>
+            </div>
+            <DonutChart data={currentData} />
+          </div>
+          <div className="mt-4 pt-3 border-t border-zinc-100 grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="p-2 rounded-xl bg-zinc-50 border border-zinc-100">
+              <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Net Worth</div>
+              <div className="font-mono font-bold text-zinc-900 mt-0.5">{formatCurrencyCompact(totalValue)}</div>
+            </div>
+            <div className="p-2 rounded-xl bg-zinc-50 border border-zinc-100">
+              <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Eq : Debt</div>
+              <div className="font-mono font-bold text-zinc-900 mt-0.5">
+                {Math.round(wealthResult.currentAllocation.equity * 100)} : {Math.round(wealthResult.currentAllocation.debt * 100)}
+              </div>
+            </div>
+            <div className="p-2 rounded-xl bg-zinc-50 border border-zinc-100">
+              <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Liquid</div>
+              <div className="font-mono font-bold text-zinc-900 mt-0.5">
+                {formatCurrencyCompact((wealthResult.currentAllocation.liquid || 0) * totalValue)}
+              </div>
             </div>
           </div>
         </Card>
 
-        <Card className="lg:col-span-2">
-          <h3 className="text-lg font-serif font-bold text-zinc-950 mb-4">Projected Asset-Class Evolution</h3>
+        {/* Card 2: Target Allocation */}
+        <Card className="flex flex-col justify-between bg-white border border-zinc-200/90 shadow-2xs">
+          <div>
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
+              <h3 className="text-base font-bold text-zinc-950 flex items-center gap-2">
+                <Target size={18} className="text-zinc-500" /> Target Allocation
+              </h3>
+              <Badge variant="outline" className="text-[11px] font-semibold">
+                {riskProfile.label}
+              </Badge>
+            </div>
+            <DonutChart data={targetData} />
+          </div>
+          <div className="mt-4 pt-3 border-t border-zinc-100 grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="p-2 rounded-xl bg-zinc-50 border border-zinc-100">
+              <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Policy Target</div>
+              <div className="font-mono font-bold text-zinc-900 mt-0.5">
+                {Math.round(targets.equity)}% Eq / {Math.round(targets.debt)}% D
+              </div>
+            </div>
+            <div className="p-2 rounded-xl bg-zinc-50 border border-zinc-100">
+              <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Max Drift</div>
+              <div className={cn("font-mono font-bold mt-0.5", maxDrift > 10 ? "text-rose-600" : maxDrift > 5 ? "text-amber-600" : "text-emerald-600")}>
+                {maxDrift.toFixed(1)}%
+              </div>
+            </div>
+            <div className="p-2 rounded-xl bg-zinc-50 border border-zinc-100">
+              <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Status</div>
+              <div className={cn("font-semibold text-[11px] mt-0.5", maxDrift > 10 ? "text-rose-700" : maxDrift > 5 ? "text-amber-700" : "text-emerald-700")}>
+                {maxDrift > 10 ? 'Rebalance' : maxDrift > 5 ? 'Minor Gap' : 'Balanced'}
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Card 3: Projected Terminal */}
+        <Card className="flex flex-col justify-between bg-white border border-zinc-200/90 shadow-2xs">
+          <div>
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
+              <h3 className="text-base font-bold text-zinc-950 flex items-center gap-2">
+                <TrendingUp size={18} className="text-zinc-500" /> Projected Terminal
+              </h3>
+              <span className="text-xs font-mono font-semibold text-zinc-500 bg-zinc-100 px-2.5 py-0.5 rounded-full border border-zinc-200">
+                Age {inputs.lifeExpectancy}
+              </span>
+            </div>
+            <DonutChart data={projectedData} />
+          </div>
+          <div className="mt-4 pt-3 border-t border-zinc-100 grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="p-2 rounded-xl bg-zinc-50 border border-zinc-100">
+              <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Terminal Corpus</div>
+              <div className="font-mono font-bold text-zinc-900 mt-0.5">{formatCurrencyCompact(projectedTotal)}</div>
+            </div>
+            <div className="p-2 rounded-xl bg-zinc-50 border border-zinc-100">
+              <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Success Prob</div>
+              <div className="font-mono font-bold text-emerald-700 mt-0.5">
+                {projection ? formatPercent(projection.probabilityOfSuccess) : '—'}
+              </div>
+            </div>
+            <div className="p-2 rounded-xl bg-zinc-50 border border-zinc-100">
+              <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Horizon</div>
+              <div className="font-mono font-bold text-zinc-900 mt-0.5">{inputs.lifeExpectancy - inputs.currentAge}y</div>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Target Weight Sliders & Asset Evolution */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-1 bg-white border border-zinc-200/90 shadow-2xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
+            <h3 className="text-base font-bold text-zinc-950 flex items-center gap-2">
+              <Shield size={18} className="text-zinc-500" /> Strategic Target Weights
+            </h3>
+            <Link to="/risk" className="text-xs text-zinc-600 hover:text-zinc-950 underline font-medium">
+              {riskProfile.label}
+            </Link>
+          </div>
+          <div className="space-y-3.5">
+            {CATEGORIES.map((cat) => {
+              return (
+                <div key={cat}>
+                  <Slider
+                    label={ASSET_LABELS[cat]}
+                    value={Math.round(targets[cat])}
+                    onChange={(v) => handleTargetChange(cat, v)}
+                    min={0}
+                    max={100}
+                    suffix="%"
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-zinc-100 space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-zinc-600 font-medium">Target Allocation Sum:</span>
+              <span className={cn(
+                "font-mono font-bold px-2 py-0.5 rounded-md text-xs",
+                Math.abs(Object.values(targets).reduce((a, b) => a + b, 0) - 100) < 0.1
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  : "bg-rose-50 text-rose-700 border border-rose-200"
+              )}>
+                {formatPercent(Object.values(targets).reduce((a, b) => a + b, 0))}
+              </span>
+            </div>
+
+            {Math.abs(Object.values(targets).reduce((a, b) => a + b, 0) - 100) > 0.1 && (
+              <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-2 text-xs text-amber-900">
+                <span className="flex items-center gap-1 font-medium">
+                  <AlertTriangle size={13} className="text-amber-600 shrink-0" />
+                  Weights sum ≠ 100%
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  onClick={normalizeTargets}
+                  className="h-7 text-xs font-bold border-amber-300 text-amber-950 hover:bg-amber-100"
+                >
+                  Normalize to 100%
+                </Button>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={syncTargetsToCashflows}
+                title="Sync these weights to your monthly SIP & STP allocations in Master Plan"
+                className="w-full sm:w-auto text-xs font-semibold gap-1.5 h-8 text-zinc-700 hover:text-zinc-950"
+              >
+                <TrendingUp size={13} className="text-zinc-500" /> Sync to SIP/STP
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setManualTargets(null);
+                  showToast(`Reset targets to ${riskProfile.label} profile.`, 'info');
+                }}
+                className="w-full sm:w-auto text-xs text-zinc-600 hover:text-zinc-950 font-medium h-8"
+              >
+                <RotateCcw size={13} className="mr-1" /> Reset to {riskProfile.label}
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="lg:col-span-2 bg-white border border-zinc-200/90 shadow-2xs">
+          <h3 className="text-base font-bold text-zinc-950 mb-4 pb-3 border-b border-zinc-100">Projected Asset-Class Evolution</h3>
           <AssetEvolutionChart data={assetEvolutionData} xKey="label" />
         </Card>
       </div>
 
       {mvoTargets && (
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-serif font-bold text-zinc-950 flex items-center gap-2">
+        <Card className="bg-white border border-zinc-200/90 shadow-2xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
+            <h3 className="text-base font-bold text-zinc-950 flex items-center gap-2">
               <BarChart3 size={18} className="text-zinc-500" /> Markowitz Efficient Targets
             </h3>
           </div>
-          <p className="text-sm text-zinc-600 mb-4">
+          <p className="text-xs text-zinc-600 mb-4">
             Optimal portfolios derived from the parametric mean-variance efficient frontier using full empirical history. These allocations strictly respect your risk profile constraints.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -413,22 +543,41 @@ export const Allocation = () => {
         </Card>
       )}
 
-      <Card>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-serif font-bold text-zinc-950">Rebalancing Analysis & Execution Tickets</h3>
-          <span className="text-xs text-zinc-500 font-medium">Rebalancing threshold: ±2% portfolio drift</span>
+      {/* Rebalancing Execution Tickets Table */}
+      <Card className="bg-white border border-zinc-200/90 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-zinc-100">
+          <div>
+            <h3 className="text-base font-bold text-zinc-950 flex items-center gap-2">
+              <Scale size={18} className="text-zinc-500" /> Rebalancing Analysis & Execution Tickets
+            </h3>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              Rebalancing threshold: ±2% portfolio drift. Generate disciplined Buy/Sell rebalance orders to align with policy targets.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {totalBuys > 0 && (
+              <span className="inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Buys: +{formatCurrencyCompact(totalBuys)}
+              </span>
+            )}
+            {totalSells > 0 && (
+              <span className="inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200">
+                Sells: -{formatCurrencyCompact(totalSells)}
+              </span>
+            )}
+          </div>
         </div>
         <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable rebalancing table">
-          <table className="w-full text-sm">
+          <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-zinc-200 text-left text-[10px] uppercase tracking-wider text-zinc-500">
+              <tr className="border-b border-zinc-200 text-left text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
                 <th className="py-2.5 pr-4">Asset Class</th>
                 <th className="py-2.5 pr-4 text-right">Current Value</th>
                 <th className="py-2.5 pr-4 text-right">Current %</th>
                 <th className="py-2.5 pr-4 text-right">Target %</th>
                 <th className="py-2.5 pr-4 text-right">Projected Terminal %</th>
                 <th className="py-2.5 pr-4 text-right">Rebalance Gap (₹)</th>
-                <th className="py-2.5 pr-4 text-center">Execution Action</th>
+                <th className="py-2.5 pr-2 text-center">Execution Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
@@ -436,7 +585,7 @@ export const Allocation = () => {
                 const projectedPct = (projectedWeights[r.category] || 0) * 100;
                 return (
                   <tr key={r.category} className="hover:bg-zinc-50/70 transition-colors">
-                    <td className="py-3 pr-4 flex items-center font-medium text-zinc-900">
+                    <td className="py-3 pr-4 flex items-center font-semibold text-zinc-900">
                       <span className="w-2.5 h-2.5 rounded-full mr-2 shrink-0" style={{ backgroundColor: ASSET_COLORS[r.category] }} />
                       {ASSET_LABELS[r.category]}
                     </td>
@@ -445,21 +594,21 @@ export const Allocation = () => {
                     <td className="py-3 pr-4 text-right font-mono font-bold text-zinc-900">{formatPercent(r.targetPct)}</td>
                     <td className="py-3 pr-4 text-right font-mono text-zinc-600">{formatPercent(projectedPct)}</td>
                     <td className="py-3 pr-4 text-right font-mono font-bold">
-                      <span className={r.trade > 0 ? 'text-emerald-700' : r.trade < 0 ? 'text-rose-700' : 'text-zinc-500'}>
+                      <span className={r.trade > 0 ? 'text-emerald-700 font-bold' : r.trade < 0 ? 'text-rose-700 font-bold' : 'text-zinc-500'}>
                         {r.trade > 0 ? `+${formatCurrency(r.trade)}` : formatCurrency(r.trade)}
                       </span>
                     </td>
-                    <td className="py-3 pr-4 text-center">
+                    <td className="py-3 pr-2 text-center">
                       {r.action === 'Hold' ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-zinc-100 text-zinc-600 border border-zinc-200">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-zinc-100 text-zinc-600 border border-zinc-200">
                           <CheckCircle2 size={11} className="mr-1 text-zinc-400" /> Hold
                         </span>
                       ) : r.action === 'Buy' ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           Buy
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
                           Sell
                         </span>
                       )}

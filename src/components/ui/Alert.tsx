@@ -1,6 +1,7 @@
+import React from 'react';
 import { cn } from '../../lib/utils';
 
-interface AlertProps {
+export interface AlertProps {
   children: React.ReactNode;
   variant?: 'info' | 'success' | 'warning' | 'danger';
   icon?: React.ComponentType<{ size?: number; className?: string }>;
@@ -9,30 +10,35 @@ interface AlertProps {
 
 export const Alert = ({ children, variant = 'info', icon: Icon, className }: AlertProps) => {
   const variants = {
-    info: 'bg-indigo-50 text-indigo-900 border-indigo-200',
-    success: 'bg-emerald-50 text-emerald-900 border-emerald-200',
-    warning: 'bg-zinc-50 text-zinc-900 border-zinc-200',
-    danger: 'bg-rose-50 text-rose-900 border-rose-200',
+    info: 'bg-sky-50/70 text-sky-950 border-sky-200/80',
+    success: 'bg-emerald-50/70 text-emerald-950 border-emerald-200/80',
+    warning: 'bg-amber-50/70 text-amber-950 border-amber-200/80',
+    danger: 'bg-rose-50/70 text-rose-950 border-rose-200/80',
   };
 
-  const iconColors = {
-    info: 'text-indigo-600',
-    success: 'text-emerald-600',
-    warning: 'text-zinc-600',
-    danger: 'text-rose-600',
+  const iconStyles = {
+    info: 'text-sky-700 bg-sky-100/70 border-sky-200/60',
+    success: 'text-emerald-700 bg-emerald-100/70 border-emerald-200/60',
+    warning: 'text-amber-700 bg-amber-100/70 border-amber-200/60',
+    danger: 'text-rose-700 bg-rose-100/70 border-rose-200/60',
   };
 
   return (
     <div
       role="alert"
       className={cn(
-        'p-4 rounded-2xl border text-sm flex items-start gap-3 shadow-sm',
+        'p-4 rounded-2xl border text-sm flex items-start gap-3.5 shadow-2xs backdrop-blur-xs transition-all',
         variants[variant],
         className,
       )}
     >
-      {Icon && <Icon size={18} className={cn('shrink-0 mt-0.5', iconColors[variant])} />}
-      <div className="flex-1 leading-relaxed">{children}</div>
+      {Icon && (
+        <div className={cn('shrink-0 p-1.5 rounded-xl border flex items-center justify-center', iconStyles[variant])}>
+          <Icon size={16} />
+        </div>
+      )}
+      <div className="flex-1 leading-relaxed font-normal">{children}</div>
     </div>
   );
 };
+

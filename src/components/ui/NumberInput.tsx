@@ -1,17 +1,20 @@
 import { EnhancedNumberInput } from './EnhancedNumberInput';
 
-interface NumberInputProps {
+export interface NumberInputProps {
   label?: string;
   value: number;
   onChange: (val: number) => void;
   suffix?: string;
+  prefix?: string;
   helper?: string;
+  error?: string;
   min?: number;
   max?: number;
   step?: number;
   presets?: { label: string; value: number }[];
   disabled?: boolean;
   className?: string;
+  id?: string;
 }
 
 export const NumberInput = ({
@@ -19,13 +22,16 @@ export const NumberInput = ({
   value,
   onChange,
   suffix,
+  prefix,
   helper,
+  error,
   min,
   max,
   step = 1,
   presets,
   disabled,
   className,
+  id,
 }: NumberInputProps) => {
   return (
     <EnhancedNumberInput
@@ -33,13 +39,17 @@ export const NumberInput = ({
       value={value}
       onChange={onChange}
       suffix={suffix}
+      prefix={prefix}
       helper={helper}
+      error={error}
       min={min}
       max={max}
       step={step}
       presets={presets}
       disabled={disabled}
       className={className}
+      id={id}
     />
   );
 };
+

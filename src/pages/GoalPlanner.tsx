@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Target, TrendingUp, PieChart, Plus, AlertTriangle, CheckCircle2, BarChart3, Trash2, ArrowUpRight } from 'lucide-react';
+import { Target, TrendingUp, PieChart, Plus, AlertTriangle, CheckCircle2, BarChart3, Trash2, ArrowUpRight, Zap } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
 import { Card } from '../components/ui/Card';
 import { NumberInput } from '../components/ui/NumberInput';
@@ -14,6 +14,7 @@ import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/for
 import { useCalculator } from '../context/CalculatorContext';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import { GoalConflictMatrix } from '../components/analytics/GoalConflictMatrix';
+import { cn } from '../lib/utils';
 import type { GoalPriority, Goal } from '../types';
 import type { GoalResult } from '../lib/wealthEngine';
 
@@ -40,7 +41,7 @@ const GOAL_PRESETS = [
 ];
 
 export const GoalPlanner = () => {
-  const { inputs, riskProfile, wealthResult, updateGoal, addGoal, removeGoal, showToast } = useCalculator();
+  const { inputs, riskProfile, wealthResult, updateGoal, addGoal, removeGoal, updateSIP, showToast } = useCalculator();
   const [selectedGoalId, setSelectedGoalId] = useState<string>(inputs.goals[0]?.id || '');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
@@ -103,6 +104,25 @@ export const GoalPlanner = () => {
     if (!simulation || totalRequiredSIP <= 0) return 0;
     return (wealthResult.monthlySIP * simulation.requiredSIP) / totalRequiredSIP;
   }, [simulation, totalRequiredSIP, wealthResult.monthlySIP]);
+
+  // Aggregate portfolio totals across all configured goals
+  const summaryTotals = useMemo(() => {
+    return inputs.goals.reduce(
+      (acc, goal) => {
+        const g = wealthResult.goalResults.find((res) => res.goal.id === goal.id);
+        const inflationRate = goal.inflation ?? inputs.inflation ?? 5;
+        const fv = g?.futureValue ?? Math.round(goal.targetAmount * Math.pow(1 + inflationRate / 100, goal.yearsToGoal));
+        const pv = g?.pvNeeded ?? Math.round(fv / Math.pow(1.11, goal.yearsToGoal));
+        const req = g?.requiredSIP ?? 0;
+        return {
+          totalFV: acc.totalFV + fv,
+          totalPV: acc.totalPV + pv,
+          totalReqSIP: acc.totalReqSIP + req,
+        };
+      },
+      { totalFV: 0, totalPV: 0, totalReqSIP: 0 },
+    );
+  }, [inputs.goals, inputs.inflation, wealthResult.goalResults]);
 
   const histogramData = useMemo(() => {
     if (!simulation || !simulation.probabilityDistribution || simulation.probabilityDistribution.length === 0) return [];
@@ -243,25 +263,31 @@ export const GoalPlanner = () => {
                       setSelectedGoalId(goal.id);
                     }
                   }}
-                  className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer ${
+                  className={cn(
+                    "w-full text-left p-3 rounded-xl border transition-all cursor-pointer",
                     isSelected
-                      ? 'bg-zinc-950 text-white border-zinc-950 shadow-xs'
-                      : 'bg-white border-zinc-200 text-zinc-900 hover:border-zinc-300 hover:bg-zinc-50/70'
-                  }`}
+                      ? "bg-zinc-950 text-white border-zinc-950 shadow-xs"
+                      : "bg-white border-zinc-200 text-zinc-900 hover:border-zinc-300 hover:bg-zinc-50/70"
+                  )}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-semibold truncate">{goal.name}</span>
                     <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                       <span
-                        className={`text-[10px] font-mono uppercase tracking-wider font-bold px-2 py-0.5 rounded-md border ${
+                        className={cn(
+                          "text-[10px] font-mono uppercase tracking-wider font-bold px-2 py-0.5 rounded-md border",
                           isSelected
-                            ? 'bg-zinc-800 text-zinc-200 border-zinc-700'
-                            : goal.priority === 'essential'
-                              ? 'bg-zinc-900 text-white border-zinc-800'
+                            ? goal.priority === 'essential'
+                              ? 'bg-rose-950/80 text-rose-300 border-rose-800'
                               : goal.priority === 'important'
-                                ? 'bg-zinc-100 text-zinc-800 border-zinc-200'
-                                : 'bg-white text-zinc-600 border-zinc-300'
-                        }`}
+                                ? 'bg-blue-950/80 text-blue-300 border-blue-800'
+                                : 'bg-amber-950/80 text-amber-300 border-amber-800'
+                            : goal.priority === 'essential'
+                              ? 'bg-rose-50 text-rose-700 border-rose-200'
+                              : goal.priority === 'important'
+                                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                : 'bg-amber-50 text-amber-700 border-amber-200'
+                        )}
                       >
                         {goal.priority}
                       </span>
@@ -273,9 +299,9 @@ export const GoalPlanner = () => {
                               e.stopPropagation();
                               handleDeleteGoal(goal.id);
                             }}
-                            className="px-1.5 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[10px] font-bold transition-colors"
+                            className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[10px] font-bold shadow-xs transition-colors"
                           >
-                            Del
+                            Confirm
                           </button>
                           <button
                             type="button"
@@ -283,11 +309,14 @@ export const GoalPlanner = () => {
                               e.stopPropagation();
                               setConfirmDeleteId(null);
                             }}
-                            className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${
-                              isSelected ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
-                            }`}
+                            className={cn(
+                              "px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors border",
+                              isSelected
+                                ? "bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700"
+                                : "bg-zinc-100 text-zinc-700 border-zinc-200 hover:bg-zinc-200"
+                            )}
                           >
-                            X
+                            Cancel
                           </button>
                         </div>
                       ) : (
@@ -297,9 +326,10 @@ export const GoalPlanner = () => {
                             e.stopPropagation();
                             setConfirmDeleteId(goal.id);
                           }}
-                          className={`p-1 rounded transition-colors ${
-                            isSelected ? 'text-zinc-400 hover:text-rose-400' : 'text-zinc-400 hover:text-rose-600'
-                          }`}
+                          className={cn(
+                            "p-1 rounded transition-colors",
+                            isSelected ? "text-zinc-400 hover:text-rose-400" : "text-zinc-400 hover:text-rose-600"
+                          )}
                           title={`Delete ${goal.name}`}
                           aria-label={`Delete ${goal.name}`}
                         >
@@ -308,23 +338,40 @@ export const GoalPlanner = () => {
                       )}
                     </div>
                   </div>
-                  <div className={`text-xs mt-1.5 flex items-center justify-between ${isSelected ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                    <span
-                      className={
-                        isSelected
-                          ? 'text-zinc-200 font-semibold'
-                          : !g
-                            ? 'text-zinc-500 font-medium'
-                            : isFunded
-                              ? 'text-emerald-700 font-semibold'
+
+                  {/* Progress Bar & Success Metric */}
+                  <div className="mt-2">
+                    <div className={cn("w-full h-1.5 rounded-full overflow-hidden", isSelected ? "bg-zinc-800" : "bg-zinc-100")}>
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all duration-300",
+                          isFunded ? "bg-emerald-500" : isLow ? "bg-rose-500" : "bg-amber-500"
+                        )}
+                        style={{ width: `${Math.min(100, Math.max(5, successRate * 100))}%` }}
+                      />
+                    </div>
+                    <div className={cn("text-xs mt-1.5 flex items-center justify-between", isSelected ? "text-zinc-400" : "text-zinc-500")}>
+                      <span
+                        className={
+                          isSelected
+                            ? isFunded
+                              ? 'text-emerald-400 font-semibold'
                               : isLow
-                                ? 'text-rose-700 font-semibold'
-                                : 'text-zinc-700 font-semibold'
-                      }
-                    >
-                      {g ? `${formatPercent(successRate * 100)} success` : 'Simulating...'}
-                    </span>
-                    <span className="font-mono">{formatCurrencyCompact(goal.targetAmount)}</span>
+                                ? 'text-rose-400 font-semibold'
+                                : 'text-amber-400 font-semibold'
+                            : !g
+                              ? 'text-zinc-500 font-medium'
+                              : isFunded
+                                ? 'text-emerald-700 font-semibold'
+                                : isLow
+                                  ? 'text-rose-700 font-semibold'
+                                  : 'text-amber-700 font-semibold'
+                        }
+                      >
+                        {g ? `${formatPercent(successRate * 100)} success` : 'Simulating...'}
+                      </span>
+                      <span className="font-mono">{formatCurrencyCompact(goal.targetAmount)}</span>
+                    </div>
                   </div>
                 </div>
               );
@@ -334,6 +381,67 @@ export const GoalPlanner = () => {
 
         {/* Right Columns: Active Goal Detail, Metrics, Histogram & Summary */}
         <div className="lg:col-span-3 space-y-6 min-w-0">
+          {/* Required SIP Gap / Surplus Banner */}
+          {sipGap > 0 ? (
+            <div className="p-4 rounded-xl border border-rose-200 bg-gradient-to-r from-rose-50/90 via-rose-50/50 to-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-rose-100 text-rose-700 shrink-0 mt-0.5">
+                  <AlertTriangle size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-rose-950">
+                      SIP Shortfall: {formatCurrency(Math.ceil(sipGap))} / month
+                    </span>
+                    <Badge variant="danger" className="text-[10px] uppercase font-bold tracking-wider">
+                      Underfunded
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-rose-800/90 mt-0.5 leading-relaxed">
+                    Allocated SIP for <strong className="font-semibold">{selectedGoal.name}</strong> is{' '}
+                    <span className="font-mono font-medium">{formatCurrency(allocatedSIP)}/mo</span> vs required{' '}
+                    <span className="font-mono font-semibold">{formatCurrency(simulation.requiredSIP)}/mo</span>. Increase portfolio SIP to hit the {riskProfile.goalSuccessThreshold}% success probability threshold.
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                className="bg-rose-600 hover:bg-rose-700 text-white font-semibold shrink-0 gap-1.5 shadow-xs"
+                onClick={() => {
+                  const neededIncrease = Math.ceil(sipGap);
+                  updateSIP({ amount: wealthResult.monthlySIP + neededIncrease });
+                  showToast(`Increased portfolio SIP by ${formatCurrency(neededIncrease)}/mo to fund goal gap`, 'success');
+                }}
+              >
+                <Zap size={14} className="fill-current" />
+                Fund Gap (+{formatCurrency(Math.ceil(sipGap))}/mo)
+              </Button>
+            </div>
+          ) : (
+            <div className="p-4 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50/90 via-emerald-50/50 to-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-emerald-100 text-emerald-700 shrink-0 mt-0.5">
+                  <CheckCircle2 size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-emerald-950">
+                      Goal Fully Funded (Surplus +{formatCurrency(Math.abs(Math.round(sipGap)))}/mo)
+                    </span>
+                    <Badge variant="success" className="text-[10px] uppercase font-bold tracking-wider">
+                      On Track
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-emerald-800/90 mt-0.5 leading-relaxed">
+                    Allocated SIP of <span className="font-mono font-medium">{formatCurrency(allocatedSIP)}/mo</span> exceeds the required{' '}
+                    <span className="font-mono font-medium">{formatCurrency(simulation.requiredSIP)}/mo</span> with a{' '}
+                    <span className="font-semibold">{formatPercent(simulation.successRate * 100)}</span> simulated probability of success.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Top Section: Goal Form & Topline Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Goal Configuration Card */}
@@ -772,9 +880,9 @@ export const GoalPlanner = () => {
                                   e.stopPropagation();
                                   handleDeleteGoal(goal.id);
                                 }}
-                                className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[11px] font-semibold transition-colors"
+                                className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[11px] font-bold shadow-xs transition-colors"
                               >
-                                Del
+                                Confirm
                               </button>
                               <button
                                 type="button"
@@ -782,30 +890,63 @@ export const GoalPlanner = () => {
                                   e.stopPropagation();
                                   setConfirmDeleteId(null);
                                 }}
-                                className="px-1.5 py-0.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200 rounded text-[11px] transition-colors"
+                                className="px-1.5 py-0.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200 rounded text-[11px] font-medium transition-colors"
                               >
                                 Cancel
                               </button>
                             </div>
                           ) : (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setConfirmDeleteId(goal.id);
-                              }}
-                              className="text-zinc-400 hover:text-rose-600 p-1 rounded hover:bg-zinc-100 transition-colors"
-                              title={`Delete ${goal.name}`}
-                              aria-label={`Delete ${goal.name}`}
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedGoalId(goal.id)}
+                                className={cn(
+                                  "px-2 py-1 rounded text-xs font-semibold transition-colors",
+                                  isSelected
+                                    ? "bg-zinc-900 text-white"
+                                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+                                )}
+                              >
+                                {isSelected ? 'Active' : 'Edit'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmDeleteId(goal.id);
+                                }}
+                                className="text-zinc-400 hover:text-rose-600 p-1 rounded hover:bg-zinc-100 transition-colors"
+                                title={`Delete ${goal.name}`}
+                                aria-label={`Delete ${goal.name}`}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
                           )}
                         </td>
                       </tr>
                     );
                   })}
                 </tbody>
+                <tfoot className="border-t-2 border-zinc-200 bg-zinc-50/80 font-semibold text-zinc-900">
+                  <tr>
+                    <td colSpan={3} className="py-3 pr-4 text-xs font-bold text-zinc-950">
+                      Total Portfolio Demand ({inputs.goals.length} Goal{inputs.goals.length !== 1 ? 's' : ''})
+                    </td>
+                    <td className="py-3 pr-4 text-right font-mono font-bold text-zinc-950">
+                      {formatCurrencyCompact(summaryTotals.totalFV)}
+                    </td>
+                    <td className="py-3 pr-4 text-right font-mono font-bold text-zinc-700">
+                      {formatCurrencyCompact(summaryTotals.totalPV)}
+                    </td>
+                    <td className="py-3 pr-4 text-right font-mono font-bold text-zinc-950">
+                      {formatCurrency(summaryTotals.totalReqSIP)}
+                    </td>
+                    <td colSpan={4} className="py-3 pr-2 text-right text-[11px] font-medium text-zinc-500">
+                      Allocated monthly SIP: {formatCurrency(wealthResult.monthlySIP)}
+                    </td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           </Card>

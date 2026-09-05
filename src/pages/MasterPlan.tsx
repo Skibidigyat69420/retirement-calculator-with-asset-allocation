@@ -23,6 +23,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useCalculator } from '../context/CalculatorContext';
+import { cn } from '../lib/utils';
 import { Card } from '../components/ui/Card';
 import { NumberInput } from '../components/ui/NumberInput';
 import { CurrencyInput } from '../components/ui/CurrencyInput';
@@ -32,7 +33,6 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { MetricCard } from '../components/ui/MetricCard';
 import { SectionTitle } from '../components/ui/SectionTitle';
-import { Tabs } from '../components/ui/Tabs';
 import { Input } from '../components/ui/Input';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import { PlanningAssumptionsModal } from '../components/analytics/PlanningAssumptionsModal';
@@ -275,12 +275,12 @@ export const MasterPlan = () => {
   }, [inputs.assets]);
 
   const tabs = [
-    { id: 'profile', label: 'Client Profile', icon: <User size={15} /> },
-    { id: 'assets', label: 'Assets & Balance Sheet', icon: <Building2 size={15} /> },
-    { id: 'cashflows', label: 'Cashflows & Savings', icon: <TrendingUp size={15} /> },
-    { id: 'loans', label: 'Loans & EMI', icon: <CreditCard size={15} /> },
-    { id: 'goals', label: 'Goals & Milestones', icon: <Target size={15} /> },
-    { id: 'results', label: 'Projections & Results', icon: <BarChart2 size={15} /> },
+    { id: 'profile', label: 'Client Profile', icon: <User size={15} />, count: null },
+    { id: 'assets', label: 'Assets & Balance Sheet', icon: <Building2 size={15} />, count: inputs.assets.length },
+    { id: 'cashflows', label: 'Cashflows & Savings', icon: <TrendingUp size={15} />, count: null },
+    { id: 'loans', label: 'Loans & Liabilities', icon: <CreditCard size={15} />, count: loans.length },
+    { id: 'goals', label: 'Goals & Milestones', icon: <Target size={15} />, count: inputs.goals.length },
+    { id: 'results', label: 'Projections & Results', icon: <BarChart2 size={15} />, count: null },
   ];
 
   const accData = useMemo(
@@ -345,8 +345,171 @@ export const MasterPlan = () => {
         badge="Step 1 · Planning Foundation"
       />
 
+      {/* Executive Balance Sheet Summary Bar */}
+      <div className="bg-white rounded-2xl border border-zinc-200/90 shadow-2xs p-4 sm:p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 pb-3">
+          <div className="flex items-center gap-2">
+            <Landmark size={18} className="text-zinc-950" />
+            <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-950">Executive Balance Sheet</h2>
+            <span className="text-[11px] text-zinc-500 font-medium hidden sm:inline">· Solvency & Capital Health</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                'text-xs font-mono font-bold px-2.5 py-1 rounded-full border',
+                debtToAssetRatio === 0
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : debtToAssetRatio < 30
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    : debtToAssetRatio <= 50
+                      ? 'bg-amber-50 text-amber-800 border-amber-200'
+                      : 'bg-rose-50 text-rose-700 border-rose-200'
+              )}
+            >
+              {debtToAssetRatio === 0
+                ? '0.0% · Fully Solvent'
+                : debtToAssetRatio < 30
+                  ? `${formatPercent(debtToAssetRatio)} · Conservative Debt`
+                  : debtToAssetRatio <= 50
+                    ? `${formatPercent(debtToAssetRatio)} · Moderate Leverage`
+                    : `${formatPercent(debtToAssetRatio)} · Elevated Leverage`}
+            </span>
+          </div>
+        </div>
+
+        {/* 3-Part Metric Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div
+            onClick={() => handleTabChange('assets')}
+            className="p-3.5 bg-zinc-50/70 hover:bg-zinc-100/70 rounded-xl border border-zinc-200/80 transition-colors cursor-pointer"
+          >
+            <div className="flex items-center justify-between text-xs font-semibold text-zinc-500 mb-1">
+              <span>Gross Assets</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-200/80 text-zinc-700">
+                {inputs.assets.length} Holdings
+              </span>
+            </div>
+            <div className="text-xl sm:text-2xl font-black font-mono text-zinc-950">
+              {formatCurrency(netWorth)}
+            </div>
+            <div className="text-[11px] text-zinc-500 mt-0.5">Total across all asset classes</div>
+          </div>
+
+          <div
+            onClick={() => handleTabChange('loans')}
+            className="p-3.5 bg-zinc-50/70 hover:bg-zinc-100/70 rounded-xl border border-zinc-200/80 transition-colors cursor-pointer"
+          >
+            <div className="flex items-center justify-between text-xs font-semibold text-zinc-500 mb-1">
+              <span>Outstanding Liabilities</span>
+              <span
+                className={cn(
+                  'text-[10px] font-mono px-1.5 py-0.5 rounded font-bold',
+                  totalLiabilities > 0 ? 'bg-rose-100 text-rose-700' : 'bg-zinc-200/80 text-zinc-700'
+                )}
+              >
+                {loans.length} Debts
+              </span>
+            </div>
+            <div
+              className={cn(
+                'text-xl sm:text-2xl font-black font-mono',
+                totalLiabilities > 0 ? 'text-rose-600' : 'text-zinc-950'
+              )}
+            >
+              {formatCurrency(totalLiabilities)}
+            </div>
+            <div className="text-[11px] text-zinc-500 mt-0.5">
+              {totalMonthlyLoanEMI > 0 ? `${formatCurrency(totalMonthlyLoanEMI)}/mo EMI` : 'Zero amortized debt'}
+            </div>
+          </div>
+
+          <div className="p-3.5 bg-zinc-950 text-white rounded-xl border border-zinc-900 shadow-xs">
+            <div className="flex items-center justify-between text-xs font-semibold text-zinc-400 mb-1">
+              <span>Net Balance Sheet</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-emerald-300 font-bold">
+                Assets − Liabilities
+              </span>
+            </div>
+            <div
+              className={cn(
+                'text-xl sm:text-2xl font-black font-mono',
+                netBalanceSheet >= 0 ? 'text-emerald-400' : 'text-rose-400'
+              )}
+            >
+              {formatCurrency(netBalanceSheet)}
+            </div>
+            <div className="text-[11px] text-zinc-400 mt-0.5">True unencumbered wealth</div>
+          </div>
+        </div>
+
+        {/* Visual Asset vs Liability Stacked Bar */}
+        <div className="pt-1">
+          <div className="flex items-center justify-between text-xs font-semibold text-zinc-600 mb-1.5">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block" />
+              Equity Capital: {formatCurrency(Math.max(0, netBalanceSheet))} ({formatPercent(netWorth > 0 ? (Math.max(0, netBalanceSheet) / netWorth) * 100 : 100)})
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
+              Debt Leverage: {formatCurrency(totalLiabilities)} ({formatPercent(netWorth > 0 ? (totalLiabilities / netWorth) * 100 : 0)})
+            </span>
+          </div>
+          <div className="h-2.5 w-full bg-zinc-100 rounded-full overflow-hidden flex border border-zinc-200/80">
+            <div
+              style={{ width: `${Math.max(0, Math.min(100, netWorth > 0 ? (Math.max(0, netBalanceSheet) / netWorth) * 100 : 100))}%` }}
+              className="bg-emerald-600 h-full transition-all duration-300"
+              title="Net unencumbered asset share"
+            />
+            <div
+              style={{ width: `${Math.max(0, Math.min(100, netWorth > 0 ? (totalLiabilities / netWorth) * 100 : 0))}%` }}
+              className="bg-rose-500 h-full transition-all duration-300"
+              title="Debt liability share"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Sleek Segmented Tab Navigation with Icons & Counts */}
       <div className="flex items-center justify-between overflow-x-auto pb-1">
-        <Tabs tabs={tabs} active={activeTab} onChange={handleTabChange} />
+        <div
+          role="tablist"
+          className="inline-flex p-1.5 bg-white/95 backdrop-blur-sm border border-zinc-200/90 rounded-2xl shadow-xs overflow-x-auto max-w-full gap-1.5"
+          style={{ scrollbarWidth: 'none' }}
+        >
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => handleTabChange(tab.id)}
+                className={cn(
+                  'flex items-center gap-2 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl whitespace-nowrap transition-all duration-200 focus:outline-none cursor-pointer',
+                  isActive
+                    ? 'bg-zinc-950 text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/80'
+                )}
+              >
+                <span className={isActive ? 'text-white' : 'text-zinc-400'}>{tab.icon}</span>
+                <span>{tab.label}</span>
+                {tab.count !== null && (
+                  <span
+                    className={cn(
+                      'px-1.5 py-0.2 text-[10px] font-mono font-bold rounded-full border',
+                      isActive
+                        ? 'bg-zinc-800 text-zinc-200 border-zinc-700'
+                        : 'bg-zinc-100 text-zinc-600 border-zinc-200'
+                    )}
+                  >
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* TAB 1: CLIENT PROFILE */}
@@ -566,9 +729,8 @@ export const MasterPlan = () => {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
+              <button
+                type="button"
                 onClick={() => {
                   addAsset({
                     name: 'Diversified Equity MF',
@@ -580,12 +742,13 @@ export const MasterPlan = () => {
                   });
                   showToast('Added Equity Mutual Fund holding', 'success');
                 }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 text-zinc-800 transition-all shadow-2xs cursor-pointer"
               >
+                <span className="w-2 h-2 rounded-full shadow-xs" style={{ backgroundColor: ASSET_COLORS.equity }} />
                 + Equity MF
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
+              </button>
+              <button
+                type="button"
                 onClick={() => {
                   addAsset({
                     name: 'Fixed Deposit / Corporate Bond',
@@ -597,12 +760,13 @@ export const MasterPlan = () => {
                   });
                   showToast('Added Fixed Income holding', 'success');
                 }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 text-zinc-800 transition-all shadow-2xs cursor-pointer"
               >
+                <span className="w-2 h-2 rounded-full shadow-xs" style={{ backgroundColor: ASSET_COLORS.debt }} />
                 + Debt/FD
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
+              </button>
+              <button
+                type="button"
                 onClick={() => {
                   addAsset({
                     name: 'Commodities (Gold/Silver)',
@@ -614,12 +778,13 @@ export const MasterPlan = () => {
                   });
                   showToast('Added Commodities holding', 'success');
                 }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 text-zinc-800 transition-all shadow-2xs cursor-pointer"
               >
+                <span className="w-2 h-2 rounded-full shadow-xs" style={{ backgroundColor: ASSET_COLORS.gold }} />
                 + Commodities
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
+              </button>
+              <button
+                type="button"
                 onClick={() => {
                   addAsset({
                     name: 'Residential Property / Land',
@@ -631,12 +796,13 @@ export const MasterPlan = () => {
                   });
                   showToast('Added Real Estate holding', 'success');
                 }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 text-zinc-800 transition-all shadow-2xs cursor-pointer"
               >
+                <span className="w-2 h-2 rounded-full shadow-xs" style={{ backgroundColor: ASSET_COLORS.realestate }} />
                 + Real Estate
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
+              </button>
+              <button
+                type="button"
                 onClick={() => {
                   addAsset({
                     name: 'Emergency Fund / Liquid Cash',
@@ -648,18 +814,28 @@ export const MasterPlan = () => {
                   });
                   showToast('Added Liquid Cash holding', 'success');
                 }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 text-zinc-800 transition-all shadow-2xs cursor-pointer"
               >
+                <span className="w-2 h-2 rounded-full shadow-xs" style={{ backgroundColor: ASSET_COLORS.liquid }} />
                 + Liquid Cash
-              </Button>
-              <Button size="sm" onClick={() => addAsset()}>
-                <Plus size={14} className="mr-1" /> Add Custom
-              </Button>
+              </button>
+              <button
+                type="button"
+                onClick={() => addAsset()}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white transition-all shadow-2xs cursor-pointer"
+              >
+                <Plus size={14} /> Custom Asset
+              </button>
             </div>
           </div>
 
           {inputs.assets.length === 0 && (
-            <div className="p-8 text-center bg-white rounded-2xl border border-zinc-200">
-              <p className="text-sm text-zinc-600">No assets recorded yet. Use the quick-add buttons above to document holdings.</p>
+            <div className="p-8 text-center bg-white rounded-2xl border border-zinc-200 shadow-2xs">
+              <Building2 size={28} className="mx-auto text-zinc-400 mb-2" />
+              <h4 className="text-sm font-bold text-zinc-950">No Assets Recorded</h4>
+              <p className="text-xs text-zinc-500 mt-1 max-w-md mx-auto">
+                No asset holdings documented yet. Use the quick-add preset buttons above to add diversified holdings.
+              </p>
             </div>
           )}
 
@@ -667,10 +843,10 @@ export const MasterPlan = () => {
             {inputs.assets.map((asset) => {
               const share = netWorth > 0 ? (asset.value / netWorth) * 100 : 0;
               return (
-              <Card key={asset.id} variant="subtle">
-                <div className="flex justify-between items-start mb-3 border-b border-zinc-200/80 pb-2.5">
-                  <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: ASSET_COLORS[asset.category] }} />
+              <Card key={asset.id} variant="subtle" className="border border-zinc-200/90 hover:border-zinc-300 transition-colors shadow-2xs bg-white">
+                <div className="flex justify-between items-start mb-3 border-b border-zinc-100 pb-2.5">
+                  <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
+                    <span className="w-3 h-3 rounded-full shrink-0 shadow-xs ring-2 ring-white" style={{ backgroundColor: ASSET_COLORS[asset.category] }} />
                     <input
                       type="text"
                       value={asset.name}
@@ -678,23 +854,24 @@ export const MasterPlan = () => {
                       aria-label={`Asset name: ${asset.name}`}
                       className="bg-transparent text-sm font-bold text-zinc-950 focus:outline-none focus:border-b focus:border-zinc-900 w-full"
                     />
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 border border-zinc-200 shrink-0" title="Share of gross assets">
-                      {formatPercent(share)}
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 border border-zinc-200 shrink-0 font-semibold" title="Share of gross assets">
+                      {formatPercent(share)} of Assets
                     </span>
                   </div>
                   {confirmDeleteAssetId === asset.id ? (
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0 bg-rose-50 border border-rose-200 px-2 py-1 rounded-lg">
+                      <span className="text-[10px] font-semibold text-rose-800">Delete?</span>
                       <button
                         type="button"
                         onClick={() => handleDeleteAsset(asset.id)}
-                        className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[11px] font-semibold transition-colors"
+                        className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[11px] font-semibold transition-colors cursor-pointer"
                       >
-                        Delete
+                        Confirm
                       </button>
                       <button
                         type="button"
                         onClick={() => setConfirmDeleteAssetId(null)}
-                        className="px-1.5 py-0.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200 rounded text-[11px] transition-colors"
+                        className="px-1.5 py-0.5 bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-200 rounded text-[11px] transition-colors cursor-pointer"
                       >
                         Cancel
                       </button>
@@ -702,7 +879,7 @@ export const MasterPlan = () => {
                   ) : (
                     <button
                       onClick={() => setConfirmDeleteAssetId(asset.id)}
-                      className="p-1 text-zinc-400 hover:text-rose-600 transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 cursor-pointer shrink-0"
+                      className="p-1.5 text-zinc-400 hover:text-rose-600 transition-colors rounded-lg hover:bg-zinc-100 cursor-pointer shrink-0"
                       aria-label={`Remove asset ${asset.name}`}
                       title={`Remove asset ${asset.name}`}
                       type="button"
@@ -1140,8 +1317,8 @@ export const MasterPlan = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {activeLoansWithEMI.map((loan) => (
-              <Card key={loan.id} variant="subtle" className="border-l-4 border-l-rose-600">
-                <div className="flex justify-between items-start mb-3 border-b border-zinc-200/80 pb-2.5">
+              <Card key={loan.id} variant="subtle" className="border border-zinc-200/90 hover:border-zinc-300 transition-all shadow-2xs bg-white border-l-4 border-l-rose-500">
+                <div className="flex justify-between items-start mb-3 border-b border-zinc-100 pb-2.5">
                   <div className="flex items-center gap-2 w-3/4">
                     <input
                       type="text"
@@ -1153,18 +1330,19 @@ export const MasterPlan = () => {
                     <Badge variant="danger">Liability</Badge>
                   </div>
                   {confirmDeleteLoanId === loan.id ? (
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0 bg-rose-50 border border-rose-200 px-2 py-1 rounded-lg">
+                      <span className="text-[10px] font-semibold text-rose-800">Delete?</span>
                       <button
                         type="button"
                         onClick={() => handleDeleteLoan(loan.id)}
-                        className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[11px] font-semibold transition-colors"
+                        className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[11px] font-semibold transition-colors cursor-pointer"
                       >
-                        Delete
+                        Confirm
                       </button>
                       <button
                         type="button"
                         onClick={() => setConfirmDeleteLoanId(null)}
-                        className="px-1.5 py-0.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200 rounded text-[11px] transition-colors"
+                        className="px-1.5 py-0.5 bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-200 rounded text-[11px] transition-colors cursor-pointer"
                       >
                         Cancel
                       </button>
@@ -1172,7 +1350,7 @@ export const MasterPlan = () => {
                   ) : (
                     <button
                       onClick={() => setConfirmDeleteLoanId(loan.id)}
-                      className="p-1 text-zinc-400 hover:text-rose-600 transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 cursor-pointer shrink-0"
+                      className="p-1.5 text-zinc-400 hover:text-rose-600 transition-colors rounded-lg hover:bg-zinc-100 cursor-pointer shrink-0"
                       aria-label={`Remove loan ${loan.name}`}
                       title={`Remove loan ${loan.name}`}
                       type="button"
@@ -1182,7 +1360,24 @@ export const MasterPlan = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3.5 mb-4">
+                {/* Highlighted Amortized Monthly EMI */}
+                <div className="p-3.5 bg-rose-50/70 border border-rose-200/80 rounded-xl flex items-center justify-between mb-4">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700">Amortized Monthly EMI</span>
+                    <div className="text-2xl sm:text-3xl font-black font-mono text-rose-600 tracking-tight mt-0.5">
+                      {formatCurrency(loan.emi)}
+                      <span className="text-xs font-normal text-rose-500 font-sans ml-1.5">/mo</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] font-semibold text-rose-600 uppercase tracking-wider">Annual Cash Flow</span>
+                    <div className="text-xs font-mono font-bold text-rose-900 mt-0.5">
+                      {formatCurrency(loan.emi * 12)}/yr
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 mb-4">
                   <CurrencyInput
                     label="Outstanding Principal"
                     value={loan.principal}
@@ -1200,16 +1395,9 @@ export const MasterPlan = () => {
                     onChange={(v) => updateLoan(loan.id, { tenureYears: v })}
                     suffix="yrs"
                   />
-                  <div className="flex flex-col justify-end">
-                    <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">Calculated EMI</span>
-                    <div className="text-base font-bold font-mono text-rose-700">
-                      {formatCurrency(loan.emi)}
-                      <span className="text-xs font-normal text-zinc-500 font-sans ml-1">/mo</span>
-                    </div>
-                  </div>
                 </div>
 
-                <div className="p-3 bg-zinc-100 rounded-xl border border-zinc-200/80 flex items-center justify-between text-xs mb-3">
+                <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-200/80 flex items-center justify-between text-xs mb-3">
                   <div>
                     <span className="text-zinc-500">Total Interest: </span>
                     <span className="font-mono font-semibold text-zinc-950">{formatCurrency(loan.totalInterest)}</span>
@@ -1220,12 +1408,12 @@ export const MasterPlan = () => {
                   </div>
                 </div>
 
-                <label className="flex items-center space-x-2 text-xs font-semibold text-zinc-900 cursor-pointer">
+                <label className="flex items-center space-x-2 text-xs font-semibold text-zinc-900 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={loan.includeInExpenses}
                     onChange={(e) => updateLoan(loan.id, { includeInExpenses: e.currentTarget.checked })}
-                    className="w-4 h-4 rounded border-zinc-300 text-zinc-950 focus:ring-zinc-950"
+                    className="w-4 h-4 rounded border-zinc-300 text-zinc-950 focus:ring-zinc-950 accent-zinc-950"
                   />
                   <span>Factor EMI into household monthly expenditure</span>
                 </label>

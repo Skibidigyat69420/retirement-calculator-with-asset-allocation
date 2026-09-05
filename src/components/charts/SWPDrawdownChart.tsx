@@ -6,17 +6,21 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  ComposedChart,
+  Bar,
+  Legend,
 } from 'recharts';
 import { formatCurrencyCompact } from '../../lib/formatters';
 import { COLORS } from '../../lib/constants';
 
-interface DataPoint {
+export interface SWPDataPoint {
   label: string;
   corpus: number;
+  withdrawal?: number;
 }
 
 interface SWPDrawdownChartProps {
-  data: DataPoint[];
+  data: SWPDataPoint[];
   xKey?: string;
 }
 
@@ -32,6 +36,79 @@ const TOOLTIP_STYLE = {
 };
 
 export const SWPDrawdownChart = ({ data, xKey = 'label' }: SWPDrawdownChartProps) => {
+  const hasWithdrawals = data.some((d) => d.withdrawal !== undefined && d.withdrawal > 0);
+
+  if (hasWithdrawals) {
+    return (
+      <div className="h-80 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={data} margin={CHART_MARGIN}>
+            <defs>
+              <linearGradient id="colorCorpus" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={COLORS.gold} stopOpacity={0.25} />
+                <stop offset="95%" stopColor={COLORS.gold} stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4e4e7" />
+            <XAxis
+              dataKey={xKey}
+              tick={{ fontSize: 11, fill: '#71717a' }}
+              axisLine={false}
+              tickLine={false}
+              tickMargin={10}
+            />
+            <YAxis
+              yAxisId="left"
+              tickFormatter={formatCurrencyCompact}
+              tick={{ fontSize: 11, fill: '#71717a' }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              tickFormatter={formatCurrencyCompact}
+              tick={{ fontSize: 11, fill: '#0284c7' }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip
+              formatter={(value: any, name: any) => [
+                formatCurrencyCompact(typeof value === 'number' ? value : Number(value)),
+                name,
+              ]}
+              contentStyle={TOOLTIP_STYLE}
+            />
+            <Legend
+              verticalAlign="top"
+              height={36}
+              iconType="circle"
+              iconSize={8}
+              wrapperStyle={{ fontSize: '11px', paddingBottom: '8px' }}
+            />
+            <Bar
+              yAxisId="right"
+              dataKey="withdrawal"
+              name="Annual SWP Cash Flow"
+              fill="#0ea5e9"
+              opacity={0.8}
+              radius={[4, 4, 0, 0]}
+            />
+            <Area
+              yAxisId="left"
+              type="monotone"
+              dataKey="corpus"
+              name="Remaining Corpus"
+              stroke={COLORS.gold}
+              strokeWidth={2.5}
+              fill="url(#colorCorpus)"
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  }
+
   return (
     <div className="h-80 w-full">
       <ResponsiveContainer width="100%" height="100%">

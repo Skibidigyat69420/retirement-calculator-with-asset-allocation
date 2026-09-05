@@ -12,10 +12,10 @@ export const Layout = ({ children }: LayoutProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex bg-cream">
+    <div className="min-h-screen flex relative selection:bg-zinc-900 selection:text-white text-zinc-900">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-navy focus:text-white focus:px-4 focus:py-2 focus:rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-zinc-950 focus:text-white focus:px-4 focus:py-2.5 focus:rounded-xl focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-xs transition-all"
       >
         Skip to main content
       </a>
@@ -25,10 +25,10 @@ export const Layout = ({ children }: LayoutProps) => {
         <TopBar onMenuClick={() => setMobileOpen(true)} mobileOpen={mobileOpen} />
         <motion.main
           id="main-content"
-          initial={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 w-full"
+          transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+          className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 w-full flex flex-col"
         >
           {children}
         </motion.main>
