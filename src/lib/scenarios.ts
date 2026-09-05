@@ -27,7 +27,7 @@ export const defaultClientInputs = (): MasterPlanInputs => ({
     },
     {
       id: 'gold-physical',
-      name: 'Gold — Physical',
+      name: 'Commodities — Physical Gold',
       value: 5000000,
       returnRate: DEFAULT_RATES.goldReturn,
       category: 'gold',
@@ -72,7 +72,7 @@ export const defaultClientInputs = (): MasterPlanInputs => ({
     },
     {
       id: 'gold-digital',
-      name: 'Gold — Digital',
+      name: 'Commodities — Digital Gold',
       value: 133000,
       returnRate: DEFAULT_RATES.goldReturn,
       category: 'gold',

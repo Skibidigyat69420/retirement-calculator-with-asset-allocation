@@ -57,14 +57,9 @@ export interface LoanLiability {
 
 const LOANS_STORAGE_KEY = 'soundthesis_master_plan_loans';
 
-const categoryOptions: { value: AssetCategory; label: string }[] = [
-  { value: 'equity', label: 'Equity' },
-  { value: 'debt', label: 'Debt' },
-  { value: 'gold', label: 'Gold' },
-  { value: 'realestate', label: 'Real Estate' },
-  { value: 'liquid', label: 'Liquid' },
-  { value: 'other', label: 'Other' },
-];
+const categoryOptions: { value: AssetCategory; label: string }[] = (
+  ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'] as AssetCategory[]
+).map((cat) => ({ value: cat, label: ASSET_LABELS[cat] }));
 
 const currencyOptions = [
   { value: 'INR', label: 'INR (₹)' },
@@ -286,14 +281,9 @@ export const MasterPlan = () => {
     if (!terminalSnapshot) return [];
     const total = terminalSnapshot.total;
     const alloc = wealthResult.projectedAllocation;
-    return [
-      { name: 'Equity', value: total * alloc.equity, color: ASSET_COLORS.equity },
-      { name: 'Debt', value: total * alloc.debt, color: ASSET_COLORS.debt },
-      { name: 'Gold', value: total * alloc.gold, color: ASSET_COLORS.gold },
-      { name: 'Real Estate', value: total * alloc.realestate, color: ASSET_COLORS.realestate },
-      { name: 'Liquid', value: total * alloc.liquid, color: ASSET_COLORS.liquid },
-      { name: 'Other', value: total * alloc.other, color: ASSET_COLORS.other },
-    ].filter((d) => d.value > 0);
+    return (['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'] as AssetCategory[])
+      .map((cat) => ({ name: ASSET_LABELS[cat], value: total * alloc[cat], color: ASSET_COLORS[cat] }))
+      .filter((d) => d.value > 0);
   }, [terminalSnapshot, wealthResult.projectedAllocation]);
 
   const monthlyNeedAtRetirement = useMemo(() => {
@@ -576,17 +566,17 @@ export const MasterPlan = () => {
                 size="sm"
                 onClick={() => {
                   addAsset({
-                    name: 'Sovereign Gold Bonds',
+                    name: 'Commodities (SGB / Gold)',
                     category: 'gold',
                     value: 300000,
                     returnRate: 8,
                     currency: 'INR',
                     liquidateAtRetirement: false,
                   });
-                  showToast('Added Gold holding', 'success');
+                  showToast('Added Commodities holding', 'success');
                 }}
               >
-                + Gold SGB
+                + Commodities
               </Button>
               <Button size="sm" onClick={() => addAsset()}>
                 <Plus size={14} className="mr-1" /> Add Custom

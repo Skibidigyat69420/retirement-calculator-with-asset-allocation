@@ -6,7 +6,7 @@ const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'li
 export function categorizeSymbol(symbol: string): AssetCategory {
   const s = symbol.toUpperCase();
   if (s.includes('NIFTY') || s.includes('SENSEX') || s.includes('BEES')) return 'equity';
-  if (s.includes('GOLD')) return 'gold';
+  if (s.includes('GOLD') || s.includes('COMMODITY') || s.includes('SILVER') || s.includes('DBC')) return 'gold';
   if (s.includes('LIQUID') || s.includes('BOND') || s.includes('GILT')) return 'debt';
   if (s.includes('REIT') || s.includes('LAND') || s.includes('PROPERTY')) return 'realestate';
   return 'other';

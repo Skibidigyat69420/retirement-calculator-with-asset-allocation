@@ -176,7 +176,7 @@ export const AngelConnect = () => {
       // The symbol in holdings is usually the tradingsymbol (e.g. RELIANCE-EQ)
       // We do a best-effort match, or default to equity.
       let category = 'equity';
-      if (h.tradingsymbol.includes('GOLD') || h.tradingsymbol.includes('SGB')) category = 'gold';
+      if (h.tradingsymbol.includes('GOLD') || h.tradingsymbol.includes('SGB') || h.tradingsymbol.includes('SILVER') || h.tradingsymbol.includes('COMMODITY')) category = 'gold';
       else if (h.tradingsymbol.includes('LIQUID')) category = 'liquid';
       else if (h.tradingsymbol.includes('GSEC') || h.tradingsymbol.includes('SDL')) category = 'debt';
       
@@ -186,8 +186,9 @@ export const AngelConnect = () => {
 
     Object.entries(grouped).forEach(([cat, val]) => {
       if (val > 0) {
+        const displayName = cat === 'gold' ? 'Commodities' : cat.charAt(0).toUpperCase() + cat.slice(1);
         addAsset({
-          name: `Angel One ${cat.charAt(0).toUpperCase() + cat.slice(1)} Portfolio`,
+          name: `Angel One ${displayName} Portfolio`,
           value: val,
           returnRate: cat === 'equity' ? 12 : cat === 'gold' ? 8 : 6,
           category: cat as any,

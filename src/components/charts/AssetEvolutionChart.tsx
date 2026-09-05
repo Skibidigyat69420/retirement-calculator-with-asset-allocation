@@ -9,7 +9,7 @@ import {
   Legend,
 } from 'recharts';
 import { formatCurrencyCompact } from '../../lib/formatters';
-import { ASSET_COLORS, COLORS } from '../../lib/constants';
+import { ASSET_COLORS, ASSET_LABELS, COLORS } from '../../lib/constants';
 
 interface DataPoint {
   label: string;
@@ -64,12 +64,12 @@ export const AssetEvolutionChart = ({ data, xKey = 'label' }: AssetEvolutionChar
             contentStyle={TOOLTIP_STYLE}
           />
           <Legend verticalAlign="top" height={36} iconType="circle" />
-          <Bar dataKey="equity" name="Equity" stackId="a" fill={ASSET_COLORS.equity} radius={[0, 0, 0, 0]} />
-          <Bar dataKey="debt" name="Debt" stackId="a" fill={ASSET_COLORS.debt} />
-          <Bar dataKey="gold" name="Gold" stackId="a" fill={ASSET_COLORS.gold} />
-          <Bar dataKey="realestate" name="Real Estate" stackId="a" fill={ASSET_COLORS.realestate} />
-          <Bar dataKey="liquid" name="Liquid" stackId="a" fill={ASSET_COLORS.liquid} />
-          <Bar dataKey="other" name="Other" stackId="a" fill={ASSET_COLORS.other} radius={[4, 4, 0, 0]} />
+          <Bar dataKey="equity" name={ASSET_LABELS.equity} stackId="a" fill={ASSET_COLORS.equity} radius={[0, 0, 0, 0]} />
+          <Bar dataKey="debt" name={ASSET_LABELS.debt} stackId="a" fill={ASSET_COLORS.debt} />
+          <Bar dataKey="gold" name={ASSET_LABELS.gold} stackId="a" fill={ASSET_COLORS.gold} />
+          <Bar dataKey="realestate" name={ASSET_LABELS.realestate} stackId="a" fill={ASSET_COLORS.realestate} />
+          <Bar dataKey="liquid" name={ASSET_LABELS.liquid} stackId="a" fill={ASSET_COLORS.liquid} />
+          <Bar dataKey="other" name={ASSET_LABELS.other} stackId="a" fill={ASSET_COLORS.other} radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

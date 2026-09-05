@@ -31,7 +31,7 @@ export const ASSET_COLORS: Record<AssetCategory, string> = {
 export const ASSET_LABELS: Record<AssetCategory, string> = {
   equity: 'Equity',
   debt: 'Debt',
-  gold: 'Gold',
+  gold: 'Commodities',
   realestate: 'Real Estate',
   liquid: 'Liquid',
   other: 'Other',
@@ -43,6 +43,7 @@ export const DEFAULT_RATES = {
   liquidReturn: 7,
   realEstateReturn: 3,
   goldReturn: 10,
+  commoditiesReturn: 10,
   inflation: 5,
   postRetirementReturn: 9,
 };

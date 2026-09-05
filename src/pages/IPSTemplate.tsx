@@ -75,7 +75,7 @@ export interface IPSState {
 const categoryLabels: Record<AssetCategory, string> = {
   equity: 'Equity',
   debt: 'Debt',
-  gold: 'Gold',
+  gold: 'Commodities',
   realestate: 'Real Estate',
   liquid: 'Liquid',
   other: 'Other',
@@ -124,7 +124,7 @@ const defaultState = (): IPSState => ({
   assets: [
     { id: 'a1', name: 'Broad Market Equity Index Funds', category: 'equity', value: 2_500_000 },
     { id: 'a2', name: 'Target Maturity G-Sec Bond Portfolio', category: 'debt', value: 1_500_000 },
-    { id: 'a3', name: 'Sovereign Gold Bonds (SGB)', category: 'gold', value: 500_000 },
+    { id: 'a3', name: 'Sovereign Gold Bonds / Commodities (SGB)', category: 'gold', value: 500_000 },
     { id: 'a4', name: 'Treasury Bills & Overnight Liquid Fund', category: 'liquid', value: 250_000 },
   ],
   notes:
@@ -2052,10 +2052,10 @@ export function parseIPSMarkdown(md: string): IPSState {
     next.allocation.debt = debt.target;
     next.currentAllocation.debt = debt.current;
   }
-  const gold = row('Gold');
-  if (gold) {
-    next.allocation.gold = gold.target;
-    next.currentAllocation.gold = gold.current;
+  const commodities = row('Commodities') || row('Gold');
+  if (commodities) {
+    next.allocation.gold = commodities.target;
+    next.currentAllocation.gold = commodities.current;
   }
   const realestate = row('Real Estate');
   if (realestate) {
@@ -2120,12 +2120,13 @@ export function parseIPSMarkdown(md: string): IPSState {
     const lines = assetsMatch[1].trim().split('\n');
     let idx = 1;
     for (const line of lines) {
-      const m = line.match(/^\s*-\s+(?:\*\*)?(.+?)(?:\*\*)?\s+\((Equity|Debt|Gold|Real Estate|Liquid|Other)\):\s*₹?([\d,]+)/i);
+      const m = line.match(/^\s*-\s+(?:\*\*)?(.+?)(?:\*\*)?\s+\((Equity|Debt|Gold|Commodities|Real Estate|Liquid|Other)\):\s*₹?([\d,]+)/i);
       if (m) {
         const catMap: Record<string, AssetCategory> = {
           Equity: 'equity',
           Debt: 'debt',
           Gold: 'gold',
+          Commodities: 'gold',
           'Real Estate': 'realestate',
           Liquid: 'liquid',
           Other: 'other',

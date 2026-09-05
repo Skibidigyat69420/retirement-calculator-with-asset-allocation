@@ -520,10 +520,10 @@ function portfolioToCategoryTargets(portfolio: Portfolio, symbols: string[], ins
     let cat: AssetCategory = 'other';
     if (inst) {
       if (inst.category === 'index' || inst.category === 'equity') cat = 'equity';
-      else if (inst.category === 'gold') cat = 'gold';
+      else if (inst.category === 'gold' || inst.category === 'commodity') cat = 'gold';
       else if (inst.category === 'debt') {
         cat = sym.includes('LIQUID') ? 'liquid' : 'debt';
-      } else if (inst.category === 'commodity') cat = 'other';
+      }
     } else {
       cat = (categoryMap[instruments[idx]?.category || ''] || 'other') as AssetCategory;
     }
