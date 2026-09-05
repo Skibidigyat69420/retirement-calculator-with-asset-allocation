@@ -75,14 +75,14 @@ export const EnhancedNumberInput = ({
   return (
     <div className={cn('space-y-1.5', className)}>
       {label && (
-        <label htmlFor={inputId} className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+        <label htmlFor={inputId} className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">
           {label}
         </label>
       )}
 
       <div className="relative">
         {prefix && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-500">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-zinc-500">
             {prefix}
           </span>
         )}
@@ -105,17 +105,17 @@ export const EnhancedNumberInput = ({
             if (e.key === 'ArrowDown') { e.preventDefault(); adjust(-step); }
           }}
           className={cn(
-            'w-full bg-white border rounded-xl px-3 py-2.5 text-sm font-medium text-ink placeholder:text-slate-400 transition-all',
+            'w-full bg-white border rounded-xl px-3 py-2.5 text-sm font-medium text-ink placeholder:text-zinc-400 transition-all',
             'focus:border-navy focus:ring-2 focus:ring-navy/10 focus:outline-none',
-            'hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed',
+            'hover:border-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed',
             prefix && 'pl-8',
             suffix && 'pr-10',
-            hasError ? 'border-rose-300' : 'border-slate-200',
+            hasError ? 'border-rose-300' : 'border-zinc-200',
           )}
         />
 
         {suffix && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-500">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-zinc-500">
             {suffix}
           </span>
         )}
@@ -125,7 +125,7 @@ export const EnhancedNumberInput = ({
             type="button"
             onClick={() => adjust(step)}
             disabled={disabled || (max !== undefined && value >= max)}
-            className="p-0.5 text-slate-500 hover:text-navy disabled:opacity-30"
+            className="p-0.5 text-zinc-500 hover:text-navy disabled:opacity-30"
             tabIndex={-1}
             aria-label={`Increase ${label || 'value'}`}
           >
@@ -135,7 +135,7 @@ export const EnhancedNumberInput = ({
             type="button"
             onClick={() => adjust(-step)}
             disabled={disabled || (min !== undefined && value <= min)}
-            className="p-0.5 text-slate-500 hover:text-navy disabled:opacity-30"
+            className="p-0.5 text-zinc-500 hover:text-navy disabled:opacity-30"
             tabIndex={-1}
             aria-label={`Decrease ${label || 'value'}`}
           >
@@ -156,7 +156,7 @@ export const EnhancedNumberInput = ({
                 'px-2 py-0.5 text-[10px] font-medium rounded-md border transition-colors',
                 value === p.value
                   ? 'bg-navy text-white border-navy'
-                  : 'bg-white text-slate-600 border-slate-200 hover:border-navy',
+                  : 'bg-white text-zinc-600 border-zinc-200 hover:border-navy',
                 'disabled:opacity-50',
               )}
             >
@@ -169,7 +169,7 @@ export const EnhancedNumberInput = ({
       {(helper || error || hasError) && (
         <div className="flex items-start gap-1">
           {hasError && <AlertCircle size={12} className="text-rose-500 mt-0.5 shrink-0" />}
-          <p className={cn('text-[10px]', hasError ? 'text-rose-500' : 'text-slate-500')}>
+          <p className={cn('text-[10px]', hasError ? 'text-rose-500' : 'text-zinc-500')}>
             {error || (hasError ? `Value must be between ${min} and ${max}` : helper)}
           </p>
         </div>

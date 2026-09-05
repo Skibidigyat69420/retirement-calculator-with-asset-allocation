@@ -4,9 +4,36 @@
  */
 
 import * as OTPAuth from 'otpauth';
+import * as fs from 'fs';
+import * as path from 'path';
 
-// Configure your credentials or pass via environment variables
-const API_KEY = process.env.ANGEL_API_KEY || 'YOUR_API_KEY';
+// Attempt to load .env file if present
+function loadEnv() {
+  try {
+    const envPath = path.resolve(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+      const lines = fs.readFileSync(envPath, 'utf8').split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+          const [key, ...rest] = trimmed.split('=');
+          const val = rest.join('=').trim().replace(/^["']|["']$/g, '');
+          const cleanKey = key.trim();
+          if (cleanKey && !process.env[cleanKey]) {
+            process.env[cleanKey] = val;
+          }
+        }
+      }
+    }
+  } catch {
+    // Ignore .env read errors
+  }
+}
+
+loadEnv();
+
+// Configure your credentials or pass via environment variables (default API Key: 7mnk8SRp)
+const API_KEY = process.env.ANGEL_API_KEY || process.env.VITE_ANGEL_API_KEY || '7mnk8SRp';
 const CLIENT_CODE = process.env.ANGEL_CLIENT_CODE || 'YOUR_CLIENT_CODE';
 const PIN = process.env.ANGEL_PIN || 'YOUR_PIN_OR_PASSWORD';
 const TOTP_SECRET = process.env.ANGEL_TOTP_SECRET || 'YOUR_TOTP_SECRET_OR_EMPTY';
@@ -44,10 +71,11 @@ async function run() {
   console.log(`- Client Code : ${CLIENT_CODE}`);
   console.log(`- API Key     : ${API_KEY ? API_KEY.slice(0, 4) + '...' + API_KEY.slice(-4) : 'Not Set'}`);
 
-  if (API_KEY === 'YOUR_API_KEY' || CLIENT_CODE === 'YOUR_CLIENT_CODE') {
-    console.log('\n[!] Please provide your credentials:');
-    console.log('    Either update the variables in this script or run:');
-    console.log('    ANGEL_API_KEY="xxx" ANGEL_CLIENT_CODE="yyy" ANGEL_PIN="1234" ANGEL_TOTP_SECRET="zzz" node scripts/test-smartapi.js\n');
+  if (!CLIENT_CODE || CLIENT_CODE === 'YOUR_CLIENT_CODE' || CLIENT_CODE === 'your_client_code_here') {
+    console.log('\n[!] Please provide your client credentials:');
+    console.log(`    Configured API Key : ${API_KEY}`);
+    console.log('    Either update the variables in .env or run:');
+    console.log('    ANGEL_CLIENT_CODE="yyy" ANGEL_PIN="1234" ANGEL_TOTP_SECRET="zzz" node scripts/test-smartapi.js\n');
     process.exit(0);
   }
 

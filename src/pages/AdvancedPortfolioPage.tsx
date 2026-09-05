@@ -7,7 +7,7 @@ export const AdvancedPortfolioPage = () => {
     <div className="space-y-8">
       <SectionTitle
         title="Advanced Portfolio Engineering Lab"
-        subtitle="Institutional multi-model asset allocation engine combining Strategic Policy (Black-Litterman, MVO, Risk Parity) with Tactical Overlays."
+        subtitle="Institutional multi-model asset allocation engine combining Strategic Policy (Black-Litterman, Risk Parity) with Tactical Overlays."
         badge="Institutional Suite"
       />
 
@@ -15,7 +15,7 @@ export const AdvancedPortfolioPage = () => {
 
       <WorkflowFooter
         prev={{ path: '/allocation', label: 'Allocation' }}
-        next={{ path: '/mvo', label: 'MVO Optimizer' }}
+        next={{ path: '/reports', label: 'Reports' }}
         flowHint="Advanced portfolio engineering bridges long-term strategic benchmarks with tactical market views."
       />
     </div>

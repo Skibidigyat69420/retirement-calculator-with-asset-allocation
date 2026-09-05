@@ -69,7 +69,7 @@ export function evaluateGoalConflicts(
     const catInfl = g.inflation ? g.inflation / 100 : inflation;
     const futureCost = g.futureValue || Math.round(targetCost * Math.pow(1 + catInfl, yearsAway));
     const targetYear = new Date().getFullYear() + yearsAway;
-    const priorityRank = customPriorities?.[g.id] ?? (idx + 1);
+    const priorityRank = customPriorities?.[g.id] ?? g.priorityRank ?? (idx + 1);
 
     return {
       id: g.id,

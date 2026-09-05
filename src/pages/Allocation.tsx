@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { PieChart, TrendingUp, Target, ArrowRight, AlertTriangle, CheckCircle2, Shield, RotateCcw, BarChart3, Zap, DollarSign } from 'lucide-react';
+import { PieChart, TrendingUp, Target, ArrowRight, AlertTriangle, CheckCircle2, Shield, RotateCcw, BarChart3, Zap, DollarSign, Layers } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { MetricCard } from '../components/ui/MetricCard';
 import { Slider } from '../components/ui/Slider';
@@ -16,6 +16,7 @@ import { runMVO, type ConstraintSet, type Portfolio } from '../lib/mvo';
 import type { AssetCategory } from '../types';
 import { Link } from 'react-router-dom';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
+import { PortfolioNavTabs } from '../components/layout/PortfolioNavTabs';
 import { StressTestSimulator } from '../components/analytics/StressTestSimulator';
 import { PlanVsReality } from '../components/analytics/PlanVsReality';
 import { ImplementationTransitionPlan } from '../components/analytics/ImplementationTransitionPlan';
@@ -203,40 +204,41 @@ export const Allocation = () => {
   return (
     <div className="space-y-6">
       <SectionTitle
-        title="Asset Allocation"
-        subtitle="Current allocation versus strategic target, projected glide path, and probability of success under the target mix."
-        badge="Strategic + Tactical"
+        title="Strategic Asset Allocation (SAA) & Rebalancing"
+        subtitle="Current asset allocation versus strategic policy target, projected glide path, rebalancing trade tickets, and multi-model optimization."
+        badge="Step 4: Strategic Allocation"
       />
 
+      <PortfolioNavTabs currentPath="/allocation" />
+
       {maxDrift > 10 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-amber-800">
-          <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+        <div className="bg-zinc-100/80 border border-zinc-200/80 rounded-2xl p-4 flex items-start gap-3 text-zinc-900 shadow-2xs">
+          <AlertTriangle size={18} className="shrink-0 mt-0.5 text-zinc-600" />
           <div className="text-sm">
-            <strong>Rebalancing recommended.</strong> One or more asset classes are more than 10% away from target. Review the rebalancing table below or run the{' '}
-            <Link to="/mvo" className="underline hover:text-amber-900">MVO optimizer</Link>.
+            <strong className="font-semibold">Rebalancing recommended:</strong> One or more asset classes drift more than 10% away from policy target. Review the rebalancing execution table below.
           </div>
         </div>
       )}
 
       {/* Empirical Market Calibration Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-zinc-200/90 shadow-2xs">
         <div className="flex items-center gap-3">
           <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
           <div>
-            <div className="text-xs font-semibold text-navy uppercase tracking-wider flex items-center gap-1.5">
-              Empirical CSV Market Calibration Active
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-mono font-medium border border-emerald-200/60">4,209 Daily Sessions</span>
+            <div className="text-xs font-semibold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+              Empirical Market Calibration Active
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-mono font-semibold border border-emerald-200/60">4,209 Daily Sessions</span>
             </div>
-            <div className="text-xs text-slate-500">
-              Correlations, asset class volatilities, and returns are calibrated from the extracted historical CSV dataset (2009–2026).
+            <div className="text-xs text-zinc-500 mt-0.5">
+              Asset class correlations, annualized volatilities, and return parameters calibrated from historical daily data (2009–2026).
             </div>
           </div>
         </div>
         <Link
-          to="/mvo"
-          className="text-xs font-medium text-navy hover:text-slate-900 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors flex items-center gap-1"
+          to="/advanced-portfolio"
+          className="text-xs font-semibold text-zinc-900 hover:text-zinc-950 px-3 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200/80 border border-zinc-200 transition-colors flex items-center gap-1.5"
         >
-          <BarChart3 size={13} /> Open Quant MVO Optimizer <ArrowRight size={12} />
+          <Layers size={13} /> Portfolio Lab <ArrowRight size={12} />
         </Link>
       </div>
 
@@ -272,35 +274,35 @@ export const Allocation = () => {
       {wealthResult.currencyExposure.length > 1 && (
         <Card>
           <div className="flex items-center gap-2 mb-4">
-            <DollarSign size={18} className="text-slate-500" />
-            <h3 className="text-lg font-serif text-navy">Currency Exposure</h3>
+            <DollarSign size={18} className="text-zinc-500" />
+            <h3 className="text-lg font-serif font-bold text-zinc-950">Currency Exposure</h3>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {wealthResult.currencyExposure.map((ce) => (
-              <div key={ce.currency} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{ce.currency}</div>
-                <div className="text-lg font-serif text-navy mt-1">{formatPercent(ce.percentage)}</div>
-                <div className="text-xs text-slate-500">{formatCurrency(ce.amount)}</div>
+              <div key={ce.currency} className="p-3 bg-zinc-50 rounded-xl border border-zinc-200/70">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{ce.currency}</div>
+                <div className="text-lg font-serif font-bold text-zinc-950 mt-1">{formatPercent(ce.percentage)}</div>
+                <div className="text-xs text-zinc-500">{formatCurrency(ce.amount)}</div>
               </div>
             ))}
           </div>
-          <p className="text-xs text-slate-500 mt-3">
-            Foreign-currency assets get an additional FX return drift ({wealthResult.currencyExposure.find((c) => c.currency !== 'INR')?.currency || 'USD'} ≈ 4% p.a. vs INR) and volatility in Monte Carlo projections.
+          <p className="text-xs text-zinc-500 mt-3">
+            Foreign-currency assets incorporate additional FX return drift ({wealthResult.currencyExposure.find((c) => c.currency !== 'INR')?.currency || 'USD'} ≈ 4% p.a. vs INR) and currency volatility in Monte Carlo projections.
           </p>
         </Card>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
-          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><PieChart size={18} className="text-slate-500" /> Current</h3>
+          <h3 className="text-lg font-serif font-bold text-zinc-950 mb-4 flex items-center gap-2"><PieChart size={18} className="text-zinc-500" /> Current Allocation</h3>
           <DonutChart data={currentData} />
         </Card>
         <Card>
-          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><Target size={18} className="text-slate-500" /> Target</h3>
+          <h3 className="text-lg font-serif font-bold text-zinc-950 mb-4 flex items-center gap-2"><Target size={18} className="text-zinc-500" /> Target Allocation</h3>
           <DonutChart data={targetData} />
         </Card>
         <Card>
-          <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-slate-500" /> Projected (Terminal)</h3>
+          <h3 className="text-lg font-serif font-bold text-zinc-950 mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-zinc-500" /> Projected Terminal</h3>
           <DonutChart data={projectedData} />
         </Card>
       </div>
@@ -308,8 +310,8 @@ export const Allocation = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-serif text-navy flex items-center gap-2"><Shield size={18} className="text-slate-500" /> Strategic Target</h3>
-            <Link to="/risk" className="text-xs text-navy hover:text-slate-900 underline">{riskProfile.label}</Link>
+            <h3 className="text-lg font-serif font-bold text-zinc-950 flex items-center gap-2"><Shield size={18} className="text-zinc-500" /> Strategic Target Weights</h3>
+            <Link to="/risk" className="text-xs text-zinc-600 hover:text-zinc-950 underline font-medium">{riskProfile.label}</Link>
           </div>
             {CATEGORIES.map((cat) => {
               return (
@@ -324,13 +326,13 @@ export const Allocation = () => {
                 />
               );
             })}
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-zinc-100">
             <span className="flex items-center text-xs">
-              <span className="text-slate-700">Total: {formatPercent(Object.values(targets).reduce((a, b) => a + b, 0))}</span>
+              <span className="text-zinc-700 font-medium">Total: {formatPercent(Object.values(targets).reduce((a, b) => a + b, 0))}</span>
               {Math.abs(Object.values(targets).reduce((a, b) => a + b, 0) - 100) > 0.1 && (
-                <span className="ml-2 inline-flex items-center text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full font-medium border border-amber-200/60">
-                  <AlertTriangle size={12} className="mr-1" /> Does not equal 100%
-                  <button onClick={normalizeTargets} className="ml-1.5 underline hover:text-amber-950">Normalize</button>
+                <span className="ml-2 inline-flex items-center text-zinc-800 bg-zinc-100 px-2 py-0.5 rounded-md font-semibold border border-zinc-200/60">
+                  <AlertTriangle size={12} className="mr-1" /> Total ≠ 100%
+                  <button onClick={normalizeTargets} className="ml-1.5 underline hover:text-zinc-950">Normalize</button>
                 </span>
               )}
             </span>
@@ -338,16 +340,16 @@ export const Allocation = () => {
               <button
                 onClick={syncTargetsToCashflows}
                 title="Sync these weights to your monthly SIP & STP allocations in Master Plan"
-                className="text-xs flex items-center text-slate-600 hover:text-navy hover:underline"
+                className="text-xs flex items-center text-zinc-600 hover:text-zinc-950 hover:underline font-medium"
               >
-                <TrendingUp size={12} className="mr-1 text-slate-500" /> Sync to SIP/STP
+                <TrendingUp size={12} className="mr-1 text-zinc-500" /> Sync to SIP/STP
               </button>
               <button
                 onClick={() => {
                   setManualTargets(null);
                   showToast(`Reset targets to ${riskProfile.label} profile.`, 'info');
                 }}
-                className="text-xs flex items-center text-slate-600 hover:text-slate-900 underline"
+                className="text-xs flex items-center text-zinc-600 hover:text-zinc-950 underline font-medium"
               >
                 <RotateCcw size={12} className="mr-1" /> Reset to {riskProfile.label}
               </button>
@@ -356,7 +358,7 @@ export const Allocation = () => {
         </Card>
 
         <Card className="lg:col-span-2">
-          <h3 className="text-lg font-serif text-navy mb-4">Projected Asset-Class Evolution</h3>
+          <h3 className="text-lg font-serif font-bold text-zinc-950 mb-4">Projected Asset-Class Evolution</h3>
           <AssetEvolutionChart data={assetEvolutionData} xKey="label" />
         </Card>
       </div>
@@ -364,39 +366,36 @@ export const Allocation = () => {
       {mvoTargets && (
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-serif text-navy flex items-center gap-2">
-              <BarChart3 size={18} className="text-slate-500" /> Market-Optimized Targets
+            <h3 className="text-lg font-serif font-bold text-zinc-950 flex items-center gap-2">
+              <BarChart3 size={18} className="text-zinc-500" /> Markowitz Efficient Targets
             </h3>
-            <Link to="/mvo" className="text-xs text-slate-600 hover:text-slate-900 underline flex items-center">
-              Open MVO <ArrowRight size={12} className="ml-1" />
-            </Link>
           </div>
-          <p className="text-sm text-slate-600 mb-4">
-            Targets derived from the mean-variance efficient frontier using the longest available history. These respect your risk profile's max equity constraint.
+          <p className="text-sm text-zinc-600 mb-4">
+            Optimal portfolios derived from the parametric mean-variance efficient frontier using full empirical history. These allocations strictly respect your risk profile constraints.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              { key: 'maxSharpe', label: 'Max Sharpe', targets: mvoTargets.maxSharpe, portfolio: mvoResult?.maxSharpe },
-              { key: 'minVariance', label: 'Min Variance', targets: mvoTargets.minVariance, portfolio: mvoResult?.minVariance },
+              { key: 'maxSharpe', label: 'Max Sharpe (Tangency)', targets: mvoTargets.maxSharpe, portfolio: mvoResult?.maxSharpe },
+              { key: 'minVariance', label: 'Minimum Variance', targets: mvoTargets.minVariance, portfolio: mvoResult?.minVariance },
             ].map((item) => (
-              <div key={item.key} className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-3">
+              <div key={item.key} className="p-4 bg-zinc-50 rounded-2xl border border-zinc-200/80 space-y-3 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <span className="font-serif text-navy flex items-center gap-2"><Zap size={16} className="text-slate-500" /> {item.label}</span>
-                  <span className="text-xs font-mono text-slate-700">Sharpe {item.portfolio?.sharpe.toFixed(2)}</span>
+                  <span className="font-serif font-bold text-zinc-950 flex items-center gap-2"><Zap size={16} className="text-zinc-600" /> {item.label}</span>
+                  <span className="text-xs font-mono font-bold text-zinc-700 bg-white px-2 py-0.5 rounded-md border border-zinc-200">Sharpe {item.portfolio?.sharpe.toFixed(2)}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-xs">
                   {CATEGORIES.filter((c) => item.targets[c] > 0.5).map((cat) => (
                     <div key={cat} className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: ASSET_COLORS[cat] }} />
-                      <span>{ASSET_LABELS[cat]} {formatPercent(item.targets[cat])}</span>
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ASSET_COLORS[cat] }} />
+                      <span className="truncate">{ASSET_LABELS[cat]} {formatPercent(item.targets[cat])}</span>
                     </div>
                   ))}
                 </div>
                 <button
                   onClick={() => item.portfolio && applyMvoTargets(item.portfolio, item.label)}
-                  className="w-full py-2 px-3 bg-navy text-white rounded-lg text-xs font-medium hover:bg-slate-800 transition-colors flex items-center justify-center gap-1"
+                  className="w-full py-2 px-3 bg-zinc-950 text-white rounded-xl text-xs font-semibold hover:bg-zinc-800 transition-colors flex items-center justify-center gap-1 shadow-2xs"
                 >
-                  {appliedMvo === item.label ? <><CheckCircle2 size={14} /> Applied</> : <>Apply to Target Mix</>}
+                  {appliedMvo === item.label ? <><CheckCircle2 size={14} className="text-emerald-400" /> Applied to Target Mix</> : <>Apply to Target Mix</>}
                 </button>
               </div>
             ))}
@@ -405,41 +404,54 @@ export const Allocation = () => {
       )}
 
       <Card>
-        <h3 className="text-lg font-serif text-navy mb-4">Rebalancing Analysis</h3>
-        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-serif font-bold text-zinc-950">Rebalancing Analysis & Execution Tickets</h3>
+          <span className="text-xs text-zinc-500 font-medium">Rebalancing threshold: ±2% portfolio drift</span>
+        </div>
+        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable rebalancing table">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-700">
-                <th className="py-2 pr-4">Asset Class</th>
-                <th className="py-2 pr-4 text-right">Current</th>
-                <th className="py-2 pr-4 text-right">Current %</th>
-                <th className="py-2 pr-4 text-right">Target %</th>
-                <th className="py-2 pr-4 text-right">Projected Terminal %</th>
-                <th className="py-2 pr-4 text-right">Gap (₹)</th>
-                <th className="py-2 pr-4 text-center">Action</th>
+              <tr className="border-b border-zinc-200 text-left text-[10px] uppercase tracking-wider text-zinc-500">
+                <th className="py-2.5 pr-4">Asset Class</th>
+                <th className="py-2.5 pr-4 text-right">Current Value</th>
+                <th className="py-2.5 pr-4 text-right">Current %</th>
+                <th className="py-2.5 pr-4 text-right">Target %</th>
+                <th className="py-2.5 pr-4 text-right">Projected Terminal %</th>
+                <th className="py-2.5 pr-4 text-right">Rebalance Gap (₹)</th>
+                <th className="py-2.5 pr-4 text-center">Execution Action</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-zinc-100">
               {dynamicRebalancingTrades.map((r) => {
                 const projectedPct = (projectedWeights[r.category] || 0) * 100;
                 return (
-                  <tr key={r.category} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="py-2 pr-4 flex items-center">
-                      <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: ASSET_COLORS[r.category] }} />
+                  <tr key={r.category} className="hover:bg-zinc-50/70 transition-colors">
+                    <td className="py-3 pr-4 flex items-center font-medium text-zinc-900">
+                      <span className="w-2.5 h-2.5 rounded-full mr-2 shrink-0" style={{ backgroundColor: ASSET_COLORS[r.category] }} />
                       {ASSET_LABELS[r.category]}
                     </td>
-                    <td className="py-2 pr-4 text-right">{formatCurrency(r.current)}</td>
-                    <td className="py-2 pr-4 text-right">{formatPercent(r.currentPct)}</td>
-                    <td className="py-2 pr-4 text-right">{formatPercent(r.targetPct)}</td>
-                    <td className="py-2 pr-4 text-right">{formatPercent(projectedPct)}</td>
-                    <td className="py-2 pr-4 text-right font-medium">{formatCurrency(r.trade)}</td>
-                    <td className="py-2 pr-4 text-center">
+                    <td className="py-3 pr-4 text-right font-mono text-zinc-700">{formatCurrency(r.current)}</td>
+                    <td className="py-3 pr-4 text-right font-mono text-zinc-700">{formatPercent(r.currentPct)}</td>
+                    <td className="py-3 pr-4 text-right font-mono font-bold text-zinc-900">{formatPercent(r.targetPct)}</td>
+                    <td className="py-3 pr-4 text-right font-mono text-zinc-600">{formatPercent(projectedPct)}</td>
+                    <td className="py-3 pr-4 text-right font-mono font-bold">
+                      <span className={r.trade > 0 ? 'text-emerald-700' : r.trade < 0 ? 'text-rose-700' : 'text-zinc-500'}>
+                        {r.trade > 0 ? `+${formatCurrency(r.trade)}` : formatCurrency(r.trade)}
+                      </span>
+                    </td>
+                    <td className="py-3 pr-4 text-center">
                       {r.action === 'Hold' ? (
-                        <span className="inline-flex items-center text-slate-700 text-xs"><CheckCircle2 size={12} className="mr-1" /> Hold</span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-zinc-100 text-zinc-600 border border-zinc-200">
+                          <CheckCircle2 size={11} className="mr-1 text-zinc-400" /> Hold
+                        </span>
                       ) : r.action === 'Buy' ? (
-                        <span className="text-green-700 text-xs font-semibold">Buy</span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          Buy
+                        </span>
                       ) : (
-                        <span className="text-red-600 text-xs font-semibold">Sell</span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                          Sell
+                        </span>
                       )}
                     </td>
                   </tr>
@@ -452,10 +464,10 @@ export const Allocation = () => {
 
       <Card>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-serif text-navy">Glide Path Reference</h3>
+          <h3 className="text-lg font-serif font-bold text-zinc-950">Glide Path Reference</h3>
         </div>
-        <p className="text-sm text-slate-600 mb-4">
-          The default glide path reduces equity as you approach retirement, shifting to capital preservation.
+        <p className="text-sm text-zinc-600 mb-4">
+          The baseline strategic glide path systematically tapers equity exposure as you approach retirement, shifting allocations towards capital preservation and liquidity.
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
@@ -466,12 +478,12 @@ export const Allocation = () => {
           ].map((point) => {
             const glide = getTargetGlideAllocation(point.age, inputs.retirementAge);
             return (
-              <div key={point.label} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-700">{point.label} (Age {point.age})</div>
-                <div className="mt-2 space-y-1 text-sm">
-                  <div className="flex justify-between"><span>Equity</span><span className="font-medium">{formatPercent(glide.equity * 100)}</span></div>
-                  <div className="flex justify-between"><span>Debt</span><span className="font-medium">{formatPercent(glide.debt * 100)}</span></div>
-                  <div className="flex justify-between"><span>Liquid</span><span className="font-medium">{formatPercent(glide.liquid * 100)}</span></div>
+              <div key={point.label} className="p-4 bg-zinc-50 rounded-2xl border border-zinc-200/80 shadow-2xs">
+                <div className="text-xs font-bold uppercase tracking-wider text-zinc-600">{point.label} (Age {point.age})</div>
+                <div className="mt-2.5 space-y-1.5 text-sm">
+                  <div className="flex justify-between text-zinc-600"><span>Equity</span><span className="font-semibold text-zinc-900 font-mono">{formatPercent(glide.equity * 100)}</span></div>
+                  <div className="flex justify-between text-zinc-600"><span>Debt</span><span className="font-semibold text-zinc-900 font-mono">{formatPercent(glide.debt * 100)}</span></div>
+                  <div className="flex justify-between text-zinc-600"><span>Liquid</span><span className="font-semibold text-zinc-900 font-mono">{formatPercent(glide.liquid * 100)}</span></div>
                 </div>
               </div>
             );
@@ -479,7 +491,7 @@ export const Allocation = () => {
         </div>
       </Card>
 
-      {/* CRISIS & MACRO STRESS TEST ENGINE */}
+      {/* MACRO STRESS TEST ENGINE */}
       <StressTestSimulator />
 
       {/* PLAN VS REALITY PORTFOLIO GOVERNANCE */}
@@ -489,9 +501,9 @@ export const Allocation = () => {
       <ImplementationTransitionPlan />
 
       <WorkflowFooter
-        prev={{ path: '/retirement', label: 'Retirement & SWP' }}
-        next={{ path: '/mvo', label: 'MVO' }}
-        flowHint="Strategic targets guide rebalancing trade suggestions and MVO constraint envelopes."
+        prev={{ path: '/retirement', label: 'Step 3: Retirement' }}
+        next={{ path: '/ips', label: 'Step 5: Deliverables & IPS' }}
+        flowHint="Strategic targets guide rebalancing trade suggestions and asset allocation envelopes."
       />
     </div>
   );

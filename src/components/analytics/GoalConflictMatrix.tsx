@@ -10,7 +10,7 @@ import { useCalculator } from '../../context/CalculatorContext';
 import { formatCurrency, formatCurrencyCompact } from '../../lib/formatters';
 
 export const GoalConflictMatrix = () => {
-  const { inputs, wealthResult } = useCalculator();
+  const { inputs, wealthResult, updateGoal } = useCalculator();
   const [customPriorities, setCustomPriorities] = useState<Record<string, number>>({});
 
   const conflictResult = useMemo(() => {
@@ -22,44 +22,45 @@ export const GoalConflictMatrix = () => {
       ...prev,
       [goalId]: newRank,
     }));
+    updateGoal(goalId, { priorityRank: newRank });
   };
 
   return (
     <div className="space-y-6">
       {/* Overview Topline Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-1 shadow-xs">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        <div className="p-4 rounded-xl border border-zinc-200 bg-white space-y-1 shadow-xs">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
             Total Goals Demand
           </span>
-          <div className="text-2xl font-bold font-mono text-slate-900">
+          <div className="text-2xl font-bold font-mono text-zinc-900">
             {formatCurrencyCompact(conflictResult.totalGoalsDemand)}
           </div>
-          <p className="text-xs text-slate-500">{conflictResult.evaluatedGoals.length} discrete targets</p>
+          <p className="text-xs text-zinc-500">{conflictResult.evaluatedGoals.length} discrete targets</p>
         </div>
 
-        <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-1 shadow-xs">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        <div className="p-4 rounded-xl border border-zinc-200 bg-white space-y-1 shadow-xs">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
             Retirement Corpus Demand
           </span>
           <div className="text-2xl font-bold font-mono text-indigo-950">
             {formatCurrencyCompact(conflictResult.retirementDemand)}
           </div>
-          <p className="text-xs text-slate-500">At Age {inputs.retirementAge} to {inputs.lifeExpectancy}</p>
+          <p className="text-xs text-zinc-500">At Age {inputs.retirementAge} to {inputs.lifeExpectancy}</p>
         </div>
 
-        <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-1 shadow-xs">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        <div className="p-4 rounded-xl border border-zinc-200 bg-white space-y-1 shadow-xs">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
             Total Household Capital Demand
           </span>
-          <div className="text-2xl font-bold font-mono text-slate-900">
+          <div className="text-2xl font-bold font-mono text-zinc-900">
             {formatCurrencyCompact(conflictResult.totalHouseholdDemand)}
           </div>
-          <p className="text-xs text-slate-500">Retirement + All Goals combined</p>
+          <p className="text-xs text-zinc-500">Retirement + All Goals combined</p>
         </div>
 
-        <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-1 shadow-xs">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        <div className="p-4 rounded-xl border border-zinc-200 bg-white space-y-1 shadow-xs">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
             Simultaneous Affordability
           </span>
           <div className="flex items-baseline gap-2">
@@ -75,26 +76,26 @@ export const GoalConflictMatrix = () => {
               {conflictResult.isFullyFunded ? '100% FUNDED' : 'DEFICIT'}
             </Badge>
           </div>
-          <p className="text-xs text-slate-500">Against projected net wealth</p>
+          <p className="text-xs text-zinc-500">Against projected net wealth</p>
         </div>
       </div>
 
       {/* Main Conflict Table */}
-      <Card className="p-6 border border-slate-200/90 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+      <Card className="p-6 border border-zinc-200/90 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 pb-3">
           <div>
-            <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <h3 className="text-base font-bold text-zinc-900 tracking-tight flex items-center gap-2">
               <Target size={18} className="text-indigo-600" />
               Simultaneous Goals Affordability & Priority Trade-Offs
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">{conflictResult.tradeOffSummary}</p>
+            <p className="text-xs text-zinc-500 mt-0.5">{conflictResult.tradeOffSummary}</p>
           </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px]">
+              <tr className="border-b border-zinc-200 text-zinc-500 uppercase tracking-wider text-[10px]">
                 <th className="pb-2 w-14 text-center">Rank</th>
                 <th className="pb-2">Goal / Milestone</th>
                 <th className="pb-2 w-24 text-right">Target Year</th>
@@ -109,17 +110,17 @@ export const GoalConflictMatrix = () => {
               {/* Retirement Anchor Row */}
               <tr className="bg-indigo-50/40 font-semibold">
                 <td className="py-2.5 text-center font-mono font-bold text-indigo-700">0</td>
-                <td className="py-2.5 font-bold text-slate-900">
+                <td className="py-2.5 font-bold text-zinc-900">
                   Core Retirement Corpus Anchor
                   <span className="text-[10px] text-indigo-600 font-normal block">Primary non-negotiable household anchor</span>
                 </td>
-                <td className="py-2.5 text-right font-mono text-slate-700">
+                <td className="py-2.5 text-right font-mono text-zinc-700">
                   {new Date().getFullYear() + Math.max(1, inputs.retirementAge - inputs.currentAge)}
                 </td>
-                <td className="py-2.5 text-right font-mono text-slate-700">
+                <td className="py-2.5 text-right font-mono text-zinc-700">
                   {formatCurrencyCompact(inputs.swp.monthlyNeedToday * 12 * Math.max(1, inputs.lifeExpectancy - inputs.retirementAge))}
                 </td>
-                <td className="py-2.5 text-right font-mono font-bold text-slate-900">
+                <td className="py-2.5 text-right font-mono font-bold text-zinc-900">
                   {formatCurrencyCompact(conflictResult.retirementDemand)}
                 </td>
                 <td className="py-2.5 text-right font-mono font-bold text-emerald-700">
@@ -141,38 +142,38 @@ export const GoalConflictMatrix = () => {
                 }
 
                 return (
-                  <tr key={g.id} className="hover:bg-slate-50/80 transition-colors">
+                  <tr key={g.id} className="hover:bg-zinc-50/80 transition-colors">
                     <td className="py-2.5 text-center">
                       <select
                         value={g.priorityRank}
                         onChange={(e) => handlePriorityChange(g.id, parseInt(e.target.value))}
                         aria-label={`Priority rank for ${g.name}`}
-                        className="text-xs font-mono font-bold bg-white border border-slate-200 rounded px-1.5 py-0.5 text-slate-800"
+                        className="text-xs font-mono font-bold bg-white border border-zinc-200 rounded px-1.5 py-0.5 text-zinc-800"
                       >
-                        {[1, 2, 3, 4, 5].map((r) => (
+                        {Array.from({ length: Math.max(5, inputs.goals.length) }, (_, i) => i + 1).map((r) => (
                           <option key={r} value={r}>
                             #{r}
                           </option>
                         ))}
                       </select>
                     </td>
-                    <td className="py-2.5 font-semibold text-slate-900">
+                    <td className="py-2.5 font-semibold text-zinc-900">
                       {g.name}
-                      <span className="text-[10px] text-slate-500 block uppercase tracking-wider">{g.category}</span>
+                      <span className="text-[10px] text-zinc-500 block uppercase tracking-wider">{g.category}</span>
                     </td>
-                    <td className="py-2.5 text-right font-mono text-slate-700">
+                    <td className="py-2.5 text-right font-mono text-zinc-700">
                       {g.targetYear} ({g.yearsAway}y)
                     </td>
-                    <td className="py-2.5 text-right font-mono text-slate-600">
+                    <td className="py-2.5 text-right font-mono text-zinc-600">
                       {formatCurrencyCompact(g.costToday)}
                     </td>
-                    <td className="py-2.5 text-right font-mono font-bold text-slate-900">
+                    <td className="py-2.5 text-right font-mono font-bold text-zinc-900">
                       {formatCurrencyCompact(g.futureCost)}
                     </td>
-                    <td className="py-2.5 text-right font-mono font-semibold text-slate-800">
+                    <td className="py-2.5 text-right font-mono font-semibold text-zinc-800">
                       {formatCurrencyCompact(g.allocatedWealth)}
                     </td>
-                    <td className="py-2.5 text-right font-mono font-bold text-slate-900">
+                    <td className="py-2.5 text-right font-mono font-bold text-zinc-900">
                       {g.coveragePercent}%
                     </td>
                     <td className="py-2.5 text-center">{badge}</td>
@@ -185,14 +186,14 @@ export const GoalConflictMatrix = () => {
       </Card>
 
       {/* Household Surplus Funding Waterfall */}
-      <Card className="p-6 border border-slate-200/90 shadow-sm space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+      <Card className="p-6 border border-zinc-200/90 shadow-sm space-y-4">
+        <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
           <div>
-            <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <h3 className="text-base font-bold text-zinc-900 tracking-tight flex items-center gap-2">
               <Layers size={18} className="text-indigo-600" />
               Household Monthly Cash Surplus Funding Waterfall
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-zinc-500 mt-0.5">
               How net household cash flow surplus cascades through emergency reserves, priority goals, and core retirement.
             </p>
           </div>
@@ -202,18 +203,18 @@ export const GoalConflictMatrix = () => {
           {conflictResult.fundingWaterfall.map((step, idx) => (
             <div
               key={step.id}
-              className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2 relative"
+              className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/50 space-y-2 relative"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold font-mono text-slate-400">STAGE 0{idx + 1}</span>
-                <span className="text-xs font-mono font-bold text-slate-700">{step.percentageOfSurplus}% of Surplus</span>
+                <span className="text-[10px] font-bold font-mono text-zinc-400">STAGE 0{idx + 1}</span>
+                <span className="text-xs font-mono font-bold text-zinc-700">{step.percentageOfSurplus}% of Surplus</span>
               </div>
-              <h4 className="text-sm font-bold text-slate-900">{step.name}</h4>
-              <div className="text-xl font-bold font-mono text-slate-900">
+              <h4 className="text-sm font-bold text-zinc-900">{step.name}</h4>
+              <div className="text-xl font-bold font-mono text-zinc-900">
                 {formatCurrency(step.monthlyAmount)}
-                <span className="text-xs font-sans text-slate-500 font-normal">/mo</span>
+                <span className="text-xs font-sans text-zinc-500 font-normal">/mo</span>
               </div>
-              <p className="text-xs text-slate-600 leading-snug">{step.reason}</p>
+              <p className="text-xs text-zinc-600 leading-snug">{step.reason}</p>
             </div>
           ))}
         </div>

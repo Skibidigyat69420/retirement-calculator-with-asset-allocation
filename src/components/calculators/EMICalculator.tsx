@@ -64,7 +64,7 @@ export const EMICalculator = () => {
           </div>
 
           <Card>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-700 mb-4">Yearly Amortisation</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Yearly Amortisation</h4>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>

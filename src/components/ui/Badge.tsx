@@ -8,13 +8,13 @@ interface BadgeProps {
 
 export const Badge = ({ children, variant = 'default', className }: BadgeProps) => {
   const variants = {
-    default: 'bg-slate-100 text-slate-700 border border-slate-200/50',
-    gold: 'bg-amber-50 text-amber-900/80 border border-amber-200/60',
-    navy: 'bg-slate-100 text-slate-800 border border-slate-200/80',
-    outline: 'border border-slate-200 text-slate-600 bg-white',
-    success: 'bg-emerald-50 text-emerald-800 border border-emerald-200/60',
-    danger: 'bg-rose-50 text-rose-800 border border-rose-200/60',
-    warning: 'bg-amber-50 text-amber-900/80 border border-amber-200/60',
+    default: 'bg-zinc-100 text-zinc-800 border border-zinc-200',
+    gold: 'bg-zinc-900 text-white border border-zinc-800',
+    navy: 'bg-zinc-900 text-white border border-zinc-800',
+    outline: 'border border-zinc-300 text-zinc-700 bg-white',
+    success: 'bg-emerald-50 text-emerald-800 border border-emerald-200',
+    danger: 'bg-rose-50 text-rose-800 border border-rose-200',
+    warning: 'bg-zinc-100 text-zinc-800 border border-zinc-300',
   };
 
   return (

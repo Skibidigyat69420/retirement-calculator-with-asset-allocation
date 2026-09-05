@@ -88,6 +88,7 @@ export interface Goal {
   priority: GoalPriority;
   inflation: number;
   recurring: boolean;
+  priorityRank?: number;
   // Computed fields
   futureValue?: number;
   pvNeeded?: number;
@@ -384,6 +385,8 @@ export interface DecisionLogEntry {
   rationale: string;
   author: 'Adviser' | 'Client' | 'Automated System';
   revertPatch?: Partial<MasterPlanInputs>;
+  revertManualTargets?: Record<AssetCategory, number> | null;
+  inputsSnapshot?: MasterPlanInputs;
   reverted?: boolean;
 }
 

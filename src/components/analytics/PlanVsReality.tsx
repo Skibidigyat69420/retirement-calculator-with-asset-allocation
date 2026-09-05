@@ -39,19 +39,19 @@ export const PlanVsReality = () => {
   };
 
   return (
-    <Card className="p-6 border border-slate-200/90 shadow-sm space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+    <Card className="p-6 border border-zinc-200/90 shadow-sm space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-3">
         <div>
           <div className="flex items-center gap-2">
             <ShieldCheck size={20} className="text-indigo-600" />
-            <h3 className="text-base font-bold text-slate-900 tracking-tight">
+            <h3 className="text-base font-bold text-zinc-900 tracking-tight">
               Plan vs. Reality — Portfolio Governance
             </h3>
             <Badge variant={Math.abs(equityDrift) > 6 ? 'warning' : 'success'} className="text-[10px]">
               {Math.abs(equityDrift) > 6 ? 'ALLOCATION DRIFT' : 'ON TARGET'}
             </Badge>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-zinc-500 mt-0.5">
             Continuous comparison between strategic policy allocation and actual live holdings.
           </p>
         </div>
@@ -61,7 +61,7 @@ export const PlanVsReality = () => {
             variant="primary"
             size="sm"
             onClick={handleRebalance}
-            className="text-xs h-8 px-3 gap-1.5 bg-slate-900 text-white hover:bg-slate-800 self-start sm:self-center shrink-0"
+            className="text-xs h-8 px-3 gap-1.5 bg-zinc-900 text-white hover:bg-zinc-800 self-start sm:self-center shrink-0"
           >
             <RefreshCw size={13} />
             Correct Allocation Drift
@@ -77,17 +77,17 @@ export const PlanVsReality = () => {
           const drift = actual - target;
 
           return (
-            <div key={cat} className="p-3 rounded-xl border border-slate-200/80 bg-slate-50/50 space-y-1">
-              <span className="text-[10px] uppercase font-bold text-slate-500 block truncate">
+            <div key={cat} className="p-3 rounded-xl border border-zinc-200/80 bg-zinc-50/50 space-y-1">
+              <span className="text-[10px] uppercase font-bold text-zinc-500 block truncate">
                 {ASSET_LABELS[cat] || cat}
               </span>
               <div className="flex items-baseline justify-between">
-                <span className="text-sm font-bold font-mono text-slate-900">{actual.toFixed(0)}%</span>
-                <span className="text-[11px] text-slate-500">Plan: {target}%</span>
+                <span className="text-sm font-bold font-mono text-zinc-900">{actual.toFixed(0)}%</span>
+                <span className="text-[11px] text-zinc-500">Plan: {target}%</span>
               </div>
               <div className="text-[11px] font-mono font-semibold">
                 Drift:{' '}
-                <span className={Math.abs(drift) > 5 ? (drift > 0 ? 'text-amber-700' : 'text-rose-700') : 'text-emerald-700'}>
+                <span className={Math.abs(drift) > 5 ? (drift > 0 ? 'text-zinc-700' : 'text-rose-700') : 'text-emerald-700'}>
                   {drift > 0 ? `+${drift.toFixed(1)}%` : `${drift.toFixed(1)}%`}
                 </span>
               </div>
@@ -98,11 +98,11 @@ export const PlanVsReality = () => {
 
       {/* Consequence Alert */}
       {Math.abs(equityDrift) > 5 && (
-        <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-xs text-amber-900 flex items-start gap-2.5">
-          <AlertTriangle size={15} className="text-amber-600 mt-0.5 shrink-0" />
+        <div className="p-3.5 rounded-xl bg-zinc-50/70 border border-zinc-200/80 text-xs text-zinc-900 flex items-start gap-2.5">
+          <AlertTriangle size={15} className="text-zinc-600 mt-0.5 shrink-0" />
           <div className="space-y-0.5">
             <span className="font-bold text-amber-950">Calculated Portfolio Drift Consequence:</span>
-            <p className="text-amber-900/90 leading-relaxed">
+            <p className="text-zinc-900/90 leading-relaxed">
               If left uncorrected, the {equityDrift > 0 ? `+${equityDrift.toFixed(0)}% equity overweight` : `${equityDrift.toFixed(0)}% equity underweight`} shifts the portfolio's tail-risk drawdown profile and reduces Monte Carlo retirement longevity probability from 92% to 87%.
             </p>
           </div>

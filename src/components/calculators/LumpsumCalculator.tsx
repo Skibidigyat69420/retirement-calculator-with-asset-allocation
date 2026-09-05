@@ -66,7 +66,7 @@ export const LumpsumCalculator = () => {
       }
     >
       <Card>
-        <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-700 mb-4">Growth Curve</h4>
+        <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Growth Curve</h4>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart

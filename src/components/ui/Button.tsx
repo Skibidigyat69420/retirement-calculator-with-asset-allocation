@@ -15,13 +15,13 @@ export const Button = ({
 }: ButtonProps) => {
   const variants = {
     primary:
-      'bg-navy text-white hover:bg-navy-dark hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 focus:ring-2 focus:ring-navy/20',
+      'bg-zinc-950 text-white hover:bg-zinc-800 shadow-2xs hover:shadow-xs active:translate-y-0 focus:ring-2 focus:ring-zinc-400',
     secondary:
-      'bg-emerald-700 text-white hover:bg-emerald-800 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 focus:ring-2 focus:ring-emerald-200',
+      'bg-zinc-100 text-zinc-900 border border-zinc-200 hover:bg-zinc-200 active:translate-y-0 focus:ring-2 focus:ring-zinc-300',
     outline:
-      'border border-slate-300 bg-white text-slate-700 hover:border-navy hover:text-navy hover:bg-indigo-50/50 active:bg-slate-50',
+      'border border-zinc-300 bg-white text-zinc-800 hover:border-zinc-950 hover:bg-zinc-50 active:bg-zinc-100',
     ghost:
-      'text-slate-600 hover:text-navy hover:bg-slate-100 active:bg-slate-200',
+      'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 active:bg-zinc-200',
   };
 
   const sizes = {

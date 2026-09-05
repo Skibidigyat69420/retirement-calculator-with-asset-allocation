@@ -1,38 +1,39 @@
 @import "tailwindcss";
 
 @theme {
-  /* Refined, understated institutional palette */
-  --color-cream: #f8fafc;
+  /* Crisp, intentional monochromatic palette with selective green & red accents */
+  --color-cream: #fafafa;
   --color-paper: #ffffff;
-  --color-warm: #e2e8f0;
-  --color-warm-dark: #94a3b8;
-  --color-navy: #0f172a;
-  --color-navy-dark: #020617;
-  --color-gold: #b45309;
-  --color-red: #be123c;
-  --color-ink: #0f172a;
-  --color-accent: #f1f5f9;
-  --color-textMain: #0f172a;
-  --color-textMuted: #64748b;
+  --color-warm: #f4f4f5;
+  --color-warm-dark: #71717a;
+  --color-navy: #09090b;
+  --color-navy-dark: #000000;
+  --color-gold: #18181b;
+  --color-red: #dc2626;
+  --color-emerald: #16a34a;
+  --color-ink: #09090b;
+  --color-accent: #f4f4f5;
+  --color-textMain: #09090b;
+  --color-textMuted: #71717a;
 
-  --font-serif: Calibri, Carlito, "Segoe UI", Candara, Arial, sans-serif;
-  --font-sans: Calibri, Carlito, "Segoe UI", Candara, Arial, sans-serif;
-  --font-mono: Consolas, "Courier New", monospace;
+  --font-serif: "Inter", system-ui, -apple-system, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 14px rgba(15, 23, 42, 0.03);
-  --shadow-card-hover: 0 4px 8px rgba(15, 23, 42, 0.04), 0 12px 28px rgba(15, 23, 42, 0.07);
-  --shadow-elevated: 0 12px 36px rgba(15, 23, 42, 0.09), 0 2px 6px rgba(15, 23, 42, 0.03);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-elevated: 0 10px 25px -3px rgba(0, 0, 0, 0.07);
 }
 
 @layer base {
   body {
-    font-family: Calibri, Carlito, "Segoe UI", Candara, Arial, sans-serif;
-    @apply bg-slate-50 text-textMain min-h-screen antialiased;
-    background-color: #f8fafc;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    @apply bg-zinc-50 text-textMain min-h-screen antialiased;
+    background-color: #fafafa;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: Calibri, Carlito, "Segoe UI", Candara, Arial, sans-serif;
-    @apply text-ink tracking-tight font-bold;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    @apply text-ink tracking-tight font-semibold;
   }
   input[type="range"] {
     -webkit-appearance: none;

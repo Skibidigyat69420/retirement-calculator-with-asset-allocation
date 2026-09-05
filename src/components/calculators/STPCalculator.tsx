@@ -69,22 +69,22 @@ export const STPCalculator = () => {
           </div>
 
           <Card>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-700 mb-4">Deployment Summary</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Deployment Summary</h4>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-slate-700">Lumpsum deployed</span>
+                <span className="text-zinc-700">Lumpsum deployed</span>
                 <span className="font-medium">{formatCurrency(lumpsum)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-700">Monthly transfer</span>
+                <span className="text-zinc-700">Monthly transfer</span>
                 <span className="font-medium">{formatCurrency(monthlyTransfer)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-700">Un deployed liquid left</span>
+                <span className="text-zinc-700">Un deployed liquid left</span>
                 <span className="font-medium">{formatCurrency(result.liquid)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-700">Wealth gained vs idle cash</span>
+                <span className="text-zinc-700">Wealth gained vs idle cash</span>
                 <span className="font-medium">{formatCurrency(result.total - lumpsum)}</span>
               </div>
             </div>

@@ -53,7 +53,7 @@ export function runScenarioLab(
 
   const baseItem: ScenarioComparisonItem = {
     id: 'base-plan',
-    name: 'Current Active Plan',
+    name: 'Current Plan',
     description: `Retire at Age ${currentRetAge}, ${currentSip > 0 ? `₹${(currentSip / 1000).toFixed(0)}k/mo SIP` : 'No SIP'}, ${currentInflation}% inflation.`,
     tag: 'Base',
     successProbability: baseSuccessProb,
@@ -62,7 +62,7 @@ export function runScenarioLab(
     sustainable: baseWealthResult.sustainable,
     deltaCorpus: 0,
     deltaProb: 0,
-    verdict: baseWealthResult.sustainable ? 'Sustainable to Life Expectancy' : `Depletes around Age ${baseDepletionAge}`,
+    verdict: baseWealthResult.sustainable ? `Funded through age ${currentLifeExp}` : `Depletes around age ${baseDepletionAge}`,
     modifiedInputs: baseInputs,
   };
 
@@ -81,8 +81,8 @@ export function runScenarioLab(
 
   const earlyItem: ScenarioComparisonItem = {
     id: 'early-retirement',
-    name: `Retire Early at Age ${earlyRetAge}`,
-    description: `Stops active salary inflows 3 years earlier, lengthening post-retirement drawdown by 3 years.`,
+    name: `Retire 3 Years Earlier (Age ${earlyRetAge})`,
+    description: `Stops employment income 3 years earlier, extending the retirement withdrawal period by 3 years.`,
     tag: 'Retirement',
     successProbability: earlySuccess,
     terminalCorpus: Math.round(earlyTerminal),
@@ -90,7 +90,7 @@ export function runScenarioLab(
     sustainable: earlyResult.sustainable,
     deltaCorpus: Math.round(earlyTerminal - baseTerminalCorpus),
     deltaProb: earlySuccess - baseSuccessProb,
-    verdict: earlyResult.sustainable ? 'Survives with reduced terminal buffer' : `Depletes at Age ${earlyDepletion}`,
+    verdict: earlyResult.sustainable ? 'Sustainable with lower terminal balance' : `Depletes at age ${earlyDepletion}`,
     modifiedInputs: earlyInputs,
   };
 
@@ -109,8 +109,8 @@ export function runScenarioLab(
 
   const lateItem: ScenarioComparisonItem = {
     id: 'delayed-retirement',
-    name: `Retire at Age ${lateRetAge} (+2 Yrs)`,
-    description: `Adds 2 additional years of salary accumulation and shortens drawdown duration.`,
+    name: `Retire 2 Years Later (Age ${lateRetAge})`,
+    description: `Adds 2 additional years of earnings and savings, shortening the withdrawal period.`,
     tag: 'Retirement',
     successProbability: lateSuccess,
     terminalCorpus: Math.round(lateTerminal),
@@ -118,7 +118,7 @@ export function runScenarioLab(
     sustainable: lateResult.sustainable,
     deltaCorpus: Math.round(lateTerminal - baseTerminalCorpus),
     deltaProb: lateSuccess - baseSuccessProb,
-    verdict: 'Significantly expands surplus buffer & longevity margin',
+    verdict: 'Increases terminal surplus and extends longevity margin',
     modifiedInputs: lateInputs,
   };
 
@@ -139,7 +139,7 @@ export function runScenarioLab(
 
   const sipBoostItem: ScenarioComparisonItem = {
     id: 'sip-boost',
-    name: `+₹25k/mo SIP Acceleration`,
+    name: `+₹25,000/Month Savings`,
     description: `Increases monthly investment by ₹25,000 with ongoing 5% annual step-up.`,
     tag: 'Savings',
     successProbability: sipBoostSuccess,
@@ -148,7 +148,7 @@ export function runScenarioLab(
     sustainable: sipBoostResult.sustainable,
     deltaCorpus: Math.round(sipBoostTerminal - baseTerminalCorpus),
     deltaProb: sipBoostSuccess - baseSuccessProb,
-    verdict: 'High-leverage wealth multiplier without lifestyle changes',
+    verdict: 'Significantly increases retirement corpus without altering retirement date',
     modifiedInputs: sipBoostInputs,
   };
 
@@ -173,8 +173,8 @@ export function runScenarioLab(
 
   const crashItem: ScenarioComparisonItem = {
     id: 'market-crash',
-    name: `-30% Severe Equity Crash`,
-    description: `Simulates early tail-risk correction of 35% across equity assets.`,
+    name: `-30% Equity Decline at Retirement`,
+    description: `Simulates an immediate 35% drop in equity values at retirement onset.`,
     tag: 'Market',
     successProbability: crashSuccess,
     terminalCorpus: Math.round(crashTerminal),
@@ -182,7 +182,7 @@ export function runScenarioLab(
     sustainable: crashResult.sustainable,
     deltaCorpus: Math.round(crashTerminal - baseTerminalCorpus),
     deltaProb: crashSuccess - baseSuccessProb,
-    verdict: crashResult.sustainable ? 'Portfolio absorbs shock without depletion' : `Depletes early at Age ${crashDepletion}`,
+    verdict: crashResult.sustainable ? 'Portfolio absorbs decline without premature depletion' : `Depletes early at age ${crashDepletion}`,
     modifiedInputs: crashInputs,
   };
 
@@ -200,8 +200,8 @@ export function runScenarioLab(
 
   const highInflItem: ScenarioComparisonItem = {
     id: 'high-inflation',
-    name: `High Inflation Regime (8.0% p.a.)`,
-    description: `Elevated persistent living cost inflation accelerating real purchasing-power erosion.`,
+    name: `Higher Inflation (8.0% p.a.)`,
+    description: `Assumes sustained 8% annual inflation across living expenses.`,
     tag: 'Inflation',
     successProbability: highInflSuccess,
     terminalCorpus: Math.round(highInflTerminal),
@@ -209,7 +209,7 @@ export function runScenarioLab(
     sustainable: highInflResult.sustainable,
     deltaCorpus: Math.round(highInflTerminal - baseTerminalCorpus),
     deltaProb: highInflSuccess - baseSuccessProb,
-    verdict: highInflResult.sustainable ? 'Survives but real purchasing power drops' : `Severe erosion: Depletes at Age ${highInflDepletion}`,
+    verdict: highInflResult.sustainable ? 'Sustainable with reduced real purchasing power' : `Depletes at age ${highInflDepletion}`,
     modifiedInputs: highInflInputs,
   };
 
@@ -236,8 +236,8 @@ export function runScenarioLab(
 
   const houseItem: ScenarioComparisonItem = {
     id: 'house-purchase',
-    name: `₹2Cr Real Estate Outlay`,
-    description: `Purchases property funded via financial assets, reducing income-generating compounding capital.`,
+    name: `₹2 Cr Property Purchase`,
+    description: `Allocates ₹2 Cr from portfolio assets toward property, reducing compounding capital.`,
     tag: 'Expense',
     successProbability: houseSuccess,
     terminalCorpus: Math.round(houseTerminal),
@@ -245,7 +245,7 @@ export function runScenarioLab(
     sustainable: houseResult.sustainable,
     deltaCorpus: Math.round(houseTerminal - baseTerminalCorpus),
     deltaProb: houseSuccess - baseSuccessProb,
-    verdict: houseResult.sustainable ? 'Viable with reduced retirement buffer' : `Underfunded: Depletes at Age ${houseDepletion}`,
+    verdict: houseResult.sustainable ? 'Sustainable with smaller final portfolio value' : `Depletes at age ${houseDepletion}`,
     modifiedInputs: houseInputs,
   };
 
@@ -256,6 +256,6 @@ export function runScenarioLab(
     scenarios,
     recommendedScenarioId: 'sip-boost',
     synthesisAdvice:
-      'Recommended Action: Accelerating monthly SIP by ₹25k preserves planned retirement age while building an institutional buffer against both inflation and market downturns.',
+      'Increasing monthly contributions by ₹25,000 maintains your planned retirement age while providing a buffer against market volatility and inflation.',
   };
 }

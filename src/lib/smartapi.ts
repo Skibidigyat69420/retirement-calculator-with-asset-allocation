@@ -50,9 +50,9 @@ export interface SmartApiFunds {
 }
 
 export const DEFAULT_NETWORK_INFO = {
-  localIp: '',
-  publicIp: '',
-  macAddress: '',
+  localIp: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ANGEL_LOCAL_IP) || '192.168.68.61',
+  publicIp: (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_ANGEL_PUBLIC_IP || import.meta.env?.ANGEL_PUBLIC_IP)) || '122.170.251.47',
+  macAddress: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ANGEL_MAC_ADDRESS) || 'b0:22:7a:74:16:ec',
 };
 
 /**
@@ -371,34 +371,68 @@ export async function fetchLTPs(
   }
 }
 
+// Storage keys for sessionStorage persistence
+const STORAGE_KEY_SESSION = 'soundthesis_angel_session_v1';
+const STORAGE_KEY_CREDS = 'soundthesis_angel_creds_v1';
+
 /**
  * Storage Helpers
  *
- * Broker credentials and sessions are intentionally NOT persisted in the browser.
- * API keys, PINs, TOTP secrets, JWTs, refresh tokens, and feed tokens live only
- * in memory for the current session. This prevents any script or XSS payload from
- * exfiltrating secrets from localStorage and limits blast radius if a device is
- * shared or lost. In a future server-side redesign, the frontend will hold only
- * an opaque application session reference.
+ * Broker sessions and non-sensitive credentials are kept in sessionStorage
+ * for the duration of the browser tab. PINs and TOTP secrets are NEVER persisted.
  */
-export function saveCredentials(_creds: SmartApiCredentials) {
-  // No-op: credentials are session-only.
+export function saveCredentials(creds: SmartApiCredentials) {
+  if (typeof window === 'undefined') return;
+  try {
+    const safeCreds = {
+      apiKey: creds.apiKey,
+      clientCode: creds.clientCode,
+      localIp: creds.localIp,
+      publicIp: creds.publicIp,
+      macAddress: creds.macAddress,
+    };
+    sessionStorage.setItem(STORAGE_KEY_CREDS, JSON.stringify(safeCreds));
+  } catch {
+    // Ignore storage quota or disabled errors
+  }
 }
 
-export function loadCredentials(): SmartApiCredentials | null {
-  return null;
+export function loadCredentials(): Partial<SmartApiCredentials> | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY_CREDS);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
-export function saveSession(_session: SmartApiSession) {
-  // No-op: broker sessions are session-only.
+export function saveSession(session: SmartApiSession) {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(session));
+  } catch {
+    // Ignore storage errors
+  }
 }
 
 export function loadSession(): SmartApiSession | null {
-  return null;
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY_SESSION);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
 export function clearSession() {
-  // No-op: there is no client-side session storage to clear.
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.removeItem(STORAGE_KEY_SESSION);
+  } catch {
+    // Ignore storage errors
+  }
 }
 
 export interface CandleDataRequest {
@@ -443,17 +477,16 @@ export async function fetchCandleData(
  * so deployments can inject it without touching committed source code.
  */
 export function buildDefaultCredentials(partial?: Partial<SmartApiCredentials>): SmartApiCredentials {
-  // No API key is injected at build time (VITE_* variables are exposed to the
-  // browser bundle) and no credentials are loaded from storage. Everything must
-  // be entered by the user each session.
+  const envKey = typeof import.meta !== 'undefined' ? (import.meta.env?.VITE_ANGEL_API_KEY as string | undefined) : undefined;
+  const saved = loadCredentials();
   return {
-    apiKey: '',
-    clientCode: '',
+    apiKey: envKey || saved?.apiKey || '7mnk8SRp',
+    clientCode: saved?.clientCode || '',
     pin: '',
     totpSecret: '',
-    localIp: DEFAULT_NETWORK_INFO.localIp,
-    publicIp: DEFAULT_NETWORK_INFO.publicIp,
-    macAddress: DEFAULT_NETWORK_INFO.macAddress,
+    localIp: saved?.localIp || DEFAULT_NETWORK_INFO.localIp,
+    publicIp: saved?.publicIp || DEFAULT_NETWORK_INFO.publicIp,
+    macAddress: saved?.macAddress || DEFAULT_NETWORK_INFO.macAddress,
     ...partial,
   };
 }

@@ -1,0 +1,124 @@
+```mermaid
+graph TD
+    %% ==========================================
+    %% CENTRAL REACTIVE STORE (SINGLE SOURCE OF TRUTH)
+    %% ==========================================
+    subgraph STORE["Central Reactive Store: CalculatorContext"]
+        subgraph INPUTS["Master Plan Inputs"]
+            CLIENT["Client Profile\n- Name, Email, Advisor\n- Review Date, Notes"]
+            HORIZON["Demographic Horizon\n- Current Age\n- Retirement Age\n- Life Expectancy\n- Inflation Rate"]
+            CASHFLOW["Cashflows\n- Annual Income\n- Monthly Expenditure\n- Savings Surplus"]
+            ASSETS["Asset Inventory\n- Equity, Debt, Gold\n- Real Estate, Liquid, Cash\n- Values & Expected Returns"]
+            SYSTEMATIC["Systematic Plans\n- SIP (Amount, Equity/Debt Split)\n- STP (Idle Cash Transfer)\n- SWP (Retirement Monthly Need)"]
+            GOALS["Financial Goals\n- Target Amount, Horizon Years\n- Priority (Essential/Important)"]
+        end
+
+        subgraph RISK_STORE["Risk & Allocation Targets"]
+            RISK_ANS["Risk Questionnaire Answers\n(10 Behavioral Questions)"]
+            MANUAL_TARGETS["Target Allocation Overrides\n(Manual / MVO Optimal Weights)"]
+        end
+
+        PERSIST["Persistence Layer\n- Debounced LocalStorage Sync\n- Multi-Plan Save/Load Engine"]
+    end
+
+    %% ==========================================
+    %% COMPUTATIONAL ENGINES (REACTIVE COMPUTATION)
+    %% ==========================================
+    subgraph ENGINES["Autonomous Analytical Engines"]
+        WEALTH_ENG["runWealthEngine()\n- Dynamic Year-by-Year Simulation\n- Accumulation (Age -> Ret. Age)\n- Distribution (Ret. Age -> Life Exp.)\n- Net Worth & Current Asset Weights"]
+        MONTE_CARLO["Monte Carlo Engine\n- 500 Stochastic Paths\n- Success Rate %\n- p5, p25, p50, p75, p95\n- Depletion Age Probability"]
+        RISK_ENG["Risk Profiling Engine\n- Score (0-100)\n- Profile (Cons/Mod/Bal/Gro/Agg)\n- Policy Equity/Debt Targets"]
+        SOLVER["Reverse Planning Solver\n- Required Monthly SIP\n- Feasible Retirement Age\n- Sustainable Monthly Spend"]
+    end
+
+    %% Connect Inputs to Engines
+    HORIZON --> WEALTH_ENG
+    CASHFLOW --> WEALTH_ENG
+    ASSETS --> WEALTH_ENG
+    SYSTEMATIC --> WEALTH_ENG
+    GOALS --> WEALTH_ENG
+    MANUAL_TARGETS --> WEALTH_ENG
+    RISK_ANS --> RISK_ENG
+    RISK_ENG --> WEALTH_ENG
+    WEALTH_ENG --> MONTE_CARLO
+    WEALTH_ENG --> SOLVER
+
+    %% ==========================================
+    %% WORKFLOW PAGES & RETROSPECTIVE FLOW
+    %% ==========================================
+    subgraph STEP1["Step 1: Client Discovery & Inventory (/master-plan)"]
+        P_MP_CLIENT["Edit Client Name & Details"]
+        P_MP_ASSETS["Manage Assets & Values"]
+        P_MP_CASH["Edit Income & Expenses"]
+        P_MP_GOALS["Add & Prioritize Goals"]
+    end
+
+    subgraph STEP2["Step 2: Risk Profile Assessment (/risk)"]
+        P_RISK_Q["Answer Risk Questions"]
+        P_RISK_APPLY["Apply Profile to SAA\n(Updates SIP splits & Targets)"]
+    end
+
+    subgraph STEP3["Step 3: Retirement & Cashflows (/retirement, /reverse-planning)"]
+        P_RET_AGE["Edit Target Retirement Age\n(e.g., Age 45 -> 50)"]
+        P_RET_SWP["Calibrate SWP Drawdown & Tax"]
+        P_REV_SOLVE["Reverse Solver:\n1-Click Apply Feasible Age or SIP"]
+    end
+
+    subgraph STEP4["Step 4: Portfolio Allocation & MVO (/allocation, /mvo)"]
+        P_ALLOC_REBAL["Current vs Target Allocation\n(Rebalancing Trade Tickets)"]
+        P_MVO_OPT["MVO Frontier Optimization\n(1-Click Apply Max Sharpe Weights)"]
+    end
+
+    subgraph STEP5["Step 5: Strategy & Deliverables (/ips, /reports, /dossier)"]
+        P_IPS["Investment Policy Statement (IPS)\n[Mode Toggle: Linked vs Independent]\n- Inherits Client Name & Advisor\n- Inherits Horizon & Net Worth\n- Inherits SAA Target Allocation\n- Clean Language (Zero CFAI References)"]
+        P_DOSSIER["Executive PDF Dossier\n- Complete Plan Printout\n- Live Charts & Health Score"]
+    end
+
+    subgraph UTILITIES["Utilities & Audit (/decision-history, /calculators)"]
+        P_AUDIT["Decision Audit History\n- Logs Plan Edits\n- 1-Click Revert Button"]
+        P_CALCS["Standalone Calculators\n- 1-Click Send Result to Active Plan"]
+    end
+
+    %% ==========================================
+    %% 2-WAY DATA BINDING & FLOW ARROWS
+    %% ==========================================
+    %% Step 1 mutations
+    P_MP_CLIENT -->|updateClient| CLIENT
+    P_MP_ASSETS -->|updateAsset / addAsset| ASSETS
+    P_MP_CASH -->|updateInputs| CASHFLOW
+    P_MP_GOALS -->|addGoal / updateGoal| GOALS
+
+    %% Step 2 mutations
+    P_RISK_Q -->|setRiskAnswers| RISK_ANS
+    P_RISK_APPLY -->|applyRiskProfileToPlan| SYSTEMATIC
+    P_RISK_APPLY -->|applyRiskProfileToPlan| MANUAL_TARGETS
+
+    %% Step 3 Retrospective Flow (e.g. Retirement Age change)
+    P_RET_AGE -.->|updateInputs: retirementAge 45->50| HORIZON
+    P_RET_SWP -.->|updateSWP: monthlyNeedToday| SYSTEMATIC
+    P_REV_SOLVE -.->|updateInputs: retirementAge / sip| HORIZON
+    P_REV_SOLVE -.->|updateInputs: retirementAge / sip| SYSTEMATIC
+
+    %% Step 4 mutations
+    P_ALLOC_REBAL -->|setManualTargets| MANUAL_TARGETS
+    P_MVO_OPT -->|setManualTargets| MANUAL_TARGETS
+
+    %% Step 5 consumption & retrospective sync
+    STORE ==>|Auto-fill / Sync when Linked| P_IPS
+    ENGINES ==>|Live Projections & Metrics| P_IPS
+    STORE ==>|Client & Plan Data| P_DOSSIER
+    ENGINES ==>|Terminal Corpus, Health Score, Charts| P_DOSSIER
+
+    %% Retrospective Feedback Loop: How changing Retirement Age updates everything
+    HORIZON ==>|Recalculates Compounding Years| WEALTH_ENG
+    WEALTH_ENG ==>|Updates Projected Corpus & Gap| STEP3
+    WEALTH_ENG ==>|Recalculates Goal Funding Feasibility| STEP1
+    WEALTH_ENG ==>|Recalculates Monte Carlo Success Rate| STEP1
+    WEALTH_ENG ==>|Recalculates Rebalancing & Glide Path| STEP4
+    WEALTH_ENG ==>|Updates Target Horizon in Deliverables| STEP5
+
+    %% Decision Logging
+    P_RET_AGE -->|logDecision| P_AUDIT
+    P_ALLOC_REBAL -->|logDecision| P_AUDIT
+    P_AUDIT -.->|revertDecision| INPUTS
+```

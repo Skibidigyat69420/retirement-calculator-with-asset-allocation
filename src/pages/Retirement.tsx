@@ -155,24 +155,24 @@ export const Retirement = () => {
       )}
 
       {gap < 0 && (
-        <Card className="border-amber-200 bg-amber-50/40">
+        <Card className="border-zinc-200 bg-zinc-50/40">
           <div className="flex items-center gap-2 mb-2">
-            <Sparkles size={20} className="text-amber-500" />
+            <Sparkles size={20} className="text-zinc-600" />
             <h3 className="text-base font-serif font-bold text-navy">
               Advisory Shortfall Solver — How to Close the Gap of {formatCurrency(shortfall)}
             </h3>
           </div>
-          <p className="text-xs text-slate-600 mb-4">
+          <p className="text-xs text-zinc-600 mb-4">
             Select any of the three recommended actions to immediately align your plan with full retirement sustainability:
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Lever 1: Increase SIP */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-3">
+            <div className="bg-white p-4 rounded-xl border border-zinc-200/80 shadow-xs flex flex-col justify-between space-y-3">
               <div>
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-navy mb-1">
-                  <DollarSign size={14} className="text-amber-500" /> Option 1: Increase SIP
+                  <DollarSign size={14} className="text-zinc-600" /> Option 1: Increase SIP
                 </div>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-zinc-600">
                   Boost monthly SIP by <strong>+{formatCurrency(extraSIPNeeded)}</strong> (to <strong>{formatCurrency(inputs.sip.amount + extraSIPNeeded)}</strong>/mo).
                 </p>
               </div>
@@ -190,12 +190,12 @@ export const Retirement = () => {
             </div>
 
             {/* Lever 2: Delay Retirement */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-3">
+            <div className="bg-white p-4 rounded-xl border border-zinc-200/80 shadow-xs flex flex-col justify-between space-y-3">
               <div>
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-navy mb-1">
-                  <Clock size={14} className="text-amber-500" /> Option 2: Extend Horizon
+                  <Clock size={14} className="text-zinc-600" /> Option 2: Extend Horizon
                 </div>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-zinc-600">
                   Delay retirement by {delayYears} year{delayYears === 1 ? '' : 's'} to age <strong>{recommendedDelayAge}</strong> to allow longer compounding.
                 </p>
               </div>
@@ -213,12 +213,12 @@ export const Retirement = () => {
             </div>
 
             {/* Lever 3: Calibrate Drawdown */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-3">
+            <div className="bg-white p-4 rounded-xl border border-zinc-200/80 shadow-xs flex flex-col justify-between space-y-3">
               <div>
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-navy mb-1">
-                  <Target size={14} className="text-amber-500" /> Option 3: Calibrate Spend
+                  <Target size={14} className="text-zinc-600" /> Option 3: Calibrate Spend
                 </div>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-zinc-600">
                   Adjust retirement drawdown to sustainable level: <strong>{formatCurrency(sustainableMonthlyNeed)}</strong>/mo today.
                 </p>
               </div>
@@ -241,7 +241,7 @@ export const Retirement = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
           <div className="flex items-center space-x-2 mb-5">
-            <Calculator size={18} className="text-amber-500" />
+            <Calculator size={18} className="text-zinc-600" />
             <h3 className="text-lg font-serif text-navy">Inputs</h3>
           </div>
           <div className="space-y-4">
@@ -302,14 +302,14 @@ export const Retirement = () => {
 
           <Card>
             <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2">
-              <TrendingUp size={18} className="text-amber-500" /> Wealth Trajectory
+              <TrendingUp size={18} className="text-zinc-600" /> Wealth Trajectory
             </h3>
             <NominalRealChart data={chartData} xKey="label" />
           </Card>
 
           <Card>
             <h3 className="text-lg font-serif text-navy mb-4 flex items-center gap-2">
-              <TrendingUp size={18} className="text-amber-500" /> Distribution Phase
+              <TrendingUp size={18} className="text-zinc-600" /> Distribution Phase
             </h3>
             <SWPDrawdownChart data={drawdownChartData} />
           </Card>
@@ -320,7 +320,7 @@ export const Retirement = () => {
               {gap >= 0 && successRate >= riskProfile.goalSuccessThreshold ? (
                 <>
                   <CheckCircle2 size={20} className="text-green-700 shrink-0 mt-0.5" />
-                  <p className="text-slate-600 leading-relaxed">
+                  <p className="text-zinc-600 leading-relaxed">
                     By age <strong>{inputs.retirementAge}</strong>, your monthly expense of{' '}
                     <strong>{formatCurrency(inputs.swp.monthlyNeedToday)}</strong> today will inflate to{' '}
                     <strong>{formatCurrency(monthlyNeedAtRetirement)}</strong>. Your projected corpus of{' '}
@@ -330,8 +330,8 @@ export const Retirement = () => {
                 </>
               ) : (
                 <>
-                  <Target size={20} className="text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-slate-600 leading-relaxed">
+                  <Target size={20} className="text-zinc-600 shrink-0 mt-0.5" />
+                  <p className="text-zinc-600 leading-relaxed">
                     By age <strong>{inputs.retirementAge}</strong>, your monthly expense of{' '}
                     <strong>{formatCurrency(inputs.swp.monthlyNeedToday)}</strong> today will inflate to{' '}
                     <strong>{formatCurrency(monthlyNeedAtRetirement)}</strong>. Your projected corpus is{' '}
@@ -343,7 +343,7 @@ export const Retirement = () => {
                 </>
               )}
             </div>
-            <div className="p-4 bg-slate-50 rounded-xl text-sm text-slate-600 space-y-2">
+            <div className="p-4 bg-zinc-50 rounded-xl text-sm text-zinc-600 space-y-2">
               <div className="flex justify-between">
                 <span>Success threshold</span>
                 <Badge variant="outline">{formatPercent(riskProfile.goalSuccessThreshold)}</Badge>
@@ -373,7 +373,7 @@ export const Retirement = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-serif text-navy flex items-center gap-2">
-            <Umbrella size={20} className="text-amber-500" /> Post-Retirement SWP Plan
+            <Umbrella size={20} className="text-zinc-600" /> Post-Retirement SWP Plan
           </h3>
           <Badge variant="navy">Decumulation</Badge>
         </div>
@@ -421,7 +421,7 @@ export const Retirement = () => {
             </Button>
           </Link>
           {sustainableAtRetirement.monthlyWithdrawal < monthlyNeedAtRetirement && (
-            <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            <span className="text-xs text-amber-700 bg-amber-50 border border-zinc-200 rounded-lg px-3 py-2">
               Current drawdown exceeds what the corpus can sustain — apply the sustainable SWP or close the gap above.
             </span>
           )}
@@ -449,7 +449,7 @@ export const Retirement = () => {
           <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable SWP schedule table">
             <table className="w-full text-sm min-w-[520px]">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-700">
+                <tr className="border-b border-zinc-200 text-left text-[10px] uppercase tracking-wider text-zinc-700">
                   <th className="py-2 pr-4">Year</th>
                   <th className="py-2 pr-4">Age</th>
                   <th className="py-2 pr-4 text-right">Monthly SWP</th>
@@ -461,7 +461,7 @@ export const Retirement = () => {
                 {scheduleRows.map((d) => (
                   <tr
                     key={d.year}
-                    className={`hover:bg-slate-50/80 transition-colors ${
+                    className={`hover:bg-zinc-50/80 transition-colors ${
                       d.corpusLeft <= 0 ? 'bg-rose-50/50 text-rose-900' : ''
                     }`}
                   >
@@ -478,7 +478,7 @@ export const Retirement = () => {
             </table>
           </div>
           {!showAllSchedule && swpPlan.yearlyData.length > 15 && (
-            <p className="text-xs text-slate-500 mt-3 pt-2 border-t border-slate-100">
+            <p className="text-xs text-zinc-500 mt-3 pt-2 border-t border-zinc-100">
               Showing first 10 years and final year of a {swpPlan.yearlyData.length}-year distribution horizon. Click "Show All" above for the complete table.
             </p>
           )}

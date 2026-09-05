@@ -26,7 +26,7 @@ export const Select = ({ label, value, onChange, options, className, id, 'aria-l
       {label && (
         <label
           htmlFor={selectId}
-          className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600"
+          className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-600"
         >
           {label}
         </label>
@@ -38,9 +38,9 @@ export const Select = ({ label, value, onChange, options, className, id, 'aria-l
           onChange={(e) => onChange(e.currentTarget.value)}
           aria-label={ariaLabel || label}
           className={cn(
-            'w-full appearance-none bg-white border border-slate-200 rounded-xl px-3 py-2.5 pr-9 text-sm font-medium text-ink',
+            'w-full appearance-none bg-white border border-zinc-200 rounded-xl px-3 py-2.5 pr-9 text-sm font-medium text-ink',
             'focus:border-navy focus:ring-2 focus:ring-navy/10 focus:outline-none',
-            'hover:border-slate-300 transition-all',
+            'hover:border-zinc-300 transition-all',
           )}
         >
           {options.map((opt) => (
@@ -49,7 +49,7 @@ export const Select = ({ label, value, onChange, options, className, id, 'aria-l
             </option>
           ))}
         </select>
-        <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
+        <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500" />
       </div>
     </div>
   );

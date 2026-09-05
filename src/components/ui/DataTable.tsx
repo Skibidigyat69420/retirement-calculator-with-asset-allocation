@@ -18,7 +18,7 @@ interface DataTableProps<T> {
 export function DataTable<T>({ columns, data, className, emptyMessage = 'No data available', 'aria-label': ariaLabel }: DataTableProps<T>) {
   if (data.length === 0) {
     return (
-      <div className="text-center py-10 text-slate-600 text-sm bg-slate-50 rounded-xl border border-slate-100">
+      <div className="text-center py-10 text-zinc-600 text-sm bg-zinc-50 rounded-xl border border-zinc-100">
         {emptyMessage}
       </div>
     );
@@ -28,7 +28,7 @@ export function DataTable<T>({ columns, data, className, emptyMessage = 'No data
     <div className={cn('overflow-x-auto', className)} role="region" aria-label={ariaLabel || 'Data table'} tabIndex={0}>
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-700">
+          <tr className="border-b border-zinc-200 text-left text-[10px] uppercase tracking-wider text-zinc-700">
             {columns.map((col) => (
               <th
                 key={col.key}
@@ -45,7 +45,7 @@ export function DataTable<T>({ columns, data, className, emptyMessage = 'No data
         </thead>
         <tbody className="divide-y divide-slate-100">
           {data.map((row, idx) => (
-            <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+            <tr key={idx} className="hover:bg-zinc-50/80 transition-colors">
               {columns.map((col) => (
                 <td
                   key={col.key}

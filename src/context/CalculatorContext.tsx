@@ -44,7 +44,7 @@ interface CalculatorContextType {
   updateSIP: (patch: Partial<MasterPlanInputs['sip']>) => void;
   updateSTP: (patch: Partial<MasterPlanInputs['stp']>) => void;
   updateSWP: (patch: Partial<MasterPlanInputs['swp']>) => void;
-  addGoal: (goal?: Partial<Goal>) => void;
+  addGoal: (goal?: Partial<Goal>) => string;
   updateGoal: (id: string, patch: Partial<Goal>) => void;
   removeGoal: (id: string) => void;
   wealthResult: WealthEngineResult;
@@ -113,6 +113,14 @@ const DEFAULT_DECISIONS: DecisionLogEntry[] = [
     newValue: '65% Equity',
     rationale: 'Drawdown stress testing revealed -24% downside vulnerability. Trimming to 65% aligns with Balanced risk tolerance.',
     author: 'Adviser',
+    revertManualTargets: { equity: 72, debt: 28, gold: 0, realestate: 0, liquid: 0, other: 0 },
+    revertPatch: {
+      sip: {
+        ...defaultClientInputs().sip,
+        equitySplit: 72,
+        debtSplit: 28,
+      },
+    },
   },
   {
     id: 'dec-3',
@@ -125,8 +133,32 @@ const DEFAULT_DECISIONS: DecisionLogEntry[] = [
     newValue: '₹50,000/mo',
     rationale: 'Current goal funding probability was only 67%. Increasing monthly SIP ensures 90%+ probability of funding.',
     author: 'Adviser',
+    revertPatch: {
+      sip: {
+        ...defaultClientInputs().sip,
+        amount: 35000,
+      },
+    },
   },
 ];
+
+const STAGE_CHECKLIST_MAP: Record<ClientMeetingStageId, string[]> = {
+  1: ['m1-profile', 'm1-assets', 'm1-cashflow', 'm1-goals', 'm1-risk'],
+  2: ['m2-networth', 'm2-readiness', 'm2-conflicts', 'm2-scenarios'],
+  3: ['m3-allocation', 'm3-waterfall', 'm3-rebalance', 'm3-transition'],
+  4: ['m4-dossier', 'm4-ips', 'm4-actions'],
+};
+
+function computeCompletedStages(checklists: Record<string, boolean>): ClientMeetingStageId[] {
+  const result: ClientMeetingStageId[] = [];
+  ([1, 2, 3, 4] as ClientMeetingStageId[]).forEach((stageId) => {
+    const ids = STAGE_CHECKLIST_MAP[stageId];
+    if (ids && ids.every((id) => Boolean(checklists[id]))) {
+      result.push(stageId);
+    }
+  });
+  return result;
+}
 
 const DEFAULT_MEETING_STATE: ClientMeetingState = {
   currentStage: 1,
@@ -195,11 +227,24 @@ function loadDecisionHistory(): DecisionLogEntry[] {
 function loadMeetingState(): ClientMeetingState {
   try {
     const raw = localStorage.getItem(MEETING_STATE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const mergedChecklists = { ...DEFAULT_MEETING_STATE.stageChecklists, ...(parsed.stageChecklists || {}) };
+      return {
+        ...DEFAULT_MEETING_STATE,
+        ...parsed,
+        notes: { ...DEFAULT_MEETING_STATE.notes, ...(parsed.notes || {}) },
+        stageChecklists: mergedChecklists,
+        completedStages: computeCompletedStages(mergedChecklists),
+      };
+    }
   } catch {
     // ignore
   }
-  return DEFAULT_MEETING_STATE;
+  return {
+    ...DEFAULT_MEETING_STATE,
+    completedStages: computeCompletedStages(DEFAULT_MEETING_STATE.stageChecklists),
+  };
 }
 
 function loadAssumptionMode(): AssumptionMode {
@@ -226,7 +271,7 @@ function loadCustomCategoryReturns(): Partial<Record<AssetCategory, number>> {
 
 /** Generate a unique ID that won't collide on rapid creation */
 function generateId(prefix: string): string {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return `${prefix}-${crypto.randomUUID()}`;
   }
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -275,20 +320,21 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     });
   }, []);
 
-  const revertDecision = useCallback((id: string) => {
-    setDecisionHistory((prev) => {
-      const target = prev.find((d) => d.id === id);
-      if (!target || !target.revertPatch) return prev;
-      setInputs((curr) => ({ ...curr, ...target.revertPatch }));
-      const next = prev.map((d) => (d.id === id ? { ...d, reverted: true } : d));
-      localStorage.setItem(DECISION_HISTORY_KEY, JSON.stringify(next));
-      return next;
-    });
-  }, []);
-
   const clearDecisionHistory = useCallback(() => {
     setDecisionHistory([]);
     localStorage.removeItem(DECISION_HISTORY_KEY);
+  }, []);
+
+  const revertDecision = useCallback((id: string) => {
+    setDecisionHistory((prev) => {
+      const entry = prev.find((e) => e.id === id);
+      if (entry?.revertPatch) {
+        setInputs((inputs) => ({ ...inputs, ...entry.revertPatch }));
+      }
+      const next = prev.filter((e) => e.id !== id);
+      localStorage.setItem(DECISION_HISTORY_KEY, JSON.stringify(next));
+      return next;
+    });
   }, []);
 
   const updateMeetingStage = useCallback((stageId: ClientMeetingStageId) => {
@@ -307,9 +353,11 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     setMeetingState((prev) => {
       const isDone = !prev.stageChecklists[checklistId];
       const nextChecklists = { ...prev.stageChecklists, [checklistId]: isDone };
+      const completedStages = computeCompletedStages(nextChecklists);
       const next = {
         ...prev,
         stageChecklists: nextChecklists,
+        completedStages,
         lastUpdated: new Date().toISOString(),
       };
       localStorage.setItem(MEETING_STATE_KEY, JSON.stringify(next));
@@ -482,7 +530,14 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
   }, [refreshSavedPlans]);
 
   const updateInputs = useCallback((patch: Partial<MasterPlanInputs>) => {
-    setInputs((prev) => ({ ...prev, ...patch }));
+    setInputs((prev) => ({
+      ...prev,
+      ...patch,
+      sip: patch.sip ? { ...prev.sip, ...patch.sip } : prev.sip,
+      stp: patch.stp ? { ...prev.stp, ...patch.stp } : prev.stp,
+      swp: patch.swp ? { ...prev.swp, ...patch.swp } : prev.swp,
+      client: patch.client ? { ...prev.client, ...patch.client } : prev.client,
+    }));
   }, []);
 
   const updateAsset = useCallback((id: string, patch: Partial<MasterPlanInputs['assets'][number]>) => {
@@ -540,28 +595,30 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
   }, []);
 
   const addGoal = useCallback((goal?: Partial<Goal>) => {
-    setInputs((prev) => ({
-      ...prev,
-      goals: [
-        ...prev.goals,
-        {
-          id: generateId('goal'),
-          name: 'New Goal',
-          targetAmount: 1000000,
-          yearsToGoal: 5,
-          priority: 'important',
-          inflation: prev.inflation,
-          recurring: false,
-          ...goal,
-        },
-      ],
-    }));
+    const id = goal?.id || generateId('goal');
+    setInputs((prev) => {
+      const newGoal: Goal = {
+        name: 'New Goal',
+        targetAmount: 1000000,
+        yearsToGoal: 5,
+        priority: 'important',
+        inflation: prev.inflation ?? 5,
+        recurring: false,
+        ...goal,
+        id,
+      };
+      return {
+        ...prev,
+        goals: [...prev.goals, newGoal],
+      };
+    });
+    return id;
   }, []);
 
-  const updateGoal = useCallback((id:string, patch: Partial<Goal>) => {
+  const updateGoal = useCallback((id: string, patch: Partial<Goal>) => {
     setInputs((prev) => ({
       ...prev,
-      goals: prev.goals.map((g) => (g.id === id ? { ...g, ...patch } : g)),
+      goals: prev.goals.map((g) => (g.id === id ? { ...g, ...patch, id: g.id } : g)),
     }));
   }, []);
 

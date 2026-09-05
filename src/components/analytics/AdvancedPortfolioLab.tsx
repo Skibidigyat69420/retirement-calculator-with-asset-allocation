@@ -90,26 +90,26 @@ export const AdvancedPortfolioLab = () => {
   return (
     <div className="space-y-6">
       {/* Header Card */}
-      <Card className="border border-slate-200/90 shadow-sm space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+      <Card className="border border-zinc-200/90 shadow-sm space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="p-1.5 bg-slate-900 text-white rounded-lg">
+              <span className="p-1.5 bg-zinc-900 text-white rounded-lg">
                 <Layers size={18} />
               </span>
-              <h3 className="text-xl font-serif font-bold text-slate-900 tracking-tight">
+              <h3 className="text-xl font-sans font-bold text-zinc-900 tracking-tight">
                 Advanced Portfolio Engineering Lab
               </h3>
               <Badge variant="navy" className="text-[10px] uppercase font-mono">
                 SAA + TAA Architecture
               </Badge>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-zinc-500 mt-1">
               Combines Strategic Asset Allocation (MVO, Risk Parity, Black-Litterman) with Tactical Overlays (Valuation, Momentum, Volatility Targeting).
             </p>
           </div>
 
-          <Button onClick={handleApplyFinalAllocation} className="bg-slate-900 text-white hover:bg-slate-800 text-xs">
+          <Button onClick={handleApplyFinalAllocation} className="bg-zinc-900 text-white hover:bg-zinc-800 text-xs">
             Apply Final Weights <ArrowRight size={13} className="ml-1" />
           </Button>
         </div>
@@ -117,10 +117,10 @@ export const AdvancedPortfolioLab = () => {
         {/* Strategic Model Selection Tabs */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            <span className="text-xs font-bold uppercase tracking-wider text-zinc-700">
               1. Strategic Asset Allocation (SAA) Foundation:
             </span>
-            <span className="text-xs text-slate-500">Long-Term Equilibrium Policy</span>
+            <span className="text-xs text-zinc-500">Long-Term Equilibrium Policy</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -150,8 +150,8 @@ export const AdvancedPortfolioLab = () => {
                 onClick={() => setActiveModel(m.id as any)}
                 className={`p-4 rounded-xl border text-left transition-all ${
                   activeModel === m.id
-                    ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                    ? 'bg-zinc-900 text-white border-zinc-900 shadow-sm'
+                    : 'bg-white border-zinc-200 text-zinc-600 hover:border-zinc-300'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
@@ -159,10 +159,10 @@ export const AdvancedPortfolioLab = () => {
                     {m.tag}
                   </Badge>
                 </div>
-                <h4 className={`text-sm font-bold ${activeModel === m.id ? 'text-white' : 'text-slate-900'}`}>
+                <h4 className={`text-sm font-bold ${activeModel === m.id ? 'text-white' : 'text-zinc-900'}`}>
                   {m.title}
                 </h4>
-                <p className={`text-xs mt-1 leading-relaxed ${activeModel === m.id ? 'text-slate-300' : 'text-slate-500'}`}>
+                <p className={`text-xs mt-1 leading-relaxed ${activeModel === m.id ? 'text-zinc-300' : 'text-zinc-500'}`}>
                   {m.desc}
                 </p>
               </button>
@@ -172,15 +172,15 @@ export const AdvancedPortfolioLab = () => {
 
         {/* Black-Litterman View Inputs if Active */}
         {activeModel === 'blackLitterman' && (
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
+          <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-amber-500" />
-                <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                <Sparkles size={16} className="text-zinc-600" />
+                <span className="text-xs font-bold text-zinc-900 uppercase tracking-wider">
                   Advisory Forward Views &amp; Confidence Matrix:
                 </span>
               </div>
-              <span className="text-xs text-slate-500 font-mono">
+              <span className="text-xs text-zinc-500 font-mono">
                 Posterior Return Tilt: +{((blViewReturn * blConfidence) / 100).toFixed(2)}%
               </span>
             </div>
@@ -210,14 +210,14 @@ export const AdvancedPortfolioLab = () => {
       </Card>
 
       {/* Tactical Overlays Card */}
-      <Card className="border border-slate-200/90 shadow-sm space-y-5">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+      <Card className="border border-zinc-200/90 shadow-sm space-y-5">
+        <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
           <div>
-            <h3 className="text-base font-serif font-bold text-slate-900 flex items-center gap-2">
-              <Sliders size={18} className="text-slate-800" />
+            <h3 className="text-base font-sans font-bold text-zinc-900 flex items-center gap-2">
+              <Sliders size={18} className="text-zinc-800" />
               2. Tactical Asset Allocation (TAA) Overlays
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-zinc-500 mt-0.5">
               Disciplined short-to-medium term shifts around strategic benchmarks based on valuation, momentum, and regime signals.
             </p>
           </div>
@@ -226,7 +226,7 @@ export const AdvancedPortfolioLab = () => {
           </Badge>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 bg-slate-50/70 rounded-xl border border-slate-200">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 bg-zinc-50/70 rounded-xl border border-zinc-200">
           <div>
             <Slider
               label="Valuation Tilt (Trailing PE & Yield Spread)"
@@ -237,7 +237,7 @@ export const AdvancedPortfolioLab = () => {
               step={0.5}
               suffix="%"
             />
-            <span className="text-[10px] text-slate-500 mt-1 block">
+            <span className="text-[10px] text-zinc-500 mt-1 block">
               Negative tilt trims equity exposure when market valuations are stretched beyond historical averages.
             </span>
           </div>
@@ -252,7 +252,7 @@ export const AdvancedPortfolioLab = () => {
               step={0.5}
               suffix="%"
             />
-            <span className="text-[10px] text-slate-500 mt-1 block">
+            <span className="text-[10px] text-zinc-500 mt-1 block">
               Positive momentum allocates incremental tactical weight into assets sustaining established upward trends.
             </span>
           </div>
@@ -262,7 +262,7 @@ export const AdvancedPortfolioLab = () => {
         <div className="overflow-x-auto pt-2">
           <table className="w-full text-xs text-left">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px]">
+              <tr className="border-b border-zinc-200 text-zinc-500 uppercase tracking-wider text-[10px]">
                 <th className="pb-2">Asset Class</th>
                 <th className="pb-2 text-right">Strategic Policy (SAA)</th>
                 <th className="pb-2 text-right">Tactical Overlay (TAA)</th>
@@ -278,22 +278,22 @@ export const AdvancedPortfolioLab = () => {
                 const color = ASSET_COLORS[cat];
 
                 return (
-                  <tr key={cat} className="hover:bg-slate-50/60">
-                    <td className="py-2.5 font-sans font-bold text-slate-900 flex items-center gap-2">
+                  <tr key={cat} className="hover:bg-zinc-50/60">
+                    <td className="py-2.5 font-sans font-bold text-zinc-900 flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
                       {ASSET_LABELS[cat]}
                     </td>
-                    <td className="py-2.5 text-right font-semibold text-slate-700">{strat}%</td>
+                    <td className="py-2.5 text-right font-semibold text-zinc-700">{strat}%</td>
                     <td className="py-2.5 text-right">
                       {delta !== 0 ? (
-                        <span className={delta > 0 ? 'text-emerald-700 font-bold' : 'text-amber-700 font-bold'}>
+                        <span className={delta > 0 ? 'text-emerald-700 font-bold' : 'text-zinc-700 font-bold'}>
                           {delta > 0 ? `+${delta}%` : `${delta}%`}
                         </span>
                       ) : (
-                        <span className="text-slate-400">0%</span>
+                        <span className="text-zinc-400">0%</span>
                       )}
                     </td>
-                    <td className="py-2.5 text-right font-bold text-slate-900 text-sm">{final}%</td>
+                    <td className="py-2.5 text-right font-bold text-zinc-900 text-sm">{final}%</td>
                     <td className="py-2.5 text-right">
                       <Badge variant={delta === 0 ? 'outline' : delta > 0 ? 'success' : 'warning'} className="text-[9px]">
                         {delta > 0 ? `Overweight` : delta < 0 ? `Underweight` : `Neutral`}

@@ -89,23 +89,23 @@ export const RetirementSensitivityMatrix = () => {
   };
 
   return (
-    <Card className="p-6 border border-slate-200/90 shadow-sm space-y-5">
+    <Card className="p-6 border border-zinc-200/90 shadow-sm space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 pb-3">
         <div>
           <div className="flex items-center gap-2">
             <Grid size={18} className="text-indigo-600" />
-            <h3 className="text-lg font-bold text-slate-900 tracking-tight">
+            <h3 className="text-lg font-bold text-zinc-900 tracking-tight">
               Retirement Age vs Lifestyle Expense Sensitivity Matrix
             </h3>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-zinc-500 mt-0.5">
             Evaluate portfolio sustainability across 25 combinations of early/delayed retirement and living expenditures.
           </p>
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-3 text-[11px] text-slate-600 self-start sm:self-center">
+        <div className="flex items-center gap-3 text-[11px] text-zinc-600 self-start sm:self-center">
           <span className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block" />
             Comfortable Surplus
@@ -126,18 +126,18 @@ export const RetirementSensitivityMatrix = () => {
         <table className="w-full text-xs text-center border-collapse">
           <thead>
             <tr>
-              <th className="p-2.5 text-left font-bold text-slate-500 uppercase tracking-wider bg-slate-50/80 border border-slate-200">
+              <th className="p-2.5 text-left font-bold text-zinc-500 uppercase tracking-wider bg-zinc-50/80 border border-zinc-200">
                 Retirement Age
               </th>
               {EXPENSE_MULTIPLIERS.map((m) => (
                 <th
                   key={m}
-                  className="p-2.5 font-bold text-slate-700 bg-slate-50/80 border border-slate-200"
+                  className="p-2.5 font-bold text-zinc-700 bg-zinc-50/80 border border-zinc-200"
                 >
                   <div>
                     {m === 1.0 ? 'Current Budget' : m > 1.0 ? `+${Math.round((m - 1) * 100)}%` : `-${Math.round((1 - m) * 100)}%`}
                   </div>
-                  <div className="text-[10px] font-mono text-slate-500 font-normal">
+                  <div className="text-[10px] font-mono text-zinc-500 font-normal">
                     {formatCurrencyCompact(inputs.swp.monthlyNeedToday * m)}/mo
                   </div>
                 </th>
@@ -152,8 +152,8 @@ export const RetirementSensitivityMatrix = () => {
               return (
                 <tr key={retAge}>
                   <td
-                    className={`p-2.5 text-left font-bold border border-slate-200 ${
-                      isBaseAge ? 'bg-indigo-50 text-indigo-900' : 'bg-slate-50/50 text-slate-800'
+                    className={`p-2.5 text-left font-bold border border-zinc-200 ${
+                      isBaseAge ? 'bg-indigo-50 text-indigo-900' : 'bg-zinc-50/50 text-zinc-800'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-1">
@@ -178,7 +178,7 @@ export const RetirementSensitivityMatrix = () => {
                     } else if (cell.surplusPercent >= 0) {
                       bgClass = 'bg-sky-50 text-sky-950 border-sky-200 hover:bg-sky-100/80';
                     } else if (cell.surplusPercent >= -15) {
-                      bgClass = 'bg-amber-50 text-amber-950 border-amber-200 hover:bg-amber-100/80';
+                      bgClass = 'bg-zinc-50 text-amber-950 border-zinc-200 hover:bg-zinc-100/80';
                     }
 
                     if (isSelected) {
@@ -224,8 +224,8 @@ export const RetirementSensitivityMatrix = () => {
                 {selectedCell.sustainable ? 'Fully Funded' : 'Requires Extra Capital'}
               </Badge>
             </div>
-            <p className="text-xs text-slate-600">
-              Projected Corpus: <span className="font-bold text-slate-800 font-mono">{formatCurrencyCompact(selectedCell.projectedCorpus)}</span> | Required Corpus: <span className="font-bold text-slate-800 font-mono">{formatCurrencyCompact(selectedCell.requiredCorpus)}</span> ({selectedCell.surplus >= 0 ? 'Surplus' : 'Shortfall'}: {formatCurrencyCompact(Math.abs(selectedCell.surplus))})
+            <p className="text-xs text-zinc-600">
+              Projected Corpus: <span className="font-bold text-zinc-800 font-mono">{formatCurrencyCompact(selectedCell.projectedCorpus)}</span> | Required Corpus: <span className="font-bold text-zinc-800 font-mono">{formatCurrencyCompact(selectedCell.requiredCorpus)}</span> ({selectedCell.surplus >= 0 ? 'Surplus' : 'Shortfall'}: {formatCurrencyCompact(Math.abs(selectedCell.surplus))})
             </p>
           </div>
 

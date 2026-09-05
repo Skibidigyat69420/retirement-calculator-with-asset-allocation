@@ -33,8 +33,10 @@ const Allocation = lazyNamed(() => import('./pages/Allocation'), 'Allocation');
 const GoalPlanner = lazyNamed(() => import('./pages/GoalPlanner'), 'GoalPlanner');
 const Retirement = lazyNamed(() => import('./pages/Retirement'), 'Retirement');
 const AngelConnect = lazyNamed(() => import('./pages/AngelConnect'), 'AngelConnect');
-const MVO = lazyNamed(() => import('./pages/MVO'), 'MVO');
-const IPSTemplate = lazyNamed(() => import('./pages/IPSTemplate'), 'IPSTemplate');
+const IPSTemplate = lazy(async () => {
+  const mod = await import('./pages/IPSTemplate');
+  return { default: mod.IPSTemplate };
+});
 const RiskQuestionnaire = lazyNamed(() => import('./pages/RiskQuestionnaire'), 'RiskQuestionnaire');
 const Reports = lazyNamed(() => import('./pages/Reports'), 'Reports');
 const Dossier = lazyNamed(() => import('./pages/Dossier'), 'Dossier');
@@ -59,7 +61,6 @@ function App() {
               <Route path="/retirement" element={<Retirement />} />
               <Route path="/reverse-planning" element={<ReversePlanning />} />
               <Route path="/allocation" element={<Allocation />} />
-              <Route path="/mvo" element={<MVO />} />
               <Route path="/advanced-portfolio" element={<AdvancedPortfolio />} />
               <Route path="/meeting-workflow" element={<ClientMeeting />} />
               <Route path="/decision-history" element={<DecisionHistory />} />

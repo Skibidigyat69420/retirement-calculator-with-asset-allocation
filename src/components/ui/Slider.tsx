@@ -24,14 +24,14 @@ export const Slider = ({
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center">
-        <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+        <label className="text-[11px] font-semibold uppercase tracking-wider text-zinc-600">
           {label}
         </label>
         <span className="text-sm font-semibold text-navy bg-indigo-50 px-2 py-0.5 rounded-md">
           {formatValue ? formatValue(value) : `${value}${suffix}`}
         </span>
       </div>
-      <div className="relative h-1.5 rounded-full bg-slate-200 overflow-hidden">
+      <div className="relative h-1.5 rounded-full bg-zinc-200 overflow-hidden">
         <div
           className="absolute left-0 top-0 h-full bg-gradient-to-r from-navy to-navy-dark rounded-full"
           style={{ width: `${percentage}%` }}

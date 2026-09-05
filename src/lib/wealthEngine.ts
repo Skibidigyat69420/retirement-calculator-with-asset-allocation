@@ -335,7 +335,11 @@ function simulateOnePath(
   const PRIORITY_RANK: Record<GoalPriority, number> = { essential: 0, important: 1, aspirational: 2 };
   const sortedGoals = goals
     .map((g, idx) => ({ goal: g, idx, futureValue: g.targetAmount * Math.pow(1 + g.inflation / 100, g.yearsToGoal) }))
-    .sort((a, b) => a.goal.yearsToGoal - b.goal.yearsToGoal || PRIORITY_RANK[a.goal.priority] - PRIORITY_RANK[b.goal.priority]);
+    .sort((a, b) => {
+      const rankA = a.goal.priorityRank ?? PRIORITY_RANK[a.goal.priority];
+      const rankB = b.goal.priorityRank ?? PRIORITY_RANK[b.goal.priority];
+      return a.goal.yearsToGoal - b.goal.yearsToGoal || rankA - rankB;
+    });
 
   for (let y = 1; y <= accYears + distYears; y++) {
     const phase: 'accumulation' | 'distribution' = y <= accYears ? 'accumulation' : 'distribution';
@@ -427,6 +431,25 @@ function simulateOnePath(
         CATEGORIES.forEach((c) => (state.values[c] = 0));
         state.cashFlows.push({ year: y, age: currentAge + y, type: 'withdrawal', amount: total, description: 'SWP shortfall' });
       }
+
+      // Fund goals maturing during retirement (distribution phase)
+      sortedGoals.forEach(({ goal, idx, futureValue }) => {
+        if (goal.yearsToGoal === y) {
+          const available = Object.values(state.values).reduce((a, b) => a + b, 0);
+          if (available >= futureValue) {
+            const ratio = available > 0 ? futureValue / available : 0;
+            CATEGORIES.forEach((c) => (state.values[c] *= 1 - ratio));
+            CATEGORIES.forEach((c) => (state.retained[c] *= 1 - ratio));
+            state.totalGoalsFunded += futureValue;
+            state.goalSuccess[idx] = true;
+            state.cashFlows.push({ year: y, age: currentAge + y, type: 'goal', amount: futureValue, description: `Goal: ${goal.name}` });
+          } else {
+            CATEGORIES.forEach((c) => (state.values[c] = 0));
+            state.totalGoalsFunded += available;
+            state.cashFlows.push({ year: y, age: currentAge + y, type: 'goal', amount: available, description: `Goal shortfall: ${goal.name}` });
+          }
+        }
+      });
     }
 
     state.yearlyValues.push(

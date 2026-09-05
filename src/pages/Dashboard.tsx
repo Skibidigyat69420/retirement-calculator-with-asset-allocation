@@ -5,7 +5,6 @@ import {
   Target,
   ArrowRight,
   ShieldCheck,
-  BarChart2,
   BarChart3,
   FileText,
   AlertTriangle,
@@ -13,13 +12,13 @@ import {
   XCircle,
   Wallet,
   TrendingUp,
-  Sparkles,
   DollarSign,
   PiggyBank,
   Compass,
   Layers,
   Briefcase,
   History,
+  Info,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useCalculator } from '../context/CalculatorContext';
@@ -52,7 +51,6 @@ const tools = [
   { path: '/retirement', label: 'Retirement & SWP', desc: 'Corpus longevity & withdrawal plan', icon: PiggyBank },
   { path: '/reverse-planning', label: 'Reverse Planning', desc: 'Target solver (SIP, corpus, age)', icon: Compass },
   { path: '/allocation', label: 'Asset Allocation', desc: 'Rebalance portfolio & targets', icon: PieChart },
-  { path: '/mvo', label: 'MVO Optimizer', desc: 'Continuous frontier + CML ray', icon: BarChart2 },
   { path: '/advanced-portfolio', label: 'Portfolio Lab', desc: 'Black-Litterman, Risk Parity, TAA', icon: Layers },
   { path: '/meeting-workflow', label: 'Client Meeting', desc: '4-stage agenda & audit tracker', icon: Briefcase },
   { path: '/decision-history', label: 'Decision Audit', desc: 'Immutable log & 1-click revert', icon: History },
@@ -63,7 +61,7 @@ const tools = [
 
 const quickActions = [
   { path: '/reverse-planning', label: 'Reverse Plan', icon: Compass },
-  { path: '/mvo', label: 'Run MVO', icon: BarChart2 },
+  { path: '/allocation', label: 'Allocation', icon: PieChart },
   { path: '/advanced-portfolio', label: 'Portfolio Lab', icon: Layers },
   { path: '/meeting-workflow', label: 'Client Meeting', icon: Briefcase },
   { path: '/decision-history', label: 'Decision Log', icon: History },
@@ -75,6 +73,11 @@ export const Dashboard = () => {
 
   const hasPlanData = wealthResult.netWorth > 0 || wealthResult.annualIncome > 0;
   const nonInrExposure = wealthResult.currencyExposure.filter((c) => c.currency !== 'INR');
+
+  const clientName = inputs.client?.name?.trim() || 'Private Client';
+  const clientMandate = inputs.client?.notes?.trim() || 'Core Wealth Growth';
+  const advisorName = inputs.client?.advisor?.trim() || 'Sound Thesis Wealth Advisory';
+  const reviewDate = inputs.client?.reviewDate?.trim() || 'Quarterly';
 
   const allocationData = useMemo(() => {
     return Object.entries(wealthResult.currentAllocation)
@@ -108,8 +111,6 @@ export const Dashboard = () => {
     [wealthResult.snapshots],
   );
 
-
-
   const [viewMode, setViewMode] = useState<'adviser' | 'client'>('adviser');
 
   const planHealth = useMemo(() => {
@@ -125,7 +126,7 @@ export const Dashboard = () => {
       label: '1. Risk Profile',
       path: '/risk',
       completed: isComplete(riskAnswers),
-      subtext: isComplete(riskAnswers) ? `${riskProfile.label} (${riskScore}/100)` : 'Questionnaire pending',
+      subtext: isComplete(riskAnswers) ? `${riskProfile.label} (${riskScore}/100)` : 'Assessment pending',
     },
     {
       label: '2. Household Assets',
@@ -149,7 +150,7 @@ export const Dashboard = () => {
       label: '5. Retirement & SWP',
       path: '/retirement',
       completed: wealthResult.sustainable,
-      subtext: wealthResult.sustainable ? 'Sustainable > life exp' : `Depletes age ${wealthResult.depletionAge}`,
+      subtext: wealthResult.sustainable ? 'Sustainable > life exp' : `Depletes at age ${wealthResult.depletionAge}`,
     },
     {
       label: '6. Asset Allocation',
@@ -167,30 +168,30 @@ export const Dashboard = () => {
           title={viewMode === 'adviser' ? 'Adviser Command Center' : 'Client Wealth Summary'}
           subtitle={
             viewMode === 'adviser'
-              ? 'Multi-dimensional plan governance, algorithmic decisions, stress testing, and action orchestration.'
-              : 'Clear, transparent view of your wealth trajectory, retirement peace of mind, and funded goals.'
+              ? 'Portfolio analytics, capital forecasting, stress tests, and action plans.'
+              : 'Wealth trajectory, retirement funding, and goal status at a glance.'
           }
-          badge={viewMode === 'adviser' ? 'Adviser Operating System' : 'Client Portal'}
+          badge={viewMode === 'adviser' ? 'Adviser Portal' : 'Client Portal'}
         />
 
         {/* Global View Toggle */}
-        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0 self-start sm:self-center">
+        <div className="flex items-center bg-zinc-100 p-1 rounded-xl border border-zinc-200 shrink-0 self-start sm:self-center">
           <button
             onClick={() => setViewMode('adviser')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               viewMode === 'adviser'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white text-zinc-950 shadow-xs border border-zinc-200/80'
+                : 'text-zinc-600 hover:text-zinc-950'
             }`}
           >
             Adviser View
           </button>
           <button
             onClick={() => setViewMode('client')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               viewMode === 'client'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white text-zinc-950 shadow-xs border border-zinc-200/80'
+                : 'text-zinc-600 hover:text-zinc-950'
             }`}
           >
             Client View
@@ -210,9 +211,9 @@ export const Dashboard = () => {
       )}
 
       {!hasPlanData && (
-        <Alert variant="info" icon={Sparkles}>
-          No plan data yet — add your assets, income, and goals to see projections.{' '}
-          <Link to="/master-plan" className="font-semibold underline hover:text-navy">
+        <Alert variant="info" icon={Info}>
+          No plan data entered yet — add household assets, income, and goals to generate projections.{' '}
+          <Link to="/master-plan" className="font-semibold underline hover:text-zinc-950">
             Set up your plan <ArrowRight size={12} className="inline" />
           </Link>
         </Alert>
@@ -220,60 +221,77 @@ export const Dashboard = () => {
 
       {!wealthResult.sustainable && (
         <Alert variant="danger" icon={AlertTriangle}>
-          Your current plan is not sustainable — corpus is projected to deplete at age {wealthResult.depletionAge}. Increase SIPs, extend retirement age, or reduce withdrawal needs.{' '}
+          Your current plan projects a funding shortfall with corpus depletion at age {wealthResult.depletionAge}. Increase monthly SIPs, extend your working horizon, or moderate withdrawal rates.{' '}
           <Link to="/master-plan" className="font-semibold underline">
-            Fix in Master Plan <ArrowRight size={12} className="inline" />
+            Adjust in Master Plan <ArrowRight size={12} className="inline" />
           </Link>
         </Alert>
       )}
 
       {!essentialSuccess && (
         <Alert variant="warning" icon={AlertTriangle}>
-          One or more essential goals have a success probability below {formatPercent(riskProfile.goalSuccessThreshold)}.{' '}
+          One or more essential goals have a projected success probability below {formatPercent(riskProfile.goalSuccessThreshold)}.{' '}
           <Link to="/goal" className="font-semibold underline">
             Review in Goal Planner <ArrowRight size={12} className="inline" />
           </Link>
         </Alert>
       )}
 
-      <Card variant="navy" className="relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-8 opacity-10">
-          <Sparkles size={120} />
-        </div>
+      {/* Client Overview Card */}
+      <Card variant="navy" className="relative overflow-hidden bg-zinc-950 border border-zinc-900 shadow-sm">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
-            <Badge variant="gold" className="mb-3">Mandate: {inputs.client?.notes || 'Core Wealth Growth'}</Badge>
-            <h3 className="text-2xl md:text-3xl font-serif text-white">Welcome, {inputs.client?.name || 'Vikram & Ananya Sharma'}</h3>
-            <p className="mt-1 text-xs text-white font-medium">
-              Advisor: {inputs.client?.advisor || 'Sound Thesis Wealth Advisory'} · Review Date: {inputs.client?.reviewDate || 'Quarterly'}
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-300 border border-zinc-700 mb-3">
+              Mandate: {clientMandate}
+            </div>
+            <h3 className="text-2xl md:text-3xl font-sans font-bold text-white tracking-tight">
+              Welcome, {clientName}
+            </h3>
+            <p className="mt-1 text-xs text-zinc-400 font-medium">
+              Advisor: {advisorName} · Review Date: {reviewDate}
             </p>
-            <p className="mt-2 text-slate-200 max-w-xl text-sm">
-              You are {inputs.currentAge} years old targeting retirement at {inputs.retirementAge}. Your plan has a{' '}
-              <span className="text-white font-semibold">{formatPercent(wealthResult.monteCarlo.successRate * 100)}</span>{' '}
-              probability of meeting all goals and sustaining withdrawals.
+            <p className="mt-2 text-zinc-300 max-w-xl text-sm leading-relaxed">
+              You are {inputs.currentAge} years old targeting retirement at age {inputs.retirementAge}. Your plan has a{' '}
+              <span
+                className={cn(
+                  'font-bold',
+                  wealthResult.monteCarlo.successRate >= 0.8
+                    ? 'text-emerald-400'
+                    : wealthResult.monteCarlo.successRate >= 0.6
+                      ? 'text-zinc-300'
+                      : 'text-rose-400',
+                )}
+              >
+                {formatPercent(wealthResult.monteCarlo.successRate * 100)}
+              </span>{' '}
+              probability of meeting all funding goals and sustaining planned withdrawals.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link to="/master-plan">
-              <Button variant="secondary"><Activity size={16} className="mr-2" /> Update Plan</Button>
+              <Button variant="secondary" className="bg-white text-zinc-950 hover:bg-zinc-100 font-semibold shadow-xs">
+                <Activity size={15} className="mr-2" /> Update Plan
+              </Button>
             </Link>
             <Link to="/risk">
-              <Button variant="outline" className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white">Risk Profile</Button>
+              <Button variant="outline" className="bg-transparent border-zinc-700 text-zinc-200 hover:bg-zinc-900 hover:text-white">
+                Risk Profile
+              </Button>
             </Link>
           </div>
         </div>
       </Card>
 
       {/* 6-Stage Planning Readiness Checklist */}
-      <Card className="border-slate-200">
+      <Card className="border border-zinc-200/90 shadow-2xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <div>
-            <h3 className="text-base font-serif font-bold text-navy flex items-center gap-2">
-              <ShieldCheck size={18} className="text-slate-500" /> Advisor Planning Checklist
+            <h3 className="text-base font-sans font-bold text-zinc-950 flex items-center gap-2">
+              <ShieldCheck size={18} className="text-zinc-700" /> Advisor Planning Checklist
             </h3>
-            <p className="text-xs text-slate-500">Track progress through the 6 stages of your institutional financial architecture</p>
+            <p className="text-xs text-zinc-500">Track progress across all 6 core pillars of the advisory plan</p>
           </div>
-          <Badge variant="outline" className="self-start sm:self-auto font-medium">
+          <Badge variant="outline" className="self-start sm:self-auto font-semibold text-zinc-700 border-zinc-300">
             {completedChecklistCount} of 6 Completed
           </Badge>
         </div>
@@ -285,96 +303,100 @@ export const Dashboard = () => {
               to={item.path}
               className={`p-3 rounded-xl border flex items-start gap-3 transition-all hover:shadow-2xs group ${
                 item.completed
-                  ? 'bg-slate-50/50 border-slate-200 hover:border-slate-300'
-                  : 'bg-amber-50/20 border-amber-200/60 hover:border-amber-300'
+                  ? 'bg-zinc-50/70 border-zinc-200 hover:border-zinc-300 hover:bg-white'
+                  : 'bg-rose-50/30 border-rose-200/70 hover:border-rose-300'
               }`}
             >
-              <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                item.completed ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
-              }`}>
+              <div
+                className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                  item.completed ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                }`}
+              >
                 {item.completed ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-xs font-semibold text-navy group-hover:text-slate-900 transition-colors flex items-center justify-between">
+                <div className="text-xs font-semibold text-zinc-950 group-hover:text-zinc-700 transition-colors flex items-center justify-between">
                   <span>{item.label}</span>
-                  <ArrowRight size={12} className="text-slate-300 group-hover:text-slate-700 transition-transform group-hover:translate-x-0.5" />
+                  <ArrowRight size={12} className="text-zinc-400 group-hover:text-zinc-700 transition-transform group-hover:translate-x-0.5" />
                 </div>
-                <div className="text-[11px] text-slate-500 truncate mt-0.5">{item.subtext}</div>
+                <div className={`text-[11px] truncate mt-0.5 ${item.completed ? 'text-zinc-500' : 'text-rose-700 font-medium'}`}>
+                  {item.subtext}
+                </div>
               </div>
             </Link>
           ))}
         </div>
       </Card>
 
-      {/* Institutional Advisory Suite Quick Launch */}
+      {/* Advisory Suite Quick Launch */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link
           to="/reverse-planning"
-          className="group relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white border border-slate-700/80 shadow-md hover:shadow-xl hover:border-amber-400/50 transition-all duration-200"
+          className="group relative overflow-hidden p-5 rounded-2xl bg-zinc-950 text-white border border-zinc-800 shadow-2xs hover:shadow-card hover:border-zinc-700 transition-all duration-200"
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200 group-hover:scale-105 transition-transform">
               <Compass size={20} />
             </div>
-            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-white/10 text-slate-300">
+            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
               Target Solver
             </span>
           </div>
-          <h4 className="text-base font-bold text-white mb-1 group-hover:text-amber-300 transition-colors">
+          <h4 className="text-base font-sans font-bold text-white mb-1 group-hover:text-zinc-100 transition-colors">
             Reverse Planning
           </h4>
-          <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">
-            Target ₹10Cr at age 55 or solve for required SIP, capital injection, and safe retirement runway.
+          <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2">
+            Target ₹10Cr at age 55 or solve for required monthly SIP, capital injection, and safe retirement runway.
           </p>
-          <div className="mt-4 flex items-center text-xs font-semibold text-amber-300 gap-1 group-hover:translate-x-1 transition-transform">
+          <div className="mt-4 flex items-center text-xs font-semibold text-zinc-200 gap-1 group-hover:translate-x-1 transition-transform">
             <span>Solve Targets</span>
             <ArrowRight size={13} />
           </div>
         </Link>
 
         <Link
-          to="/mvo"
-          className="group relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white border border-slate-700/80 shadow-md hover:shadow-xl hover:border-emerald-400/50 transition-all duration-200"
+          to="/allocation"
+          className="group relative overflow-hidden p-5 rounded-2xl bg-zinc-950 text-white border border-zinc-800 shadow-2xs hover:shadow-card hover:border-zinc-700 transition-all duration-200"
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-400/10 border border-emerald-400/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
-              <BarChart2 size={20} />
+            <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200 group-hover:scale-105 transition-transform">
+              <PieChart size={20} />
             </div>
-            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-white/10 text-slate-300">
-              Frontier + CML
+            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
+              Rebalancing
             </span>
           </div>
-          <h4 className="text-base font-bold text-white mb-1 group-hover:text-emerald-300 transition-colors">
-            MVO & Monte Carlo
+          <h4 className="text-base font-sans font-bold text-white mb-1 group-hover:text-zinc-100 transition-colors">
+            Asset Allocation
           </h4>
-          <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">
-            Continuous frontier, Capital Market Line tangent ray, constituent asset dots, and dual-path Monte Carlo.
+          <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2">
+            Strategic asset allocation, drift monitoring, cash surplus waterfall, and transition execution plans.
           </p>
-          <div className="mt-4 flex items-center text-xs font-semibold text-emerald-300 gap-1 group-hover:translate-x-1 transition-transform">
-            <span>Optimize Frontier</span>
+          <div className="mt-4 flex items-center text-xs font-semibold text-zinc-200 gap-1 group-hover:translate-x-1 transition-transform">
+            <span>Rebalance Portfolio</span>
             <ArrowRight size={13} />
           </div>
         </Link>
 
         <Link
           to="/advanced-portfolio"
-          className="group relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white border border-slate-700/80 shadow-md hover:shadow-xl hover:border-sky-400/50 transition-all duration-200"
+          className="group relative overflow-hidden p-5 rounded-2xl bg-zinc-950 text-white border border-zinc-800 shadow-2xs hover:shadow-card hover:border-zinc-700 transition-all duration-200"
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-sky-400/10 border border-sky-400/20 flex items-center justify-center text-sky-400 group-hover:scale-110 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200 group-hover:scale-105 transition-transform">
               <Layers size={20} />
             </div>
-            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-white/10 text-slate-300">
-              Quant SAA & TAA
+            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
+              SAA & TAA Models
             </span>
           </div>
-          <h4 className="text-base font-bold text-white mb-1 group-hover:text-sky-300 transition-colors">
+          <h4 className="text-base font-sans font-bold text-white mb-1 group-hover:text-zinc-100 transition-colors">
             Portfolio Lab
           </h4>
-          <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">
+          <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2">
             Black-Litterman subjective views, Risk Parity equal risk contribution, and valuation & momentum overlays.
           </p>
-          <div className="mt-4 flex items-center text-xs font-semibold text-sky-300 gap-1 group-hover:translate-x-1 transition-transform">
+          <div className="mt-4 flex items-center text-xs font-semibold text-zinc-200 gap-1 group-hover:translate-x-1 transition-transform">
             <span>Explore Models</span>
             <ArrowRight size={13} />
           </div>
@@ -382,23 +404,23 @@ export const Dashboard = () => {
 
         <Link
           to="/meeting-workflow"
-          className="group relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white border border-slate-700/80 shadow-md hover:shadow-xl hover:border-purple-400/50 transition-all duration-200"
+          className="group relative overflow-hidden p-5 rounded-2xl bg-zinc-950 text-white border border-zinc-800 shadow-2xs hover:shadow-card hover:border-zinc-700 transition-all duration-200"
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-400/10 border border-purple-400/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200 group-hover:scale-105 transition-transform">
               <Briefcase size={20} />
             </div>
-            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-white/10 text-slate-300">
+            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
               Advisory Room
             </span>
           </div>
-          <h4 className="text-base font-bold text-white mb-1 group-hover:text-purple-300 transition-colors">
+          <h4 className="text-base font-sans font-bold text-white mb-1 group-hover:text-zinc-100 transition-colors">
             Client Meeting
           </h4>
-          <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">
+          <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2">
             Structured 4-stage client meeting workflow, live agenda tracking, and immutable decision audit trail.
           </p>
-          <div className="mt-4 flex items-center text-xs font-semibold text-purple-300 gap-1 group-hover:translate-x-1 transition-transform">
+          <div className="mt-4 flex items-center text-xs font-semibold text-zinc-200 gap-1 group-hover:translate-x-1 transition-transform">
             <span>Open Meeting Flow</span>
             <ArrowRight size={13} />
           </div>
@@ -417,7 +439,7 @@ export const Dashboard = () => {
           label="Annual Income"
           value={formatCurrencyCompact(wealthResult.annualIncome)}
           subtext={`Savings ${formatPercent(wealthResult.savingsRate)}`}
-          variant="gold"
+          variant="default"
           icon={<TrendingUp size={18} />}
         />
         <Link to="/risk" className="block">
@@ -464,9 +486,9 @@ export const Dashboard = () => {
             <Link
               key={action.path}
               to={action.path}
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200/80 rounded-xl text-sm font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900 hover:shadow-2xs transition-all"
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-zinc-200/90 rounded-xl text-xs font-semibold text-zinc-800 hover:border-zinc-400 hover:text-zinc-950 hover:shadow-2xs transition-all"
             >
-              <Icon size={16} /> {action.label}
+              <Icon size={16} className="text-zinc-600" /> {action.label}
             </Link>
           );
         })}
@@ -475,23 +497,23 @@ export const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card variant="elevated" className="lg:col-span-2">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-serif text-navy">Wealth Trajectory</h3>
-            <Badge variant="navy">Accumulation + Distribution</Badge>
+            <h3 className="text-base sm:text-lg font-sans font-bold text-zinc-950 tracking-tight">Wealth Trajectory</h3>
+            <Badge variant="outline">Accumulation & Distribution</Badge>
           </div>
           <NominalRealChart data={chartData} xKey="label" />
         </Card>
 
         <Card variant="elevated">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-serif text-navy">Current Allocation</h3>
-            <Badge variant="outline">Today</Badge>
+            <h3 className="text-base sm:text-lg font-sans font-bold text-zinc-950 tracking-tight">Current Allocation</h3>
+            <Badge variant="outline">Current Holdings</Badge>
           </div>
           {allocationData.length > 0 ? (
             <DonutChart data={allocationData} />
           ) : (
-            <div className="h-80 flex flex-col items-center justify-center text-center text-sm text-slate-700">
+            <div className="h-80 flex flex-col items-center justify-center text-center text-sm text-zinc-600">
               <p>No assets added yet.</p>
-              <Link to="/master-plan" className="mt-2 text-slate-800 font-semibold hover:underline flex items-center">
+              <Link to="/master-plan" className="mt-2 text-zinc-950 font-semibold hover:underline flex items-center">
                 Add assets <ArrowRight size={12} className="ml-1" />
               </Link>
             </div>
@@ -502,54 +524,56 @@ export const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card variant="elevated">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-serif text-navy">Asset-Class Projections</h3>
-            <Badge variant="gold">Mean Path</Badge>
+            <h3 className="text-base sm:text-lg font-sans font-bold text-zinc-950 tracking-tight">Asset-Class Projections</h3>
+            <Badge variant="outline">Expected Return</Badge>
           </div>
           <AssetEvolutionChart data={assetEvolutionData} xKey="label" />
         </Card>
 
         <Card variant="elevated">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-serif text-navy">Goal Health</h3>
-            <Link to="/goal" className="text-xs text-slate-600 hover:text-slate-900 underline flex items-center font-semibold">
+            <h3 className="text-base sm:text-lg font-sans font-bold text-zinc-950 tracking-tight">Goal Health</h3>
+            <Link to="/goal" className="text-xs text-zinc-600 hover:text-zinc-950 underline flex items-center font-semibold">
               Open planner <ArrowRight size={12} className="ml-1" />
             </Link>
           </div>
           <div className="space-y-3">
             {wealthResult.goalResults.length === 0 && (
-              <div className="p-6 text-center text-sm text-slate-700">
+              <div className="p-6 text-center text-sm text-zinc-600">
                 <p>No goals defined yet.</p>
-                <Link to="/goal" className="mt-2 inline-flex items-center text-slate-800 font-semibold hover:underline">
+                <Link to="/goal" className="mt-2 inline-flex items-center text-zinc-950 font-semibold hover:underline">
                   Create a goal <ArrowRight size={12} className="ml-1" />
                 </Link>
               </div>
             )}
             {wealthResult.goalResults.map((g) => (
-              <div key={g.goal.id} className="p-3 bg-slate-50/80 rounded-xl border border-slate-100">
+              <div key={g.goal.id} className="p-3 bg-zinc-50/70 rounded-xl border border-zinc-200/80">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     {g.successRate >= riskProfile.goalSuccessThreshold / 100 ? (
-                      <CheckCircle2 size={16} className="text-emerald-700 mr-2" />
+                      <CheckCircle2 size={16} className="text-emerald-700 mr-2 shrink-0" />
                     ) : (
-                      <XCircle size={16} className="text-rose-500 mr-2" />
+                      <XCircle size={16} className="text-rose-600 mr-2 shrink-0" />
                     )}
-                    <span className="text-sm font-semibold text-navy">{g.goal.name}</span>
+                    <span className="text-sm font-semibold text-zinc-950">{g.goal.name}</span>
                   </div>
                   <Badge
                     variant={
                       g.successRate >= riskProfile.goalSuccessThreshold / 100
                         ? 'success'
                         : g.successRate >= (riskProfile.goalSuccessThreshold / 100) * 0.6
-                          ? 'default'
+                          ? 'warning'
                           : 'danger'
                     }
                   >
                     {formatPercent(g.successRate * 100)}
                   </Badge>
                 </div>
-                <div className="mt-2 flex items-center justify-between text-xs text-slate-700">
-                  <span>Future need {formatCurrency(g.futureValue)}</span>
-                  <span>Required SIP {formatCurrency(g.requiredSIP)}/mo</span>
+                <div className="mt-2 flex items-center justify-between text-xs text-zinc-600">
+                  <span>Target: {formatCurrency(g.futureValue)}</span>
+                  <span className={g.requiredSIP > 0 ? 'font-semibold text-zinc-900' : ''}>
+                    Required SIP: {formatCurrency(g.requiredSIP)}/mo
+                  </span>
                 </div>
               </div>
             ))}
@@ -559,14 +583,14 @@ export const Dashboard = () => {
 
       <Card variant="elevated">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-serif text-navy">Monte Carlo Fan Chart</h3>
-          <Badge variant="gold">{wealthResult.monteCarlo.outcomes.length.toLocaleString()} paths</Badge>
+          <h3 className="text-base sm:text-lg font-sans font-bold text-zinc-950 tracking-tight">Monte Carlo Fan Chart</h3>
+          <Badge variant="outline">{wealthResult.monteCarlo.outcomes.length.toLocaleString()} simulations</Badge>
         </div>
         <MonteCarloFanChart data={wealthResult.monteCarlo.yearlyPercentiles} />
       </Card>
 
       <Card variant="elevated">
-        <h3 className="text-lg font-serif text-navy mb-4">Platform Modules</h3>
+        <h3 className="text-base sm:text-lg font-sans font-bold text-zinc-950 tracking-tight mb-4">Platform Modules</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {tools.map((tool) => {
             const Icon = tool.icon;
@@ -576,17 +600,17 @@ export const Dashboard = () => {
                 to={tool.path}
                 className={cn(
                   'flex items-center p-4 rounded-xl transition-all group',
-                  'bg-slate-50/60 border border-slate-100 hover:bg-white hover:border-slate-300 hover:shadow-2xs',
+                  'bg-zinc-50/60 border border-zinc-200/80 hover:bg-white hover:border-zinc-300 hover:shadow-2xs',
                 )}
               >
-                <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center mr-3 group-hover:border-slate-300 shadow-2xs">
-                  <Icon size={18} className="text-slate-600 group-hover:text-slate-900 transition-colors" />
+                <div className="w-10 h-10 rounded-xl bg-white border border-zinc-200 flex items-center justify-center mr-3 group-hover:border-zinc-400 shadow-2xs">
+                  <Icon size={18} className="text-zinc-700 group-hover:text-zinc-950 transition-colors" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-slate-900 truncate">{tool.label}</div>
-                  <div className="text-xs text-slate-500 truncate">{tool.desc}</div>
+                  <div className="text-sm font-semibold text-zinc-950 truncate">{tool.label}</div>
+                  <div className="text-xs text-zinc-500 truncate">{tool.desc}</div>
                 </div>
-                <ArrowRight size={14} className="text-slate-300 group-hover:text-slate-700 shrink-0 ml-2" />
+                <ArrowRight size={14} className="text-zinc-400 group-hover:text-zinc-700 shrink-0 ml-2" />
               </Link>
             );
           })}
@@ -601,8 +625,9 @@ export const Dashboard = () => {
 
       <WorkflowFooter
         next={{ path: '/risk', label: 'Risk Profile' }}
-        flowHint="Discover your behavioral risk profile to automatically parameterize your portfolio and financial plan."
+        flowHint="Assess behavioral risk tolerance to calibrate asset allocation targets and portfolio limits."
       />
     </div>
   );
 };
+

@@ -2,12 +2,12 @@ import { Link, useLocation } from 'react-router-dom';
 import { Check, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { cn } from '../../lib/utils';
-import { navItems, utilityItem } from './navItems';
+import { navItems, utilityItem, type NavItem } from './navItems';
 import { useCalculator } from '../../context/CalculatorContext';
 import { isComplete } from '../../lib/riskQuestionnaire';
 
 interface NavLinkProps {
-  item: typeof navItems[0];
+  item: NavItem;
   onClick?: () => void;
   completed?: boolean;
 }
@@ -16,23 +16,40 @@ const NavLink = ({ item, onClick, completed }: NavLinkProps) => {
   const location = useLocation();
   const Icon = item.icon;
   const active = location.pathname === item.path;
+
   return (
     <Link
       to={item.path}
       onClick={onClick}
       className={cn(
-        'group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150',
+        'group flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150',
         active
-          ? 'bg-slate-900 text-white shadow-xs'
-          : 'text-slate-600 hover:bg-slate-100/90 hover:text-slate-900',
+          ? 'bg-zinc-950 text-white shadow-xs'
+          : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950',
       )}
     >
-      <Icon size={18} className={cn('transition-colors', active ? 'text-white' : 'text-slate-400 group-hover:text-slate-900')} />
-      <span>{item.label}</span>
+      {item.step ? (
+        <span
+          className={cn(
+            'text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md transition-colors',
+            active
+              ? 'bg-zinc-800 text-white'
+              : 'bg-zinc-100 text-zinc-500 group-hover:bg-zinc-200 group-hover:text-zinc-900',
+          )}
+        >
+          {item.step}
+        </span>
+      ) : (
+        <Icon
+          size={16}
+          className={cn('transition-colors', active ? 'text-white' : 'text-zinc-400 group-hover:text-zinc-900')}
+        />
+      )}
+      <span className="truncate">{item.label}</span>
       {completed && (
         <Check
-          size={14}
-          className={cn('ml-auto', active ? 'text-white' : 'text-emerald-600')}
+          size={13}
+          className={cn('ml-auto shrink-0', active ? 'text-white' : 'text-emerald-600')}
           aria-label="Completed"
         />
       )}
@@ -49,23 +66,18 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
   const { inputs, riskAnswers, wealthResult, manualTargets } = useCalculator();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Comprehensive workflow completion flags per route
+  // Workflow completion flags for the 5-step core journey
   const completionMap: Record<string, boolean> = {
-    '/risk': isComplete(riskAnswers),
     '/master-plan': inputs.assets.length > 0 && inputs.annualIncome > 0,
-    '/goal': inputs.goals.length > 0,
+    '/risk': isComplete(riskAnswers),
     '/retirement': wealthResult.sustainable,
-    '/reverse-planning': true,
     '/allocation': manualTargets !== null || isComplete(riskAnswers),
-    '/mvo': true,
-    '/advanced-portfolio': true,
-    '/meeting-workflow': true,
-    '/decision-history': true,
-    '/reports': wealthResult.netWorth > 0,
     '/ips': Boolean(inputs.client?.name),
+    '/calculators': true,
+    '/decision-history': true,
   };
 
-  const workflowSteps = ['/risk', '/master-plan', '/goal', '/retirement', '/reverse-planning', '/allocation', '/mvo', '/advanced-portfolio', '/meeting-workflow', '/decision-history', '/reports', '/ips', '/calculators'];
+  const workflowSteps = ['/master-plan', '/risk', '/retirement', '/allocation', '/ips'];
   const completedCount = workflowSteps.filter((path) => completionMap[path]).length;
   const progressPercent = Math.round((completedCount / workflowSteps.length) * 100);
 
@@ -95,17 +107,22 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
     if (!acc[section]) acc[section] = [];
     acc[section].push(item);
     return acc;
-  }, {} as Record<string, typeof navItems>);
+  }, {} as Record<string, NavItem[]>);
 
   const renderNavSections = (onClick?: () => void) => (
-    <nav className="flex-1 space-y-6 overflow-y-auto pb-4" style={{ scrollbarWidth: 'none' }}>
+    <nav className="flex-1 space-y-5 overflow-y-auto pb-4" style={{ scrollbarWidth: 'none' }}>
       {Object.entries(groupedNavItems).map(([section, items]) => (
         <div key={section} className="space-y-1">
-          <div className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <div className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
             {section}
           </div>
           {items.map((item) => (
-            <NavLink key={item.path} item={item} onClick={onClick} completed={completionMap[item.path]} />
+            <NavLink
+              key={item.path}
+              item={item}
+              onClick={onClick}
+              completed={completionMap[item.path]}
+            />
           ))}
         </div>
       ))}
@@ -115,85 +132,94 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 border-r border-slate-200/80 bg-white/95 backdrop-blur-sm px-4 py-6">
-        <Link to="/" className="flex items-center gap-3 px-2 mb-8">
-          <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center shadow-xs">
-            <span className="text-white font-serif font-bold text-lg">S</span>
+      <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 border-r border-zinc-200/80 bg-white/95 backdrop-blur-sm px-4 py-5">
+        <Link to="/" className="flex items-center gap-3 px-2 mb-6">
+          <div className="w-8 h-8 bg-zinc-950 rounded-xl flex items-center justify-center shadow-xs">
+            <span className="text-white font-sans font-bold text-sm">ST</span>
           </div>
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Sound Thesis</div>
-            <div className="text-sm font-serif text-ink leading-tight">Wealth Planner</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Sound Thesis</div>
+            <div className="text-xs font-semibold text-zinc-950 leading-tight">Advisory Engine</div>
           </div>
         </Link>
 
         {renderNavSections()}
 
         {/* Progress & Client Profile summary */}
-        <div className="p-3 my-2 bg-slate-50 rounded-xl border border-slate-200/80">
-          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700 mb-1.5">
-            <span>Advisor Progress</span>
-            <span className="text-slate-900 font-bold">{completedCount}/{workflowSteps.length}</span>
+        <div className="p-3 my-2 bg-zinc-50 rounded-xl border border-zinc-200/80">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-zinc-700 mb-1.5">
+            <span>Workflow Progress</span>
+            <span className="text-zinc-950 font-bold">{completedCount}/5 Steps</span>
           </div>
-          <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden mb-2.5">
-            <div className="h-full bg-slate-900 rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
+          <div className="w-full h-1.5 bg-zinc-200 rounded-full overflow-hidden mb-2.5">
+            <div
+              className="h-full bg-zinc-950 rounded-full transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
           </div>
           <Link
             to="/master-plan"
             className="flex items-center gap-2 text-left p-1 rounded-lg hover:bg-white transition-colors group"
           >
-            <div className="w-6 h-6 rounded-full bg-slate-900 text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+            <div className="w-6 h-6 rounded-full bg-zinc-950 text-white text-[10px] font-bold flex items-center justify-center shrink-0">
               {inputs.client?.name?.charAt(0) || 'C'}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-semibold text-ink truncate group-hover:text-slate-900 transition-colors">
-                {inputs.client?.name || 'Client Plan'}
+              <div className="text-xs font-semibold text-zinc-950 truncate group-hover:text-zinc-700 transition-colors">
+                {inputs.client?.name || 'Private Client'}
               </div>
-              <div className="text-[10px] text-slate-500 truncate">
+              <div className="text-[10px] text-zinc-500 truncate">
                 {inputs.client?.advisor || 'Sound Thesis'}
               </div>
             </div>
           </Link>
         </div>
 
-        <div className="pt-2 mt-auto border-t border-slate-200/70">
+        <div className="pt-2 mt-auto border-t border-zinc-200/70">
           <NavLink item={utilityItem} />
         </div>
       </aside>
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Navigation menu">
-          <div className="w-72 bg-white h-full shadow-elevated px-4 py-6 flex flex-col animate-drawer-in">
-            <div className="flex items-center justify-between px-2 mb-8">
-              <Link to="/" onClick={onClose} className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center shadow-xs">
-                  <span className="text-white font-serif font-bold text-lg">S</span>
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs animate-overlay-in"
+            onClick={onClose}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation Menu"
+            className="fixed inset-y-0 left-0 w-72 bg-white flex flex-col p-4 shadow-xl animate-drawer-in z-10"
+          >
+            <div className="flex items-center justify-between pb-4 mb-2 border-b border-zinc-200">
+              <Link to="/" onClick={onClose} className="flex items-center gap-2.5">
+                <div className="w-8 h-8 bg-zinc-950 rounded-xl flex items-center justify-center">
+                  <span className="text-white font-sans font-bold text-sm">ST</span>
                 </div>
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Sound Thesis</div>
-                  <div className="text-sm font-serif text-ink leading-tight">Wealth Planner</div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Sound Thesis</div>
+                  <div className="text-xs font-semibold text-zinc-950">Advisory Engine</div>
                 </div>
               </Link>
               <button
                 ref={closeButtonRef}
                 onClick={onClose}
-                aria-label="Close menu"
-                className="p-2 text-slate-500 hover:text-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-navy/30"
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100"
+                aria-label="Close navigation menu"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
             {renderNavSections(onClose)}
 
-            <div className="pt-4 mt-auto border-t border-slate-200/70">
+            <div className="pt-2 border-t border-zinc-200">
               <NavLink item={utilityItem} onClick={onClose} />
             </div>
           </div>
-          <div
-            className="flex-1 bg-slate-900/20 backdrop-blur-sm animate-overlay-in"
-            onClick={onClose}
-          />
         </div>
       )}
     </>

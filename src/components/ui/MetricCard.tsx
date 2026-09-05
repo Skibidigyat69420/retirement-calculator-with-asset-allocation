@@ -18,25 +18,33 @@ export const MetricCard = ({
   icon,
 }: MetricCardProps) => {
   const variants = {
-    default: 'bg-white border border-slate-200/90 shadow-2xs hover:shadow-card hover:border-slate-300 text-slate-900',
-    navy: 'bg-slate-900 border border-slate-800 text-white shadow-xs',
-    gold: 'bg-white border border-slate-200/90 shadow-2xs hover:shadow-card text-slate-900',
-    success: 'bg-white border border-emerald-200/80 shadow-2xs hover:shadow-card text-slate-900',
-    danger: 'bg-white border border-rose-200/80 shadow-2xs hover:shadow-card text-slate-900',
+    default: 'bg-white border border-zinc-200/90 shadow-2xs hover:shadow-card hover:border-zinc-300 text-zinc-900',
+    navy: 'bg-zinc-950 border border-zinc-900 text-white shadow-xs',
+    gold: 'bg-white border border-zinc-200/90 shadow-2xs hover:shadow-card text-zinc-900',
+    success: 'bg-white border border-emerald-200 shadow-2xs hover:shadow-card text-zinc-900',
+    danger: 'bg-white border border-rose-200 shadow-2xs hover:shadow-card text-zinc-900',
   };
 
   const mutedColors = {
-    default: 'text-slate-500',
-    navy: 'text-slate-400',
-    gold: 'text-slate-500',
-    success: 'text-slate-500',
-    danger: 'text-slate-500',
+    default: 'text-zinc-500',
+    navy: 'text-zinc-400',
+    gold: 'text-zinc-500',
+    success: 'text-emerald-700/80',
+    danger: 'text-rose-700/80',
+  };
+
+  const valueColors = {
+    default: 'text-zinc-950',
+    navy: 'text-white',
+    gold: 'text-zinc-950',
+    success: 'text-emerald-700',
+    danger: 'text-rose-700',
   };
 
   const iconColors = {
-    default: 'text-slate-600 bg-slate-100',
+    default: 'text-zinc-700 bg-zinc-100',
     navy: 'text-white bg-white/10',
-    gold: 'text-amber-800 bg-amber-50',
+    gold: 'text-zinc-800 bg-zinc-100',
     success: 'text-emerald-700 bg-emerald-50',
     danger: 'text-rose-700 bg-rose-50',
   };
@@ -59,7 +67,7 @@ export const MetricCard = ({
           </div>
         )}
       </div>
-      <div className={cn('text-xl sm:text-2xl font-serif font-semibold tracking-tight tabular-nums truncate leading-tight', variant === 'navy' ? 'text-white' : 'text-slate-900')}>
+      <div className={cn('text-xl sm:text-2xl font-sans font-semibold tracking-tight tabular-nums truncate leading-tight', valueColors[variant])}>
         {value}
       </div>
       {subtext && <div className={cn('text-xs mt-1.5 leading-snug line-clamp-2', mutedColors[variant])}>{subtext}</div>}
