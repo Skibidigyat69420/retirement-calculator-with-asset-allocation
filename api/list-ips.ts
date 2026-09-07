@@ -1,6 +1,6 @@
 import { readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import { jsonResponse, methodNotAllowed } from './_shared.ts';
+import { jsonResponse, methodNotAllowed } from './lib/shared.js';
 
 /**
  * GET /api/list-ips — list markdown policy documents in the ips/ directory.

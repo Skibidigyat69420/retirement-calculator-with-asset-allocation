@@ -1,6 +1,6 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { jsonResponse, methodNotAllowed } from './_shared.ts';
+import { jsonResponse, methodNotAllowed } from './lib/shared.js';
 
 /**
  * GET /api/angel-one-snapshot — return the newest local Angel One snapshot.

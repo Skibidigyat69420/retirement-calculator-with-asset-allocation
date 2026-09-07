@@ -1,6 +1,17 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "functions": {
+    "api/market-data.ts": {
+      "includeFiles": "public/data/market-data.json"
+    },
+    "api/list-ips.ts": {
+      "includeFiles": "ips/**"
+    },
+    "api/load-ips.ts": {
+      "includeFiles": "ips/**"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/angelone/:path*",

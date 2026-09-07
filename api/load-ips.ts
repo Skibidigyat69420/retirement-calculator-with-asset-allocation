@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
-import { jsonResponse, methodNotAllowed } from './_shared.ts';
+import { jsonResponse, methodNotAllowed } from './lib/shared.js';
 
 /**
  * GET /api/load-ips?filename=<name>.md — return { content } for a markdown

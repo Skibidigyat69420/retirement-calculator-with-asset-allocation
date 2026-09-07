@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { jsonResponse, methodNotAllowed } from './_shared.ts';
+import { jsonResponse, methodNotAllowed } from './lib/shared.js';
 
 /**
  * GET /api/market-data[?symbols=A,B&from=YYYY-MM-DD&to=YYYY-MM-DD]
@@ -125,7 +125,16 @@ export default async function handler(request: Request) {
   try {
     raw = await readFile(filePath, 'utf8');
   } catch {
-    return jsonResponse({ error: 'Market data bundle not found at public/data/market-data.json' }, { status: 404, headers: CACHE_HEADERS });
+    // On Vercel the bundle may not be in the function's filesystem even with
+    // includeFiles; fall back to fetching this deployment's own static copy.
+    try {
+      const origin = new URL(request.url).origin;
+      const upstream = await fetch(`${origin}/data/market-data.json`);
+      if (!upstream.ok) throw new Error(`static bundle HTTP ${upstream.status}`);
+      raw = await upstream.text();
+    } catch {
+      return jsonResponse({ error: 'Market data bundle not found at public/data/market-data.json' }, { status: 404, headers: CACHE_HEADERS });
+    }
   }
 
   const url = new URL(request.url);
