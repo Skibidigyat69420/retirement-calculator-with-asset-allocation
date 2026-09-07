@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { sendJson, methodNotAllowed, queryParam } from './lib/shared.js';
+import { IPS_DOCS } from './lib/ipsDocs.generated.js';
 
 /**
  * GET /api/load-ips?filename=<name>.md — return { content } for a markdown
@@ -27,6 +28,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    const embedded = IPS_DOCS.find((d) => d.name === name);
+    if (embedded) return sendJson(res, { content: embedded.content });
     const content = await readFile(join(process.cwd(), 'ips', name), 'utf8');
     return sendJson(res, { content });
   } catch {
