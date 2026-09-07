@@ -35,7 +35,7 @@ export const Tabs = ({ tabs, active, onChange, className }: TabsProps) => {
             aria-label={tab.label}
             onClick={() => onChange(tab.id)}
             className={cn(
-              'flex items-center px-3.5 sm:px-4 py-2 text-xs sm:text-sm rounded-xl whitespace-nowrap transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20 cursor-pointer active:scale-[0.98] select-none',
+              'flex items-center px-3.5 sm:px-4 py-2 min-h-9 text-xs sm:text-sm rounded-xl whitespace-nowrap transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-1 cursor-pointer active:scale-[0.98] select-none',
               isActive
                 ? 'bg-white text-zinc-950 font-semibold shadow-xs border border-zinc-200/80'
                 : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/60 font-medium border border-transparent',

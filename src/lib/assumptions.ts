@@ -223,7 +223,7 @@ export function getAssumptionSourceLabel(mode: 'market' | 'conservative' | 'hist
     case 'historical':
       return 'Long-Term Historical Indian Capital Market Rates';
     case 'override':
-      return 'Adviser Manual Override';
+      return 'Advisor Manual Override';
   }
 }
 

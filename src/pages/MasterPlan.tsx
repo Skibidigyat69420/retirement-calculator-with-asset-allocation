@@ -103,12 +103,13 @@ export const MasterPlan = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const paramTab = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(paramTab || 'profile');
-
-  useEffect(() => {
-    if (paramTab && paramTab !== activeTab) {
-      setActiveTab(paramTab);
-    }
-  }, [paramTab]);
+  // Reflect URL ?tab= changes into state during render (React-endorsed
+  // derived-state pattern) instead of a setState-in-effect.
+  const [prevParamTab, setPrevParamTab] = useState(paramTab);
+  if (paramTab !== prevParamTab) {
+    setPrevParamTab(paramTab);
+    if (paramTab) setActiveTab(paramTab);
+  }
 
   const handleTabChange = (newTab: string) => {
     setActiveTab(newTab);
@@ -164,25 +165,22 @@ export const MasterPlan = () => {
     }
   }, [loans]);
 
-  // Compute amortized values for each loan
-  const activeLoansWithEMI = useMemo(() => {
-    return loans.map((loan) => {
-      const p = Math.max(0, Number(loan.principal) || 0);
-      const r = Math.max(0, Number(loan.rate) || 0);
-      const t = Math.max(1, Number(loan.tenureYears) || 1);
-      const res = p > 0 ? calculateEMI(p, r, t) : { emi: 0, totalPayment: 0, totalInterest: 0, principal: 0, yearlyData: [] };
-      return {
-        ...loan,
-        emi: res.emi,
-        totalPayment: res.totalPayment,
-        totalInterest: res.totalInterest,
-      };
-    });
-  }, [loans]);
+  // Compute amortized values for each loan (plain computation — `loans`
+  // updates are immutable, so memoization gave no stability benefit here)
+  const activeLoansWithEMI = loans.map((loan) => {
+    const p = Math.max(0, Number(loan.principal) || 0);
+    const r = Math.max(0, Number(loan.rate) || 0);
+    const t = Math.max(1, Number(loan.tenureYears) || 1);
+    const res = p > 0 ? calculateEMI(p, r, t) : { emi: 0, totalPayment: 0, totalInterest: 0, principal: 0, yearlyData: [] };
+    return {
+      ...loan,
+      emi: res.emi,
+      totalPayment: res.totalPayment,
+      totalInterest: res.totalInterest,
+    };
+  });
 
-  const totalLiabilities = useMemo(() => {
-    return loans.reduce((sum, loan) => sum + (Number(loan.principal) || 0), 0);
-  }, [loans]);
+  const totalLiabilities = loans.reduce((sum, loan) => sum + (Number(loan.principal) || 0), 0);
 
   const totalMonthlyLoanEMI = useMemo(() => {
     return activeLoansWithEMI

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Target, TrendingUp, PieChart, Plus, AlertTriangle, CheckCircle2, BarChart3, Trash2, ArrowUpRight, Zap } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
@@ -45,14 +45,18 @@ export const GoalPlanner = () => {
   const [selectedGoalId, setSelectedGoalId] = useState<string>(inputs.goals[0]?.id || '');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  // Synchronize selected goal if goals are added, removed, or switched externally
-  useEffect(() => {
+  // Synchronize selected goal if goals are added, removed, or switched
+  // externally — adjusted during render (derived-state pattern) rather than
+  // in an effect.
+  const [prevGoals, setPrevGoals] = useState(inputs.goals);
+  if (prevGoals !== inputs.goals) {
+    setPrevGoals(inputs.goals);
     if (inputs.goals.length > 0 && !inputs.goals.some((g) => g.id === selectedGoalId)) {
       setSelectedGoalId(inputs.goals[0].id);
     } else if (inputs.goals.length === 0 && selectedGoalId !== '') {
       setSelectedGoalId('');
     }
-  }, [inputs.goals, selectedGoalId]);
+  }
 
   const selectedGoal = useMemo(
     () => inputs.goals.find((g) => g.id === selectedGoalId) || inputs.goals[0],

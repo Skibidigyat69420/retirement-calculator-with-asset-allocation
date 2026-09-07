@@ -47,7 +47,7 @@ export const Select = ({
           aria-label={ariaLabel || label}
           className={cn(
             'w-full appearance-none bg-white/95 border border-zinc-200/80 rounded-xl px-3.5 py-2.5 pr-10 text-sm font-medium text-zinc-950 shadow-2xs',
-            'focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10 focus:outline-none',
+            'focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none',
             'hover:border-zinc-300 transition-all cursor-pointer',
           )}
         >

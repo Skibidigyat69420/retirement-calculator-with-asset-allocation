@@ -31,24 +31,24 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-[#FDFBF7] p-6">
-          <div className="max-w-md w-full bg-white border border-[#D1CDC3] rounded-lg shadow-lg p-8 text-center">
-            <h1 className="text-2xl font-semibold text-[#1A233A] mb-4">
+        <div className="min-h-screen flex items-center justify-center bg-background p-6" role="alert">
+          <div className="max-w-md w-full bg-surface border border-border rounded-2xl shadow-elevated p-8 text-center">
+            <h1 className="text-2xl font-semibold text-ink mb-4">
               Something went wrong
             </h1>
-            <p className="text-[#5C5C5C] mb-6">
+            <p className="text-muted mb-6">
               The application encountered an unexpected error. Please try
               reloading the page.
             </p>
             {this.state.error?.message && (
-              <pre className="text-left bg-[#F6F4F0] text-sm text-[#A31621] p-4 rounded mb-6 overflow-auto">
+              <pre className="text-left bg-sunken text-sm text-negative p-4 rounded-xl mb-6 overflow-auto">
                 {this.state.error.message}
               </pre>
             )}
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="inline-flex items-center justify-center px-6 py-2 bg-[#1A233A] text-white rounded hover:bg-[#111111] transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center px-6 py-2.5 min-h-11 bg-ink text-white rounded-xl hover:bg-zinc-800 transition-colors cursor-pointer font-semibold text-sm"
             >
               Reload page
             </button>

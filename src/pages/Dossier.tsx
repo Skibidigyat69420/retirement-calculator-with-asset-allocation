@@ -10,6 +10,12 @@ import {
   Award,
   FileText,
   Building2,
+  HeartPulse,
+  Target,
+  Percent,
+  StickyNote,
+  History,
+  Landmark,
 } from 'lucide-react';
 import { useCalculator } from '../context/CalculatorContext';
 import { DonutChart } from '../components/charts/DonutChart';
@@ -19,21 +25,61 @@ import { Badge } from '../components/ui/Badge';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
 import { CRISIS_PRESETS, runStressTest } from '../lib/stressTest';
+import { runMVO, evaluateCustomWeights, type Portfolio } from '../lib/mvo';
+import { computePlanHealthScore } from '../lib/planHealthScore';
+import { generatePlanRecommendations } from '../lib/recommendationEngine';
+import { getDimensionBreakdown, analyzeRiskGap, detectBehavioralBiases, type RiskDimension } from '../lib/riskQuestionnaire';
+import { getAssumptionsForMode } from '../lib/assumptions';
+import { StressMatrixTable } from '../components/reports/StressMatrixTable';
+import { GoalDistributionBars } from '../components/reports/GoalDistributionBars';
+import { PlanHealthPanel } from '../components/reports/PlanHealthPanel';
 import type { AssetCategory } from '../types';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
 
+const DIMENSION_LABELS: Record<RiskDimension, string> = {
+  time: 'Time Horizon',
+  tolerance: 'Risk Tolerance',
+  capacity: 'Risk Capacity',
+  knowledge: 'Knowledge & Experience',
+  liquidity: 'Liquidity & Safety Net',
+  flexibility: 'Goal Flexibility',
+  behavior: 'Behavioral Stability',
+  context: 'Concentration & Context',
+};
+
+const MEETING_STAGES: { id: 1 | 2 | 3 | 4; name: string; title: string }[] = [
+  { id: 1, name: 'Meeting 01', title: 'Client Discovery & Inventory' },
+  { id: 2, name: 'Meeting 02', title: 'Diagnostic & Scenario Lab' },
+  { id: 3, name: 'Meeting 03', title: 'Recommendation & Strategy Architecture' },
+  { id: 4, name: 'Meeting 04', title: 'Plan Delivery & Governance Onboarding' },
+];
+
+const AUTHOR_LABELS: Record<string, string> = {
+  Adviser: 'Advisor',
+  Client: 'Client',
+  'Automated System': 'Automated System',
+};
+
 export const Dossier = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { inputs, riskProfile, riskScore, wealthResult, manualTargets } = useCalculator();
+  const {
+    inputs,
+    riskProfile,
+    riskScore,
+    wealthResult,
+    manualTargets,
+    riskAnswers,
+    decisionHistory,
+    meetingState,
+    assumptions,
+    assumptionMode,
+    customCategoryReturns,
+    activeAssumptionSourceLabel,
+  } = useCalculator();
 
   const autoPrint = searchParams.get('autoPrint') === 'true';
-
-  const gfcTest = useMemo(() => {
-    const gfc = CRISIS_PRESETS.find((p) => p.id === 'gfc-2008') || CRISIS_PRESETS[0];
-    return runStressTest(inputs, gfc);
-  }, [inputs]);
 
   useEffect(() => {
     if (autoPrint) {
@@ -45,6 +91,74 @@ export const Dossier = () => {
   }, [autoPrint]);
 
   const targets = manualTargets || riskProfile.targets;
+
+  // Live assumption set — identical to what the wealth engine projects with.
+  const activeAssumptions = useMemo(
+    () => getAssumptionsForMode(assumptionMode, assumptions, customCategoryReturns),
+    [assumptionMode, assumptions, customCategoryReturns],
+  );
+
+  // Section 5: live MVO against current assumptions / covariance.
+  const mvoResult = useMemo(() => {
+    const means = CATEGORIES.map((c) => activeAssumptions.categories[c].mean);
+    const covariance = CATEGORIES.map((i) => CATEGORIES.map((j) => activeAssumptions.covariance[i][j]));
+    const equityMask = CATEGORIES.map((c) => c === 'equity' || c === 'other');
+    return runMVO(
+      CATEGORIES.map((c) => ASSET_LABELS[c]),
+      means,
+      covariance,
+      {
+        samples: 12000,
+        riskFreeRate: riskProfile.riskFreeRate / 100,
+        constraints: {
+          minWeight: CATEGORIES.map(() => 0),
+          maxWeight: CATEGORIES.map(() => 1),
+          maxEquity: riskProfile.maxEquity / 100,
+          equityMask,
+        },
+        seed: 'dossier-mvo',
+      },
+    );
+  }, [activeAssumptions, riskProfile]);
+
+  const targetPortfolio: Portfolio = useMemo(() => {
+    const means = CATEGORIES.map((c) => activeAssumptions.categories[c].mean);
+    const covariance = CATEGORIES.map((i) => CATEGORIES.map((j) => activeAssumptions.covariance[i][j]));
+    return evaluateCustomWeights(
+      CATEGORIES.map((c) => targets[c] / 100),
+      means,
+      covariance,
+      riskProfile.riskFreeRate / 100,
+    );
+  }, [activeAssumptions, targets, riskProfile.riskFreeRate]);
+
+  // Section 5: stress matrix across all four crisis presets.
+  const stressResults = useMemo(() => CRISIS_PRESETS.map((p) => runStressTest(inputs, p)), [inputs]);
+
+  // Section 6: plan health + recommendations.
+  const planHealth = useMemo(
+    () => computePlanHealthScore(inputs, wealthResult, riskScore),
+    [inputs, wealthResult, riskScore],
+  );
+  const recommendations = useMemo(
+    () => generatePlanRecommendations(inputs, wealthResult, planHealth, riskScore).slice(0, 5),
+    [inputs, wealthResult, planHealth, riskScore],
+  );
+
+  // Section 8: risk analytics.
+  const hasRiskAnswers = Object.keys(riskAnswers).length > 0;
+  const dimensionBreakdown = useMemo(
+    () => (hasRiskAnswers ? getDimensionBreakdown(riskAnswers) : null),
+    [riskAnswers, hasRiskAnswers],
+  );
+  const riskGap = useMemo(
+    () => (hasRiskAnswers ? analyzeRiskGap(riskAnswers) : null),
+    [riskAnswers, hasRiskAnswers],
+  );
+  const biases = useMemo(
+    () => (hasRiskAnswers ? detectBehavioralBiases(riskAnswers) : []),
+    [riskAnswers, hasRiskAnswers],
+  );
 
   const currentAllocationData = useMemo(
     () =>
@@ -62,11 +176,42 @@ export const Dossier = () => {
   const retirementSnapshot = wealthResult.snapshots.find((s) => s.age === inputs.retirementAge);
   const corpusAtRetirement = retirementSnapshot ? retirementSnapshot.total : wealthResult.terminalValue;
 
+  // Section 3: Monte Carlo terminal band.
+  const mc = wealthResult.monteCarlo;
+  const mcBandMin = mc.percentile5;
+  const mcBandMax = mc.percentile95 > mc.percentile5 ? mc.percentile95 : mc.percentile5 + 1;
+  const bandPos = (v: number) => `${Math.min(100, Math.max(0, ((v - mcBandMin) / (mcBandMax - mcBandMin)) * 100))}%`;
+
+  // Appendix A: projection milestones at key ages.
+  const milestones = useMemo(() => {
+    const seen = new Set<number>();
+    const ages = [inputs.currentAge + 5, inputs.currentAge + 10, inputs.retirementAge, 75].filter((age) => {
+      if (age < inputs.currentAge || age > inputs.lifeExpectancy || seen.has(age)) return false;
+      seen.add(age);
+      return true;
+    });
+    return ages
+      .map((age) => {
+        const snap = wealthResult.snapshots.find((s) => s.age === age);
+        return snap ? { age, snap } : null;
+      })
+      .filter((m): m is { age: number; snap: (typeof wealthResult.snapshots)[number] } => m !== null);
+  }, [inputs.currentAge, inputs.retirementAge, inputs.lifeExpectancy, wealthResult.snapshots]);
+
+  // Appendix B: meeting record — only stages with saved notes.
+  const meetingNotes = MEETING_STAGES.map((s) => ({
+    ...s,
+    note: (meetingState.notes[s.id] || '').trim(),
+  })).filter((s) => s.note.length > 0);
+
   const printDate = new Date().toLocaleDateString('en-IN', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
+
+  const sectionHeaderClass = 'border-b border-zinc-200 pb-4 mb-6 flex items-center justify-between';
+  const tableHeadClass = 'bg-zinc-50 text-zinc-600 font-semibold border-b border-zinc-200 uppercase tracking-wider';
 
   return (
     <div className="min-h-screen bg-zinc-100/70 print:bg-white text-zinc-900 pb-16 print:pb-0">
@@ -98,7 +243,7 @@ export const Dossier = () => {
               Complete Portfolio Dossier — {inputs.client?.name || 'Client Report'}
             </h1>
             <p className="text-[11px] text-zinc-400">
-              All 7 sections compiled for high-resolution PDF export or print
+              All 11 sections compiled for high-resolution PDF export or print
             </p>
           </div>
         </div>
@@ -206,7 +351,7 @@ export const Dossier = () => {
         {/* SECTION 1: EXECUTIVE DASHBOARD                            */}
         {/* ========================================================= */}
         <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
-          <div className="border-b border-zinc-200 pb-4 mb-6 flex items-center justify-between">
+          <div className={sectionHeaderClass}>
             <div className="flex items-center gap-2.5">
               <Activity size={20} className="text-zinc-700" />
               <h2 className="text-xl font-sans font-bold text-zinc-900">Section 1: Executive Dashboard</h2>
@@ -237,7 +382,7 @@ export const Dossier = () => {
           {/* Key Advisory Metrics Table */}
           <div className="overflow-x-auto avoid-break">
             <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
-              <thead className="bg-zinc-50 text-zinc-600 font-semibold border-b border-zinc-200 uppercase tracking-wider">
+              <thead className={tableHeadClass}>
                 <tr>
                   <th className="p-3">Advisory Metric</th>
                   <th className="p-3">Current Plan Value</th>
@@ -280,7 +425,7 @@ export const Dossier = () => {
                   <td className="p-3 text-zinc-600">Age {inputs.lifeExpectancy} horizon</td>
                   <td className="p-3 text-zinc-600">
                     {wealthResult.sustainable
-                      ? '✓ 100% sustainable through full mortality horizon.'
+                      ? `✓ ${formatPercent(mc.successRate * 100)} of simulated paths sustain withdrawals through age ${inputs.lifeExpectancy}.`
                       : '⚠ Depletion occurs prior to target life expectancy.'}
                   </td>
                 </tr>
@@ -293,7 +438,7 @@ export const Dossier = () => {
         {/* SECTION 2: MASTER PLAN                                    */}
         {/* ========================================================= */}
         <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
-          <div className="border-b border-zinc-200 pb-4 mb-6 flex items-center justify-between">
+          <div className={sectionHeaderClass}>
             <div className="flex items-center gap-2.5">
               <Building2 size={20} className="text-zinc-700" />
               <h2 className="text-xl font-sans font-bold text-zinc-900">Section 2: Master Plan & Capital Assets</h2>
@@ -308,7 +453,7 @@ export const Dossier = () => {
               <span className="text-xs text-zinc-500">Total Value: {formatCurrency(wealthResult.netWorth)}</span>
             </div>
             <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
-              <thead className="bg-zinc-50 text-zinc-600 font-semibold border-b border-zinc-200 uppercase tracking-wider">
+              <thead className={tableHeadClass}>
                 <tr>
                   <th className="p-3">Asset Description</th>
                   <th className="p-3">Category</th>
@@ -372,7 +517,7 @@ export const Dossier = () => {
           <div className="space-y-3 avoid-break">
             <h3 className="text-sm font-semibold text-zinc-900">2. Life Goal Milestone Commitments</h3>
             <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
-              <thead className="bg-zinc-50 text-zinc-600 font-semibold border-b border-zinc-200 uppercase tracking-wider">
+              <thead className={tableHeadClass}>
                 <tr>
                   <th className="p-3">Goal Description</th>
                   <th className="p-3">Priority</th>
@@ -413,7 +558,7 @@ export const Dossier = () => {
         {/* SECTION 3: RETIREMENT & SWP LONGEVITY                      */}
         {/* ========================================================= */}
         <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
-          <div className="border-b border-zinc-200 pb-4 mb-6 flex items-center justify-between">
+          <div className={sectionHeaderClass}>
             <div className="flex items-center gap-2.5">
               <TrendingUp size={20} className="text-zinc-700" />
               <h2 className="text-xl font-sans font-bold text-zinc-900">Section 3: Retirement & SWP Longevity Analysis</h2>
@@ -443,6 +588,67 @@ export const Dossier = () => {
             </div>
           </div>
 
+          {/* Monte Carlo terminal outcome band */}
+          <div className="p-6 rounded-xl border border-zinc-200 bg-white avoid-break space-y-4 mb-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-zinc-900">Monte Carlo Terminal Outcome Distribution</h3>
+              <span className="text-xs font-mono font-bold text-zinc-900">
+                {formatPercent(mc.successRate * 100)} path success
+              </span>
+            </div>
+            <p className="text-xs text-zinc-600 leading-relaxed">
+              {formatPercent(mc.successRate * 100)} of simulated paths sustain withdrawals through age {inputs.lifeExpectancy}.
+              {mc.medianDepletionAge !== null
+                ? ` The median simulated path first exhausts the corpus at age ${mc.medianDepletionAge}.`
+                : ' The median simulated path never exhausts the corpus within the planning horizon.'}
+            </p>
+            <div>
+              <div className="relative h-4 rounded-full bg-zinc-100 overflow-visible">
+                <div
+                  className="absolute h-4 rounded-full bg-zinc-300"
+                  style={{ left: bandPos(mc.percentile25), width: `calc(${bandPos(mc.percentile75)} - ${bandPos(mc.percentile25)})` }}
+                />
+                <div
+                  className="absolute h-4 rounded-full bg-zinc-400/70"
+                  style={{ left: bandPos(mc.percentile5), width: `calc(${bandPos(mc.percentile95)} - ${bandPos(mc.percentile5)})` }}
+                />
+                <div
+                  className="absolute -top-1 h-6 w-0.5 bg-zinc-950 rounded"
+                  style={{ left: bandPos(mc.medianTerminal) }}
+                />
+              </div>
+              <div className="flex justify-between mt-2 text-[10px] text-zinc-500 font-mono">
+                <span>P5 {formatCurrencyCompact(mc.percentile5)}</span>
+                <span className="font-semibold text-zinc-800">Median {formatCurrencyCompact(mc.medianTerminal)}</span>
+                <span>P95 {formatCurrencyCompact(mc.percentile95)}</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 print:grid-cols-4 gap-3 text-xs">
+              <div className="p-3 bg-zinc-50 rounded-lg">
+                <span className="text-zinc-500 block">Mean Terminal</span>
+                <span className="font-mono font-semibold text-zinc-900">{formatCurrencyCompact(mc.meanTerminal)}</span>
+              </div>
+              <div className="p-3 bg-zinc-50 rounded-lg">
+                <span className="text-zinc-500 block">Interquartile (P25–P75)</span>
+                <span className="font-mono font-semibold text-zinc-900">
+                  {formatCurrencyCompact(mc.percentile25)} – {formatCurrencyCompact(mc.percentile75)}
+                </span>
+              </div>
+              <div className="p-3 bg-zinc-50 rounded-lg">
+                <span className="text-zinc-500 block">Median Depletion Age</span>
+                <span className="font-mono font-semibold text-zinc-900">
+                  {mc.medianDepletionAge !== null ? `Age ${mc.medianDepletionAge}` : 'Not depleted'}
+                </span>
+              </div>
+              <div className="p-3 bg-zinc-50 rounded-lg">
+                <span className="text-zinc-500 block">Deterministic Verdict</span>
+                <span className="font-semibold text-zinc-900">
+                  {wealthResult.sustainable ? `Solvent to ${inputs.lifeExpectancy}+` : `Depletes at ${wealthResult.depletionAge}`}
+                </span>
+              </div>
+            </div>
+          </div>
+
           {/* SWP Stress Test Breakdown */}
           <div className="p-6 rounded-xl border border-zinc-200 bg-white avoid-break space-y-4">
             <h3 className="text-sm font-semibold text-zinc-900">Post-Retirement Withdrawal Framework</h3>
@@ -468,7 +674,7 @@ export const Dossier = () => {
               <div className="p-3 bg-zinc-50 rounded-lg">
                 <span className="text-zinc-500">Longevity Cushion:</span>
                 <p className="font-semibold text-slate-800 mt-0.5">
-                  {wealthResult.sustainable ? '35+ Years' : `${(wealthResult.depletionAge ?? inputs.retirementAge) - inputs.retirementAge} Years`}
+                  {wealthResult.sustainable ? `${inputs.lifeExpectancy - inputs.retirementAge}+ Years` : `${(wealthResult.depletionAge ?? inputs.retirementAge) - inputs.retirementAge} Years`}
                 </p>
               </div>
             </div>
@@ -479,7 +685,7 @@ export const Dossier = () => {
         {/* SECTION 4: STRATEGIC ASSET ALLOCATION & REBALANCING       */}
         {/* ========================================================= */}
         <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
-          <div className="border-b border-zinc-200 pb-4 mb-6 flex items-center justify-between">
+          <div className={sectionHeaderClass}>
             <div className="flex items-center gap-2.5">
               <PieChart size={20} className="text-zinc-700" />
               <h2 className="text-xl font-sans font-bold text-zinc-900">Section 4: Strategic Asset Allocation & Rebalancing</h2>
@@ -489,7 +695,7 @@ export const Dossier = () => {
 
           <div className="overflow-x-auto mb-8 avoid-break">
             <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
-              <thead className="bg-zinc-50 text-zinc-600 font-semibold border-b border-zinc-200 uppercase tracking-wider">
+              <thead className={tableHeadClass}>
                 <tr>
                   <th className="p-3">Asset Class</th>
                   <th className="p-3 text-right">Current Value</th>
@@ -547,8 +753,8 @@ export const Dossier = () => {
         {/* ========================================================= */}
         {/* SECTION 5: QUANT LAB & MVO OPTIMIZATION                   */}
         {/* ========================================================= */}
-        <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm">
-          <div className="border-b border-zinc-200 pb-4 mb-6 flex items-center justify-between">
+        <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
+          <div className={sectionHeaderClass}>
             <div className="flex items-center gap-2.5">
               <Award size={20} className="text-zinc-700" />
               <h2 className="text-xl font-sans font-bold text-zinc-900">Section 5: Quant Lab & Mean-Variance Optimization</h2>
@@ -558,72 +764,199 @@ export const Dossier = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 gap-4 mb-8 avoid-break">
             <div className="p-4 rounded-xl border border-zinc-200 bg-white">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Historical Calibration</span>
-              <p className="text-lg font-sans font-semibold text-zinc-900 mt-1">10-Year Daily Candles</p>
-              <p className="text-xs text-zinc-600 mt-0.5">NSE Nifty, Gold, Bonds & G-Secs</p>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Assumption Engine</span>
+              <p className="text-lg font-sans font-semibold text-zinc-900 mt-1">{activeAssumptionSourceLabel}</p>
+              <p className="text-xs text-zinc-600 mt-0.5">Calibrated {assumptions.fetchedAt ? new Date(assumptions.fetchedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'from default priors'}</p>
             </div>
             <div className="p-4 rounded-xl border border-zinc-200 bg-white">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">MVO Risk-Free Rate</span>
-              <p className="text-lg font-sans font-semibold text-zinc-900 mt-1">6.50% p.a.</p>
-              <p className="text-xs text-zinc-600 mt-0.5">RBI 10-Year Benchmark G-Sec</p>
+              <p className="text-lg font-sans font-semibold text-zinc-900 mt-1">{formatPercent(riskProfile.riskFreeRate)} p.a.</p>
+              <p className="text-xs text-zinc-600 mt-0.5">{riskProfile.label} profile parameter</p>
             </div>
             <div className="p-4 rounded-xl border border-zinc-200 bg-white">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Optimization Goal</span>
-              <p className="text-lg font-sans font-semibold text-zinc-900 mt-1">Max Sharpe Frontier</p>
-              <p className="text-xs text-zinc-600 mt-0.5">Constrained non-negative weights</p>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Optimization Objective</span>
+              <p className="text-lg font-sans font-semibold text-zinc-900 mt-1">Max Sharpe · Long-Only</p>
+              <p className="text-xs text-zinc-600 mt-0.5">Equity capped at {formatPercent(riskProfile.maxEquity)} · 12,000 sampled portfolios</p>
             </div>
           </div>
 
-          <div className="p-6 rounded-xl border border-zinc-200 bg-zinc-50 avoid-break space-y-3">
-            <h3 className="text-sm font-semibold text-zinc-900">Optimization Frontier Guidelines</h3>
+          {/* Frontier portfolio summary stats */}
+          <div className="space-y-3 mb-8 avoid-break">
+            <h3 className="text-sm font-semibold text-zinc-900">Efficient Frontier — Key Portfolio Statistics</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
+                <thead className={tableHeadClass}>
+                  <tr>
+                    <th className="p-3">Portfolio</th>
+                    <th className="p-3 text-right">Expected Return</th>
+                    <th className="p-3 text-right">Volatility</th>
+                    <th className="p-3 text-right">Sharpe Ratio</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {[
+                    { label: 'Maximum Sharpe (Tangency)', p: mvoResult.maxSharpe },
+                    { label: 'Minimum Variance', p: mvoResult.minVariance },
+                    { label: 'Risk Parity', p: mvoResult.riskParity },
+                    { label: 'Equal Weight', p: mvoResult.equalWeight },
+                    { label: 'Current Strategic Target', p: targetPortfolio },
+                  ].map((row) => (
+                    <tr key={row.label}>
+                      <td className="p-3 font-medium text-zinc-900">{row.label}</td>
+                      <td className="p-3 text-right font-mono text-zinc-800">{formatPercent(row.p.expectedReturn * 100)}</td>
+                      <td className="p-3 text-right font-mono text-zinc-800">{formatPercent(row.p.volatility * 100)}</td>
+                      <td className="p-3 text-right font-mono font-semibold text-zinc-900">{row.p.sharpe.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Optimal weights */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 print:grid-cols-2 gap-6 mb-8 avoid-break">
+            <div className="p-5 rounded-xl border border-zinc-200 bg-white space-y-3">
+              <h3 className="text-sm font-semibold text-zinc-900">Maximum-Sharpe Weights</h3>
+              <div className="space-y-1.5 text-xs">
+                {CATEGORIES.map((cat, i) => (
+                  <div key={cat} className="flex items-center gap-2">
+                    <span className="w-28 shrink-0 text-zinc-600 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ASSET_COLORS[cat] }} />
+                      {ASSET_LABELS[cat]}
+                    </span>
+                    <div className="flex-1 h-2.5 rounded-full bg-zinc-100 overflow-hidden">
+                      <div className="h-full bg-zinc-800 rounded-full" style={{ width: `${Math.min(100, mvoResult.maxSharpe.weights[i] * 100)}%` }} />
+                    </div>
+                    <span className="w-12 text-right font-mono font-semibold text-zinc-900">{formatPercent(mvoResult.maxSharpe.weights[i] * 100)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="p-5 rounded-xl border border-zinc-200 bg-white space-y-3">
+              <h3 className="text-sm font-semibold text-zinc-900">Minimum-Variance Weights</h3>
+              <div className="space-y-1.5 text-xs">
+                {CATEGORIES.map((cat, i) => (
+                  <div key={cat} className="flex items-center gap-2">
+                    <span className="w-28 shrink-0 text-zinc-600 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ASSET_COLORS[cat] }} />
+                      {ASSET_LABELS[cat]}
+                    </span>
+                    <div className="flex-1 h-2.5 rounded-full bg-zinc-100 overflow-hidden">
+                      <div className="h-full bg-zinc-500 rounded-full" style={{ width: `${Math.min(100, mvoResult.minVariance.weights[i] * 100)}%` }} />
+                    </div>
+                    <span className="w-12 text-right font-mono font-semibold text-zinc-900">{formatPercent(mvoResult.minVariance.weights[i] * 100)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* CML note */}
+          <div className="p-6 rounded-xl border border-zinc-200 bg-zinc-50 avoid-break space-y-2 mb-6">
+            <h3 className="text-sm font-semibold text-zinc-900">Capital Market Line Interpretation</h3>
             <p className="text-xs text-zinc-600 leading-relaxed">
-              Mean-Variance Optimization generates the mathematically optimal efficient frontier by evaluating the covariance
-              structure between asset classes. The portfolio recommended for the {riskProfile.label} mandate balances
-              maximum return per unit of volatility while adhering to liquidity and concentration caps.
+              Under the {activeAssumptionSourceLabel.toLowerCase()} assumption set, the tangency (maximum-Sharpe) portfolio delivers{' '}
+              {formatPercent(mvoResult.maxSharpe.expectedReturn * 100)} p.a. at {formatPercent(mvoResult.maxSharpe.volatility * 100)} volatility,
+              a reward-to-variability ratio of {mvoResult.maxSharpe.sharpe.toFixed(2)} against the {formatPercent(riskProfile.riskFreeRate)} risk-free rate.
+              Levered or mixed allocations along the Capital Market Line earn the risk-free rate plus {mvoResult.maxSharpe.sharpe.toFixed(2)} units of
+              excess return per unit of incremental volatility. For the {riskProfile.label} mandate, the strategic target is judged against this frontier:
+              the target portfolio scores a Sharpe of {targetPortfolio.sharpe.toFixed(2)} with {formatPercent(targetPortfolio.volatility * 100)} expected volatility.
             </p>
           </div>
 
-          {/* Tail-Risk Stress Test Audit */}
-          <div className="mt-6 p-4 rounded-xl border border-zinc-200 bg-zinc-50/50 avoid-break space-y-2">
+          {/* Tail-Risk Stress Matrix: all four crisis presets */}
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                Tail-Risk Stress Test: 2008 Global Financial Crisis Simulation
-              </h3>
-              <span className="text-xs font-mono font-bold text-zinc-900">
-                Resilience Score: {gfcTest.resilienceScore}/100
-              </span>
+              <h3 className="text-sm font-semibold text-zinc-900">Tail-Risk Stress Matrix — Historical Crisis Simulations</h3>
+              <span className="text-xs text-zinc-500">Shocks applied to current holdings; plans re-projected under stressed inflation</span>
             </div>
-            <div className="grid grid-cols-3 gap-3 text-xs">
-              <div>
-                <span className="text-zinc-500 block">Simulated Drawdown</span>
-                <span className="font-mono font-bold text-rose-600">
-                  {formatPercent(gfcTest.drawdownPercent)} ({formatCurrencyCompact(gfcTest.drawdownAmount)})
-                </span>
-              </div>
-              <div>
-                <span className="text-zinc-500 block">Shocked Net Worth</span>
-                <span className="font-mono font-semibold text-zinc-900">
-                  {formatCurrencyCompact(gfcTest.shockedNetWorth)}
-                </span>
-              </div>
-              <div>
-                <span className="text-zinc-500 block">Longevity Impact</span>
-                <span className="font-semibold text-zinc-900">
-                  {gfcTest.shockedSustainable ? `Survives to Age ${inputs.lifeExpectancy}` : `Depletes at Age ${gfcTest.shockedDepletionAge}`}
-                </span>
-              </div>
-            </div>
+            <StressMatrixTable results={stressResults} />
           </div>
         </section>
 
         {/* ========================================================= */}
-        {/* SECTION 6: RISK QUESTIONNAIRE & BEHAVIORAL PROFILE        */}
+        {/* SECTION 6: PLAN HEALTH & PRIORITY ACTIONS                 */}
         {/* ========================================================= */}
         <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
-          <div className="border-b border-zinc-200 pb-4 mb-6 flex items-center justify-between">
+          <div className={sectionHeaderClass}>
+            <div className="flex items-center gap-2.5">
+              <HeartPulse size={20} className="text-zinc-700" />
+              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 6: Plan Health & Priority Actions</h2>
+            </div>
+            <span className="text-xs font-medium text-zinc-500">Weighted Diagnostic Score</span>
+          </div>
+
+          <PlanHealthPanel health={planHealth} recommendations={recommendations} detailed />
+        </section>
+
+        {/* ========================================================= */}
+        {/* SECTION 7: GOAL PROBABILITY DETAIL                        */}
+        {/* ========================================================= */}
+        {wealthResult.goalResults.length > 0 && (
+          <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
+            <div className={sectionHeaderClass}>
+              <div className="flex items-center gap-2.5">
+                <Target size={20} className="text-zinc-700" />
+                <h2 className="text-xl font-sans font-bold text-zinc-900">Section 7: Goal Probability Detail</h2>
+              </div>
+              <span className="text-xs font-medium text-zinc-500">Simulated Funding Distributions</span>
+            </div>
+
+            <div className="overflow-x-auto avoid-break">
+              <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
+                <thead className={tableHeadClass}>
+                  <tr>
+                    <th className="p-3">Goal</th>
+                    <th className="p-3 text-right">Horizon</th>
+                    <th className="p-3 text-right">FV Needed</th>
+                    <th className="p-3 text-right">PV Needed</th>
+                    <th className="p-3 text-center">Success</th>
+                    <th className="p-3 text-center">Shortfall Prob.</th>
+                    <th className="p-3 text-right">Expected Shortfall</th>
+                    <th className="p-3 w-44">Outcome Distribution</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {wealthResult.goalResults.map((gr) => (
+                    <tr key={gr.goal.id}>
+                      <td className="p-3 font-medium text-zinc-900">
+                        {gr.goal.name}
+                        <span className={`ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-medium ${
+                          gr.goal.priority === 'essential' ? 'bg-emerald-50 text-emerald-800' :
+                          gr.goal.priority === 'important' ? 'bg-blue-50 text-blue-800' : 'bg-slate-100 text-zinc-700'
+                        }`}>
+                          {gr.goal.priority.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="p-3 text-right text-zinc-600">{gr.goal.yearsToGoal}y</td>
+                      <td className="p-3 text-right font-mono text-zinc-800">{formatCurrencyCompact(gr.futureValue)}</td>
+                      <td className="p-3 text-right font-mono text-zinc-600">{formatCurrencyCompact(gr.pvNeeded)}</td>
+                      <td className="p-3 text-center font-mono font-semibold text-zinc-900">{formatPercent(gr.successRate * 100)}</td>
+                      <td className="p-3 text-center font-mono text-rose-600">{formatPercent(gr.shortfallProbability * 100)}</td>
+                      <td className="p-3 text-right font-mono text-zinc-700">{formatCurrencyCompact(gr.expectedShortfall)}</td>
+                      <td className="p-3">
+                        <GoalDistributionBars distribution={gr.probabilityDistribution} targetAmount={gr.futureValue} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-[11px] text-zinc-500 mt-3 leading-relaxed">
+              Distributions show the simulated value of each goal's funding bucket at target date. Rose segments mark outcomes below the
+              required future value; the label below each histogram reports the probability mass in that shortfall zone.
+            </p>
+          </section>
+        )}
+
+        {/* ========================================================= */}
+        {/* SECTION 8: RISK QUESTIONNAIRE & BEHAVIORAL PROFILE        */}
+        {/* ========================================================= */}
+        <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
+          <div className={sectionHeaderClass}>
             <div className="flex items-center gap-2.5">
               <Shield size={20} className="text-zinc-700" />
-              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 6: Risk Questionnaire & Behavioral Profiling</h2>
+              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 8: Risk Questionnaire & Behavioral Profiling</h2>
             </div>
             <span className="text-xs font-medium text-zinc-500">Capacity & Tolerance</span>
           </div>
@@ -651,16 +984,268 @@ export const Dossier = () => {
               </div>
             </div>
           </div>
+
+          {dimensionBreakdown && (
+            <div className="space-y-3 mb-8 avoid-break">
+              <h3 className="text-sm font-semibold text-zinc-900">Dimension Breakdown</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
+                  <thead className={tableHeadClass}>
+                    <tr>
+                      <th className="p-3">Dimension</th>
+                      <th className="p-3 text-center">Weight</th>
+                      <th className="p-3 text-center">Score</th>
+                      <th className="p-3 text-center">Weighted Contribution</th>
+                      <th className="p-3">Interpretation</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {(Object.keys(dimensionBreakdown) as RiskDimension[]).map((dim) => {
+                      const d = dimensionBreakdown[dim];
+                      const interpretation = d.percentage >= 70 ? 'High — strongly supports risk-taking' : d.percentage >= 45 ? 'Moderate — supports measured risk' : 'Low — constrains risk capacity';
+                      return (
+                        <tr key={dim}>
+                          <td className="p-3 font-medium text-zinc-900">{DIMENSION_LABELS[dim]}</td>
+                          <td className="p-3 text-center text-zinc-600 font-mono">{formatPercent(d.weight * 100, 0)}</td>
+                          <td className="p-3 text-center font-mono font-semibold text-zinc-900">{formatPercent(d.percentage)}</td>
+                          <td className="p-3 text-center font-mono text-zinc-700">{d.weightedContribution.toFixed(1)} pts</td>
+                          <td className="p-3 text-zinc-600">{interpretation}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {riskGap && (
+            <div className="p-6 rounded-xl border border-zinc-200 bg-zinc-50/50 avoid-break space-y-2 mb-8">
+              <h3 className="text-sm font-semibold text-zinc-900">Risk Tolerance vs Capacity Gap</h3>
+              <div className="grid grid-cols-3 gap-3 text-xs">
+                <div className="p-3 bg-white rounded-lg border border-zinc-200/70">
+                  <span className="text-zinc-500 block">Willingness (Tolerance)</span>
+                  <span className="font-mono font-bold text-zinc-900">{formatPercent(riskGap.tolerancePct)}</span>
+                </div>
+                <div className="p-3 bg-white rounded-lg border border-zinc-200/70">
+                  <span className="text-zinc-500 block">Ability (Capacity)</span>
+                  <span className="font-mono font-bold text-zinc-900">{formatPercent(riskGap.capacityPct)}</span>
+                </div>
+                <div className="p-3 bg-white rounded-lg border border-zinc-200/70">
+                  <span className="text-zinc-500 block">Gap</span>
+                  <span className={`font-mono font-bold ${Math.abs(riskGap.gap) > 20 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                    {riskGap.gap > 0 ? '+' : ''}{formatPercent(riskGap.gap)}
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-zinc-600 leading-relaxed">{riskGap.verdict}</p>
+            </div>
+          )}
+
+          {biases.length > 0 && (
+            <div className="space-y-3 avoid-break">
+              <h3 className="text-sm font-semibold text-zinc-900">Detected Behavioral Biases</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-4">
+                {biases.map((b) => (
+                  <div key={b.bias} className="p-4 rounded-xl border border-zinc-200 bg-white space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-zinc-900">{b.bias}</span>
+                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
+                        b.level === 'high' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'
+                      }`}>
+                        {b.level}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-600 leading-snug">{b.description}</p>
+                    <p className="text-[11px] text-zinc-500 leading-snug"><span className="font-medium text-zinc-700">Advisory counterweight:</span> {b.suggestion}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
 
         {/* ========================================================= */}
-        {/* SECTION 7: INVESTMENT POLICY STATEMENT (IPS)              */}
+        {/* SECTION 9: TAX & CURRENCY POSITION                        */}
+        {/* ========================================================= */}
+        <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
+          <div className={sectionHeaderClass}>
+            <div className="flex items-center gap-2.5">
+              <Percent size={20} className="text-zinc-700" />
+              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 9: Tax & Currency Position</h2>
+            </div>
+            <span className="text-xs font-medium text-zinc-500">Fiscal Drag & FX Exposure</span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 print:grid-cols-4 gap-4 mb-8 avoid-break">
+            <div className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/70">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Annual Tax Estimate</span>
+              <p className="text-lg font-sans font-bold text-zinc-900 mt-1">{formatCurrencyCompact(wealthResult.taxSummary.annualTax)}</p>
+            </div>
+            <div className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/70">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Effective Tax Rate</span>
+              <p className="text-lg font-sans font-bold text-zinc-900 mt-1">{formatPercent(wealthResult.taxSummary.effectiveRate * 100)}</p>
+            </div>
+            <div className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/70">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Post-Tax Income</span>
+              <p className="text-lg font-sans font-bold text-zinc-900 mt-1">{formatCurrencyCompact(wealthResult.taxSummary.postTaxIncome)}</p>
+            </div>
+            <div className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/70">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Recommended Tax Saving</span>
+              <p className="text-lg font-sans font-bold text-zinc-900 mt-1">{formatCurrencyCompact(wealthResult.taxSummary.recommendedTaxSaving)}</p>
+            </div>
+          </div>
+
+          {wealthResult.currencyExposure.length > 0 && (
+            <div className="space-y-3 avoid-break">
+              <h3 className="text-sm font-semibold text-zinc-900">Currency Exposure of Investable Assets</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
+                  <thead className={tableHeadClass}>
+                    <tr>
+                      <th className="p-3">Currency</th>
+                      <th className="p-3 text-right">Exposure Value</th>
+                      <th className="p-3 text-right">Portfolio Weight</th>
+                      <th className="p-3">Hedging Note</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {wealthResult.currencyExposure.map((c) => (
+                      <tr key={c.currency}>
+                        <td className="p-3 font-medium text-zinc-900">{c.currency}</td>
+                        <td className="p-3 text-right font-mono text-zinc-800">{formatCurrency(c.amount)}</td>
+                        <td className="p-3 text-right font-mono font-semibold text-zinc-900">{formatPercent(c.percentage)}</td>
+                        <td className="p-3 text-zinc-600">
+                          {c.currency === 'INR'
+                            ? 'Domestic — no FX drag on liabilities.'
+                            : 'Unhedged global exposure — adds diversification but introduces currency volatility on rupee goals.'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ========================================================= */}
+        {/* SECTION 10: APPENDICES                                    */}
+        {/* ========================================================= */}
+        <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
+          <div className={sectionHeaderClass}>
+            <div className="flex items-center gap-2.5">
+              <Landmark size={20} className="text-zinc-700" />
+              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 10: Appendices</h2>
+            </div>
+            <span className="text-xs font-medium text-zinc-500">Milestones · Meeting Record · Decision Audit</span>
+          </div>
+
+          {/* Appendix A: Projection Milestones */}
+          {milestones.length > 0 && (
+            <div className="space-y-3 mb-8 avoid-break">
+              <h3 className="text-sm font-semibold text-zinc-900">Appendix A: Projection Milestones</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
+                  <thead className={tableHeadClass}>
+                    <tr>
+                      <th className="p-3">Age</th>
+                      <th className="p-3">Phase</th>
+                      <th className="p-3 text-right">Nominal Net Worth</th>
+                      <th className="p-3 text-right">Real Net Worth</th>
+                      <th className="p-3 text-right">Cumulative Invested</th>
+                      <th className="p-3 text-right">Cumulative Withdrawn</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {milestones.map(({ age, snap }) => (
+                      <tr key={age}>
+                        <td className="p-3 font-semibold text-zinc-900">{age}</td>
+                        <td className="p-3">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                            snap.phase === 'accumulation' ? 'bg-blue-50 text-blue-800' : 'bg-violet-50 text-violet-800'
+                          }`}>
+                            {snap.phase === 'accumulation' ? 'Accumulation' : 'Distribution'}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right font-mono font-semibold text-zinc-900">{formatCurrency(snap.total)}</td>
+                        <td className="p-3 text-right font-mono text-zinc-700">{formatCurrency(snap.realTotal)}</td>
+                        <td className="p-3 text-right font-mono text-zinc-700">{formatCurrency(snap.invested)}</td>
+                        <td className="p-3 text-right font-mono text-zinc-700">{snap.withdrawn > 0 ? formatCurrency(snap.withdrawn) : '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Appendix B: Meeting Record (only when notes exist) */}
+          {meetingNotes.length > 0 && (
+            <div className="space-y-3 mb-8 avoid-break">
+              <h3 className="text-sm font-semibold text-zinc-900 flex items-center gap-2">
+                <StickyNote size={15} className="text-zinc-600" /> Appendix B: Meeting Record
+              </h3>
+              <div className="space-y-3">
+                {meetingNotes.map((s) => (
+                  <div key={s.id} className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/50">
+                    <p className="text-xs font-semibold text-zinc-900">{s.name}: {s.title}</p>
+                    <p className="text-xs text-zinc-600 leading-relaxed mt-1 whitespace-pre-wrap">{s.note}</p>
+                  </div>
+                ))}
+                <p className="text-[10px] text-zinc-500">Last updated: {meetingState.lastUpdated || '—'}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Appendix C: Decision Audit Trail (only when entries exist) */}
+          {decisionHistory.length > 0 && (
+            <div className="space-y-3 avoid-break">
+              <h3 className="text-sm font-semibold text-zinc-900 flex items-center gap-2">
+                <History size={15} className="text-zinc-600" /> Appendix C: Decision Audit Trail
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
+                  <thead className={tableHeadClass}>
+                    <tr>
+                      <th className="p-3">Date</th>
+                      <th className="p-3">Decision</th>
+                      <th className="p-3">Change</th>
+                      <th className="p-3">Rationale</th>
+                      <th className="p-3">Author</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {decisionHistory.slice(0, 12).map((dec) => (
+                      <tr key={dec.id}>
+                        <td className="p-3 text-zinc-600 whitespace-nowrap">{dec.dateFormatted}</td>
+                        <td className="p-3 font-medium text-zinc-900">
+                          {dec.actionTitle}
+                          {dec.reverted && <span className="ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-zinc-200 text-zinc-600">REVERTED</span>}
+                        </td>
+                        <td className="p-3 text-zinc-600 font-mono text-[11px]">{dec.newValue}</td>
+                        <td className="p-3 text-zinc-600 leading-snug">{dec.rationale || '—'}</td>
+                        <td className="p-3 text-zinc-700 whitespace-nowrap">{AUTHOR_LABELS[dec.author] || dec.author}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {decisionHistory.length > 12 && (
+                <p className="text-[10px] text-zinc-500">Showing 12 of {decisionHistory.length} recorded decisions. The full trail is available on the Decision History page.</p>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* ========================================================= */}
+        {/* SECTION 11: INVESTMENT POLICY STATEMENT (IPS)              */}
         {/* ========================================================= */}
         <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 sm:p-12 print:border-none print:p-6 shadow-sm">
           <div className="border-b border-zinc-200 pb-4 mb-8 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <FileText size={20} className="text-zinc-700" />
-              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 7: Investment Policy Statement (IPS)</h2>
+              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 11: Investment Policy Statement (IPS)</h2>
             </div>
             <span className="text-xs font-medium text-zinc-500">Governance & Execution Mandate</span>
           </div>
@@ -687,10 +1272,11 @@ export const Dossier = () => {
             <div>
               <h3 className="text-sm font-sans font-bold text-zinc-900 mb-1">3. Strategic Objectives & Constraints</h3>
               <ul className="list-disc pl-5 space-y-1 mt-1 text-zinc-600">
-                <li><span className="font-medium text-slate-800">Return Objective:</span> Target real portfolio growth of 3.50%–4.50% above inflation to meet essential goals and secure early retirement at age {inputs.retirementAge}.</li>
+                <li><span className="font-medium text-slate-800">Return Objective:</span> Target real portfolio growth of {formatPercent(wealthResult.cagrReal)} p.a. (projected plan CAGR) to meet essential goals and secure retirement at age {inputs.retirementAge}.</li>
                 <li><span className="font-medium text-slate-800">Risk Tolerance:</span> Assessed at {riskScore}/100 ({riskProfile.label}), permitting controlled drawdowns in equity allocations in exchange for long-term purchasing power expansion.</li>
                 <li><span className="font-medium text-slate-800">Liquidity Constraints:</span> An emergency liquid reserve of at least 6 months of expenditures ({formatCurrency(inputs.monthlyExpenditure * 6)}) must be maintained in high-quality liquid instruments at all times.</li>
                 <li><span className="font-medium text-slate-800">Time Horizon:</span> Multi-stage horizon consisting of an accumulation phase through age {inputs.retirementAge}, followed by an inflation-adjusted distribution phase through age {inputs.lifeExpectancy}.</li>
+                <li><span className="font-medium text-slate-800">Success Threshold:</span> The plan must maintain at least {formatPercent(riskProfile.goalSuccessThreshold)} probability of success on essential goals and full SWP sustainability, per the Monte Carlo analysis in Section 3.</li>
               </ul>
             </div>
 

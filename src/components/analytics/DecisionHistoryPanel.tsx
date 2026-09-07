@@ -38,7 +38,7 @@ export const DecisionHistoryPanel = () => {
       previousValue: newOldVal,
       newValue: newNewVal,
       rationale: newRationale,
-      author: 'Adviser',
+      author: 'Advisor',
     });
     showToast('Decision recorded in audit trail.', 'success');
     setAddModalOpen(false);
@@ -100,8 +100,23 @@ export const DecisionHistoryPanel = () => {
         </div>
 
         {decisionHistory.length === 0 ? (
-          <div className="p-8 text-center text-zinc-500 text-xs">
-            No decisions recorded in the audit trail yet. Plan updates, MVO applications, and scenario decisions will appear here automatically.
+          <div className="p-10 rounded-xl border border-dashed border-zinc-300 bg-zinc-50/50 text-center space-y-3">
+            <div className="w-11 h-11 mx-auto rounded-xl bg-white border border-zinc-200 shadow-2xs flex items-center justify-center text-zinc-400">
+              <History size={20} />
+            </div>
+            <p className="text-sm font-bold text-zinc-900">No decisions logged yet</p>
+            <p className="text-xs text-zinc-500 max-w-md mx-auto leading-relaxed">
+              Decisions you record — plan updates, allocation changes, and scenario approvals — will appear in this immutable audit trail.
+            </p>
+            <div className="pt-1">
+              <Button
+                size="sm"
+                onClick={() => setAddModalOpen(true)}
+                className="bg-zinc-900 text-white hover:bg-zinc-800 text-xs h-8 px-4"
+              >
+                <Plus size={13} className="mr-1" /> Log First Decision
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-3">

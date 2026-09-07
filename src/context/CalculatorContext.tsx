@@ -26,6 +26,7 @@ import { loadClientData, saveClientData, resetClientData } from '../lib/persiste
 import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
 import type { StoredPlan } from '../lib/store';
 import { savePlan, loadPlan, listPlans, deletePlan } from '../lib/planStorage';
+import { getActivePlanId, setActivePlanId } from '../lib/store/localStorageStore';
 
 export interface ToastNotification {
   id: string;
@@ -88,60 +89,6 @@ const MEETING_STATE_KEY = 'soundthesis_meeting_state';
 const ASSUMPTION_MODE_KEY = 'soundthesis_assumption_mode';
 const CUSTOM_RETURNS_KEY = 'soundthesis_custom_returns';
 
-const DEFAULT_DECISIONS: DecisionLogEntry[] = [
-  {
-    id: 'dec-1',
-    timestamp: new Date(Date.now() - 86400000 * 3).toISOString(),
-    dateFormatted: new Date(Date.now() - 86400000 * 3).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-    category: 'retirement',
-    actionTitle: 'Retirement Age Calibrated',
-    summary: 'Adjusted target retirement age from 55 to 58.',
-    previousValue: 'Age 55',
-    newValue: 'Age 58',
-    rationale: 'Moving retirement age allows 3 additional years of compounding and lifts Monte Carlo probability from 82% to 94%.',
-    author: 'Adviser',
-    revertPatch: { retirementAge: 55 },
-  },
-  {
-    id: 'dec-2',
-    timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
-    dateFormatted: new Date(Date.now() - 86400000 * 2).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-    category: 'allocation',
-    actionTitle: 'Strategic Equity Target Trimmed',
-    summary: 'Rebalanced strategic equity allocation from 72% down to 65%.',
-    previousValue: '72% Equity',
-    newValue: '65% Equity',
-    rationale: 'Drawdown stress testing revealed -24% downside vulnerability. Trimming to 65% aligns with Balanced risk tolerance.',
-    author: 'Adviser',
-    revertManualTargets: { equity: 72, debt: 28, gold: 0, realestate: 0, liquid: 0, other: 0 },
-    revertPatch: {
-      sip: {
-        ...defaultClientInputs().sip,
-        equitySplit: 72,
-        debtSplit: 28,
-      },
-    },
-  },
-  {
-    id: 'dec-3',
-    timestamp: new Date(Date.now() - 86400000).toISOString(),
-    dateFormatted: new Date(Date.now() - 86400000).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-    category: 'sip',
-    actionTitle: 'Education Goal SIP Boost',
-    summary: 'Allocated ₹15,000/month incremental SIP toward Child Foreign Education.',
-    previousValue: '₹35,000/mo',
-    newValue: '₹50,000/mo',
-    rationale: 'Current goal funding probability was only 67%. Increasing monthly SIP ensures 90%+ probability of funding.',
-    author: 'Adviser',
-    revertPatch: {
-      sip: {
-        ...defaultClientInputs().sip,
-        amount: 35000,
-      },
-    },
-  },
-];
-
 const STAGE_CHECKLIST_MAP: Record<ClientMeetingStageId, string[]> = {
   1: ['m1-profile', 'm1-assets', 'm1-cashflow', 'm1-goals', 'm1-risk'],
   2: ['m2-networth', 'm2-readiness', 'm2-conflicts', 'm2-scenarios'],
@@ -164,12 +111,12 @@ const DEFAULT_MEETING_STATE: ClientMeetingState = {
   currentStage: 1,
   completedStages: [],
   stageChecklists: {
-    'm1-profile': true,
-    'm1-assets': true,
-    'm1-cashflow': true,
+    'm1-profile': false,
+    'm1-assets': false,
+    'm1-cashflow': false,
     'm1-goals': false,
     'm1-risk': false,
-    'm2-networth': true,
+    'm2-networth': false,
     'm2-readiness': false,
     'm2-conflicts': false,
     'm2-scenarios': false,
@@ -181,12 +128,7 @@ const DEFAULT_MEETING_STATE: ClientMeetingState = {
     'm4-ips': false,
     'm4-actions': false,
   },
-  notes: {
-    1: 'Client expressed preference for early retirement at 58 with comfortable lifestyle and funding child higher education abroad.',
-    2: 'Identified ₹1.4Cr projected corpus gap under conservative return scenario. Equity allocation is currently overweight by 8%.',
-    3: 'Recommended shifting ₹25,000/mo into diversified debt, rebalancing equity back to 60%, and locking in emergency reserves.',
-    4: 'Delivered customized Investment Policy Statement and 24-month execution trade roadmap.',
-  },
+  notes: {},
   lastUpdated: new Date().toISOString(),
 };
 
@@ -221,7 +163,7 @@ function loadDecisionHistory(): DecisionLogEntry[] {
   } catch {
     // ignore
   }
-  return DEFAULT_DECISIONS;
+  return [];
 }
 
 function loadMeetingState(): ClientMeetingState {
@@ -279,6 +221,7 @@ function generateId(prefix: string): string {
 
 export const CalculatorProvider = ({ children }: { children: React.ReactNode }) => {
   const [savedPlans, setSavedPlans] = useState<StoredPlan[]>([]);
+  const [, setActivePlanIdState] = useState<string | null>(() => getActivePlanId());
 
   const [inputs, setInputs] = useState<MasterPlanInputs>(() => loadClientData() ?? defaultClientInputs());
   const [assumptions, setAssumptions] = useState<AssumptionSet>(() => loadAssumptions());
@@ -470,6 +413,8 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     setManualTargets(null);
     resetClientData();
     localStorage.removeItem(RISK_ANSWERS_KEY);
+    setActivePlanIdState(null);
+    setActivePlanId(null);
     showToast('Plan inputs and risk profile reset to defaults.', 'info');
   }, [setRiskAnswers, setManualTargets, showToast]);
 
@@ -507,6 +452,8 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       if (plan.assumptions) setAssumptions(plan.assumptions as AssumptionSet);
       if (plan.riskAnswers) setRiskAnswers(plan.riskAnswers as RiskAnswers);
       if (plan.manualTargets !== undefined) setManualTargets(plan.manualTargets as Record<AssetCategory, number> | null);
+      setActivePlanIdState(plan.id);
+      setActivePlanId(plan.id);
       showToast(`Loaded plan: ${plan.name}`, 'success');
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to load plan', 'error');
@@ -516,6 +463,11 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
   const deleteSavedPlan = useCallback(async (id: string) => {
     try {
       await deletePlan(id);
+      // Clear the active-plan marker both in state and persistent storage
+      // when the deleted plan was the active one (functional check avoids a
+      // stale closure on the active plan id).
+      setActivePlanIdState((prev) => (prev === id ? null : prev));
+      setActivePlanId(getActivePlanId() === id ? null : getActivePlanId());
       showToast('Plan deleted', 'info');
       await refreshSavedPlans();
     } catch (err) {

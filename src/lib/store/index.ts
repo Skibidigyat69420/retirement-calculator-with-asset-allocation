@@ -2,7 +2,7 @@ import type { DataStore } from './types';
 import { localStorageStore } from './localStorageStore';
 
 export type { DataStore, StoredPlan } from './types';
-export { localStorageStore } from './localStorageStore';
+export { localStorageStore, getActivePlanId, setActivePlanId } from './localStorageStore';
 
 /**
  * Returns the client DataStore (localStorage backed).

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Compass,
   ArrowRight,
@@ -40,10 +40,14 @@ export const ReversePlanning = () => {
   const [targetAge, setTargetAge] = useState<number>(Math.max(inputs.currentAge + 1, inputs.retirementAge));
   const [appliedPathway, setAppliedPathway] = useState<string | null>(null);
 
-  // Synchronize target age when inputs.retirementAge updates from external components
-  useEffect(() => {
+  // Synchronize target age when inputs.retirementAge updates from external
+  // components — adjusted during render (derived-state pattern) instead of
+  // in an effect.
+  const [prevAges, setPrevAges] = useState({ retirement: inputs.retirementAge, current: inputs.currentAge });
+  if (prevAges.retirement !== inputs.retirementAge || prevAges.current !== inputs.currentAge) {
+    setPrevAges({ retirement: inputs.retirementAge, current: inputs.currentAge });
     setTargetAge((prev) => (prev === inputs.retirementAge ? prev : Math.max(inputs.currentAge + 1, inputs.retirementAge)));
-  }, [inputs.retirementAge, inputs.currentAge]);
+  }
 
   const handleTargetAgeChange = (newAge: number) => {
     const validAge = Math.max(inputs.currentAge + 1, Math.min(newAge, inputs.lifeExpectancy - 1));
@@ -69,7 +73,7 @@ export const ReversePlanning = () => {
       previousValue: `${formatCurrency(inputs.sip.amount)}/mo`,
       newValue: `${formatCurrency(result.requiredMonthlySip)}/mo`,
       rationale: `Solved monthly contribution required to achieve ${formatCurrencyCompact(targetCorpus)} by age ${targetAge} at ${inputs.sip.stepUp}% annual step-up.`,
-      author: 'Adviser',
+      author: 'Advisor',
       revertPatch: { sip: { ...inputs.sip } },
     });
     showToast(`Monthly SIP updated to ${formatCurrency(result.requiredMonthlySip)}!`, 'success');
@@ -86,7 +90,7 @@ export const ReversePlanning = () => {
       previousValue: `Age ${inputs.retirementAge}`,
       newValue: `Age ${result.feasibleRetirementAge}`,
       rationale: `Compounding at the current SIP rate of ${formatCurrency(inputs.sip.amount)}/mo reaches ${formatCurrencyCompact(targetCorpus)} at age ${result.feasibleRetirementAge}.`,
-      author: 'Adviser',
+      author: 'Advisor',
       revertPatch: { retirementAge: inputs.retirementAge },
     });
     showToast(`Retirement age shifted to ${result.feasibleRetirementAge}!`, 'success');
@@ -102,7 +106,7 @@ export const ReversePlanning = () => {
       previousValue: `${formatCurrency(inputs.swp.monthlyNeedToday)}/mo`,
       newValue: `${formatCurrency(result.maxSustainableMonthlySpend)}/mo`,
       rationale: `Calibrated decumulation to the maximum sustainable annuity yield over ${inputs.lifeExpectancy - targetAge} years from target corpus.`,
-      author: 'Adviser',
+      author: 'Advisor',
       revertPatch: { swp: { ...inputs.swp } },
     });
     showToast(`Retirement living budget updated to ${formatCurrency(result.maxSustainableMonthlySpend)}/mo!`, 'success');
@@ -120,7 +124,7 @@ export const ReversePlanning = () => {
       summary: `${pathway.primaryAction} to achieve ${formatCurrencyCompact(targetCorpus)} target corpus.`,
       newValue: `${formatCurrencyCompact(pathway.targetCorpus)} Target`,
       rationale: pathway.tradeOffDescription,
-      author: 'Adviser',
+      author: 'Advisor',
       revertPatch: {
         retirementAge: inputs.retirementAge,
         sip: { ...inputs.sip },

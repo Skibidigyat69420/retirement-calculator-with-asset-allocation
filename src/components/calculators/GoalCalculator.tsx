@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState } from 'react';
 import { Target, Coins, TrendingUp, CheckCircle2, Sparkles, RefreshCw, Trash2 } from 'lucide-react';
 import { NumberInput } from '../ui/NumberInput';
 import { MetricCard } from '../ui/MetricCard';
@@ -45,15 +45,32 @@ export const GoalCalculator = () => {
   );
   const [stepUp, setStepUp] = useState(5);
 
-  const lastLoadedGoalIdRef = useRef<string | null>(selectedGoalId);
+  // Tracks which goal the name/target/years/inflation fields were last loaded from
+  const [lastLoadedGoalId, setLastLoadedGoalId] = useState<string | null>(selectedGoalId);
 
-  // Synchronize inputs when selected goal changes or when a selected goal is deleted externally
-  useEffect(() => {
+  // Synchronize inputs when selected goal changes or when a selected goal is
+  // deleted externally — adjusted during render (derived-state pattern)
+  // instead of in an effect.
+  const [prevSnapshot, setPrevSnapshot] = useState({
+    goals: inputs.goals,
+    inflation: inputs.inflation,
+    selectedId: selectedGoalId,
+  });
+  if (
+    prevSnapshot.goals !== inputs.goals ||
+    prevSnapshot.inflation !== inputs.inflation ||
+    prevSnapshot.selectedId !== selectedGoalId
+  ) {
+    setPrevSnapshot({
+      goals: inputs.goals,
+      inflation: inputs.inflation,
+      selectedId: selectedGoalId,
+    });
     if (selectedGoalId !== 'scratchpad') {
       const found = inputs.goals.find((g) => g.id === selectedGoalId);
       if (found) {
-        if (lastLoadedGoalIdRef.current !== selectedGoalId) {
-          lastLoadedGoalIdRef.current = selectedGoalId;
+        if (lastLoadedGoalId !== selectedGoalId) {
+          setLastLoadedGoalId(selectedGoalId);
           setName(found.name);
           setTarget(found.targetAmount);
           setYears(found.yearsToGoal);
@@ -61,20 +78,20 @@ export const GoalCalculator = () => {
         }
       } else if (inputs.goals.length > 0) {
         const fallback = inputs.goals[0];
-        lastLoadedGoalIdRef.current = fallback.id;
+        setLastLoadedGoalId(fallback.id);
         setSelectedGoalId(fallback.id);
         setName(fallback.name);
         setTarget(fallback.targetAmount);
         setYears(fallback.yearsToGoal);
         setInflation(fallback.inflation ?? (inputs.inflation || 5));
       } else {
-        lastLoadedGoalIdRef.current = 'scratchpad';
+        setLastLoadedGoalId("scratchpad");
         setSelectedGoalId('scratchpad');
       }
     } else {
-      lastLoadedGoalIdRef.current = 'scratchpad';
+      setLastLoadedGoalId("scratchpad");
     }
-  }, [inputs.goals, inputs.inflation, selectedGoalId]);
+  }
 
   const result = useMemo(
     () => calculateGoal(target, years, returnRate, inflation, stepUp),
@@ -83,7 +100,7 @@ export const GoalCalculator = () => {
 
   const handleSelectGoal = (goalId: string) => {
     setSelectedGoalId(goalId);
-    lastLoadedGoalIdRef.current = goalId;
+    setLastLoadedGoalId(goalId);
     setConfirmDelete(false);
     if (goalId === 'scratchpad') {
       showToast('Switched to scratchpad mode.', 'info');
@@ -159,7 +176,7 @@ export const GoalCalculator = () => {
       inflation,
     });
     if (newId) {
-      lastLoadedGoalIdRef.current = newId;
+      setLastLoadedGoalId(newId);
       setSelectedGoalId(newId);
     }
     showToast(`Added goal "${goalName}" to Master Plan and connected.`, 'success');

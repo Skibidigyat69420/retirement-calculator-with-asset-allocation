@@ -5,7 +5,6 @@ import {
   ArrowRight,
   RotateCcw,
   Clock,
-  CheckCircle2,
   ChevronRight,
   GitCommit,
 } from 'lucide-react';
@@ -57,10 +56,8 @@ export const WhatChangedPanel = () => {
 
   // Recent decisions
   const recentDecisions = decisionHistory.slice(0, 3);
-  const latestTimestamp =
-    decisionHistory.length > 0 && decisionHistory[0].dateFormatted
-      ? decisionHistory[0].dateFormatted
-      : new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const hasDecisions = decisionHistory.length > 0;
+  const latestTimestamp = hasDecisions ? decisionHistory[0].dateFormatted : null;
 
   const handleRevert = (id: string, title: string) => {
     revertDecision(id);
@@ -98,7 +95,10 @@ export const WhatChangedPanel = () => {
         <div className="flex items-center gap-3 text-xs self-start sm:self-center">
           <div className="flex items-center gap-1.5 text-zinc-500 bg-zinc-50 px-2.5 py-1 rounded-lg border border-zinc-200">
             <Clock size={12} className="text-zinc-400" />
-            <span>Last Audit: <strong className="text-zinc-800 font-semibold">{latestTimestamp}</strong></span>
+            <span>
+              Last Audit:{' '}
+              <strong className="text-zinc-800 font-semibold">{latestTimestamp ?? 'Not logged yet'}</strong>
+            </span>
           </div>
 
           <Link
@@ -233,12 +233,17 @@ export const WhatChangedPanel = () => {
         </div>
 
         {recentDecisions.length === 0 ? (
-          <div className="p-3 rounded-lg bg-white border border-zinc-200 text-xs text-zinc-600 flex items-center justify-between">
+          <div className="p-4 rounded-lg bg-white border border-dashed border-zinc-300 text-xs text-zinc-600 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <CheckCircle2 size={14} className="text-emerald-600" />
-              <span>Baseline Plan Calibrated — No manual parameter overrides active.</span>
+              <GitCommit size={14} className="text-zinc-400 shrink-0" />
+              <span>No decisions logged yet — decisions you log will appear here.</span>
             </div>
-            <span className="text-[11px] text-zinc-400 font-mono">Initial Plan State</span>
+            <Link
+              to="/decision-history"
+              className="font-semibold text-zinc-800 hover:text-zinc-950 underline underline-offset-2 inline-flex items-center gap-1 shrink-0"
+            >
+              Log a decision <ArrowRight size={12} />
+            </Link>
           </div>
         ) : (
           <div className="space-y-2.5">

@@ -23,7 +23,7 @@ export const WorkflowFooter = ({ prev, next, flowHint }: WorkflowFooterProps) =>
           {prev ? (
             <Link
               to={prev.path}
-              className="inline-flex items-center gap-3 px-4 py-2.5 rounded-xl border border-zinc-200/80 bg-white/90 hover:bg-white text-zinc-700 hover:text-zinc-950 hover:border-zinc-300 hover:shadow-xs text-xs font-semibold transition-all duration-200 group w-full sm:w-auto"
+              className="inline-flex items-center gap-3 px-4 py-2.5 min-h-11 rounded-xl border border-zinc-200/80 bg-white/90 hover:bg-white text-zinc-700 hover:text-zinc-950 hover:border-zinc-300 hover:shadow-xs text-xs font-semibold transition-all duration-200 group w-full sm:w-auto"
             >
               <div className="w-7 h-7 rounded-lg bg-zinc-100/90 border border-zinc-200/60 flex items-center justify-center group-hover:bg-zinc-200/70 group-hover:border-zinc-300 transition-colors">
                 <ArrowLeft
@@ -58,7 +58,7 @@ export const WorkflowFooter = ({ prev, next, flowHint }: WorkflowFooterProps) =>
           {next ? (
             <Link
               to={next.path}
-              className="inline-flex items-center justify-end gap-3 px-5 py-2.5 rounded-xl bg-zinc-950 text-white hover:bg-zinc-900 hover:shadow-sm ring-1 ring-zinc-800 text-xs font-semibold transition-all duration-200 group w-full sm:w-auto"
+              className="inline-flex items-center justify-end gap-3 px-5 py-2.5 min-h-11 rounded-xl bg-zinc-950 text-white hover:bg-zinc-900 hover:shadow-sm ring-1 ring-zinc-800 text-xs font-semibold transition-all duration-200 group w-full sm:w-auto"
             >
               <div className="text-right">
                 <span className="block text-[9px] font-mono font-bold uppercase tracking-widest text-zinc-400">

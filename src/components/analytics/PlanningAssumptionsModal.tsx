@@ -54,7 +54,7 @@ export const PlanningAssumptionsModal = ({ isOpen, onClose }: PlanningAssumption
       summary: `Switched planning return assumption methodology to ${selectedMode}.`,
       newValue: selectedMode.toUpperCase(),
       rationale: `Aligned cashflows and wealth engine projections under unified ${selectedMode} model.`,
-      author: 'Adviser',
+      author: 'Advisor',
     });
     showToast(`Saved return assumption methodology: ${selectedMode}`, 'success');
     onClose();
@@ -101,7 +101,7 @@ export const PlanningAssumptionsModal = ({ isOpen, onClose }: PlanningAssumption
             },
             {
               id: 'override',
-              name: 'Adviser Manual Override',
+              name: 'Advisor Manual Override',
               desc: 'Specify customized expected annualized returns per asset category with audit tracking.',
               icon: Edit3,
             },

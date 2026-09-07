@@ -8,7 +8,7 @@ export const ClientMeetingPage = () => {
       <SectionTitle
         title="Client Meeting Workflow"
         subtitle="Guided 4-meeting advisory onboarding and review framework. Keep agendas on track, record qualitative client notes, and monitor planning completion."
-        badge="Adviser OS"
+        badge="Advisor OS"
       />
 
       <ClientMeetingWorkflow />

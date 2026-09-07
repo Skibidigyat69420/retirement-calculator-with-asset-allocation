@@ -21,8 +21,9 @@ const NavLink = ({ item, onClick, completed }: NavLinkProps) => {
     <Link
       to={item.path}
       onClick={onClick}
+      aria-current={active ? 'page' : undefined}
       className={cn(
-        'group flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150',
+        'group flex items-center gap-2.5 px-3 min-h-9 py-2 rounded-xl text-xs font-semibold transition-all duration-200 ease-out',
         active
           ? 'bg-zinc-950 text-white shadow-xs ring-1 ring-zinc-800/80'
           : 'text-zinc-600 hover:bg-zinc-100/90 hover:text-zinc-950',
@@ -226,7 +227,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
               <button
                 ref={closeButtonRef}
                 onClick={onClose}
-                className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
+                className="p-2 min-h-11 min-w-11 flex items-center justify-center rounded-xl text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
                 aria-label="Close navigation menu"
               >
                 <X size={18} />

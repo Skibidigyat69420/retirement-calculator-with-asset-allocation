@@ -50,21 +50,25 @@ interface DataState {
   snapshot: Snapshot | null;
   loading: boolean;
   error: string | null;
+  snapshotMissing: boolean;
 }
 
 type DataAction =
   | { type: 'load' }
   | { type: 'success'; payload: Snapshot }
+  | { type: 'missing' }
   | { type: 'error'; payload: string };
 
-const initialDataState: DataState = { snapshot: null, loading: false, error: null };
+const initialDataState: DataState = { snapshot: null, loading: false, error: null, snapshotMissing: false };
 
 function dataReducer(state: DataState, action: DataAction): DataState {
   switch (action.type) {
     case 'load':
-      return { ...state, loading: true, error: null };
+      return { ...state, loading: true, error: null, snapshotMissing: false };
     case 'success':
-      return { snapshot: action.payload, loading: false, error: null };
+      return { snapshot: action.payload, loading: false, error: null, snapshotMissing: false };
+    case 'missing':
+      return { snapshot: null, loading: false, error: null, snapshotMissing: true };
     case 'error':
       return { ...state, loading: false, error: action.payload };
     default:
@@ -74,13 +78,17 @@ function dataReducer(state: DataState, action: DataAction): DataState {
 
 export const AngelData = () => {
   const [state, dispatch] = useReducer(dataReducer, initialDataState);
-  const { snapshot, loading, error } = state;
+  const { snapshot, loading, error, snapshotMissing } = state;
 
   const loadSnapshot = useCallback(async () => {
     dispatch({ type: 'load' });
     try {
       const response = await fetch('/api/angel-one-snapshot');
       if (!response.ok) {
+        if (response.status === 404) {
+          dispatch({ type: 'missing' });
+          return;
+        }
         const err = await response.json().catch(() => ({}));
         throw new Error(err.error || `Snapshot request failed: ${response.status}`);
       }
@@ -180,6 +188,24 @@ export const AngelData = () => {
         <Alert variant="warning" icon={AlertCircle}>
           {error}
         </Alert>
+      )}
+
+      {snapshotMissing && !loading && (
+        <Card>
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-slate-100 rounded-lg shrink-0">
+              <Database size={18} className="text-slate-500" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">No Angel One snapshot available on this deployment</h3>
+              <p className="text-sm text-slate-600 mt-1">
+                Snapshots are captured by the local data pipeline and are not published with the app.
+                Use <span className="font-medium">Refresh Live</span> to pull profile, funds, holdings, positions,
+                orders, and trades directly from Angel One SmartAPI after connecting on the Angel Connect page.
+              </p>
+            </div>
+          </div>
+        </Card>
       )}
 
       {snapshot && (

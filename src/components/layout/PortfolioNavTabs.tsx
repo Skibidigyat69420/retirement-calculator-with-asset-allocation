@@ -41,8 +41,9 @@ export const PortfolioNavTabs = ({ currentPath }: PortfolioNavTabsProps) => {
               to={tab.path}
               role="tab"
               aria-selected={active}
+              aria-current={active ? 'page' : undefined}
               className={cn(
-                'flex items-center gap-2 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl whitespace-nowrap transition-all duration-150 group',
+                'flex items-center gap-2 px-3.5 sm:px-4 py-2 min-h-9 text-xs sm:text-sm font-semibold rounded-xl whitespace-nowrap transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 group',
                 active
                   ? 'bg-zinc-950 text-white shadow-2xs'
                   : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/70',

@@ -66,7 +66,7 @@ export const RecommendationsList = ({ recommendations }: RecommendationsListProp
       previousValue: rec.whyExplainer.current,
       newValue: rec.whyExplainer.target,
       rationale: `${rec.whyExplainer.driver}. Benefit: ${rec.whyExplainer.benefit}`,
-      author: 'Adviser',
+      author: 'Advisor',
       revertPatch: prevState,
     });
 

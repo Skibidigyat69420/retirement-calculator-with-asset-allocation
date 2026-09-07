@@ -122,7 +122,7 @@ export const ClientMeetingWorkflow = () => {
                 Guided Client Meeting Workflow
               </h3>
               <Badge variant="navy" className="text-[10px] uppercase font-mono">
-                Adviser Operating System
+                Advisor Operating System
               </Badge>
             </div>
             <p className="text-xs text-zinc-500 mt-1">
@@ -262,13 +262,13 @@ export const ClientMeetingWorkflow = () => {
           </div>
         </Card>
 
-        {/* Adviser Notes & Briefing */}
+        {/* Advisor Notes & Briefing */}
         <Card className="space-y-4 flex flex-col justify-between">
           <div className="space-y-3">
             <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
               <h4 className="font-sans font-bold text-zinc-900 text-sm flex items-center gap-2">
                 <FileText size={16} className="text-zinc-500" />
-                Adviser Meeting Notes
+                Advisor Meeting Notes
               </h4>
               <Badge variant="outline" className="text-[10px]">
                 {activeStage.name}
@@ -282,6 +282,12 @@ export const ClientMeetingWorkflow = () => {
               placeholder="Record client questions, qualitative constraints, behavioral observations, or specific adjustments discussed..."
               className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-800 focus:outline-none focus:border-zinc-900 resize-none font-sans leading-relaxed"
             />
+            {!meetingState.notes[activeStageId]?.trim() && (
+              <p className="text-[11px] text-zinc-400 flex items-center gap-1.5">
+                <FileText size={12} className="text-zinc-300 shrink-0" />
+                No notes recorded for this stage yet — notes you save will appear here and in the dossier.
+              </p>
+            )}
           </div>
 
           <div className="space-y-3 pt-2">

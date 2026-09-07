@@ -48,7 +48,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
               onClick={onMenuClick}
               aria-label="Toggle menu"
               aria-expanded={mobileOpen}
-              className="p-2 -ml-2 text-zinc-600 hover:text-zinc-950 rounded-xl hover:bg-zinc-100 transition-colors shrink-0 focus:outline-none focus:ring-2 focus:ring-zinc-400"
+              className="p-2 -ml-2 min-h-11 min-w-11 flex items-center justify-center text-zinc-600 hover:text-zinc-950 rounded-xl hover:bg-zinc-100 transition-colors shrink-0"
             >
               <Menu size={20} />
             </button>
@@ -80,7 +80,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
               to="/master-plan"
               title="Click to edit client profile in Master Plan"
               aria-label={`Client profile: ${inputs.client?.name || 'Client Plan'}`}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/90 hover:bg-white border border-zinc-200/80 hover:border-zinc-300 text-xs font-semibold text-zinc-700 hover:text-zinc-950 transition-all shadow-2xs focus:outline-none focus:ring-2 focus:ring-zinc-400 group"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 min-h-9 rounded-xl bg-white/90 hover:bg-white border border-zinc-200/80 hover:border-zinc-300 text-xs font-semibold text-zinc-700 hover:text-zinc-950 transition-all shadow-2xs focus:outline-none focus:ring-2 focus:ring-zinc-400 group"
             >
               <User size={13} className="text-zinc-500 shrink-0" />
               <span className="hidden sm:inline max-w-[120px] sm:max-w-[150px] truncate">
@@ -93,7 +93,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
               to="/risk"
               title={`Risk Score: ${riskScore}/100. Click to view Questionnaire`}
               aria-label={`Risk profile: ${riskProfile.label} (${riskScore})`}
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/90 hover:bg-white border border-zinc-200/80 hover:border-zinc-300 text-xs font-semibold text-zinc-700 hover:text-zinc-950 transition-all shadow-2xs focus:outline-none focus:ring-2 focus:ring-zinc-400"
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 min-h-9 rounded-xl bg-white/90 hover:bg-white border border-zinc-200/80 hover:border-zinc-300 text-xs font-semibold text-zinc-700 hover:text-zinc-950 transition-all shadow-2xs focus:outline-none focus:ring-2 focus:ring-zinc-400"
             >
               <ShieldCheck size={13} className="text-zinc-500 shrink-0" />
               <span className="capitalize">{riskProfile.label}</span>
@@ -107,7 +107,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
               to="/retirement"
               title={wealthResult.sustainable ? 'Plan sustainable through life expectancy' : `Plan depletes at age ${wealthResult.depletionAge}`}
               aria-label={wealthResult.sustainable ? 'Plan sustainable through life expectancy' : `Plan depletes at age ${wealthResult.depletionAge}`}
-              className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all shadow-2xs focus:outline-none focus:ring-2 focus:ring-zinc-400 ${
+              className={`hidden sm:flex items-center gap-2 px-3 py-1.5 min-h-9 rounded-xl border text-xs font-semibold transition-all shadow-2xs focus:outline-none focus:ring-2 focus:ring-zinc-400 ${
                 wealthResult.sustainable
                   ? 'bg-emerald-50/90 text-emerald-800 border-emerald-200/80 hover:bg-emerald-100/80 hover:border-emerald-300'
                   : 'bg-amber-50/90 text-amber-800 border-amber-200/80 hover:bg-amber-100/80 hover:border-amber-300'
@@ -136,7 +136,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
             {/* Export Complete PDF Button */}
             <Link
               to="/dossier?autoPrint=true"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all shadow-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30 shrink-0"
+              className="flex items-center gap-1.5 px-3 py-1.5 min-h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all shadow-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30 shrink-0"
               title="Export complete snapshot of all pages as a PDF"
               aria-label="Export complete snapshot of all pages as a PDF"
             >
@@ -147,7 +147,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
             {/* Quick Reset Plan Button */}
             <button
               onClick={() => setShowResetConfirm(true)}
-              className="p-2 text-zinc-400 hover:text-rose-600 rounded-xl hover:bg-rose-50/80 hover:border-rose-200 border border-transparent transition-all focus:outline-none focus:ring-2 focus:ring-rose-300"
+              className="p-2 min-h-11 min-w-11 flex items-center justify-center text-zinc-400 hover:text-rose-600 rounded-xl hover:bg-rose-50/80 hover:border-rose-200 border border-transparent transition-all"
               title="Reset plan inputs to defaults"
               aria-label="Reset plan inputs to defaults"
             >

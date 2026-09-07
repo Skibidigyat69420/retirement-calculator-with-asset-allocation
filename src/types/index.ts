@@ -383,7 +383,7 @@ export interface DecisionLogEntry {
   previousValue?: string;
   newValue: string;
   rationale: string;
-  author: 'Adviser' | 'Client' | 'Automated System';
+  author: 'Advisor' | 'Client' | 'Automated System';
   revertPatch?: Partial<MasterPlanInputs>;
   revertManualTargets?: Record<AssetCategory, number> | null;
   inputsSnapshot?: MasterPlanInputs;
@@ -406,7 +406,7 @@ export interface ClientMeetingState {
   currentStage: ClientMeetingStageId;
   completedStages: ClientMeetingStageId[];
   stageChecklists: Record<string, boolean>; // checklistId -> boolean
-  notes: Record<ClientMeetingStageId, string>;
+  notes: Partial<Record<ClientMeetingStageId, string>>;
   lastUpdated: string;
 }
 

@@ -82,7 +82,7 @@ export const AdvancedPortfolioLab = () => {
       summary: `Strategic ${activeModel.toUpperCase()} (${strategicWeights.equity}% Eq) with Tactical Overlays (${finalWeights.equity}% Final Eq).`,
       newValue: `${finalWeights.equity}% Eq / ${finalWeights.debt}% Debt / ${finalWeights.gold}% Gold`,
       rationale: `Applied Black-Litterman equilibrium with ${blConfidence}% confidence view and valuation/momentum tactical tilts.`,
-      author: 'Adviser',
+      author: 'Advisor',
     });
     showToast('Applied institutional allocation to Strategic Targets!', 'success');
   };
@@ -128,7 +128,7 @@ export const AdvancedPortfolioLab = () => {
               {
                 id: 'blackLitterman',
                 title: 'Black-Litterman Model',
-                desc: 'Combines neutral market equilibrium prior with adviser subjective views & confidence matrix.',
+                desc: 'Combines neutral market equilibrium prior with advisor subjective views & confidence matrix.',
                 tag: 'Recommended',
               },
               {

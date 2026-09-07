@@ -15,7 +15,19 @@ const WS_URL = 'wss://tns.angelone.in/smartapi/stream/';
 const HEARTBEAT_INTERVAL_MS = 25000;
 const RECONNECT_DELAY_MS = 5000;
 
-export function createFeedManager(_jwtToken: string, _apiKey: string, _clientCode: string): FeedConnection {
+/**
+ * SmartAPI websocket credentials. All four values come from the login
+ * response / persisted session (see src/lib/smartapi.ts): the JWT auth
+ * token, the API key, the client code, and the feed token.
+ */
+export interface FeedAuth {
+  jwtToken: string;
+  apiKey: string;
+  clientCode: string;
+  feedToken: string;
+}
+
+export function createFeedManager(auth: FeedAuth): FeedConnection {
   let ws: WebSocket | null = null;
   let status: FeedStatus = 'idle';
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
@@ -53,26 +65,28 @@ export function createFeedManager(_jwtToken: string, _apiKey: string, _clientCod
     }
   };
 
+  const buildWsUrl = () => {
+    const query = new URLSearchParams({
+      clientCode: auth.clientCode,
+      feedToken: auth.feedToken,
+      apiKey: auth.apiKey,
+      jwtToken: auth.jwtToken,
+    });
+    return `${WS_URL}?${query.toString()}`;
+  };
+
   const connect = () => {
     if (ws?.readyState === WebSocket.OPEN || ws?.readyState === WebSocket.CONNECTING) return;
 
     setStatus('connecting');
     try {
-      ws = new WebSocket(WS_URL);
+      ws = new WebSocket(buildWsUrl());
 
       ws.onopen = () => {
         setStatus('connected');
-        // Authenticate
-        ws?.send(
-          JSON.stringify({
-            action: 1,
-            correlationID: `auth_${Date.now()}`,
-            params: {
-              mode: 2,
-              tokenList: [{ exchangeType: 1, tokens: subscribedTokens }],
-            },
-          }),
-        );
+        // Authenticate + subscribe in one message; SmartAPI v3 accepts the
+        // subscription params on open when connection creds are in the URL.
+        ws?.send(JSON.stringify(buildConnectionMessage()));
 
         heartbeatTimer = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS);
       };

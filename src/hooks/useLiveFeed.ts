@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createFeedManager, type FeedStatus } from '../lib/feed';
 import type { LiveTick } from '../types';
-import { loadSession } from '../lib/smartapi';
+import { loadSession, buildDefaultCredentials } from '../lib/smartapi';
 
 interface UseLiveFeedOptions {
   autoConnect?: boolean;
@@ -27,9 +27,15 @@ export function useLiveFeed(options: UseLiveFeedOptions = {}): UseLiveFeedReturn
 
   useEffect(() => {
     const session = loadSession();
-    if (!session) return;
+    if (!session?.feedToken) return;
 
-    const manager = createFeedManager(session.jwtToken, session.jwtToken, session.userProfile?.clientcode || '');
+    const creds = buildDefaultCredentials();
+    const manager = createFeedManager({
+      jwtToken: session.jwtToken,
+      apiKey: creds.apiKey,
+      clientCode: session.userProfile?.clientcode || creds.clientCode,
+      feedToken: session.feedToken,
+    });
     managerRef.current = manager;
 
     const unsubStatus = manager.onStatus((s) => setStatus(s));
