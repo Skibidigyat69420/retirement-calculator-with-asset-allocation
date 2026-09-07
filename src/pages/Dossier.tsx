@@ -25,17 +25,14 @@ import { Badge } from '../components/ui/Badge';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
 import { CRISIS_PRESETS, runStressTest } from '../lib/stressTest';
-import { runMVO, evaluateCustomWeights, type Portfolio } from '../lib/mvo';
 import { computePlanHealthScore } from '../lib/planHealthScore';
 import { generatePlanRecommendations } from '../lib/recommendationEngine';
 import { getDimensionBreakdown, analyzeRiskGap, detectBehavioralBiases, type RiskDimension } from '../lib/riskQuestionnaire';
-import { getAssumptionsForMode } from '../lib/assumptions';
 import { StressMatrixTable } from '../components/reports/StressMatrixTable';
 import { GoalDistributionBars } from '../components/reports/GoalDistributionBars';
 import { PlanHealthPanel } from '../components/reports/PlanHealthPanel';
 import { NetWorthGrowthChart } from '../components/reports/NetWorthGrowthChart';
 import { SWPSurvivalChart } from '../components/reports/SWPSurvivalChart';
-import { EfficientFrontierChart } from '../components/reports/EfficientFrontierChart';
 import { AllocationComparisonBars } from '../components/reports/AllocationComparisonBars';
 import { StressImpactBars } from '../components/reports/StressImpactBars';
 import { PlanHealthRadial } from '../components/reports/PlanHealthRadial';
@@ -81,8 +78,6 @@ export const Dossier = () => {
     decisionHistory,
     meetingState,
     assumptions,
-    assumptionMode,
-    customCategoryReturns,
     activeAssumptionSourceLabel,
   } = useCalculator();
 
@@ -98,46 +93,6 @@ export const Dossier = () => {
   }, [autoPrint]);
 
   const targets = manualTargets || riskProfile.targets;
-
-  // Live assumption set — identical to what the wealth engine projects with.
-  const activeAssumptions = useMemo(
-    () => getAssumptionsForMode(assumptionMode, assumptions, customCategoryReturns),
-    [assumptionMode, assumptions, customCategoryReturns],
-  );
-
-  // Section 5: live MVO against current assumptions / covariance.
-  const mvoResult = useMemo(() => {
-    const means = CATEGORIES.map((c) => activeAssumptions.categories[c].mean);
-    const covariance = CATEGORIES.map((i) => CATEGORIES.map((j) => activeAssumptions.covariance[i][j]));
-    const equityMask = CATEGORIES.map((c) => c === 'equity' || c === 'other');
-    return runMVO(
-      CATEGORIES.map((c) => ASSET_LABELS[c]),
-      means,
-      covariance,
-      {
-        samples: 12000,
-        riskFreeRate: riskProfile.riskFreeRate / 100,
-        constraints: {
-          minWeight: CATEGORIES.map(() => 0),
-          maxWeight: CATEGORIES.map(() => 1),
-          maxEquity: riskProfile.maxEquity / 100,
-          equityMask,
-        },
-        seed: 'dossier-mvo',
-      },
-    );
-  }, [activeAssumptions, riskProfile]);
-
-  const targetPortfolio: Portfolio = useMemo(() => {
-    const means = CATEGORIES.map((c) => activeAssumptions.categories[c].mean);
-    const covariance = CATEGORIES.map((i) => CATEGORIES.map((j) => activeAssumptions.covariance[i][j]));
-    return evaluateCustomWeights(
-      CATEGORIES.map((c) => targets[c] / 100),
-      means,
-      covariance,
-      riskProfile.riskFreeRate / 100,
-    );
-  }, [activeAssumptions, targets, riskProfile.riskFreeRate]);
 
   // Section 5: stress matrix across all four crisis presets.
   const stressResults = useMemo(() => CRISIS_PRESETS.map((p) => runStressTest(inputs, p)), [inputs]);
@@ -931,15 +886,15 @@ export const Dossier = () => {
         </section>
 
         {/* ========================================================= */}
-        {/* SECTION 5: QUANT LAB & MVO OPTIMIZATION                   */}
+        {/* SECTION 5: QUANT LAB & TAIL-RISK ANALYSIS                  */}
         {/* ========================================================= */}
         <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
           <div className={sectionHeaderClass}>
             <div className="flex items-center gap-2.5">
               <Award size={20} className="text-zinc-700" />
-              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 5: Quant Lab & Mean-Variance Optimization</h2>
+              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 5: Quant Lab & Tail-Risk Analysis</h2>
             </div>
-            <span className="text-xs font-medium text-zinc-500">Markowitz Modern Portfolio Theory</span>
+            <span className="text-xs font-medium text-zinc-500">Historical Crisis Simulations</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 gap-4 mb-8 avoid-break">
@@ -949,135 +904,15 @@ export const Dossier = () => {
               <p className="text-xs text-zinc-600 mt-0.5">Calibrated {assumptions.fetchedAt ? new Date(assumptions.fetchedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'from default priors'}</p>
             </div>
             <div className="p-4 rounded-xl border border-zinc-200 bg-white">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">MVO Risk-Free Rate</span>
-              <p className="text-lg font-sans font-semibold text-zinc-900 mt-1">{formatPercent(riskProfile.riskFreeRate)} p.a.</p>
-              <p className="text-xs text-zinc-600 mt-0.5">{riskProfile.label} profile parameter</p>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Simulation Method</span>
+              <p className="text-lg font-sans font-semibold text-zinc-900 mt-1">Historical Replay</p>
+              <p className="text-xs text-zinc-600 mt-0.5">Crisis drawdowns applied to current holdings</p>
             </div>
             <div className="p-4 rounded-xl border border-zinc-200 bg-white">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Optimization Objective</span>
-              <p className="text-lg font-sans font-semibold text-zinc-900 mt-1">Max Sharpe · Long-Only</p>
-              <p className="text-xs text-zinc-600 mt-0.5">Equity capped at {formatPercent(riskProfile.maxEquity)} · 12,000 sampled portfolios</p>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Scenarios Modeled</span>
+              <p className="text-lg font-sans font-semibold text-zinc-900 mt-1">{CRISIS_PRESETS.length} Crises</p>
+              <p className="text-xs text-zinc-600 mt-0.5">{CRISIS_PRESETS.map((p) => p.name).join(' · ')}</p>
             </div>
-          </div>
-
-          {/* Frontier portfolio summary stats */}
-          <div className="space-y-3 mb-8 avoid-break">
-            <h3 className="text-sm font-semibold text-zinc-900">Efficient Frontier — Key Portfolio Statistics</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
-                <thead className={tableHeadClass}>
-                  <tr>
-                    <th className="p-3">Portfolio</th>
-                    <th className="p-3 text-right">Expected Return</th>
-                    <th className="p-3 text-right">Volatility</th>
-                    <th className="p-3 text-right">Sharpe Ratio</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {[
-                    { label: 'Maximum Sharpe (Tangency)', p: mvoResult.maxSharpe },
-                    { label: 'Minimum Variance', p: mvoResult.minVariance },
-                    { label: 'Risk Parity', p: mvoResult.riskParity },
-                    { label: 'Equal Weight', p: mvoResult.equalWeight },
-                    { label: 'Current Strategic Target', p: targetPortfolio },
-                  ].map((row) => (
-                    <tr key={row.label}>
-                      <td className="p-3 font-medium text-zinc-900">{row.label}</td>
-                      <td className="p-3 text-right font-mono text-zinc-800">{formatPercent(row.p.expectedReturn * 100)}</td>
-                      <td className="p-3 text-right font-mono text-zinc-800">{formatPercent(row.p.volatility * 100)}</td>
-                      <td className="p-3 text-right font-mono font-semibold text-zinc-900">{row.p.sharpe.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Efficient frontier scatter: sampled frontier + annotated key portfolios */}
-          <div className="p-5 rounded-xl border border-zinc-200 bg-white avoid-break space-y-3 mb-8">
-            <h3 className="text-sm font-semibold text-zinc-900">Efficient Frontier — Risk / Return Map</h3>
-            <EfficientFrontierChart
-              frontier={mvoResult.frontier}
-              keyPortfolios={[
-                { label: 'Maximum Sharpe', portfolio: mvoResult.maxSharpe, color: 'var(--color-positive)' },
-                { label: 'Minimum Variance', portfolio: mvoResult.minVariance, color: 'var(--color-info)' },
-                { label: 'Current Target', portfolio: targetPortfolio, color: 'var(--color-warning)' },
-              ]}
-              ariaLabel="Efficient frontier scatter chart of sampled portfolios by volatility and expected return, with maximum Sharpe, minimum variance and current target portfolios annotated"
-              summary={`Maximum Sharpe portfolio: ${formatPercent(mvoResult.maxSharpe.expectedReturn * 100)} return at ${formatPercent(mvoResult.maxSharpe.volatility * 100)} volatility (Sharpe ${mvoResult.maxSharpe.sharpe.toFixed(2)}). Minimum variance: ${formatPercent(mvoResult.minVariance.expectedReturn * 100)} return at ${formatPercent(mvoResult.minVariance.volatility * 100)} volatility. Current strategic target: ${formatPercent(targetPortfolio.expectedReturn * 100)} return at ${formatPercent(targetPortfolio.volatility * 100)} volatility (Sharpe ${targetPortfolio.sharpe.toFixed(2)}).`}
-            />
-            <div className="flex flex-wrap gap-x-5 gap-y-1.5">
-              {[
-                { label: 'Maximum Sharpe', p: mvoResult.maxSharpe, color: 'var(--color-positive)' },
-                { label: 'Minimum Variance', p: mvoResult.minVariance, color: 'var(--color-info)' },
-                { label: 'Current Target', p: targetPortfolio, color: 'var(--color-warning)' },
-              ].map((k) => (
-                <span key={k.label} className="inline-flex items-center gap-1.5 text-[11px] text-ink">
-                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: k.color }} />
-                  <span className="font-medium">{k.label}</span>
-                  <span className="font-mono text-muted">
-                    {formatPercent(k.p.expectedReturn * 100)} ret · {formatPercent(k.p.volatility * 100)} vol · S {k.p.sharpe.toFixed(2)}
-                  </span>
-                </span>
-              ))}
-            </div>
-            <p className="text-[11px] text-muted leading-snug">
-              Insight: the strategic target sits{' '}
-              {targetPortfolio.sharpe >= mvoResult.maxSharpe.sharpe - 0.05
-                ? 'essentially on the efficient frontier — the recommended mandate captures nearly all available reward per unit of risk.'
-                : `${(mvoResult.maxSharpe.sharpe - targetPortfolio.sharpe).toFixed(2)} Sharpe points inside the tangency portfolio — the gap is the deliberate cost of the mandate's risk cap and liquidity buffers.`}
-            </p>
-          </div>
-
-          {/* Optimal weights */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 print:grid-cols-2 gap-6 mb-8 avoid-break">
-            <div className="p-5 rounded-xl border border-zinc-200 bg-white space-y-3">
-              <h3 className="text-sm font-semibold text-zinc-900">Maximum-Sharpe Weights</h3>
-              <div className="space-y-1.5 text-xs">
-                {CATEGORIES.map((cat, i) => (
-                  <div key={cat} className="flex items-center gap-2">
-                    <span className="w-28 shrink-0 text-zinc-600 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ASSET_COLORS[cat] }} />
-                      {ASSET_LABELS[cat]}
-                    </span>
-                    <div className="flex-1 h-2.5 rounded-full bg-zinc-100 overflow-hidden">
-                      <div className="h-full bg-zinc-800 rounded-full" style={{ width: `${Math.min(100, mvoResult.maxSharpe.weights[i] * 100)}%` }} />
-                    </div>
-                    <span className="w-12 text-right font-mono font-semibold text-zinc-900">{formatPercent(mvoResult.maxSharpe.weights[i] * 100)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="p-5 rounded-xl border border-zinc-200 bg-white space-y-3">
-              <h3 className="text-sm font-semibold text-zinc-900">Minimum-Variance Weights</h3>
-              <div className="space-y-1.5 text-xs">
-                {CATEGORIES.map((cat, i) => (
-                  <div key={cat} className="flex items-center gap-2">
-                    <span className="w-28 shrink-0 text-zinc-600 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ASSET_COLORS[cat] }} />
-                      {ASSET_LABELS[cat]}
-                    </span>
-                    <div className="flex-1 h-2.5 rounded-full bg-zinc-100 overflow-hidden">
-                      <div className="h-full bg-zinc-500 rounded-full" style={{ width: `${Math.min(100, mvoResult.minVariance.weights[i] * 100)}%` }} />
-                    </div>
-                    <span className="w-12 text-right font-mono font-semibold text-zinc-900">{formatPercent(mvoResult.minVariance.weights[i] * 100)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* CML note */}
-          <div className="p-6 rounded-xl border border-zinc-200 bg-zinc-50 avoid-break space-y-2 mb-6">
-            <h3 className="text-sm font-semibold text-zinc-900">Capital Market Line Interpretation</h3>
-            <p className="text-xs text-zinc-600 leading-relaxed">
-              Under the {activeAssumptionSourceLabel.toLowerCase()} assumption set, the tangency (maximum-Sharpe) portfolio delivers{' '}
-              {formatPercent(mvoResult.maxSharpe.expectedReturn * 100)} p.a. at {formatPercent(mvoResult.maxSharpe.volatility * 100)} volatility,
-              a reward-to-variability ratio of {mvoResult.maxSharpe.sharpe.toFixed(2)} against the {formatPercent(riskProfile.riskFreeRate)} risk-free rate.
-              Levered or mixed allocations along the Capital Market Line earn the risk-free rate plus {mvoResult.maxSharpe.sharpe.toFixed(2)} units of
-              excess return per unit of incremental volatility. For the {riskProfile.label} mandate, the strategic target is judged against this frontier:
-              the target portfolio scores a Sharpe of {targetPortfolio.sharpe.toFixed(2)} with {formatPercent(targetPortfolio.volatility * 100)} expected volatility.
-            </p>
           </div>
 
           {/* Tail-Risk Stress Matrix: all four crisis presets */}
