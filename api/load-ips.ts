@@ -1,17 +1,17 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
-import { jsonResponse, methodNotAllowed } from './lib/shared.js';
+import { sendJson, methodNotAllowed, queryParam } from './lib/shared.js';
 
 /**
  * GET /api/load-ips?filename=<name>.md — return { content } for a markdown
  * policy document in the ips/ directory. Filename is strictly sanitized:
  * basename only, .md extension required, path traversal rejected with 400.
  */
-export default async function handler(request: Request) {
-  if (request.method !== 'GET') return methodNotAllowed(request.method);
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'GET') return methodNotAllowed(res, req.method);
 
-  const url = new URL(request.url);
-  const filename = url.searchParams.get('filename') || '';
+  const filename = queryParam(req, 'filename') || '';
 
   const name = basename(filename);
   const isSafe =
@@ -23,13 +23,13 @@ export default async function handler(request: Request) {
     name !== '.md';
 
   if (!isSafe) {
-    return jsonResponse({ error: 'Invalid filename. Expected a bare .md file name.' }, { status: 400 });
+    return sendJson(res, { error: 'Invalid filename. Expected a bare .md file name.' }, 400);
   }
 
   try {
     const content = await readFile(join(process.cwd(), 'ips', name), 'utf8');
-    return jsonResponse({ content });
+    return sendJson(res, { content });
   } catch {
-    return jsonResponse({ error: `Document not found: ${name}` }, { status: 404 });
+    return sendJson(res, { error: `Document not found: ${name}` }, 404);
   }
 }

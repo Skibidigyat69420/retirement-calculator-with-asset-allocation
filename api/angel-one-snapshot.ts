@@ -1,6 +1,7 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { jsonResponse, methodNotAllowed } from './lib/shared.js';
+import { sendJson, methodNotAllowed } from './lib/shared.js';
 
 /**
  * GET /api/angel-one-snapshot — return the newest local Angel One snapshot.
@@ -22,8 +23,8 @@ interface SnapshotIndex {
   files: Record<string, string>;
 }
 
-export default async function handler(request: Request) {
-  if (request.method !== 'GET') return methodNotAllowed(request.method);
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'GET') return methodNotAllowed(res, req.method);
 
   const root = join(process.cwd(), 'data', 'angel_one');
 
@@ -32,13 +33,13 @@ export default async function handler(request: Request) {
     const entries = await readdir(root, { withFileTypes: true });
     dirs = entries.filter((e) => e.isDirectory()).map((e) => e.name);
   } catch {
-    return jsonResponse({ error: 'No Angel One snapshot available' }, { status: 404 });
+    return sendJson(res, { error: 'No Angel One snapshot available' }, 404);
   }
 
   // Directory names are timestamped YYYYMMDD_HHMMSS, so lexical order is chronological.
   dirs.sort();
   if (dirs.length === 0) {
-    return jsonResponse({ error: 'No Angel One snapshot available' }, { status: 404 });
+    return sendJson(res, { error: 'No Angel One snapshot available' }, 404);
   }
 
   try {
@@ -56,8 +57,8 @@ export default async function handler(request: Request) {
       }
     }
 
-    return jsonResponse({ timestamp: index.timestamp, client_code: index.client_code, files });
+    return sendJson(res, { timestamp: index.timestamp, client_code: index.client_code, files });
   } catch {
-    return jsonResponse({ error: 'No Angel One snapshot available' }, { status: 404 });
+    return sendJson(res, { error: 'No Angel One snapshot available' }, 404);
   }
 }

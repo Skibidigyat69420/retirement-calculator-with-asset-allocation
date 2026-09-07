@@ -1,6 +1,7 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { jsonResponse, methodNotAllowed } from './lib/shared.js';
+import { sendJson, methodNotAllowed, queryParam } from './lib/shared.js';
 
 /**
  * GET /api/market-data[?symbols=A,B&from=YYYY-MM-DD&to=YYYY-MM-DD]
@@ -117,8 +118,8 @@ function computeCorrelationMatrix(cov: number[][]): number[][] {
 
 const CACHE_HEADERS = { 'Cache-Control': 'public, max-age=3600' };
 
-export default async function handler(request: Request) {
-  if (request.method !== 'GET') return methodNotAllowed(request.method);
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'GET') return methodNotAllowed(res, req.method);
 
   const filePath = join(process.cwd(), 'public', 'data', 'market-data.json');
   let raw: string;
@@ -128,23 +129,27 @@ export default async function handler(request: Request) {
     // On Vercel the bundle may not be in the function's filesystem even with
     // includeFiles; fall back to fetching this deployment's own static copy.
     try {
-      const origin = new URL(request.url).origin;
-      const upstream = await fetch(`${origin}/data/market-data.json`);
+      const proto = (req.headers['x-forwarded-proto'] as string) || 'https';
+      const host = req.headers.host || 'localhost';
+      const upstream = await fetch(`${proto}://${host}/data/market-data.json`);
       if (!upstream.ok) throw new Error(`static bundle HTTP ${upstream.status}`);
       raw = await upstream.text();
     } catch {
-      return jsonResponse({ error: 'Market data bundle not found at public/data/market-data.json' }, { status: 404, headers: CACHE_HEADERS });
+      return sendJson(res, { error: 'Market data bundle not found at public/data/market-data.json' }, 404, CACHE_HEADERS);
     }
   }
 
-  const url = new URL(request.url);
-  const symbolsParam = url.searchParams.get('symbols');
-  const from = url.searchParams.get('from');
-  const to = url.searchParams.get('to');
+  const symbolsParam = queryParam(req, 'symbols');
+  const from = queryParam(req, 'from');
+  const to = queryParam(req, 'to');
 
   // Fast path: no filtering requested — serve the bundle verbatim.
   if (!symbolsParam && !from && !to) {
-    return new Response(raw, { status: 200, headers: { 'Content-Type': 'application/json', ...CACHE_HEADERS } });
+    res.status(200);
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', CACHE_HEADERS['Cache-Control']);
+    res.send(raw);
+    return;
   }
 
   const bundle = JSON.parse(raw) as MarketDataBundle;
@@ -158,7 +163,7 @@ export default async function handler(request: Request) {
     const known = new Set(prices.map((p) => p.symbol.toUpperCase()));
     const unknown = wanted.filter((s) => !known.has(s));
     if (unknown.length > 0) {
-      return jsonResponse({ error: `Unknown symbols: ${unknown.join(', ')}` }, { status: 400, headers: CACHE_HEADERS });
+      return sendJson(res, { error: `Unknown symbols: ${unknown.join(', ')}` }, 400, CACHE_HEADERS);
     }
     const bySymbol = new Map(prices.map((p) => [p.symbol.toUpperCase(), p]));
     prices = wanted.map((s) => bySymbol.get(s)!);
@@ -178,7 +183,7 @@ export default async function handler(request: Request) {
     });
     const empty = prices.find((p) => p.dates.length < 2);
     if (empty) {
-      return jsonResponse({ error: `Date range yields insufficient data for ${empty.symbol}` }, { status: 400, headers: CACHE_HEADERS });
+      return sendJson(res, { error: `Date range yields insufficient data for ${empty.symbol}` }, 400, CACHE_HEADERS);
     }
   }
 
@@ -192,7 +197,8 @@ export default async function handler(request: Request) {
   const instrumentSet = new Set(symbols.map((s) => s.toUpperCase()));
   const instruments = bundle.instruments.filter((i) => instrumentSet.has(String(i.symbol).toUpperCase()));
 
-  return jsonResponse(
+  sendJson(
+    res,
     {
       symbols,
       instruments,
@@ -207,6 +213,7 @@ export default async function handler(request: Request) {
       fetchedAt: bundle.fetchedAt,
       source: bundle.source,
     },
-    { headers: CACHE_HEADERS },
+    200,
+    CACHE_HEADERS,
   );
 }

@@ -1,18 +1,28 @@
 /**
  * Shared helpers for the read-only Vercel serverless API.
  *
- * Underscore-prefixed files in api/ are ignored by Vercel as routes,
- * so this module is only bundled into the functions that import it.
+ * Uses the classic (req, res) handler signature throughout — empirically
+ * verified to work on this deployment, unlike the Web Request/Response
+ * handler form, which hangs/crashes at runtime.
  */
 
-export function jsonResponse(body: unknown, init?: { status?: number; headers?: Record<string, string> }) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(init?.headers || {}) };
-  return new Response(JSON.stringify(body), { status: init?.status ?? 200, headers });
+import type { VercelResponse } from '@vercel/node';
+
+export function sendJson(res: VercelResponse, body: unknown, status = 200, headers: Record<string, string> = {}) {
+  res.status(status);
+  res.setHeader('Content-Type', 'application/json');
+  for (const [key, value] of Object.entries(headers)) res.setHeader(key, value);
+  res.send(JSON.stringify(body));
 }
 
-export function methodNotAllowed(method: string | undefined) {
-  return jsonResponse({ error: `Method ${method || 'UNKNOWN'} not allowed. This endpoint is read-only (GET only).` }, {
-    status: 405,
-    headers: { Allow: 'GET' },
+export function methodNotAllowed(res: VercelResponse, method: string | undefined) {
+  sendJson(res, { error: `Method ${method || 'UNKNOWN'} not allowed. This endpoint is read-only (GET only).` }, 405, {
+    Allow: 'GET',
   });
+}
+
+/** Read a query param that may arrive as string | string[] | undefined. */
+export function queryParam(req: { query: Record<string, unknown> }, key: string): string | undefined {
+  const value = req.query[key];
+  return typeof value === 'string' ? value : undefined;
 }
