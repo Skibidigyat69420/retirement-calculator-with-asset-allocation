@@ -15,6 +15,19 @@ import { projectAssetAllocation, getTargetGlideAllocation } from '../lib/project
 import { useMarketData } from '../hooks/useMarketData';
 import { DEFAULT_ALLOCATION_SYMBOLS, getInstrument } from '../lib/instruments';
 import { runMVO, type ConstraintSet, type Portfolio } from '../lib/mvo';
+import { simulateRebalancing } from '../lib/implementationShortfall';
+import { CATEGORY_SIGMAS } from '../lib/constants';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ReferenceLine,
+} from 'recharts';
 import type { AssetCategory } from '../types';
 import { Link } from 'react-router-dom';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
@@ -212,6 +225,37 @@ export const Allocation = () => {
   const totalSells = useMemo(
     () => dynamicRebalancingTrades.filter((t) => t.trade < 0 && t.action === 'Sell').reduce((sum, t) => sum + Math.abs(t.trade), 0),
     [dynamicRebalancingTrades],
+  );
+
+  // Pre-trade implementation-shortfall estimate for the full rebalance program:
+  // square-root market impact per asset class vs an assumed 2%-of-portfolio daily liquidity.
+  const rebalancingSim = useMemo(() => {
+    if (totalValue <= 0) return null;
+    const currentWeights: Record<string, number> = {};
+    const targetWeights: Record<string, number> = {};
+    const advByAsset: Record<string, number> = {};
+    const volByAsset: Record<string, number> = {};
+    CATEGORIES.forEach((c) => {
+      currentWeights[c] = wealthResult.currentAllocation[c] || 0;
+      targetWeights[c] = (targets[c] || 0) / 100;
+      advByAsset[c] = totalValue * 0.02;
+      volByAsset[c] = CATEGORY_SIGMAS[c] ?? 0.15;
+    });
+    return simulateRebalancing(currentWeights, targetWeights, totalValue, advByAsset, volByAsset);
+  }, [wealthResult.currentAllocation, targets, totalValue]);
+
+  const tradeImpactData = useMemo(
+    () =>
+      (rebalancingSim?.trades ?? []).map((t) => {
+        const cat = t.symbol as AssetCategory;
+        return {
+          category: cat,
+          label: ASSET_LABELS[cat] ?? t.symbol,
+          trade: t.diff * totalValue,
+          impactBps: t.impactBps,
+        };
+      }),
+    [rebalancingSim, totalValue],
   );
 
   return (
@@ -542,6 +586,163 @@ export const Allocation = () => {
           </div>
         </Card>
       )}
+
+      {/* Policy Drift Monitor & Trade Impact Visual Summary */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-white border border-zinc-200/90 shadow-2xs">
+          <h3 className="text-base font-bold text-zinc-950 mb-1 pb-3 border-b border-zinc-100 flex items-center gap-2">
+            <BarChart3 size={18} className="text-zinc-500" /> Policy Drift Monitor
+          </h3>
+          <p className="text-xs text-zinc-600 mt-3">
+            {maxDrift > 10
+              ? `${ASSET_LABELS[dynamicRebalancingTrades.reduce((a, b) => (Math.abs(b.currentPct - b.targetPct) > Math.abs(a.currentPct - a.targetPct) ? b : a)).category]} is the largest policy breach at ${maxDrift.toFixed(1)}% drift — rebalance tickets below restore the target mix.`
+              : maxDrift > 5
+              ? `All asset classes sit within ±10% of policy; ${ASSET_LABELS[dynamicRebalancingTrades.reduce((a, b) => (Math.abs(b.currentPct - b.targetPct) > Math.abs(a.currentPct - a.targetPct) ? b : a)).category]} shows the widest gap at ${maxDrift.toFixed(1)}%.`
+              : 'Portfolio is well balanced — every asset class is within ±5% of its strategic policy weight.'}
+          </p>
+          <div role="img" aria-label={`Diverging bar chart of current versus target allocation per asset class. Maximum drift is ${maxDrift.toFixed(1)} percentage points.`}>
+            <div className="mt-4 space-y-3">
+              {dynamicRebalancingTrades.map((r) => {
+                const drift = r.currentPct - r.targetPct;
+                const width = Math.min(Math.abs(drift) * 5, 50);
+                return (
+                  <div key={r.category} className="flex items-center gap-3 text-xs">
+                    <span className="w-24 shrink-0 flex items-center gap-1.5 font-semibold text-zinc-800">
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ASSET_COLORS[r.category] }} />
+                      {ASSET_LABELS[r.category]}
+                    </span>
+                    <div className="flex-1 flex items-center h-5">
+                      <div className="w-1/2 flex justify-end pr-1">
+                        {drift < 0 && (
+                          <div
+                            className="h-3.5 rounded-l-md bg-negative"
+                            style={{ width: `${width}%`, opacity: 0.85 }}
+                            title={`${drift.toFixed(1)}% under target`}
+                          />
+                        )}
+                      </div>
+                      <div className="w-px h-5 bg-zinc-300 shrink-0" />
+                      <div className="w-1/2 pl-1">
+                        {drift > 0 && (
+                          <div
+                            className="h-3.5 rounded-r-md bg-positive"
+                            style={{ width: `${width}%`, opacity: 0.85 }}
+                            title={`+${drift.toFixed(1)}% over target`}
+                          />
+                        )}
+                      </div>
+                    </div>
+                    <span
+                      className={cn(
+                        'w-16 shrink-0 text-right font-mono font-bold',
+                        drift > 5 ? 'text-negative' : drift < -5 ? 'text-warning' : 'text-muted',
+                      )}
+                    >
+                      {drift > 0 ? '+' : ''}
+                      {drift.toFixed(1)}%
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex items-center justify-center gap-4 mt-3 text-[11px] text-zinc-600">
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-negative" /> Over target</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-warning" /> Under target</span>
+              <span className="text-zinc-500">Center line = policy weight</span>
+            </div>
+          </div>
+          <table className="sr-only">
+            <caption>Policy drift per asset class: current weight minus target weight in percentage points</caption>
+            <thead>
+              <tr><th>Asset class</th><th>Current %</th><th>Target %</th><th>Drift (pp)</th></tr>
+            </thead>
+            <tbody>
+              {dynamicRebalancingTrades.map((r) => (
+                <tr key={r.category}>
+                  <td>{ASSET_LABELS[r.category]}</td>
+                  <td>{r.currentPct.toFixed(1)}%</td>
+                  <td>{r.targetPct.toFixed(1)}%</td>
+                  <td>{(r.currentPct - r.targetPct).toFixed(1)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+
+        <Card className="bg-white border border-zinc-200/90 shadow-2xs">
+          <h3 className="text-base font-bold text-zinc-950 mb-1 pb-3 border-b border-zinc-100 flex items-center gap-2">
+            <Scale size={18} className="text-zinc-500" /> Rebalance Trade Impact Estimate
+          </h3>
+          {rebalancingSim && rebalancingSim.trades.length > 0 ? (
+            <>
+              <p className="text-xs text-zinc-600 mt-3">
+                Executing the full rebalance turns over {formatPercent(rebalancingSim.totalTurnover * 50)} of the portfolio one-way with an estimated weighted market-impact cost of{' '}
+                <span className="font-mono font-bold text-zinc-900">{rebalancingSim.totalImpactBps.toFixed(1)} bps</span> — use limit orders and stage sells larger than a day&rsquo;s liquidity.
+              </p>
+              <div className="h-64 w-full mt-3" role="img" aria-label={`Bar chart of rebalance trade value per asset class. Weighted estimated market impact is ${rebalancingSim.totalImpactBps.toFixed(1)} basis points.`}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={tradeImpactData} layout="vertical" margin={{ top: 5, right: 16, left: 8, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-border)" />
+                    <XAxis
+                      type="number"
+                      tickFormatter={(v: number) => formatCurrencyCompact(v)}
+                      tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="label"
+                      width={92}
+                      tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      formatter={(value: any, _name: any, item: any) => [
+                        `${formatCurrency(Number(value))} · est. impact ${Number(item?.payload?.impactBps ?? 0).toFixed(1)} bps`,
+                        'Rebalance trade',
+                      ]}
+                      contentStyle={{
+                        borderRadius: '14px',
+                        border: '1px solid var(--color-border)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                        padding: '10px 14px',
+                      }}
+                    />
+                    <ReferenceLine x={0} stroke="var(--color-border-strong)" />
+                    <Bar dataKey="trade" name="Rebalance trade" radius={[4, 4, 4, 4]} minPointSize={2}>
+                      {tradeImpactData.map((d) => (
+                        <Cell
+                          key={d.category}
+                          style={{ fill: d.trade >= 0 ? 'var(--color-positive)' : 'var(--color-negative)' }}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <table className="sr-only">
+                <caption>Rebalance trade value and estimated market impact per asset class</caption>
+                <thead>
+                  <tr><th>Asset class</th><th>Trade value</th><th>Estimated impact (bps)</th></tr>
+                </thead>
+                <tbody>
+                  {tradeImpactData.map((d) => (
+                    <tr key={d.category}>
+                      <td>{d.label}</td>
+                      <td>{formatCurrency(d.trade)}</td>
+                      <td>{d.impactBps.toFixed(1)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          ) : (
+            <p className="text-xs text-zinc-600 mt-3">No material trades required — current allocation already matches policy targets.</p>
+          )}
+        </Card>
+      </div>
 
       {/* Rebalancing Execution Tickets Table */}
       <Card className="bg-white border border-zinc-200/90 shadow-2xs">

@@ -577,7 +577,11 @@ export const PortfolioReturnProjectionCalculator = () => {
         </div>
 
         {/* Recharts Area Chart */}
-        <div className="h-80 w-full">
+        <div
+          className="h-80 w-full"
+          role="img"
+          aria-label={`Area chart of projected wealth over ${years} years in ${chartView === 'nominal-real' ? 'nominal versus inflation-adjusted terms, with total capital invested' : 'a breakdown by asset class'}.`}
+        >
           <ResponsiveContainer width="100%" height="100%">
             {chartView === 'nominal-real' ? (
               <AreaChart data={projection.snapshots} margin={{ top: 10, right: 20, left: 20, bottom: 0 }}>

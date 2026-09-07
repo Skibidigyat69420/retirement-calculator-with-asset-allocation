@@ -34,7 +34,10 @@ import { SectionTitle } from '../components/ui/SectionTitle';
 import { Alert } from '../components/ui/Alert';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
-import { NominalRealChart } from '../components/charts/NominalRealChart';
+import { NetWorthEvolutionChart } from '../components/dashboard/charts/NetWorthEvolutionChart';
+import { AllocationCompareChart } from '../components/dashboard/charts/AllocationCompareChart';
+import { MonteCarloHistogram } from '../components/dashboard/charts/MonteCarloHistogram';
+import { CashflowWaterfallChart } from '../components/dashboard/charts/CashflowWaterfallChart';
 import { DonutChart } from '../components/charts/DonutChart';
 import { AssetEvolutionChart } from '../components/charts/AssetEvolutionChart';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
@@ -42,7 +45,7 @@ import { PlanManager } from '../components/identity/PlanManager';
 import { isComplete } from '../lib/riskQuestionnaire';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { cn } from '../lib/utils';
-import { ASSET_COLORS } from '../lib/constants';
+import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
 import { MonteCarloFanChart } from '../components/charts/MonteCarloFanChart';
 
 const workflowTools = [
@@ -127,6 +130,51 @@ export const Dashboard = () => {
   const recommendations = useMemo(() => {
     return generatePlanRecommendations(inputs, wealthResult, planHealth, riskScore);
   }, [inputs, wealthResult, planHealth, riskScore]);
+
+  const retirementSnapshot = useMemo(
+    () =>
+      wealthResult.snapshots.find((s) => s.age >= inputs.retirementAge) ??
+      wealthResult.snapshots[wealthResult.snapshots.length - 1] ??
+      null,
+    [wealthResult.snapshots, inputs.retirementAge],
+  );
+
+  const terminalSnapshot = useMemo(
+    () => wealthResult.snapshots[wealthResult.snapshots.length - 1] ?? null,
+    [wealthResult.snapshots],
+  );
+
+  const mcTerminalValues = useMemo(
+    () => wealthResult.monteCarlo.outcomes.map((o) => o.terminalValue),
+    [wealthResult.monteCarlo.outcomes],
+  );
+
+  const cashflowWaterfall = useMemo(() => {
+    const income = wealthResult.annualIncome;
+    const expenses = wealthResult.annualExpenses;
+    const annualSIP = (wealthResult.monthlySIP || inputs.sip.amount) * 12;
+    const surplus = Math.max(0, income - expenses - annualSIP);
+    return [
+      { name: 'Income', base: 0, value: income, kind: 'income' as const },
+      { name: 'Expenses', base: Math.max(0, income - expenses), value: expenses, kind: 'expense' as const },
+      { name: 'SIP', base: surplus, value: annualSIP, kind: 'sip' as const },
+      { name: 'Surplus', base: 0, value: surplus, kind: 'surplus' as const },
+    ];
+  }, [wealthResult.annualIncome, wealthResult.annualExpenses, wealthResult.monthlySIP, inputs.sip.amount]);
+
+  const goalThreshold = riskProfile.goalSuccessThreshold / 100;
+  const goalsOnTrack = wealthResult.goalResults.filter((g) => g.successRate >= goalThreshold).length;
+  const largestAllocationDrift = useMemo(() => {
+    let best: { name: string; drift: number } | null = null;
+    for (const [category, currentFrac] of Object.entries(wealthResult.currentAllocation)) {
+      const driftPct = (currentFrac - (wealthResult.targetAllocation[category as keyof typeof wealthResult.targetAllocation] || 0)) * 100;
+      if (Math.abs(driftPct) < 0.5) continue;
+      if (!best || Math.abs(driftPct) > Math.abs(best.drift)) {
+        best = { name: category, drift: driftPct };
+      }
+    }
+    return best;
+  }, [wealthResult.currentAllocation, wealthResult.targetAllocation]);
 
   const checklistItems = [
     {
@@ -680,7 +728,16 @@ export const Dashboard = () => {
               </Badge>
             </div>
           </div>
-          <NominalRealChart data={chartData} xKey="label" />
+          <NetWorthEvolutionChart
+            data={chartData}
+            ariaLabel="Net-worth evolution chart showing projected nominal corpus and inflation-adjusted real corpus from current age to life expectancy"
+            summary={`Projected corpus at retirement (age ${inputs.retirementAge}): ${retirementSnapshot ? formatCurrencyCompact(retirementSnapshot.total) : '₹0'}. Terminal corpus at age ${inputs.lifeExpectancy}: ${terminalSnapshot ? formatCurrencyCompact(terminalSnapshot.total) : '₹0'} nominal, ${terminalSnapshot ? formatCurrencyCompact(terminalSnapshot.realTotal) : '₹0'} in today's purchasing power.`}
+          />
+          <p className="text-xs text-zinc-500 border-t border-zinc-100 pt-3 leading-relaxed">
+            Corpus reaches <strong className="text-zinc-800">{retirementSnapshot ? formatCurrencyCompact(retirementSnapshot.total) : '₹0'}</strong> at retirement (age {inputs.retirementAge}) and{' '}
+            <strong className="text-zinc-800">{terminalSnapshot ? formatCurrencyCompact(terminalSnapshot.total) : '₹0'}</strong> by age {inputs.lifeExpectancy} — in today's money that is{' '}
+            <strong className="text-zinc-800">{terminalSnapshot ? formatCurrencyCompact(terminalSnapshot.realTotal) : '₹0'}</strong> after inflation.
+          </p>
         </Card>
 
         {/* Donut Chart: Current Allocation */}
@@ -707,6 +764,71 @@ export const Dashboard = () => {
               </Link>
             </div>
           )}
+          <p className="text-xs text-zinc-500 border-t border-zinc-100 pt-3 leading-relaxed">
+            {allocationData.length > 0
+              ? `Portfolio spans ${allocationData.length} asset class${allocationData.length === 1 ? '' : 'es'} totaling ${formatCurrencyCompact(wealthResult.netWorth)}; the largest sleeve is ${allocationData.reduce((a, b) => (b.value > a.value ? b : a)).name} at ${formatPercent((allocationData.reduce((a, b) => (b.value > a.value ? b : a)).value / Math.max(1, wealthResult.netWorth)) * 100)}.`
+              : 'Composition breakdown appears once holdings are added in the Master Plan.'}
+          </p>
+        </Card>
+      </div>
+
+      {/* Allocation Drift & Annual Cashflow Waterfall */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card variant="elevated" className="lg:col-span-2 p-5 sm:p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 pb-3">
+            <div>
+              <h3 className="text-base sm:text-lg font-sans font-bold text-zinc-950 tracking-tight">
+                Current vs Target Allocation
+              </h3>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                Portfolio drift against the {riskProfile.label} strategic target
+              </p>
+            </div>
+            <Badge variant="outline" className="text-[10px] font-semibold uppercase">
+              Drift Monitor
+            </Badge>
+          </div>
+          <AllocationCompareChart
+            current={wealthResult.currentAllocation}
+            target={wealthResult.targetAllocation}
+            ariaLabel="Paired horizontal stacked bars comparing current asset allocation percentages against strategic target percentages by asset class"
+            summary={`Current allocation: ${Object.entries(wealthResult.currentAllocation)
+              .filter(([, v]) => v > 0)
+              .map(([k, v]) => `${ASSET_LABELS[k as keyof typeof ASSET_LABELS] ?? k} ${(v * 100).toFixed(1)}%`)
+              .join(', ')}. Target allocation: ${Object.entries(wealthResult.targetAllocation)
+              .filter(([, v]) => v > 0)
+              .map(([k, v]) => `${ASSET_LABELS[k as keyof typeof ASSET_LABELS] ?? k} ${(v * 100).toFixed(1)}%`)
+              .join(', ')}.`}
+          />
+          <p className="text-xs text-zinc-500 border-t border-zinc-100 pt-3 leading-relaxed">
+            {largestAllocationDrift
+              ? `${ASSET_LABELS[largestAllocationDrift.name as keyof typeof ASSET_LABELS]} carries the largest drift at ${largestAllocationDrift.drift > 0 ? '+' : ''}${largestAllocationDrift.drift.toFixed(1)} percentage points versus the ${riskProfile.label} target.`
+              : `Portfolio is aligned with the ${riskProfile.label} target — no asset class drifts more than 0.5 percentage points.`}
+          </p>
+        </Card>
+
+        <Card variant="elevated" className="p-5 sm:p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+            <div>
+              <h3 className="text-base sm:text-lg font-sans font-bold text-zinc-950 tracking-tight">
+                Annual Cashflow Waterfall
+              </h3>
+              <p className="text-xs text-zinc-500 mt-0.5">Income → expenses → SIP → surplus</p>
+            </div>
+            <Badge variant="outline" className="text-[10px] font-semibold uppercase">
+              Savings Engine
+            </Badge>
+          </div>
+          <CashflowWaterfallChart
+            data={cashflowWaterfall}
+            ariaLabel="Waterfall chart of annual income minus living expenses and SIP contributions, ending with investable surplus"
+            summary={`Annual income ${formatCurrencyCompact(wealthResult.annualIncome)}, expenses ${formatCurrencyCompact(wealthResult.annualExpenses)}, SIP ${formatCurrencyCompact((wealthResult.monthlySIP || inputs.sip.amount) * 12)}, surplus ${formatCurrencyCompact(Math.max(0, wealthResult.annualIncome - wealthResult.annualExpenses - (wealthResult.monthlySIP || inputs.sip.amount) * 12))}.`}
+          />
+          <p className="text-xs text-zinc-500 border-t border-zinc-100 pt-3 leading-relaxed">
+            Savings rate of <strong className="text-zinc-800">{formatPercent(wealthResult.savingsRate)}</strong> funds a{' '}
+            <strong className="text-zinc-800">{formatCurrencyCompact((wealthResult.monthlySIP || inputs.sip.amount) * 12)}/yr</strong> SIP, leaving{' '}
+            <strong className="text-zinc-800">{formatCurrencyCompact(Math.max(0, wealthResult.annualIncome - wealthResult.annualExpenses - (wealthResult.monthlySIP || inputs.sip.amount) * 12))}/yr</strong> of unallocated surplus.
+          </p>
         </Card>
       </div>
 
@@ -726,6 +848,11 @@ export const Dashboard = () => {
             </Badge>
           </div>
           <AssetEvolutionChart data={assetEvolutionData} xKey="label" />
+          <p className="text-xs text-zinc-500 border-t border-zinc-100 pt-3 leading-relaxed">
+            {assetEvolutionData.length > 1
+              ? `Equity compounds from ${formatCurrencyCompact(assetEvolutionData[0].equity)} to ${formatCurrencyCompact(assetEvolutionData[assetEvolutionData.length - 1].equity)} across the horizon, while debt and liquid sleeves stabilize the distribution phase.`
+              : 'Asset-class trajectories appear once a plan is configured.'}
+          </p>
         </Card>
 
         {/* Goal Health Progress */}
@@ -791,29 +918,73 @@ export const Dashboard = () => {
                       {g.requiredSIP > 0 ? `Required: ${formatCurrency(g.requiredSIP)}/mo` : 'Fully Funded'}
                     </span>
                   </div>
+
+                  {/* Funding progress bar — paired with the % Funded badge above so color is never the only encoder */}
+                  <div
+                    className="w-full h-2 bg-zinc-100 rounded-full overflow-hidden border border-zinc-200/50"
+                    aria-hidden="true"
+                  >
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all duration-700 ease-out',
+                        g.successRate >= goalThreshold
+                          ? 'bg-emerald-600'
+                          : g.successRate >= goalThreshold * 0.6
+                          ? 'bg-amber-600'
+                          : 'bg-rose-600',
+                      )}
+                      style={{ width: `${Math.max(3, Math.min(100, g.successRate * 100))}%` }}
+                    />
+                  </div>
                 </div>
               ))
             )}
           </div>
+
+          <p className="text-xs text-zinc-500 border-t border-zinc-100 pt-3 leading-relaxed">
+            {wealthResult.goalResults.length > 0
+              ? `${goalsOnTrack} of ${wealthResult.goalResults.length} goals clear the ${formatPercent(riskProfile.goalSuccessThreshold)} confidence bar${wealthResult.goalsAtRisk.length > 0 ? ` — ${wealthResult.goalsAtRisk.length} need dedicated funding attention` : ''}.`
+              : 'Goal funding progress appears once milestones are configured.'}
+          </p>
         </Card>
       </div>
 
-      {/* Monte Carlo Fan Chart Card */}
+      {/* Monte Carlo Fan Chart + Terminal Outcome Histogram */}
       <Card variant="elevated" className="p-5 sm:p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 pb-3">
           <div>
             <h3 className="text-base sm:text-lg font-sans font-bold text-zinc-950 tracking-tight">
-              Monte Carlo Simulation Percentile Cone
+              Monte Carlo Simulation: Trajectory Cone & Outcome Distribution
             </h3>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Stochastic outcome fan across 10th, 25th, 50th, 75th, and 90th percentiles
+              Stochastic percentile fan and the distribution of terminal corpus values
             </p>
           </div>
           <Badge variant="outline" className="text-[10px] font-bold uppercase">
             {wealthResult.monteCarlo.outcomes.length.toLocaleString()} Scenarios Evaluated
           </Badge>
         </div>
-        <MonteCarloFanChart data={wealthResult.monteCarlo.yearlyPercentiles} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-3">
+            <MonteCarloFanChart data={wealthResult.monteCarlo.yearlyPercentiles} />
+            <p className="text-xs text-zinc-500 border-t border-zinc-100 pt-3 leading-relaxed">
+              {formatPercent(wealthResult.monteCarlo.successRate * 100)} of {wealthResult.monteCarlo.outcomes.length.toLocaleString()} scenarios keep the corpus funded through age {inputs.lifeExpectancy}; median terminal value is{' '}
+              <strong className="text-zinc-800">{formatCurrencyCompact(wealthResult.monteCarlo.medianTerminal)}</strong>.
+            </p>
+          </div>
+          <div className="space-y-3">
+            <MonteCarloHistogram
+              terminalValues={mcTerminalValues}
+              ariaLabel="Histogram of Monte Carlo terminal corpus values across scenario bins, with the median outcome marked"
+              summary={`Across ${wealthResult.monteCarlo.outcomes.length.toLocaleString()} scenarios: median terminal corpus ${formatCurrencyCompact(wealthResult.monteCarlo.medianTerminal)}, 5th percentile ${formatCurrencyCompact(wealthResult.monteCarlo.percentile5)}, 95th percentile ${formatCurrencyCompact(wealthResult.monteCarlo.percentile95)}.`}
+            />
+            <p className="text-xs text-zinc-500 border-t border-zinc-100 pt-3 leading-relaxed">
+              The middle 50% of outcomes land between <strong className="text-zinc-800">{formatCurrencyCompact(wealthResult.monteCarlo.percentile25)}</strong> and{' '}
+              <strong className="text-zinc-800">{formatCurrencyCompact(wealthResult.monteCarlo.percentile75)}</strong>; the 5th–95th range spans{' '}
+              <strong className="text-zinc-800">{formatCurrencyCompact(wealthResult.monteCarlo.percentile5)}</strong>–<strong className="text-zinc-800">{formatCurrencyCompact(wealthResult.monteCarlo.percentile95)}</strong>.
+            </p>
+          </div>
+        </div>
       </Card>
 
       {/* 5. Refined Workflow Tools Grid with Step Badges & Hover Lift Effects */}

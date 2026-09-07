@@ -67,7 +67,14 @@ export const LumpsumCalculator = () => {
     >
       <Card>
         <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Growth Curve</h4>
-        <div className="h-72">
+        <p className="text-xs text-zinc-600 mb-3">
+          {formatCurrency(principal)} at {returnRate}% grows to {formatCurrency(result.total)} in {years} years — a {result.gained > principal ? `${(result.total / Math.max(1, principal)).toFixed(1)}× multiple` : `${formatCurrency(result.gained)} gain`} on the original investment.
+        </p>
+        <div
+          className="h-72"
+          role="img"
+          aria-label={`Area chart of lumpsum growth over ${years} years at ${returnRate} percent. Final value ${formatCurrency(result.total)}.`}
+        >
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={result.yearlyData.map((d) => ({ year: `Y${d.year}`, value: d.value }))}
@@ -109,6 +116,20 @@ export const LumpsumCalculator = () => {
             </AreaChart>
           </ResponsiveContainer>
         </div>
+        <table className="sr-only">
+          <caption>Lumpsum value at the end of each year</caption>
+          <thead>
+            <tr><th>Year</th><th>Value</th></tr>
+          </thead>
+          <tbody>
+            {result.yearlyData.map((d) => (
+              <tr key={d.year}>
+                <td>Year {d.year}</td>
+                <td>{formatCurrency(d.value)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </Card>
     </CalculatorShell>
   );

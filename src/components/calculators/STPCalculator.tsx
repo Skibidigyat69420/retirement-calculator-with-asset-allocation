@@ -5,9 +5,20 @@ import { MetricCard } from '../ui/MetricCard';
 import { Card } from '../ui/Card';
 import { CalculatorShell } from './CalculatorShell';
 import { calculateSTP } from '../../lib/calculators';
-import { formatCurrency } from '../../lib/formatters';
+import { formatCurrency, formatCurrencyCompact } from '../../lib/formatters';
 import { useCalculator } from '../../context/CalculatorContext';
 import { Button } from '../ui/Button';
+import { COLORS } from '../../lib/constants';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from 'recharts';
 
 export const STPCalculator = () => {
   const { inputs, updateSTP, showToast } = useCalculator();
@@ -20,6 +31,27 @@ export const STPCalculator = () => {
     () => calculateSTP(lumpsum, monthlyTransfer, liquidReturn, targetReturn),
     [lumpsum, monthlyTransfer, liquidReturn, targetReturn],
   );
+
+  // Month-by-month deployment schedule: idle liquid balance drains while the
+  // target portfolio compounds at its expected rate.
+  const scheduleData = useMemo(() => {
+    const liqR = liquidReturn / 100 / 12;
+    const tgtR = targetReturn / 100 / 12;
+    let liquid = lumpsum;
+    let target = 0;
+    const points: { month: string; liquid: number; target: number }[] = [];
+    for (let m = 1; m <= result.months && m <= 120; m++) {
+      liquid = liquid * (1 + liqR);
+      target = target * (1 + tgtR);
+      const transfer = Math.min(liquid, monthlyTransfer);
+      liquid -= transfer;
+      target += transfer;
+      if (result.months <= 24 || m % Math.ceil(result.months / 24) === 0 || m === result.months) {
+        points.push({ month: `M${m}`, liquid: Math.round(liquid), target: Math.round(target) });
+      }
+    }
+    return points;
+  }, [lumpsum, monthlyTransfer, liquidReturn, targetReturn, result.months]);
 
   const handleApply = () => {
     updateSTP({
@@ -88,6 +120,67 @@ export const STPCalculator = () => {
                 <span className="font-medium">{formatCurrency(result.total - lumpsum)}</span>
               </div>
             </div>
+          </Card>
+
+          <Card>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Capital Deployment Schedule</h4>
+            <p className="text-xs text-zinc-600 mb-3">
+              The lumpsum stays in the liquid fund earning {liquidReturn}% while {formatCurrency(monthlyTransfer)}/mo is systematically routed into the target portfolio — full deployment takes {result.months} months.
+            </p>
+            <div className="h-64" role="img" aria-label={`Area chart of STP deployment over ${result.months} months: liquid fund balance falls from ${formatCurrencyCompact(lumpsum)} to ${formatCurrencyCompact(result.liquid)} while the target portfolio grows to ${formatCurrencyCompact(result.target)}.`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={scheduleData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="stpLiquid" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={COLORS.ink} stopOpacity={0.14} />
+                      <stop offset="95%" stopColor={COLORS.ink} stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="stpTarget" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={COLORS.gold} stopOpacity={0.2} />
+                      <stop offset="95%" stopColor={COLORS.gold} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis
+                    tickFormatter={formatCurrencyCompact}
+                    tick={{ fontSize: 11, fill: '#64748b' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    formatter={(value: any, name: any) => [
+                      formatCurrency(Number(value)),
+                      name === 'liquid' ? 'Liquid fund (undeployed)' : 'Target portfolio',
+                    ]}
+                    contentStyle={{
+                      borderRadius: '14px',
+                      border: '1px solid rgba(226, 232, 240, 0.9)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                      padding: '10px 14px',
+                    }}
+                  />
+                  <Legend verticalAlign="top" height={32} iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
+                  <Area type="monotone" dataKey="liquid" name="Liquid fund (undeployed)" stroke={COLORS.ink} strokeWidth={2} fill="url(#stpLiquid)" />
+                  <Area type="monotone" dataKey="target" name="Target portfolio" stroke={COLORS.gold} strokeWidth={2} fill="url(#stpTarget)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <table className="sr-only">
+              <caption>STP deployment checkpoints: liquid balance and target portfolio value by month</caption>
+              <thead>
+                <tr><th>Month</th><th>Liquid balance</th><th>Target portfolio</th></tr>
+              </thead>
+              <tbody>
+                {scheduleData.map((d) => (
+                  <tr key={d.month}>
+                    <td>{d.month}</td>
+                    <td>{formatCurrency(d.liquid)}</td>
+                    <td>{formatCurrency(d.target)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </Card>
         </>
       }

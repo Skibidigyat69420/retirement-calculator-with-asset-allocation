@@ -41,6 +41,9 @@ import { AssetEvolutionChart } from '../components/charts/AssetEvolutionChart';
 import { SWPDrawdownChart } from '../components/charts/SWPDrawdownChart';
 import { DonutChart } from '../components/charts/DonutChart';
 import { MonteCarloFanChart } from '../components/charts/MonteCarloFanChart';
+import { NetWorthInvestedChart } from '../components/charts/NetWorthInvestedChart';
+import { CashFlowTimelineChart } from '../components/charts/CashFlowTimelineChart';
+import { PhaseTimelineBar } from '../components/charts/PhaseTimelineBar';
 import { calculateEMI } from '../lib/calculators';
 import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
@@ -289,22 +292,6 @@ export const MasterPlan = () => {
     [wealthResult.snapshots],
   );
 
-  const assetEvolutionData = useMemo(
-    () =>
-      wealthResult.snapshots
-        .filter((s) => s.phase === 'accumulation')
-        .map((s) => ({
-          label: `Age ${s.age}`,
-          equity: s.values.equity,
-          debt: s.values.debt,
-          gold: s.values.gold,
-          realestate: s.values.realestate,
-          liquid: s.values.liquid,
-          other: s.values.other,
-        })),
-    [wealthResult.snapshots],
-  );
-
   const swpData = useMemo(
     () =>
       wealthResult.snapshots
@@ -312,6 +299,36 @@ export const MasterPlan = () => {
         .map((s) => ({ label: `Age ${s.age}`, corpus: s.total })),
     [wealthResult.snapshots],
   );
+
+  // Full-horizon series for the net-worth + cumulative-invested overlay chart.
+  const netWorthData = useMemo(
+    () =>
+      wealthResult.snapshots.map((s) => ({
+        label: `Age ${s.age}`,
+        netWorth: s.total,
+        invested: s.invested,
+      })),
+    [wealthResult.snapshots],
+  );
+
+  // Full-horizon per-category stacked area (accumulation + distribution).
+  const assetEvolutionAllData = useMemo(
+    () =>
+      wealthResult.snapshots.map((s) => ({
+        label: `Age ${s.age}`,
+        equity: s.values.equity,
+        debt: s.values.debt,
+        gold: s.values.gold,
+        realestate: s.values.realestate,
+        liquid: s.values.liquid,
+        other: s.values.other,
+      })),
+    [wealthResult.snapshots],
+  );
+
+  const growthMultiple = wealthResult.totalInvested > 0
+    ? wealthResult.terminalValue / Math.max(wealthResult.netWorth, 1)
+    : 0;
 
   const terminalSnapshot = wealthResult.snapshots[wealthResult.snapshots.length - 1];
   const allocationData = useMemo(() => {
@@ -1795,15 +1812,59 @@ export const MasterPlan = () => {
             />
           </div>
 
+          {/* Phase Timeline */}
+          <Card>
+            <h3 className="text-base font-bold text-zinc-950 mb-4 tracking-tight">Plan Phase Timeline</h3>
+            <PhaseTimelineBar
+              currentAge={inputs.currentAge}
+              retirementAge={inputs.retirementAge}
+              lifeExpectancy={inputs.lifeExpectancy}
+              depletionAge={wealthResult.depletionAge}
+            />
+            <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
+              <strong className="text-zinc-700">Insight:</strong>{' '}
+              {wealthResult.sustainable
+                ? `The plan funds all ${Math.max(0, inputs.lifeExpectancy - inputs.retirementAge)} retirement years — the corpus never depletes before age ${inputs.lifeExpectancy}.`
+                : `The corpus depletes at age ${wealthResult.depletionAge}, leaving ${Math.max(0, inputs.lifeExpectancy - (wealthResult.depletionAge ?? inputs.lifeExpectancy))} unfunded years — raise SIP, delay retirement, or trim the SWP.`}
+            </p>
+          </Card>
+
           {/* Trajectory & Evolution Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <h3 className="text-base font-bold text-zinc-950 mb-4 tracking-tight">Accumulation Trajectory (Nominal vs Real)</h3>
               <NominalRealChart data={accData} xKey="label" />
+              <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
+                <strong className="text-zinc-700">Insight:</strong> The gap between the solid nominal curve and the dashed real curve is the silent cost of inflation over the accumulation phase.
+              </p>
             </Card>
             <Card>
-              <h3 className="text-base font-bold text-zinc-950 mb-4 tracking-tight">Asset Class Evolution</h3>
-              <AssetEvolutionChart data={assetEvolutionData} xKey="label" />
+              <h3 className="text-base font-bold text-zinc-950 mb-4 tracking-tight">Asset Class Evolution (Full Horizon)</h3>
+              <AssetEvolutionChart data={assetEvolutionAllData} xKey="label" variant="area" />
+              <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
+                <strong className="text-zinc-700">Insight:</strong> Watch the equity band (blue) dominate growth during accumulation, then compress as SWP withdrawals drain the corpus in distribution.
+              </p>
+            </Card>
+          </div>
+
+          {/* Net Worth vs Invested Capital + Cash Flow Events */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <h3 className="text-base font-bold text-zinc-950 mb-4 tracking-tight">Net Worth vs Capital Invested</h3>
+              <NetWorthInvestedChart data={netWorthData} />
+              <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
+                <strong className="text-zinc-700">Insight:</strong>{' '}
+                {wealthResult.totalInvested > 0
+                  ? `Compounding does the heavy lifting: ${formatCurrency(wealthResult.terminalValue)} of terminal net worth against ${formatCurrency(wealthResult.totalInvested)} of contributed capital${growthMultiple > 0 ? ` — a ${growthMultiple.toFixed(1)}× multiple` : ''}.`
+                  : 'Add a monthly SIP to see contributed capital accumulate against projected net worth.'}
+              </p>
+            </Card>
+            <Card>
+              <h3 className="text-base font-bold text-zinc-950 mb-4 tracking-tight">Annual Cash Flow Events</h3>
+              <CashFlowTimelineChart snapshots={wealthResult.snapshots} />
+              <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
+                <strong className="text-zinc-700">Insight:</strong> Green bars (SIP + STP) dominate the accumulation years; amber goal spikes and red SWP withdrawals mark the distribution phase.
+              </p>
             </Card>
           </div>
 
@@ -1811,10 +1872,19 @@ export const MasterPlan = () => {
             <Card>
               <h3 className="text-base font-bold text-zinc-950 mb-4 tracking-tight">SWP Drawdown Longevity</h3>
               <SWPDrawdownChart data={swpData} xKey="label" />
+              <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
+                <strong className="text-zinc-700">Insight:</strong>{' '}
+                {wealthResult.sustainable
+                  ? `The SWP corpus holds above zero through age ${inputs.lifeExpectancy}.`
+                  : `The drawdown curve hits zero at age ${wealthResult.depletionAge} — before life expectancy.`}
+              </p>
             </Card>
             <Card>
               <h3 className="text-base font-bold text-zinc-950 mb-4 tracking-tight">Terminal Allocation</h3>
               <DonutChart data={allocationData} />
+              <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
+                <strong className="text-zinc-700">Insight:</strong> The projected mix at age {inputs.lifeExpectancy} shows what decades of growth and withdrawals leave in each asset class.
+              </p>
             </Card>
           </div>
 
@@ -1858,6 +1928,10 @@ export const MasterPlan = () => {
               />
             </div>
             <MonteCarloFanChart data={wealthResult.monteCarlo.yearlyPercentiles} />
+            <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
+              <strong className="text-zinc-700">Insight:</strong>{' '}
+              {formatPercent(wealthResult.monteCarlo.successRate * 100)} of correlated paths sustain the plan; the spread between the dashed P5 and P95 lines is the sequence-of-returns risk envelope.
+            </p>
           </Card>
 
           {/* Rebalancing & Currency Exposure */}

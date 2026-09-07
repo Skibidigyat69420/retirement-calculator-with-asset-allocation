@@ -33,6 +33,13 @@ import { getAssumptionsForMode } from '../lib/assumptions';
 import { StressMatrixTable } from '../components/reports/StressMatrixTable';
 import { GoalDistributionBars } from '../components/reports/GoalDistributionBars';
 import { PlanHealthPanel } from '../components/reports/PlanHealthPanel';
+import { NetWorthGrowthChart } from '../components/reports/NetWorthGrowthChart';
+import { SWPSurvivalChart } from '../components/reports/SWPSurvivalChart';
+import { EfficientFrontierChart } from '../components/reports/EfficientFrontierChart';
+import { AllocationComparisonBars } from '../components/reports/AllocationComparisonBars';
+import { StressImpactBars } from '../components/reports/StressImpactBars';
+import { PlanHealthRadial } from '../components/reports/PlanHealthRadial';
+import { CurrencyExposureBars } from '../components/reports/CurrencyExposureBars';
 import type { AssetCategory } from '../types';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
@@ -197,6 +204,63 @@ export const Dossier = () => {
       })
       .filter((m): m is { age: number; snap: (typeof wealthResult.snapshots)[number] } => m !== null);
   }, [inputs.currentAge, inputs.retirementAge, inputs.lifeExpectancy, wealthResult.snapshots]);
+
+  // Section 4: strategic target weights as fractions for the comparison bars.
+  const targetFractions = useMemo(() => {
+    const rec = {} as Record<AssetCategory, number>;
+    CATEGORIES.forEach((c) => {
+      rec[c] = targets[c] / 100;
+    });
+    return rec;
+  }, [targets]);
+
+  // Section 3: deterministic net-worth trajectory for the growth chart (with retirement marker).
+  const netWorthGrowthData = useMemo(
+    () =>
+      wealthResult.snapshots.map((s) => ({
+        age: s.age,
+        nominal: s.total,
+        real: s.realTotal,
+      })),
+    [wealthResult.snapshots],
+  );
+
+  // Section 3: SWP survival curves — per-year P5/P50/P95 across Monte Carlo outcome paths
+  // (fall back to the deterministic snapshot totals when no outcome paths exist).
+  const swpSurvivalData = useMemo(() => {
+    const percentile = (sorted: number[], q: number) => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * q))] ?? 0;
+    const outcomes = mc.outcomes;
+    if (outcomes.length > 0) {
+      const years = Math.min(...outcomes.map((o) => o.yearlyValues.length));
+      const rows: { age: number; p5: number; p50: number; p95: number }[] = [];
+      for (let y = 0; y < years; y++) {
+        const age = inputs.currentAge + y + 1;
+        if (age < inputs.retirementAge) continue;
+        const values = outcomes.map((o) => o.yearlyValues[y] ?? 0).sort((a, b) => a - b);
+        rows.push({
+          age,
+          p5: percentile(values, 0.05),
+          p50: percentile(values, 0.5),
+          p95: percentile(values, 0.95),
+        });
+      }
+      return rows;
+    }
+    return wealthResult.snapshots
+      .filter((s) => s.age >= inputs.retirementAge)
+      .map((s) => ({ age: s.age, p5: s.total, p50: s.total, p95: s.total }));
+  }, [mc.outcomes, inputs.currentAge, inputs.retirementAge, wealthResult.snapshots]);
+
+  // Representative survival checkpoints for the adjacent detail table.
+  const survivalCheckpoints = useMemo(() => {
+    if (!swpSurvivalData.length) return [];
+    const pick = (age: number) =>
+      swpSurvivalData.find((d) => d.age >= age) ?? swpSurvivalData[swpSurvivalData.length - 1];
+    const midAge = Math.round((inputs.retirementAge + inputs.lifeExpectancy) / 2);
+    return [pick(inputs.retirementAge), pick(midAge), pick(inputs.lifeExpectancy)].filter(
+      (d, i, arr) => arr.findIndex((x) => x.age === d.age) === i,
+    );
+  }, [swpSurvivalData, inputs.retirementAge, inputs.lifeExpectancy]);
 
   // Appendix B: meeting record — only stages with saved notes.
   const meetingNotes = MEETING_STAGES.map((s) => ({
@@ -364,18 +428,40 @@ export const Dossier = () => {
             <div className="p-4 rounded-xl border border-zinc-200 bg-white">
               <h3 className="text-sm font-semibold text-slate-800 mb-1">Projected Net Worth Fan (Monte Carlo)</h3>
               <p className="text-xs text-zinc-500 mb-2">Simulated percentiles across accumulation and distribution</p>
-              <div className="h-56 print:h-52 overflow-hidden">
-                <MonteCarloFanChart data={wealthResult.monteCarlo.yearlyPercentiles} className="h-52 w-full" />
-              </div>
+              <figure role="img" aria-label="Monte Carlo projected net worth fan chart showing simulated P5, P25, P50, P75 and P95 percentile paths across the planning horizon" className="m-0">
+                <div className="h-56 print:h-52 overflow-hidden" aria-hidden="true">
+                  <MonteCarloFanChart data={wealthResult.monteCarlo.yearlyPercentiles} className="h-52 w-full" />
+                </div>
+                <figcaption className="sr-only">
+                  Simulated net worth paths from age {inputs.currentAge} to {inputs.lifeExpectancy}. Median terminal value{' '}
+                  {formatCurrency(mc.medianTerminal)}; P5 stress path {formatCurrency(mc.percentile5)}; P95 optimistic path{' '}
+                  {formatCurrency(mc.percentile95)}.
+                </figcaption>
+              </figure>
+              <p className="text-[11px] text-muted mt-2 leading-snug">
+                Insight: {formatPercent(mc.successRate * 100)} of simulated paths sustain the plan — the median path ends at{' '}
+                {formatCurrencyCompact(mc.medianTerminal)} versus {formatCurrencyCompact(mc.percentile5)} in the P5 stress case.
+              </p>
             </div>
 
             {/* Asset Allocation Donut */}
             <div className="p-4 rounded-xl border border-zinc-200 bg-white">
               <h3 className="text-sm font-semibold text-slate-800 mb-1">Current Capital Distribution</h3>
               <p className="text-xs text-zinc-500 mb-2">Total holdings: {formatCurrency(wealthResult.netWorth)}</p>
-              <div className="h-56 print:h-52 flex items-center justify-center">
-                <DonutChart data={currentAllocationData} />
-              </div>
+              <figure role="img" aria-label="Donut chart of current capital distribution across asset categories" className="m-0">
+                <div className="h-56 print:h-52 flex items-center justify-center" aria-hidden="true">
+                  <DonutChart data={currentAllocationData} />
+                </div>
+                <figcaption className="sr-only">
+                  Current allocation: {currentAllocationData.map((d) => `${d.name} ${formatCurrency(d.value)}`).join(', ')}.
+                </figcaption>
+              </figure>
+              <p className="text-[11px] text-muted mt-2 leading-snug">
+                Insight: {currentAllocationData.length > 0 && (() => {
+                  const top = [...currentAllocationData].sort((a, b) => b.value - a.value)[0];
+                  return `${top.name} dominates the book at ${formatPercent((top.value / Math.max(1, wealthResult.netWorth)) * 100)} of net worth (${formatCurrencyCompact(top.value)}).`;
+                })()}
+              </p>
             </div>
           </div>
 
@@ -588,6 +674,26 @@ export const Dossier = () => {
             </div>
           </div>
 
+          {/* Net-worth growth trajectory with retirement marker */}
+          <div className="p-6 rounded-xl border border-zinc-200 bg-white avoid-break space-y-3 mb-6">
+            <h3 className="text-sm font-semibold text-zinc-900">Net-Worth Growth Trajectory & Retirement Milestone</h3>
+            <p className="text-xs text-zinc-600 leading-relaxed">
+              Deterministic projection of the plan year by year; the dashed marker flags the transition from accumulation to
+              distribution at age {inputs.retirementAge}. Milestone values are tabulated in Appendix A.
+            </p>
+            <NetWorthGrowthChart
+              data={netWorthGrowthData}
+              retirementAge={inputs.retirementAge}
+              ariaLabel={`Net-worth growth chart from age ${inputs.currentAge} to ${inputs.lifeExpectancy} with retirement marker at age ${inputs.retirementAge}`}
+              summary={`Net worth grows from ${formatCurrency(wealthResult.netWorth)} today to a projected ${formatCurrency(corpusAtRetirement)} at retirement (age ${inputs.retirementAge}), reaching ${formatCurrency(wealthResult.terminalValue)} by age ${inputs.lifeExpectancy} nominally (${formatCurrency(wealthResult.terminalRealValue)} in today's rupees).`}
+            />
+            <p className="text-[11px] text-muted leading-snug">
+              Insight: the corpus peaks around retirement at {formatCurrencyCompact(corpusAtRetirement)} —{' '}
+              {wealthResult.netWorth > 0 ? formatPercent((corpusAtRetirement / wealthResult.netWorth) * 100, 0) : '—'} of today's net worth — then{' '}
+              {wealthResult.sustainable ? `holds or grows through age ${inputs.lifeExpectancy}.` : `declines to depletion at age ${wealthResult.depletionAge}.`}
+            </p>
+          </div>
+
           {/* Monte Carlo terminal outcome band */}
           <div className="p-6 rounded-xl border border-zinc-200 bg-white avoid-break space-y-4 mb-6">
             <div className="flex items-center justify-between">
@@ -649,6 +755,60 @@ export const Dossier = () => {
             </div>
           </div>
 
+          {/* SWP survival curves: corpus survival through the distribution phase */}
+          <div className="p-6 rounded-xl border border-zinc-200 bg-white avoid-break space-y-3 mb-6">
+            <h3 className="text-sm font-semibold text-zinc-900">Corpus Survival Through Retirement (Monte Carlo)</h3>
+            <p className="text-xs text-zinc-600 leading-relaxed">
+              Remaining corpus while withdrawals run, from age {inputs.retirementAge} onward. The band spans the 5th–95th percentile
+              of simulated paths; the solid line is the median path. A path touching zero has exhausted its corpus.
+            </p>
+            <SWPSurvivalChart
+              data={swpSurvivalData}
+              retirementAge={inputs.retirementAge}
+              lifeExpectancy={inputs.lifeExpectancy}
+              ariaLabel={`Corpus survival chart from retirement age ${inputs.retirementAge} to ${inputs.lifeExpectancy} showing the median path with a P5 to P95 confidence band`}
+              summary={
+                swpSurvivalData.length > 0
+                  ? `Median corpus at retirement is ${formatCurrency(swpSurvivalData[0].p50)}, evolving to ${formatCurrency(swpSurvivalData[swpSurvivalData.length - 1].p50)} by age ${swpSurvivalData[swpSurvivalData.length - 1].age}; the P5 stress path ends at ${formatCurrency(swpSurvivalData[swpSurvivalData.length - 1].p5)}.`
+                  : 'No distribution-phase survival data available.'
+              }
+            />
+            {survivalCheckpoints.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-[11px] text-left border border-zinc-200 rounded-lg overflow-hidden">
+                  <thead className={tableHeadClass}>
+                    <tr>
+                      <th className="p-2">Age Checkpoint</th>
+                      <th className="p-2 text-right">P5 Corpus</th>
+                      <th className="p-2 text-right">Median Corpus</th>
+                      <th className="p-2 text-right">P95 Corpus</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {survivalCheckpoints.map((d) => (
+                      <tr key={d.age}>
+                        <td className="p-2 font-medium text-zinc-900">{d.age}</td>
+                        <td className="p-2 text-right font-mono text-zinc-700">{formatCurrencyCompact(d.p5)}</td>
+                        <td className="p-2 text-right font-mono font-semibold text-zinc-900">{formatCurrencyCompact(d.p50)}</td>
+                        <td className="p-2 text-right font-mono text-zinc-700">{formatCurrencyCompact(d.p95)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <p className="text-[11px] text-muted leading-snug">
+              Insight:{' '}
+              {(() => {
+                const last = swpSurvivalData[swpSurvivalData.length - 1];
+                if (!last) return 'No distribution-phase data available.';
+                return last.p5 > 0
+                  ? `even the P5 stress path retains ${formatCurrencyCompact(last.p5)} at age ${last.age} — withdrawals survive the full horizon in 95% of simulations.`
+                  : `the P5 stress path is exhausted by age ${last.age}, while the median path ends at ${formatCurrencyCompact(last.p50)}.`;
+              })()}
+            </p>
+          </div>
+
           {/* SWP Stress Test Breakdown */}
           <div className="p-6 rounded-xl border border-zinc-200 bg-white avoid-break space-y-4">
             <h3 className="text-sm font-semibold text-zinc-900">Post-Retirement Withdrawal Framework</h3>
@@ -691,6 +851,26 @@ export const Dossier = () => {
               <h2 className="text-xl font-sans font-bold text-zinc-900">Section 4: Strategic Asset Allocation & Rebalancing</h2>
             </div>
             <span className="text-xs font-medium text-zinc-500">Target vs Actual Drift</span>
+          </div>
+
+          {/* Paired 100% stacked bars: current vs strategic target */}
+          <div className="p-5 rounded-xl border border-zinc-200 bg-white avoid-break space-y-3 mb-8">
+            <h3 className="text-sm font-semibold text-zinc-900">Current vs Strategic Target Allocation</h3>
+            <AllocationComparisonBars
+              current={wealthResult.currentAllocation}
+              target={targetFractions}
+              ariaLabel="Paired stacked bars comparing current and target allocation weights per asset class"
+            />
+            <p className="text-[11px] text-muted leading-snug">
+              Insight:{' '}
+              {(() => {
+                const biggest = CATEGORIES.reduce((a, b) =>
+                  Math.abs(wealthResult.currentAllocation[b] * 100 - targets[b]) > Math.abs(wealthResult.currentAllocation[a] * 100 - targets[a]) ? b : a,
+                );
+                const diff = wealthResult.currentAllocation[biggest] * 100 - targets[biggest];
+                return `${ASSET_LABELS[biggest]} shows the largest drift at ${diff > 0 ? '+' : ''}${formatPercent(diff)} vs target — ${Math.abs(diff) <= 2 ? 'all classes sit within the ±2% tolerance band.' : 'see the action column below for the rebalance directive.'}`;
+              })()}
+            </p>
           </div>
 
           <div className="overflow-x-auto mb-8 avoid-break">
@@ -813,6 +993,42 @@ export const Dossier = () => {
             </div>
           </div>
 
+          {/* Efficient frontier scatter: sampled frontier + annotated key portfolios */}
+          <div className="p-5 rounded-xl border border-zinc-200 bg-white avoid-break space-y-3 mb-8">
+            <h3 className="text-sm font-semibold text-zinc-900">Efficient Frontier — Risk / Return Map</h3>
+            <EfficientFrontierChart
+              frontier={mvoResult.frontier}
+              keyPortfolios={[
+                { label: 'Maximum Sharpe', portfolio: mvoResult.maxSharpe, color: 'var(--color-positive)' },
+                { label: 'Minimum Variance', portfolio: mvoResult.minVariance, color: 'var(--color-info)' },
+                { label: 'Current Target', portfolio: targetPortfolio, color: 'var(--color-warning)' },
+              ]}
+              ariaLabel="Efficient frontier scatter chart of sampled portfolios by volatility and expected return, with maximum Sharpe, minimum variance and current target portfolios annotated"
+              summary={`Maximum Sharpe portfolio: ${formatPercent(mvoResult.maxSharpe.expectedReturn * 100)} return at ${formatPercent(mvoResult.maxSharpe.volatility * 100)} volatility (Sharpe ${mvoResult.maxSharpe.sharpe.toFixed(2)}). Minimum variance: ${formatPercent(mvoResult.minVariance.expectedReturn * 100)} return at ${formatPercent(mvoResult.minVariance.volatility * 100)} volatility. Current strategic target: ${formatPercent(targetPortfolio.expectedReturn * 100)} return at ${formatPercent(targetPortfolio.volatility * 100)} volatility (Sharpe ${targetPortfolio.sharpe.toFixed(2)}).`}
+            />
+            <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+              {[
+                { label: 'Maximum Sharpe', p: mvoResult.maxSharpe, color: 'var(--color-positive)' },
+                { label: 'Minimum Variance', p: mvoResult.minVariance, color: 'var(--color-info)' },
+                { label: 'Current Target', p: targetPortfolio, color: 'var(--color-warning)' },
+              ].map((k) => (
+                <span key={k.label} className="inline-flex items-center gap-1.5 text-[11px] text-ink">
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: k.color }} />
+                  <span className="font-medium">{k.label}</span>
+                  <span className="font-mono text-muted">
+                    {formatPercent(k.p.expectedReturn * 100)} ret · {formatPercent(k.p.volatility * 100)} vol · S {k.p.sharpe.toFixed(2)}
+                  </span>
+                </span>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted leading-snug">
+              Insight: the strategic target sits{' '}
+              {targetPortfolio.sharpe >= mvoResult.maxSharpe.sharpe - 0.05
+                ? 'essentially on the efficient frontier — the recommended mandate captures nearly all available reward per unit of risk.'
+                : `${(mvoResult.maxSharpe.sharpe - targetPortfolio.sharpe).toFixed(2)} Sharpe points inside the tangency portfolio — the gap is the deliberate cost of the mandate's risk cap and liquidity buffers.`}
+            </p>
+          </div>
+
           {/* Optimal weights */}
           <div className="grid grid-cols-1 lg:grid-cols-2 print:grid-cols-2 gap-6 mb-8 avoid-break">
             <div className="p-5 rounded-xl border border-zinc-200 bg-white space-y-3">
@@ -870,6 +1086,21 @@ export const Dossier = () => {
               <h3 className="text-sm font-semibold text-zinc-900">Tail-Risk Stress Matrix — Historical Crisis Simulations</h3>
               <span className="text-xs text-zinc-500">Shocks applied to current holdings; plans re-projected under stressed inflation</span>
             </div>
+            <div className="p-5 rounded-xl border border-zinc-200 bg-white avoid-break space-y-3">
+              <h4 className="text-xs font-semibold text-zinc-900">Corpus Impact at Retirement by Scenario</h4>
+              <StressImpactBars
+                results={stressResults}
+                ariaLabel="Horizontal bars showing corpus impact at retirement for each crisis scenario, scaled by magnitude with negative impacts in red extending left from zero"
+              />
+              <p className="text-[11px] text-muted leading-snug">
+                Insight: the worst modeled shock (
+                {[...stressResults].sort((a, b) => a.corpusDelta - b.corpusDelta)[0]?.scenario.name ?? '—'}) cuts the retirement corpus by{' '}
+                {formatCurrencyCompact(Math.abs(Math.min(...stressResults.map((r) => Math.min(0, r.corpusDelta)))))} —{' '}
+                {[...stressResults].sort((a, b) => a.corpusDelta - b.corpusDelta)[0]?.shockedSustainable
+                  ? 'the plan still survives it with buffer to spare.'
+                  : 'the plan would need the mitigation actions listed below to restore solvency.'}
+              </p>
+            </div>
             <StressMatrixTable results={stressResults} />
           </div>
         </section>
@@ -886,7 +1117,13 @@ export const Dossier = () => {
             <span className="text-xs font-medium text-zinc-500">Weighted Diagnostic Score</span>
           </div>
 
-          <PlanHealthPanel health={planHealth} recommendations={recommendations} detailed />
+          <PlanHealthRadial
+            health={planHealth}
+            ariaLabel="Radial gauge of the composite plan health score with per-component score bars"
+          />
+          <div className="mt-6">
+            <PlanHealthPanel health={planHealth} recommendations={recommendations} detailed />
+          </div>
         </section>
 
         {/* ========================================================= */}
@@ -945,6 +1182,19 @@ export const Dossier = () => {
             <p className="text-[11px] text-zinc-500 mt-3 leading-relaxed">
               Distributions show the simulated value of each goal's funding bucket at target date. Rose segments mark outcomes below the
               required future value; the label below each histogram reports the probability mass in that shortfall zone.
+            </p>
+            <p className="text-[11px] text-muted leading-snug">
+              Insight:{' '}
+              {(() => {
+                const essential = wealthResult.goalResults.filter((g) => g.goal.priority === 'essential');
+                const weakest = [...wealthResult.goalResults].sort((a, b) => a.successRate - b.successRate)[0];
+                if (!weakest) return 'No goals configured.';
+                return `${weakest.goal.name} is the weakest-funded goal at ${formatPercent(weakest.successRate * 100)} success${
+                  essential.length > 0
+                    ? `; essential goals overall fund at ${formatPercent(wealthResult.essentialSuccessRate * 100)}.`
+                    : '.'
+                }`;
+              })()}
             </p>
           </section>
         )}
@@ -1099,6 +1349,25 @@ export const Dossier = () => {
           {wealthResult.currencyExposure.length > 0 && (
             <div className="space-y-3 avoid-break">
               <h3 className="text-sm font-semibold text-zinc-900">Currency Exposure of Investable Assets</h3>
+              <div className="p-4 rounded-xl border border-zinc-200 bg-white space-y-3">
+                <CurrencyExposureBars
+                  exposure={wealthResult.currencyExposure}
+                  ariaLabel="Percentage bars showing the portfolio weight of each currency exposure"
+                />
+                <p className="text-[11px] text-muted leading-snug">
+                  Insight:{' '}
+                  {(() => {
+                    const sorted = [...wealthResult.currencyExposure].sort((a, b) => b.percentage - a.percentage);
+                    const top = sorted[0];
+                    if (!top) return 'No currency exposure data.';
+                    return `${top.currency} represents ${formatPercent(top.percentage)} of investable assets${
+                      sorted.length > 1
+                        ? ` — the remaining ${formatPercent(100 - top.percentage)} is unhedged foreign exposure that adds diversification but FX volatility on rupee goals.`
+                        : ' — the book is fully domestic with no FX drag on rupee liabilities.'
+                    }`;
+                  })()}
+                </p>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
                   <thead className={tableHeadClass}>

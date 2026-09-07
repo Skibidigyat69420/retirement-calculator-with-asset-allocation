@@ -110,7 +110,14 @@ export const SIPCalculator = () => {
         <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">
           Growth Curve
         </h4>
-        <div className="h-72">
+        <p className="text-xs text-zinc-600 mb-3">
+          Compounding does the heavy lifting: {formatCurrency(result.gained)} of the final {formatCurrency(result.total)} is growth on a {formatCurrency(result.invested)} contribution base.
+        </p>
+        <div
+          className="h-72"
+          role="img"
+          aria-label={`Area chart of SIP growth over ${years} years. Total invested ${formatCurrency(result.invested)}, future value ${formatCurrency(result.total)}.`}
+        >
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
@@ -157,6 +164,21 @@ export const SIPCalculator = () => {
             </AreaChart>
           </ResponsiveContainer>
         </div>
+        <table className="sr-only">
+          <caption>SIP growth: cumulative invested amount and future value at each year-end</caption>
+          <thead>
+            <tr><th>Year</th><th>Invested</th><th>Future value</th></tr>
+          </thead>
+          <tbody>
+            {chartData.map((d) => (
+              <tr key={d.year}>
+                <td>{d.year}</td>
+                <td>{formatCurrency(d.invested)}</td>
+                <td>{formatCurrency(d.total)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </Card>
     </CalculatorShell>
   );

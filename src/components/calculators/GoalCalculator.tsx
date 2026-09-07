@@ -11,6 +11,17 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Select } from '../ui/Select';
 import { Badge } from '../ui/Badge';
+import { COLORS } from '../../lib/constants';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ReferenceLine,
+} from 'recharts';
 
 export const GoalCalculator = () => {
   const { inputs, updateGoal, addGoal, removeGoal, showToast } = useCalculator();
@@ -97,6 +108,18 @@ export const GoalCalculator = () => {
     () => calculateGoal(target, years, returnRate, inflation, stepUp),
     [target, years, returnRate, inflation, stepUp],
   );
+
+  // Corpus accumulation of the required flat SIP versus the inflation-adjusted target.
+  const fundingCurve = useMemo(() => {
+    const r = returnRate / 100 / 12;
+    const monthly = result.requiredSIP;
+    const points: { year: string; corpus: number }[] = [];
+    for (let y = 1; y <= years; y++) {
+      const fv = monthly <= 0 ? 0 : monthly * ((Math.pow(1 + r, y * 12) - 1) / r) * (1 + r);
+      points.push({ year: `Y${y}`, corpus: Math.round(fv) });
+    }
+    return points;
+  }, [result.requiredSIP, years, returnRate]);
 
   const handleSelectGoal = (goalId: string) => {
     setSelectedGoalId(goalId);
@@ -394,6 +417,71 @@ export const GoalCalculator = () => {
                 <span className="font-medium">{formatCurrency(result.requiredSIPWithStepUp)}</span>
               </div>
             </div>
+          </Card>
+
+          <Card>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Funding Trajectory</h4>
+            <p className="text-xs text-zinc-600 mb-3">
+              Investing {formatCurrency(result.requiredSIP)}/mo at {returnRate}% compounds to exactly {formatCurrency(result.futureValue)} in {years} years — the corpus crosses the inflation-adjusted target only in the final years, so starting early matters most.
+            </p>
+            <div className="h-64" role="img" aria-label={`Area chart of SIP corpus growth over ${years} years versus the inflation-adjusted goal of ${formatCurrencyCompact(result.futureValue)}. The corpus reaches the target at year ${years}.`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={fundingCurve} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="goalFunding" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={COLORS.ink} stopOpacity={0.15} />
+                      <stop offset="95%" stopColor={COLORS.ink} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
+                  <XAxis dataKey="year" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis
+                    tickFormatter={formatCurrencyCompact}
+                    tick={{ fontSize: 11, fill: '#64748b' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    formatter={(value: any) => [formatCurrency(Number(value)), 'Projected corpus']}
+                    contentStyle={{
+                      borderRadius: '14px',
+                      border: '1px solid rgba(226, 232, 240, 0.9)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                      padding: '10px 14px',
+                    }}
+                  />
+                  <ReferenceLine
+                    y={result.futureValue}
+                    stroke={COLORS.red}
+                    strokeDasharray="6 4"
+                    label={{ value: `Goal ${formatCurrencyCompact(result.futureValue)}`, position: 'insideTopRight', fill: COLORS.red, fontSize: 11 }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="corpus"
+                    name="Projected Corpus"
+                    stroke={COLORS.ink}
+                    strokeWidth={2}
+                    fill="url(#goalFunding)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <table className="sr-only">
+              <caption>Projected SIP corpus at the end of each year versus the goal</caption>
+              <thead>
+                <tr><th>Year</th><th>Projected corpus</th><th>Goal</th></tr>
+              </thead>
+              <tbody>
+                {fundingCurve.map((d) => (
+                  <tr key={d.year}>
+                    <td>{d.year}</td>
+                    <td>{formatCurrency(d.corpus)}</td>
+                    <td>{formatCurrency(result.futureValue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </Card>
         </>
       }

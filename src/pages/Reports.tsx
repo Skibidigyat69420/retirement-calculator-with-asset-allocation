@@ -18,7 +18,17 @@ import { runReversePlanning } from '../lib/reversePlanning';
 import { PlanHealthPanel } from '../components/reports/PlanHealthPanel';
 import { StressMatrixTable } from '../components/reports/StressMatrixTable';
 import { GoalDistributionBars } from '../components/reports/GoalDistributionBars';
+import { MonteCarloHistogram } from '../components/reports/screen/MonteCarloHistogram';
+import { NetWorthTrajectory } from '../components/reports/screen/NetWorthTrajectory';
+import { GoalFundingChart } from '../components/reports/screen/GoalFundingChart';
+import { AllocationDriftChart } from '../components/reports/screen/AllocationDriftChart';
+import { StressScenarioChart } from '../components/reports/screen/StressScenarioChart';
+import { TaxBreakdownChart } from '../components/reports/screen/TaxBreakdownChart';
+import { CurrencyExposureChart } from '../components/reports/screen/CurrencyExposureChart';
+import { CashflowTimelineChart } from '../components/reports/screen/CashflowTimelineChart';
+import { SensitivityTornado } from '../components/reports/screen/SensitivityTornado';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
+import { evaluateGoalConflicts } from '../lib/goalConflictEngine';
 import type { AssetCategory } from '../types';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
@@ -50,6 +60,7 @@ export const Reports = () => {
   );
   const stressResults = useMemo(() => CRISIS_PRESETS.map((p) => runStressTest(inputs, p)), [inputs]);
   const reverseResult = useMemo(() => runReversePlanning(inputs, wealthResult), [inputs, wealthResult]);
+  const goalConflict = useMemo(() => evaluateGoalConflicts(inputs, wealthResult), [inputs, wealthResult]);
 
   const mc = wealthResult.monteCarlo;
 
@@ -221,6 +232,11 @@ export const Reports = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <MonteCarloHistogram mc={mc} />
+        <NetWorthTrajectory snapshots={wealthResult.snapshots} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border border-zinc-200/90 shadow-2xs">
           <h3 className="text-lg font-sans text-zinc-950 font-bold mb-4 flex items-center gap-2"><HeartPulse size={18} className="text-zinc-600" /> Plan Health</h3>
           <PlanHealthPanel health={planHealth} />
@@ -325,6 +341,11 @@ export const Reports = () => {
         </Card>
       )}
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <GoalFundingChart conflict={goalConflict} />
+        <StressScenarioChart results={stressResults} />
+      </div>
+
       <Card className="border border-zinc-200/90 shadow-2xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1">
           <h3 className="text-lg font-sans text-zinc-950 font-bold flex items-center gap-2"><Route size={18} className="text-zinc-600" /> Reverse-Planning Pathways</h3>
@@ -397,6 +418,18 @@ export const Reports = () => {
           </div>
         </Card>
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <AllocationDriftChart current={wealthResult.currentAllocation} targets={targets} netWorth={wealthResult.netWorth} />
+        <CurrencyExposureChart exposure={wealthResult.currencyExposure} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TaxBreakdownChart taxSummary={wealthResult.taxSummary} annualIncome={wealthResult.annualIncome} />
+        <SensitivityTornado inputs={inputs} wealthResult={wealthResult} />
+      </div>
+
+      <CashflowTimelineChart snapshots={wealthResult.snapshots} />
 
       {wealthResult.goalsAtRisk.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 text-red-800">

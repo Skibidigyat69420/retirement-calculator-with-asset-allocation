@@ -5,7 +5,18 @@ import { MetricCard } from '../ui/MetricCard';
 import { Card } from '../ui/Card';
 import { CalculatorShell } from './CalculatorShell';
 import { calculateRetirementCorpus } from '../../lib/calculators';
-import { formatCurrency, formatPercent } from '../../lib/formatters';
+import { formatCurrency, formatCurrencyCompact, formatPercent } from '../../lib/formatters';
+import { COLORS } from '../../lib/constants';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from 'recharts';
 
 import { useCalculator } from '../../context/CalculatorContext';
 import { Button } from '../ui/Button';
@@ -116,6 +127,56 @@ export const RetirementCorpusCalculator = () => {
                 <span className="font-medium">{formatCurrency(result.sustainableMonthlyWithdrawal)}</span>
               </div>
             </div>
+          </Card>
+
+          <Card>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Withdrawal Need Escalation</h4>
+            <p className="text-xs text-zinc-600 mb-3">
+              Inflation multiplies the monthly need by {(result.monthlyNeedAtRetirement / Math.max(1, monthlyNeedToday)).toFixed(2)}× over {result.yearsToRetirement} years — the required corpus is sized to the retirement-date need, not today&rsquo;s.
+            </p>
+            <div className="h-64" role="img" aria-label={`Bar chart comparing monthly withdrawal needs: ${formatCurrency(monthlyNeedToday)} today, ${formatCurrency(result.monthlyNeedAtRetirement)} at retirement, and a sustainable draw of ${formatCurrency(result.sustainableMonthlyWithdrawal)}.`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={[
+                    { label: 'Today', value: monthlyNeedToday },
+                    { label: 'At Retirement', value: result.monthlyNeedAtRetirement },
+                    { label: 'Sustainable Draw', value: result.sustainableMonthlyWithdrawal },
+                  ]}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
+                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis
+                    tickFormatter={formatCurrencyCompact}
+                    tick={{ fontSize: 11, fill: '#64748b' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    formatter={(value: any) => [formatCurrency(Number(value)), 'Monthly need']}
+                    contentStyle={{
+                      borderRadius: '14px',
+                      border: '1px solid rgba(226, 232, 240, 0.9)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                      padding: '10px 14px',
+                    }}
+                  />
+                  <Bar dataKey="value" name="Monthly need" radius={[6, 6, 0, 0]}>
+                    <Cell style={{ fill: 'var(--color-muted)' }} />
+                    <Cell style={{ fill: 'var(--color-accent)' }} />
+                    <Cell style={{ fill: 'var(--color-info)' }} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <table className="sr-only">
+              <caption>Monthly withdrawal needs today, at retirement, and the sustainable draw</caption>
+              <tbody>
+                <tr><th scope="row">Today</th><td>{formatCurrency(monthlyNeedToday)}</td></tr>
+                <tr><th scope="row">At retirement</th><td>{formatCurrency(result.monthlyNeedAtRetirement)}</td></tr>
+                <tr><th scope="row">Sustainable draw</th><td>{formatCurrency(result.sustainableMonthlyWithdrawal)}</td></tr>
+              </tbody>
+            </table>
           </Card>
         </>
       }

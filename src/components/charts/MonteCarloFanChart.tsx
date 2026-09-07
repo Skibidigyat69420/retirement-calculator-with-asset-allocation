@@ -15,6 +15,8 @@ import type { MonteCarloYearlyPercentile } from '../../types';
 interface MonteCarloFanChartProps {
   data: MonteCarloYearlyPercentile[];
   className?: string;
+  /** Accessible name for the chart container. */
+  ariaLabel?: string;
 }
 
 const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 };
@@ -32,7 +34,7 @@ const LEGEND_WRAPPER_STYLE = { fontSize: '11px', paddingBottom: '8px' };
 
 const XAXIS_LABEL = { value: 'Age', position: 'insideBottom' as const, offset: -5, fill: '#78716c', fontSize: 12 };
 
-export const MonteCarloFanChart = ({ data, className }: MonteCarloFanChartProps) => {
+export const MonteCarloFanChart = ({ data, className, ariaLabel }: MonteCarloFanChartProps) => {
   const chartData = data.map((d) => ({
     age: d.age,
     p5: d.p5,
@@ -42,8 +44,17 @@ export const MonteCarloFanChart = ({ data, className }: MonteCarloFanChartProps)
     p95: d.p95,
   }));
 
+  const last = chartData[chartData.length - 1];
+  const summary =
+    chartData.length === 0 || !last
+      ? 'No Monte Carlo percentile data.'
+      : `Monte Carlo corpus fan: at age ${last.age} the median path is ${formatCurrencyCompact(last.p50)}, ` +
+        `the favorable 75th percentile is ${formatCurrencyCompact(last.p75)}, and the stress 5th percentile is ` +
+        `${formatCurrencyCompact(last.p5)}.`;
+
   return (
-    <div className={className || "h-80 w-full"}>
+    <div className={className || "h-80 w-full"} role="img" aria-label={ariaLabel ?? 'Monte Carlo percentile fan chart'}>
+      <span className="sr-only">{summary}</span>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={chartData} margin={CHART_MARGIN}>
           <defs>

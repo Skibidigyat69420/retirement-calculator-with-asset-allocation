@@ -2,12 +2,20 @@ import { useState, useMemo } from 'react';
 import { ShieldCheck, Shield, ArrowRight, ArrowLeft, RotateCcw, CheckCircle2, AlertTriangle, TrendingUp, Target, Activity, Wallet, BarChart2, PieChart, Clock, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  ResponsiveContainer,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  Radar,
+  Tooltip,
+} from 'recharts';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { useCalculator } from '../context/CalculatorContext';
-import { RISK_QUESTIONS, calculateRiskScore, isComplete, getCategoryScores, buildGlidePath, analyzeRiskGap, detectBehavioralBiases, generateActionChecklist } from '../lib/riskQuestionnaire';
+import { RISK_QUESTIONS, calculateRiskScore, isComplete, getCategoryScores, getDimensionBreakdown, buildGlidePath, analyzeRiskGap, detectBehavioralBiases, generateActionChecklist } from '../lib/riskQuestionnaire';
 import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
 import { formatPercent } from '../lib/formatters';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
@@ -46,6 +54,21 @@ export const RiskQuestionnaire = () => {
   const currentQuestion = RISK_QUESTIONS[step];
   const score = useMemo(() => calculateRiskScore(riskAnswers), [riskAnswers]);
   const categoryScores = useMemo(() => getCategoryScores(riskAnswers), [riskAnswers]);
+  const dimensionBreakdown = useMemo(() => getDimensionBreakdown(riskAnswers), [riskAnswers]);
+
+  const radarData = useMemo(
+    () =>
+      (Object.keys(categoryLabels) as (keyof typeof categoryLabels)[]).map((dim) => ({
+        dimension: categoryLabels[dim],
+        score: Math.round(dimensionBreakdown[dim as keyof typeof dimensionBreakdown]?.percentage ?? 0),
+      })),
+    [dimensionBreakdown],
+  );
+
+  const weakestDimension = useMemo(
+    () => radarData.reduce((a, b) => (b.score < a.score ? b : a), radarData[0]),
+    [radarData],
+  );
   const glidePath = useMemo(() => buildGlidePath(inputs.currentAge, inputs.retirementAge, riskProfile), [inputs.currentAge, inputs.retirementAge, riskProfile]);
   
   const gapAnalysis = useMemo(() => analyzeRiskGap(riskAnswers), [riskAnswers]);
@@ -105,6 +128,36 @@ export const RiskQuestionnaire = () => {
             <div className="text-[10px] font-bold uppercase tracking-widest text-white">Profile</div>
             <h3 className="text-3xl font-serif mt-2">{riskProfile.label}</h3>
             <p className="text-sm text-slate-200 mt-3 leading-relaxed">{riskProfile.description}</p>
+
+            {/* Risk score gauge */}
+            <div className="mt-6 flex flex-col items-center" role="img" aria-label={`Risk score gauge: ${score} out of 100.`}>
+              <svg viewBox="0 0 140 82" className="w-40">
+                <path
+                  d="M 14 74 A 56 56 0 0 1 126 74"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.18)"
+                  strokeWidth="11"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M 14 74 A 56 56 0 0 1 126 74"
+                  fill="none"
+                  stroke="var(--color-emerald)"
+                  strokeWidth="11"
+                  strokeLinecap="round"
+                  strokeDasharray={`${(Math.max(0, Math.min(100, score)) / 100) * Math.PI * 56} ${Math.PI * 56}`}
+                />
+                <text x="70" y="66" textAnchor="middle" fontSize="24" fontWeight="700" fill="#ffffff" fontFamily="var(--font-mono)">
+                  {score}
+                </text>
+                <text x="70" y="80" textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.65)" letterSpacing="1.5">
+                  RISK SCORE / 100
+                </text>
+              </svg>
+              <span className="text-[11px] text-slate-300 mt-1">
+                {score >= 70 ? 'Growth-seeking band' : score >= 45 ? 'Balanced band' : score >= 25 ? 'Conservative-leaning band' : 'Capital-preservation band'}
+              </span>
+            </div>
             <div className="mt-6 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-300">Risk score</span>
@@ -165,6 +218,57 @@ export const RiskQuestionnaire = () => {
                 <h3 className="text-lg font-serif text-navy">Dimension Scores</h3>
                 <span className="text-xs text-slate-700">Weighted 0–100</span>
               </div>
+
+              {/* Dimension radar */}
+              <div
+                className="h-64 w-full mb-5"
+                role="img"
+                aria-label={`Radar chart of the eight risk dimensions. ${weakestDimension ? `Weakest dimension: ${weakestDimension.dimension} at ${weakestDimension.score} percent.` : ''}`}
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={radarData} outerRadius="72%">
+                    <PolarGrid stroke="#e2e8f0" />
+                    <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 10, fill: '#475569' }} />
+                    <Tooltip
+                      formatter={(value: any, name: any) => [`${Number(value)}%`, name === 'score' ? 'Dimension score' : name]}
+                      contentStyle={{
+                        borderRadius: '14px',
+                        border: '1px solid rgba(226, 232, 240, 0.9)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                        padding: '8px 12px',
+                        fontSize: '12px',
+                      }}
+                    />
+                    <Radar
+                      name="score"
+                      dataKey="score"
+                      stroke="var(--color-accent)"
+                      fill="var(--color-accent)"
+                      fillOpacity={0.25}
+                      strokeWidth={2}
+                      isAnimationActive={false}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+              <table className="sr-only">
+                <caption>Risk dimension scores as percentages</caption>
+                <thead>
+                  <tr><th>Dimension</th><th>Score</th></tr>
+                </thead>
+                <tbody>
+                  {radarData.map((d) => (
+                    <tr key={d.dimension}>
+                      <td>{d.dimension}</td>
+                      <td>{d.score}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="text-xs text-slate-600 mb-4">
+                {weakestDimension ? `${weakestDimension.dimension} is the binding constraint at ${weakestDimension.score}% — the profile cannot be more aggressive than this dimension supports.` : ''}
+              </p>
+
               <div className="space-y-4">
                 {Object.entries(categoryScores).map(([category, scorePct]) => (
                   <div key={category}>

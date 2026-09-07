@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -12,16 +13,15 @@ import {
 import { formatCurrencyCompact } from '../../lib/formatters';
 import { COLORS } from '../../lib/constants';
 
-interface DataPoint {
+export interface NetWorthDataPoint {
   label: string;
-  nominal: number;
-  real: number;
+  netWorth: number;
+  invested: number;
 }
 
-interface NominalRealChartProps {
-  data: DataPoint[];
+interface NetWorthInvestedChartProps {
+  data: NetWorthDataPoint[];
   xKey?: string;
-  /** Accessible name for the chart container. */
   ariaLabel?: string;
 }
 
@@ -36,25 +36,34 @@ const TOOLTIP_STYLE = {
   padding: '10px 14px',
 };
 
-const ACTIVE_DOT = { r: 5 };
-
-export const NominalRealChart = ({ data, xKey = 'label', ariaLabel }: NominalRealChartProps) => {
-  const first = data[0];
-  const last = data[data.length - 1];
-  const summary =
-    data.length === 0
-      ? 'No projection data.'
-      : `Nominal corpus moves from ${formatCurrencyCompact(first.nominal)} at ${first.label} to ` +
-        `${formatCurrencyCompact(last.nominal)} at ${last.label}; real purchasing-power value ends at ` +
-        `${formatCurrencyCompact(last.real)}.`;
+export const NetWorthInvestedChart = ({
+  data,
+  xKey = 'label',
+  ariaLabel = 'Net worth evolution with cumulative invested capital overlay',
+}: NetWorthInvestedChartProps) => {
+  const summary = useMemo(() => {
+    if (data.length === 0) return 'No projection data available.';
+    const first = data[0];
+    const last = data[data.length - 1];
+    const growthMultiple = first.netWorth > 0 ? last.netWorth / first.netWorth : 0;
+    return (
+      `Projected net worth grows from ${formatCurrencyCompact(first.netWorth)} at ${first.label} ` +
+      `to ${formatCurrencyCompact(last.netWorth)} at ${last.label}, while cumulative invested capital reaches ` +
+      `${formatCurrencyCompact(last.invested)} — a ${growthMultiple.toFixed(1)}× multiple on the starting net worth.`
+    );
+  }, [data]);
 
   return (
-    <div className="h-80 w-full" role="img" aria-label={ariaLabel ?? 'Nominal versus real corpus trajectory chart'}>
+    <div
+      className="h-80 w-full"
+      role="img"
+      aria-label={ariaLabel}
+    >
       <span className="sr-only">{summary}</span>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={CHART_MARGIN}>
           <defs>
-            <linearGradient id="colorNominal" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id="colorNetWorth" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={COLORS.navy} stopOpacity={0.12} />
               <stop offset="95%" stopColor={COLORS.navy} stopOpacity={0} />
             </linearGradient>
@@ -62,14 +71,14 @@ export const NominalRealChart = ({ data, xKey = 'label', ariaLabel }: NominalRea
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
           <XAxis
             dataKey={xKey}
-            tick={{ fontSize: 12, fill: '#78716c' }}
+            tick={{ fontSize: 12, fill: 'var(--color-faint)' }}
             axisLine={false}
             tickLine={false}
             tickMargin={10}
           />
           <YAxis
             tickFormatter={formatCurrencyCompact}
-            tick={{ fontSize: 12, fill: '#78716c' }}
+            tick={{ fontSize: 12, fill: 'var(--color-faint)' }}
             axisLine={false}
             tickLine={false}
           />
@@ -82,21 +91,20 @@ export const NominalRealChart = ({ data, xKey = 'label', ariaLabel }: NominalRea
           <Legend verticalAlign="top" height={36} iconType="circle" />
           <Area
             type="monotone"
-            dataKey="nominal"
-            name="Nominal Corpus"
+            dataKey="netWorth"
+            name="Net Worth"
             stroke={COLORS.navy}
             strokeWidth={2.5}
-            fill="url(#colorNominal)"
+            fill="url(#colorNetWorth)"
           />
           <Line
             type="monotone"
-            dataKey="real"
-            name="Real Corpus (Purchasing Power)"
-            stroke={COLORS.gold}
+            dataKey="invested"
+            name="Cumulative Capital Invested"
+            stroke="var(--color-accent)"
             strokeWidth={2}
             strokeDasharray="6 4"
             dot={false}
-            activeDot={ACTIVE_DOT}
           />
         </AreaChart>
       </ResponsiveContainer>

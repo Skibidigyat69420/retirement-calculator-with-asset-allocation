@@ -14,6 +14,10 @@ import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/for
 import { useCalculator } from '../context/CalculatorContext';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import { GoalConflictMatrix } from '../components/analytics/GoalConflictMatrix';
+import { GoalPriorityWaterfall } from '../components/charts/GoalPriorityWaterfall';
+import { GoalSuccessChart } from '../components/charts/GoalSuccessChart';
+import { GoalHorizonTimeline } from '../components/charts/GoalHorizonTimeline';
+import { evaluateGoalConflicts } from '../lib/goalConflictEngine';
 import { cn } from '../lib/utils';
 import type { GoalPriority, Goal } from '../types';
 import type { GoalResult } from '../lib/wealthEngine';
@@ -127,6 +131,39 @@ export const GoalPlanner = () => {
       { totalFV: 0, totalPV: 0, totalReqSIP: 0 },
     );
   }, [inputs.goals, inputs.inflation, wealthResult.goalResults]);
+
+  // Priority-order funding waterfall: projected wealth cascaded across goals
+  // (retirement demand is funded first by the conflict engine).
+  const conflictResult = useMemo(
+    () => evaluateGoalConflicts(inputs, wealthResult),
+    [inputs, wealthResult],
+  );
+
+  // Per-goal Monte Carlo feasibility (0–100) for the comparison bar chart.
+  const goalSuccessData = useMemo(
+    () =>
+      wealthResult.goalResults.map((g) => ({
+        name: g.goal.name,
+        successRate: g.successRate * 100,
+      })),
+    [wealthResult.goalResults],
+  );
+
+  // All goals on a single horizon axis, annotated with future values.
+  const horizonGoals = useMemo(
+    () =>
+      inputs.goals.map((goal) => {
+        const g = wealthResult.goalResults.find((res) => res.goal.id === goal.id);
+        return {
+          id: goal.id,
+          name: goal.name,
+          yearsToGoal: goal.yearsToGoal,
+          priority: goal.priority,
+          futureValue: g?.futureValue,
+        };
+      }),
+    [inputs.goals, wealthResult.goalResults],
+  );
 
   const histogramData = useMemo(() => {
     if (!simulation || !simulation.probabilityDistribution || simulation.probabilityDistribution.length === 0) return [];
@@ -956,6 +993,64 @@ export const GoalPlanner = () => {
           </Card>
         </div>
       </div>
+
+      {/* Goal Priority Funding Waterfall & Monte Carlo Feasibility */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-white border border-zinc-200/90 shadow-2xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
+            <div className="flex items-center gap-2">
+              <PieChart size={18} className="text-zinc-500" />
+              <h3 className="text-base font-bold text-zinc-900">Priority Funding Waterfall</h3>
+            </div>
+            <Badge variant={conflictResult.isFullyFunded ? 'success' : 'danger'}>
+              {conflictResult.isFullyFunded ? 'Fully Funded' : 'Deficit'}
+            </Badge>
+          </div>
+          <GoalPriorityWaterfall result={conflictResult} />
+          <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
+            <strong className="text-zinc-700">Insight:</strong>{' '}
+            {conflictResult.isFullyFunded
+              ? 'Projected wealth covers every goal in priority order — surplus remains after the last milestone.'
+              : 'Wealth runs out part-way down the priority list; the dashed segments show exactly which goals lose funding first.'}
+          </p>
+        </Card>
+
+        <Card className="bg-white border border-zinc-200/90 shadow-2xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
+            <div className="flex items-center gap-2">
+              <BarChart3 size={18} className="text-zinc-500" />
+              <h3 className="text-base font-bold text-zinc-900">Monte Carlo Feasibility by Goal</h3>
+            </div>
+            <span className="text-xs font-mono font-medium text-zinc-500">
+              Threshold {formatPercent(riskProfile.goalSuccessThreshold)}
+            </span>
+          </div>
+          <GoalSuccessChart data={goalSuccessData} threshold={riskProfile.goalSuccessThreshold} />
+          <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
+            <strong className="text-zinc-700">Insight:</strong>{' '}
+            {goalSuccessData.filter((g) => g.successRate >= riskProfile.goalSuccessThreshold).length === goalSuccessData.length
+              ? 'Every goal clears the success threshold — feasibility is not the binding constraint.'
+              : 'Bars below the dashed threshold are the goals to renegotiate, delay, or SIP-fund first.'}
+          </p>
+        </Card>
+      </div>
+
+      {/* Goal Horizon Timeline */}
+      <Card className="bg-white border border-zinc-200/90 shadow-2xs">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
+          <div className="flex items-center gap-2">
+            <Target size={18} className="text-zinc-500" />
+            <h3 className="text-base font-bold text-zinc-900">Goal Horizon Timeline</h3>
+          </div>
+          <span className="text-xs font-mono text-zinc-500">
+            {inputs.goals.length} milestone{inputs.goals.length !== 1 ? 's' : ''} on one axis
+          </span>
+        </div>
+        <GoalHorizonTimeline goals={horizonGoals} currentAge={inputs.currentAge} />
+        <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
+          <strong className="text-zinc-700">Insight:</strong> Clustered markers reveal cash-flow crunches — goals landing in the same year compete for the same corpus in the simulation.
+        </p>
+      </Card>
 
       {/* Goal Conflict Matrix & Capital Waterfall */}
       <GoalConflictMatrix />

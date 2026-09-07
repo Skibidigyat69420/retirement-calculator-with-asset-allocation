@@ -1,4 +1,4 @@
-import { useReducer, useEffect, useCallback } from 'react';
+import { useReducer, useEffect, useCallback, useMemo } from 'react';
 import {
   RefreshCw,
   User,
@@ -10,14 +10,29 @@ import {
   AlertCircle,
   Database,
   Globe,
+  PieChart as PieChartIcon,
+  Scale,
 } from 'lucide-react';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Alert } from '../components/ui/Alert';
-import { formatCurrency } from '../lib/formatters';
+import { DonutChart } from '../components/charts/DonutChart';
+import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
+import { ASSET_COLORS } from '../lib/constants';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ReferenceLine,
+} from 'recharts';
 import {
   loadSession,
   buildDefaultCredentials,
@@ -161,6 +176,50 @@ export const AngelData = () => {
   const orderList = orderBook?.data || [];
   const tradeList = tradeBook?.data || [];
 
+  // Normalised holding rows for the allocation donut and P&L visualisations.
+  // Memoized on the raw holdings JSON so it re-evaluates only when the snapshot changes.
+  const holdingRows = useMemo(() => {
+    const parsed = parseFile(snapshot?.files.holdings);
+    const list = (parsed?.data?.holdings || parsed?.data || []) as any[];
+    return list
+      .map((h) => ({
+        symbol: h.tradingsymbol || 'Unknown',
+        value: Number(h.totalHoldingValue) || Number(h.quantity) * Number(h.ltp) || 0,
+        pnl: Number(h.pnl) || 0,
+      }))
+      .filter((r) => r.value > 0)
+      .sort((a, b) => b.value - a.value);
+  }, [snapshot?.files.holdings]);
+
+  const holdingsTotal = useMemo(() => holdingRows.reduce((s, r) => s + r.value, 0), [holdingRows]);
+  const holdingsPnlTotal = useMemo(() => holdingRows.reduce((s, r) => s + r.pnl, 0), [holdingRows]);
+
+  // Slice colours reuse the sanctioned asset-category palette (labels in the
+  // legend and adjacent table carry the encoding, so colour is never alone).
+  const HOLDING_PALETTE = useMemo(() => Array.from(new Set(Object.values(ASSET_COLORS))), []);
+
+  const holdingsDonutData = useMemo(() => {
+    const top = holdingRows.slice(0, 6).map((r, i) => ({
+      name: r.symbol,
+      value: r.value,
+      color: HOLDING_PALETTE[i % HOLDING_PALETTE.length],
+    }));
+    const rest = holdingRows.slice(6);
+    if (rest.length > 0) {
+      top.push({
+        name: `Others (${rest.length})`,
+        value: rest.reduce((s, r) => s + r.value, 0),
+        color: HOLDING_PALETTE[5 % HOLDING_PALETTE.length],
+      });
+    }
+    return top;
+  }, [holdingRows, HOLDING_PALETTE]);
+
+  const pnlBarData = useMemo(() => {
+    const top = [...holdingRows].sort((a, b) => Math.abs(b.pnl) - Math.abs(a.pnl)).slice(0, 8);
+    return top.map((r) => ({ symbol: r.symbol, pnl: r.pnl }));
+  }, [holdingRows]);
+
   return (
     <div className="space-y-8">
       <SectionTitle
@@ -289,6 +348,115 @@ export const AngelData = () => {
           <p className="text-sm text-slate-700">No holdings found.</p>
         )}
       </Card>
+
+      {holdingRows.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <div className="flex items-center gap-2 mb-1">
+              <PieChartIcon size={18} className="text-amber-500" />
+              <h3 className="text-lg font-serif text-navy">Holdings Allocation</h3>
+            </div>
+            <p className="text-xs text-slate-600 mb-2">
+              {holdingRows[0]?.symbol} is the largest position at{' '}
+              <span className="font-mono font-bold text-navy">{formatPercent((holdingRows[0].value / Math.max(1, holdingsTotal)) * 100)}</span> of the{' '}
+              {formatCurrencyCompact(holdingsTotal)} equity book{holdingRows.length > 6 ? `; the remaining ${holdingRows.length - 6} holdings are grouped as "Others".` : '.'}
+            </p>
+            <div
+              role="img"
+              aria-label={`Donut chart of holdings allocation by symbol. Largest holding: ${holdingRows[0]?.symbol} at ${formatPercent((holdingRows[0]?.value ?? 0) / Math.max(1, holdingsTotal) * 100)} of total value.`}
+            >
+              <DonutChart data={holdingsDonutData} />
+            </div>
+            <table className="sr-only">
+              <caption>Holdings allocation by symbol</caption>
+              <thead>
+                <tr><th>Symbol</th><th>Value</th></tr>
+              </thead>
+              <tbody>
+                {holdingRows.map((r) => (
+                  <tr key={r.symbol}>
+                    <td>{r.symbol}</td>
+                    <td>{formatCurrency(r.value)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+
+          <Card>
+            <div className="flex items-center gap-2 mb-1">
+              <Scale size={18} className="text-amber-500" />
+              <h3 className="text-lg font-serif text-navy">P&L per Holding</h3>
+            </div>
+            <p className="text-xs text-slate-600 mb-2">
+              Unrealised P&L across the book nets to{' '}
+              <span className={`font-mono font-bold ${holdingsPnlTotal >= 0 ? 'text-positive' : 'text-negative'}`}>
+                {holdingsPnlTotal >= 0 ? '+' : ''}{formatCurrency(holdingsPnlTotal)}
+              </span>
+              {pnlBarData[0] ? `; ${pnlBarData[0].symbol} contributes the largest absolute move at ${formatCurrency(Math.abs(pnlBarData[0].pnl))}.` : '.'}
+            </p>
+            <div
+              className="h-72 w-full"
+              role="img"
+              aria-label={`Horizontal bar chart of unrealised profit and loss per holding. Net book P&L is ${formatCurrency(holdingsPnlTotal)}.`}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={pnlBarData} layout="vertical" margin={{ top: 5, right: 16, left: 8, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-border)" />
+                  <XAxis
+                    type="number"
+                    tickFormatter={(v: number) => formatCurrencyCompact(v)}
+                    tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="symbol"
+                    width={90}
+                    tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    formatter={(value: any) => [formatCurrency(Number(value)), 'Unrealised P&L']}
+                    contentStyle={{
+                      borderRadius: '14px',
+                      border: '1px solid var(--color-border)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                      padding: '10px 14px',
+                    }}
+                  />
+                  <ReferenceLine x={0} stroke="var(--color-border-strong)" />
+                  <Bar dataKey="pnl" name="Unrealised P&L" radius={[4, 4, 4, 4]} minPointSize={2}>
+                    {pnlBarData.map((d) => (
+                      <Cell key={d.symbol} style={{ fill: d.pnl >= 0 ? 'var(--color-positive)' : 'var(--color-negative)' }} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex items-center justify-center gap-4 mt-2 text-[11px] text-slate-600">
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-positive" /> Gain</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-negative" /> Loss</span>
+            </div>
+            <table className="sr-only">
+              <caption>Unrealised profit and loss per holding</caption>
+              <thead>
+                <tr><th>Symbol</th><th>Unrealised P&L</th></tr>
+              </thead>
+              <tbody>
+                {pnlBarData.map((r) => (
+                  <tr key={r.symbol}>
+                    <td>{r.symbol}</td>
+                    <td>{formatCurrency(r.pnl)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        </div>
+      )}
 
       <Card>
         <div className="flex items-center gap-2 mb-4">

@@ -8,7 +8,19 @@ import {
   CheckCircle2,
   DollarSign,
   Layers,
+  GitCompare,
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ReferenceLine,
+} from 'recharts';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -142,6 +154,27 @@ export const ReversePlanning = () => {
   const milestonePresets = [50000000, 75000000, 100000000, 150000000];
   const agePresets = [45, 50, 55, 58, 60].filter(
     (age) => age > inputs.currentAge && age < inputs.lifeExpectancy,
+  );
+
+  const pathwayChartData = useMemo(
+    () =>
+      result.pathways.map((p) => ({
+        id: p.id,
+        name: p.name,
+        requiredSipMonthly: p.requiredSipMonthly,
+        projectedRetirementAge: p.projectedRetirementAge,
+        successProbability: p.successProbability,
+      })),
+    [result.pathways],
+  );
+
+  const cheapestPathway = useMemo(
+    () => pathwayChartData.reduce((a, b) => (b.requiredSipMonthly < a.requiredSipMonthly ? b : a), pathwayChartData[0]),
+    [pathwayChartData],
+  );
+  const fastestPathway = useMemo(
+    () => pathwayChartData.reduce((a, b) => (b.projectedRetirementAge < a.projectedRetirementAge ? b : a), pathwayChartData[0]),
+    [pathwayChartData],
   );
 
   return (
@@ -371,6 +404,152 @@ export const ReversePlanning = () => {
           </div>
         </div>
       </Card>
+
+      {/* Pathway Comparison Visuals */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="border border-zinc-200 bg-white shadow-2xs space-y-3">
+          <h4 className="text-sm font-sans font-bold text-zinc-950 flex items-center gap-2">
+            <GitCompare size={16} className="text-zinc-600" />
+            Required Monthly SIP per Pathway
+          </h4>
+          <p className="text-xs text-zinc-600">
+            {cheapestPathway ? `"${cheapestPathway.name}" demands the lowest commitment at ${formatCurrency(cheapestPathway.requiredSipMonthly)}/mo; the spread across pathways shows how spend, age, and SIP levers trade off against each other.` : ''}
+          </p>
+          <div
+            className="h-64 w-full"
+            role="img"
+            aria-label={`Horizontal bar chart of required monthly SIP per pathway. Lowest: ${cheapestPathway ? `${cheapestPathway.name} at ${formatCurrency(cheapestPathway.requiredSipMonthly)} per month` : 'n/a'}.`}
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={pathwayChartData} layout="vertical" margin={{ top: 5, right: 16, left: 8, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-border)" />
+                <XAxis
+                  type="number"
+                  tickFormatter={(v: number) => formatCurrencyCompact(v)}
+                  tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  width={130}
+                  tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip
+                  formatter={(value: any, _name: any, item: any) => [
+                    `${formatCurrency(Number(value))}/mo · ${Number(item?.payload?.successProbability ?? 0)}% success`,
+                    'Required SIP',
+                  ]}
+                  contentStyle={{
+                    borderRadius: '14px',
+                    border: '1px solid var(--color-border)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                    padding: '10px 14px',
+                  }}
+                />
+                <Bar dataKey="requiredSipMonthly" name="Required SIP" radius={[0, 4, 4, 0]} minPointSize={2}>
+                  {pathwayChartData.map((p) => (
+                    <Cell key={p.id} style={{ fill: 'var(--color-accent)' }} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <table className="sr-only">
+            <caption>Required monthly SIP per pathway</caption>
+            <thead>
+              <tr><th>Pathway</th><th>Required SIP</th><th>Success probability</th></tr>
+            </thead>
+            <tbody>
+              {pathwayChartData.map((p) => (
+                <tr key={p.id}>
+                  <td>{p.name}</td>
+                  <td>{formatCurrency(p.requiredSipMonthly)}</td>
+                  <td>{p.successProbability}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+
+        <Card className="border border-zinc-200 bg-white shadow-2xs space-y-3">
+          <h4 className="text-sm font-sans font-bold text-zinc-950 flex items-center gap-2">
+            <Clock size={16} className="text-zinc-600" />
+            Feasible Retirement Age Timeline
+          </h4>
+          <p className="text-xs text-zinc-600">
+            {fastestPathway ? `"${fastestPathway.name}" reaches the milestone earliest at age ${fastestPathway.projectedRetirementAge}; bars right of the dashed line retire later than the current plan (age ${inputs.retirementAge}).` : ''}
+          </p>
+          <div
+            className="h-64 w-full"
+            role="img"
+            aria-label={`Horizontal bar chart of projected retirement age per pathway relative to the current plan age of ${inputs.retirementAge}. Earliest: ${fastestPathway ? `${fastestPathway.name} at age ${fastestPathway.projectedRetirementAge}` : 'n/a'}.`}
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={pathwayChartData} layout="vertical" margin={{ top: 5, right: 16, left: 8, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-border)" />
+                <XAxis
+                  type="number"
+                  domain={['dataMin - 2', 'dataMax + 2']}
+                  tickFormatter={(v: number) => `Age ${v}`}
+                  tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  width={130}
+                  tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip
+                  formatter={(value: any) => [`Age ${Number(value)}`, 'Projected retirement age']}
+                  contentStyle={{
+                    borderRadius: '14px',
+                    border: '1px solid var(--color-border)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                    padding: '10px 14px',
+                  }}
+                />
+                <ReferenceLine x={inputs.retirementAge} stroke="var(--color-warning)" strokeDasharray="5 4" />
+                <Bar dataKey="projectedRetirementAge" name="Projected retirement age" radius={[0, 4, 4, 0]} minPointSize={2}>
+                  {pathwayChartData.map((p) => (
+                    <Cell
+                      key={p.id}
+                      style={{ fill: p.projectedRetirementAge <= inputs.retirementAge ? 'var(--color-accent)' : 'var(--color-info)' }}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex items-center justify-center gap-4 text-[11px] text-zinc-600">
+            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-accent" /> At/before plan age</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-info" /> Later than plan</span>
+            <span className="text-zinc-500">Dashed line = current plan (age {inputs.retirementAge})</span>
+          </div>
+          <table className="sr-only">
+            <caption>Projected retirement age per pathway versus the current plan age</caption>
+            <thead>
+              <tr><th>Pathway</th><th>Projected retirement age</th><th>Current plan age</th></tr>
+            </thead>
+            <tbody>
+              {pathwayChartData.map((p) => (
+                <tr key={p.id}>
+                  <td>{p.name}</td>
+                  <td>{p.projectedRetirementAge}</td>
+                  <td>{inputs.retirementAge}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      </div>
 
       {/* 4 Strategic Pathways */}
       <div className="space-y-4">

@@ -164,12 +164,41 @@ export const Retirement = () => {
   );
 
   const drawdownChartData = useMemo(() => {
-    return swpPlan.yearlyData.map((d) => ({
-      label: `Age ${inputs.retirementAge + d.year}`,
-      corpus: d.corpusLeft,
-      withdrawal: d.withdrawn,
-    }));
-  }, [swpPlan.yearlyData, inputs.retirementAge]);
+    const percentilesByAge = new Map(
+      wealthResult.monteCarlo.yearlyPercentiles.map((p) => [p.age, p]),
+    );
+    return swpPlan.yearlyData.map((d) => {
+      const age = inputs.retirementAge + d.year;
+      const band = percentilesByAge.get(age);
+      return {
+        label: `Age ${age}`,
+        corpus: d.corpusLeft,
+        withdrawal: d.withdrawn,
+        p5: band?.p5,
+        p50: band?.p50,
+        p95: band?.p95,
+      };
+    });
+  }, [swpPlan.yearlyData, inputs.retirementAge, wealthResult.monteCarlo.yearlyPercentiles]);
+
+  // Per-year survival probability during the distribution phase: the share of
+  // Monte Carlo paths whose corpus is still positive at each age.
+  const survivalByYear = useMemo(() => {
+    const outcomes = wealthResult.monteCarlo.outcomes;
+    const totalYears = Math.max(0, inputs.lifeExpectancy - inputs.currentAge);
+    const accYears = Math.max(0, inputs.retirementAge - inputs.currentAge);
+    const rows: { age: number; probability: number }[] = [];
+    for (let y = accYears; y < totalYears; y++) {
+      const alive = outcomes.filter((o) => (o.yearlyValues[y] ?? 0) > 0).length;
+      rows.push({
+        age: inputs.currentAge + y + 1,
+        probability: outcomes.length > 0 ? alive / outcomes.length : 1,
+      });
+    }
+    return rows;
+  }, [wealthResult.monteCarlo.outcomes, inputs.lifeExpectancy, inputs.currentAge, inputs.retirementAge]);
+
+  const halfSurvivalAge = survivalByYear.find((r) => r.probability < 0.5)?.age ?? null;
 
   return (
     <div className="space-y-6">
@@ -456,6 +485,95 @@ export const Retirement = () => {
               </span>
             </div>
             <SWPDrawdownChart data={drawdownChartData} />
+            <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
+              <strong className="text-zinc-700">Insight:</strong> The gold area is the deterministic plan; the dashed navy and red lines are the Monte Carlo median (P50) and stress (P5) paths around it.
+            </p>
+          </Card>
+
+          <Card className="bg-white border border-zinc-200/90 shadow-2xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-zinc-100">
+              <h3 className="text-base font-bold text-zinc-950 flex items-center gap-2">
+                <Flame size={18} className="text-zinc-600" /> Year-by-Year Depletion Risk Heat Strip
+              </h3>
+              <span className="text-xs font-mono text-zinc-500">
+                {wealthResult.monteCarlo.outcomes.length.toLocaleString()} Monte Carlo paths
+              </span>
+            </div>
+
+            <div
+              role="img"
+              aria-label={`Depletion risk heat strip by age: probability the corpus is still solvent at each age from ${inputs.retirementAge + 1} to ${inputs.lifeExpectancy}`}
+            >
+              <span className="sr-only">
+                {halfSurvivalAge !== null
+                  ? `Survival probability falls below 50 percent at age ${halfSurvivalAge}.`
+                  : `The corpus stays solvent in at least half of all simulated paths through age ${inputs.lifeExpectancy}.`}
+              </span>
+              {survivalByYear.length > 0 ? (
+                <>
+                  <div className="flex gap-0.5" aria-hidden="true">
+                    {survivalByYear.map((r) => (
+                      <div
+                        key={r.age}
+                        className={cn(
+                          'flex-1 h-8 rounded-xs min-w-0 transition-colors',
+                          r.probability >= 0.95
+                            ? 'bg-positive'
+                            : r.probability >= 0.8
+                              ? 'bg-positive/70'
+                              : r.probability >= 0.5
+                                ? 'bg-warning'
+                                : r.probability > 0
+                                  ? 'bg-negative/60'
+                                  : 'bg-negative',
+                        )}
+                        title={`Age ${r.age}: ${formatPercent(r.probability * 100)} of paths solvent`}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex gap-0.5 mt-1 text-[9px] font-mono text-faint" aria-hidden="true">
+                    {survivalByYear.map((r, i) => (
+                      <div key={r.age} className="flex-1 min-w-0 text-center">
+                        {i % 5 === 0 || i === survivalByYear.length - 1 ? r.age : ''}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-zinc-600">No distribution years to display.</p>
+              )}
+
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mt-3 text-[11px] text-muted">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-xs bg-positive inline-block" aria-hidden="true" />
+                  ≥95% solvent
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-xs bg-positive/70 inline-block" aria-hidden="true" />
+                  80–95%
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-xs bg-warning inline-block" aria-hidden="true" />
+                  50–80%
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-xs bg-negative/60 inline-block" aria-hidden="true" />
+                  1–50%
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-xs bg-negative inline-block" aria-hidden="true" />
+                  Depleted
+                </span>
+                <span className="ml-auto font-mono text-zinc-700">Age →</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
+              <strong className="text-zinc-700">Insight:</strong>{' '}
+              {halfSurvivalAge !== null
+                ? `Half of the simulated paths run dry by age ${halfSurvivalAge} — the amber-to-red transition marks where sequence risk bites.`
+                : `Every simulated path retains a positive corpus through age ${inputs.lifeExpectancy}; the plan carries no depletion risk.`}
+            </p>
           </Card>
 
           <Card>
@@ -592,6 +710,41 @@ export const Retirement = () => {
               <p className="text-xs text-zinc-600 leading-relaxed mb-4">
                 Evaluating first-year initial withdrawal rate against the empirical Safe Withdrawal Rate (SWR) rules (Trinity 4% and Indian 3.5%–4.5% inflation-adjusted benchmarks).
               </p>
+
+              {/* Visual SWR gauge: zones + current-rate marker */}
+              <div
+                className="mb-4"
+                role="img"
+                aria-label={`Withdrawal rate gauge: current gross initial withdrawal rate ${formatPercent(swpWithdrawalRate)}, safe zone under 3.5 percent, caution zone 3.5 to 4.5 percent, elevated risk above 4.5 percent`}
+              >
+                <span className="sr-only">
+                  Current gross initial withdrawal rate is {formatPercent(swpWithdrawalRate)}.
+                  {swpWithdrawalRate <= 3.5
+                    ? ' It sits in the safe zone below 3.5 percent.'
+                    : swpWithdrawalRate <= 4.5
+                      ? ' It sits in the caution zone between 3.5 and 4.5 percent.'
+                      : ' It sits in the elevated-risk zone above 4.5 percent.'}
+                </span>
+                <div className="flex justify-between text-[10px] font-mono text-faint mb-1">
+                  <span>0%</span>
+                  <span>3.5% Safe</span>
+                  <span>4.5% Caution</span>
+                  <span>10%+</span>
+                </div>
+                <div className="relative h-3 rounded-full overflow-hidden flex border border-border" aria-hidden="true">
+                  <div className="bg-positive h-full" style={{ width: '35%' }} />
+                  <div className="bg-warning h-full" style={{ width: '10%' }} />
+                  <div className="bg-negative h-full" style={{ width: '55%' }} />
+                  <div
+                    className="absolute top-0 h-full w-0.5 bg-ink"
+                    style={{ left: `${Math.min(99, Math.max(0, swpWithdrawalRate * 10))}%` }}
+                  />
+                </div>
+                <div className="flex justify-between items-center mt-1 text-[11px]">
+                  <span className="text-muted">Your initial withdrawal rate</span>
+                  <span className="font-mono font-bold text-ink">{formatPercent(swpWithdrawalRate)}</span>
+                </div>
+              </div>
 
               <div className="space-y-3 text-xs">
                 {/* Benchmark Comparison Rows */}

@@ -267,7 +267,16 @@ export const SWPCalculator = () => {
                   {result.sustainable ? `Sustains ${horizonYears}+ Yrs` : `Depletes Year ${result.depletionYear}`}
                 </Badge>
               </div>
-              <div className="h-72">
+              <p className="text-xs text-zinc-600 mb-3">
+                {result.sustainable
+                  ? `Withdrawals of ${formatCurrency(monthlyWithdrawal)}/mo (inflation-indexed) are comfortably funded — the corpus still stands at ${formatCurrency(chartData[chartData.length - 1]?.corpus ?? 0)} after ${horizonYears} years.`
+                  : `At ${formatCurrency(monthlyWithdrawal)}/mo the corpus runs dry in year ${result.depletionYear}; cutting to the sustainable ${formatCurrency(Math.round(sustainableResult.monthlyWithdrawal))}/mo preserves capital through the full horizon.`}
+              </p>
+              <div
+                className="h-72"
+                role="img"
+                aria-label={`Area chart of remaining corpus over ${horizonYears} years. ${result.sustainable ? `The corpus sustains withdrawals for the full horizon, ending at ${formatCurrency(chartData[chartData.length - 1]?.corpus ?? 0)}.` : `The corpus depletes in year ${result.depletionYear}.`}`}
+              >
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
@@ -309,6 +318,20 @@ export const SWPCalculator = () => {
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
+              <table className="sr-only">
+                <caption>Remaining corpus at the end of each horizon year</caption>
+                <thead>
+                  <tr><th>Year</th><th>Remaining corpus</th></tr>
+                </thead>
+                <tbody>
+                  {chartData.map((d) => (
+                    <tr key={d.year}>
+                      <td>{d.year}</td>
+                      <td>{formatCurrency(d.corpus)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </Card>
           )}
 

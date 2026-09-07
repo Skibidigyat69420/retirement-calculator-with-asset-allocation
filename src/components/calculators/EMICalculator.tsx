@@ -11,11 +11,14 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceLine,
 } from 'recharts';
 
 import { useCalculator } from '../../context/CalculatorContext';
@@ -34,6 +37,19 @@ export const EMICalculator = () => {
     principal: d.principalPaid,
     interest: d.interestPaid,
   }));
+
+  // Remaining outstanding balance at the end of each loan year.
+  const balanceData = useMemo(
+    () =>
+      result.yearlyData.reduce<{ year: string; balance: number }[]>((acc, d) => {
+        const prev = acc.length > 0 ? acc[acc.length - 1].balance : principal;
+        acc.push({ year: `Y${d.year}`, balance: Math.max(0, prev - d.principalPaid) });
+        return acc;
+      }, []),
+    [result.yearlyData, principal],
+  );
+
+  const interestShare = result.totalPayment > 0 ? (result.totalInterest / result.totalPayment) * 100 : 0;
 
   const handleAddEmiToExpenses = () => {
     const emiRounded = Math.round(result.emi);
@@ -65,7 +81,10 @@ export const EMICalculator = () => {
 
           <Card>
             <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Yearly Amortisation</h4>
-            <div className="h-72">
+            <p className="text-xs text-zinc-600 mb-3">
+              Interest is front-loaded: {interestShare.toFixed(0)}% of every EMI rupee over the full tenure goes to interest, so the principal outstanding falls slowly in the early years.
+            </p>
+            <div className="h-72" role="img" aria-label={`Stacked bar chart of yearly principal and interest payments over ${years} years. Total interest is ${formatCurrency(result.totalInterest)} on a ${formatCurrency(principal)} loan.`}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
@@ -93,6 +112,80 @@ export const EMICalculator = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+            <table className="sr-only">
+              <caption>Yearly principal and interest paid</caption>
+              <thead>
+                <tr><th>Year</th><th>Principal paid</th><th>Interest paid</th></tr>
+              </thead>
+              <tbody>
+                {chartData.map((d) => (
+                  <tr key={d.year}>
+                    <td>{d.year}</td>
+                    <td>{formatCurrency(d.principal)}</td>
+                    <td>{formatCurrency(d.interest)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+
+          <Card>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Outstanding Balance Curve</h4>
+            <p className="text-xs text-zinc-600 mb-3">
+              Half the principal is still outstanding around the midpoint of the tenure despite paying half the EMIs — the balance only accelerates down once the interest component shrinks.
+            </p>
+            <div className="h-64" role="img" aria-label={`Area chart of the remaining loan balance by year, starting at ${formatCurrency(principal)} and reaching zero in year ${years}.`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={balanceData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="emiBalance" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={COLORS.ink} stopOpacity={0.15} />
+                      <stop offset="95%" stopColor={COLORS.ink} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
+                  <XAxis dataKey="year" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis
+                    tickFormatter={formatCurrencyCompact}
+                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    formatter={(value: any) => [formatCurrency(Number(value)), 'Outstanding balance']}
+                    contentStyle={{
+                      borderRadius: '14px',
+                      border: '1px solid rgba(226, 232, 240, 0.9)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                      padding: '10px 14px',
+                    }}
+                  />
+                  <ReferenceLine y={principal / 2} stroke="#94a3b8" strokeDasharray="4 4" />
+                  <Area
+                    type="monotone"
+                    dataKey="balance"
+                    name="Outstanding Balance"
+                    stroke={COLORS.ink}
+                    strokeWidth={2}
+                    fill="url(#emiBalance)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <table className="sr-only">
+              <caption>Outstanding loan balance at the end of each year</caption>
+              <thead>
+                <tr><th>Year</th><th>Balance</th></tr>
+              </thead>
+              <tbody>
+                {balanceData.map((d) => (
+                  <tr key={d.year}>
+                    <td>{d.year}</td>
+                    <td>{formatCurrency(d.balance)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </Card>
         </>
       }
