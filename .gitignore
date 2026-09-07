@@ -28,8 +28,11 @@ __pycache__/
 *.njsproj
 *.sln
 *.sw?
+# Locally generated IPS drafts stay untracked; committed sample docs are served via the API.
 ips/*
 !ips/.gitkeep
+!ips/Smoke_Test.md
+!ips/Test_Client_IPS.md
 data/live_feed.csv
 
 # QA artifacts
