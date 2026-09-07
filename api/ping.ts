@@ -1,3 +1,5 @@
-export default function handler() {
-  return Response.json({ ok: true, ping: 'pong', node: process.version });
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+export default function handler(_req: VercelRequest, res: VercelResponse) {
+  res.json({ ok: true, ping: 'pong', node: process.version });
 }
