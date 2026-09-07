@@ -42,5 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const files = [...embedded, ...diskFiles].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  sendJson(res, { files });
+  // `embedded` count doubles as a deployment marker: 2 means the build-time
+  // generator ran against the committed ips/ docs on this deployment.
+  sendJson(res, { files, embedded: IPS_DOCS.length });
 }
