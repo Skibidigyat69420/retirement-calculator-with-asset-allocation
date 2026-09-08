@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef, useDeferredValue } from 'react';
+import { createContext, useContext, useState, useMemo, useCallback, useEffect, useDeferredValue } from 'react';
 import type {
   MasterPlanInputs,
   Goal,
@@ -22,11 +22,24 @@ import {
 import { fetchMarketDataFromBackend } from '../lib/marketData';
 import { runWealthEngine, type WealthEngineResult } from '../lib/wealthEngine';
 import { calculateRiskScore, getRiskProfile } from '../lib/riskQuestionnaire';
-import { loadClientData, saveClientData, resetClientData } from '../lib/persistenceUtils';
+
 import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
 import type { StoredPlan } from '../lib/store';
 import { savePlan, loadPlan, listPlans, deletePlan } from '../lib/planStorage';
 import { getActivePlanId, setActivePlanId } from '../lib/store/localStorageStore';
+import { generateId } from '../lib/utils';
+
+export const DEFAULT_MEETING_STATE: ClientMeetingState = {
+  currentStage: 1,
+  completedStages: [],
+  stageChecklists: {},
+  notes: {},
+  lastUpdated: new Date().toISOString(),
+};
+
+const computeCompletedStages = (_checklists: Record<string, boolean>): ClientMeetingStageId[] => {
+  return [];
+};
 
 export interface ToastNotification {
   id: string;
@@ -45,6 +58,9 @@ interface CalculatorContextType {
   updateSIP: (patch: Partial<MasterPlanInputs['sip']>) => void;
   updateSTP: (patch: Partial<MasterPlanInputs['stp']>) => void;
   updateSWP: (patch: Partial<MasterPlanInputs['swp']>) => void;
+  addLoan: (loan?: Partial<MasterPlanInputs['loans'][number]>) => void;
+  updateLoan: (id: string, patch: Partial<MasterPlanInputs['loans'][number]>) => void;
+  removeLoan: (id: string) => void;
   addGoal: (goal?: Partial<Goal>) => string;
   updateGoal: (id: string, patch: Partial<Goal>) => void;
   removeGoal: (id: string) => void;
@@ -82,155 +98,20 @@ interface CalculatorContextType {
 
 const CalculatorContext = createContext<CalculatorContextType | undefined>(undefined);
 
-const RISK_ANSWERS_KEY = 'soundthesis_risk_answers';
-const MANUAL_TARGETS_KEY = 'soundthesis_manual_targets';
-const DECISION_HISTORY_KEY = 'soundthesis_decision_history';
-const MEETING_STATE_KEY = 'soundthesis_meeting_state';
-const ASSUMPTION_MODE_KEY = 'soundthesis_assumption_mode';
-const CUSTOM_RETURNS_KEY = 'soundthesis_custom_returns';
-
-const STAGE_CHECKLIST_MAP: Record<ClientMeetingStageId, string[]> = {
-  1: ['m1-profile', 'm1-assets', 'm1-cashflow', 'm1-goals', 'm1-risk'],
-  2: ['m2-networth', 'm2-readiness', 'm2-conflicts', 'm2-scenarios'],
-  3: ['m3-allocation', 'm3-waterfall', 'm3-rebalance', 'm3-transition'],
-  4: ['m4-dossier', 'm4-ips', 'm4-actions'],
-};
-
-function computeCompletedStages(checklists: Record<string, boolean>): ClientMeetingStageId[] {
-  const result: ClientMeetingStageId[] = [];
-  ([1, 2, 3, 4] as ClientMeetingStageId[]).forEach((stageId) => {
-    const ids = STAGE_CHECKLIST_MAP[stageId];
-    if (ids && ids.every((id) => Boolean(checklists[id]))) {
-      result.push(stageId);
-    }
-  });
-  return result;
-}
-
-const DEFAULT_MEETING_STATE: ClientMeetingState = {
-  currentStage: 1,
-  completedStages: [],
-  stageChecklists: {
-    'm1-profile': false,
-    'm1-assets': false,
-    'm1-cashflow': false,
-    'm1-goals': false,
-    'm1-risk': false,
-    'm2-networth': false,
-    'm2-readiness': false,
-    'm2-conflicts': false,
-    'm2-scenarios': false,
-    'm3-allocation': false,
-    'm3-waterfall': false,
-    'm3-rebalance': false,
-    'm3-transition': false,
-    'm4-dossier': false,
-    'm4-ips': false,
-    'm4-actions': false,
-  },
-  notes: {},
-  lastUpdated: new Date().toISOString(),
-};
-
-function loadRiskAnswers(): RiskAnswers {
-  try {
-    const raw = localStorage.getItem(RISK_ANSWERS_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {
-    // ignore
-  }
-  return {};
-}
-
-function saveRiskAnswers(answers: RiskAnswers): void {
-  localStorage.setItem(RISK_ANSWERS_KEY, JSON.stringify(answers));
-}
-
-function loadManualTargets(): Record<AssetCategory, number> | null {
-  try {
-    const raw = localStorage.getItem(MANUAL_TARGETS_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {
-    // ignore
-  }
-  return null;
-}
-
-function loadDecisionHistory(): DecisionLogEntry[] {
-  try {
-    const raw = localStorage.getItem(DECISION_HISTORY_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {
-    // ignore
-  }
-  return [];
-}
-
-function loadMeetingState(): ClientMeetingState {
-  try {
-    const raw = localStorage.getItem(MEETING_STATE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      const mergedChecklists = { ...DEFAULT_MEETING_STATE.stageChecklists, ...(parsed.stageChecklists || {}) };
-      return {
-        ...DEFAULT_MEETING_STATE,
-        ...parsed,
-        notes: { ...DEFAULT_MEETING_STATE.notes, ...(parsed.notes || {}) },
-        stageChecklists: mergedChecklists,
-        completedStages: computeCompletedStages(mergedChecklists),
-      };
-    }
-  } catch {
-    // ignore
-  }
-  return {
-    ...DEFAULT_MEETING_STATE,
-    completedStages: computeCompletedStages(DEFAULT_MEETING_STATE.stageChecklists),
-  };
-}
-
-function loadAssumptionMode(): AssumptionMode {
-  try {
-    const raw = localStorage.getItem(ASSUMPTION_MODE_KEY);
-    if (raw && ['market', 'conservative', 'historical', 'override'].includes(raw)) {
-      return raw as AssumptionMode;
-    }
-  } catch {
-    // ignore
-  }
-  return 'market';
-}
-
-function loadCustomCategoryReturns(): Partial<Record<AssetCategory, number>> {
-  try {
-    const raw = localStorage.getItem(CUSTOM_RETURNS_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {
-    // ignore
-  }
-  return {};
-}
-
-/** Generate a unique ID that won't collide on rapid creation */
-function generateId(prefix: string): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`;
-  }
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
+// LocalStorage removed in favor of API backend.
 
 export const CalculatorProvider = ({ children }: { children: React.ReactNode }) => {
   const [savedPlans, setSavedPlans] = useState<StoredPlan[]>([]);
-  const [, setActivePlanIdState] = useState<string | null>(() => getActivePlanId());
+  const [, setActivePlanIdState] = useState<string | null>(null);
 
-  const [inputs, setInputs] = useState<MasterPlanInputs>(() => loadClientData() ?? defaultClientInputs());
-  const [assumptions, setAssumptions] = useState<AssumptionSet>(() => loadAssumptions());
-  const [riskAnswers, setRiskAnswersState] = useState<RiskAnswers>(() => loadRiskAnswers());
-  const [manualTargets, setManualTargetsState] = useState<Record<AssetCategory, number> | null>(() => loadManualTargets());
-  const [decisionHistory, setDecisionHistory] = useState<DecisionLogEntry[]>(() => loadDecisionHistory());
-  const [meetingState, setMeetingState] = useState<ClientMeetingState>(() => loadMeetingState());
-  const [assumptionMode, setAssumptionModeState] = useState<AssumptionMode>(() => loadAssumptionMode());
-  const [customCategoryReturns, setCustomCategoryReturns] = useState<Partial<Record<AssetCategory, number>>>(() => loadCustomCategoryReturns());
+  const [inputs, setInputs] = useState<MasterPlanInputs>(defaultClientInputs());
+  const [assumptions, setAssumptions] = useState<AssumptionSet>(loadAssumptions());
+  const [riskAnswers, setRiskAnswersState] = useState<RiskAnswers>({});
+  const [manualTargets, setManualTargetsState] = useState<Record<AssetCategory, number> | null>(null);
+  const [decisionHistory, setDecisionHistory] = useState<DecisionLogEntry[]>([]);
+  const [meetingState, setMeetingState] = useState<ClientMeetingState>(DEFAULT_MEETING_STATE);
+  const [assumptionMode, setAssumptionModeState] = useState<AssumptionMode>('market');
+  const [customCategoryReturns, setCustomCategoryReturns] = useState<Partial<Record<AssetCategory, number>>>({});
 
   const activeAssumptions = useMemo(() => {
     return getAssumptionsForMode(assumptionMode, assumptions, customCategoryReturns);
@@ -242,12 +123,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
 
   const setAssumptionMode = useCallback((mode: AssumptionMode) => {
     setAssumptionModeState(mode);
-    localStorage.setItem(ASSUMPTION_MODE_KEY, mode);
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem(CUSTOM_RETURNS_KEY, JSON.stringify(customCategoryReturns));
-  }, [customCategoryReturns]);
 
   const logDecision = useCallback((entry: Omit<DecisionLogEntry, 'id' | 'timestamp' | 'dateFormatted'>) => {
     const newEntry: DecisionLogEntry = {
@@ -256,16 +132,11 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       timestamp: new Date().toISOString(),
       dateFormatted: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
     };
-    setDecisionHistory((prev) => {
-      const next = [newEntry, ...prev];
-      localStorage.setItem(DECISION_HISTORY_KEY, JSON.stringify(next));
-      return next;
-    });
+    setDecisionHistory((prev) => [newEntry, ...prev]);
   }, []);
 
   const clearDecisionHistory = useCallback(() => {
     setDecisionHistory([]);
-    localStorage.removeItem(DECISION_HISTORY_KEY);
   }, []);
 
   const revertDecision = useCallback((id: string) => {
@@ -275,7 +146,6 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         setInputs((inputs) => ({ ...inputs, ...entry.revertPatch }));
       }
       const next = prev.filter((e) => e.id !== id);
-      localStorage.setItem(DECISION_HISTORY_KEY, JSON.stringify(next));
       return next;
     });
   }, []);
@@ -287,23 +157,19 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         currentStage: stageId,
         lastUpdated: new Date().toISOString(),
       };
-      localStorage.setItem(MEETING_STATE_KEY, JSON.stringify(next));
       return next;
     });
   }, []);
 
   const toggleMeetingChecklist = useCallback((checklistId: string) => {
     setMeetingState((prev) => {
-      const isDone = !prev.stageChecklists[checklistId];
-      const nextChecklists = { ...prev.stageChecklists, [checklistId]: isDone };
-      const completedStages = computeCompletedStages(nextChecklists);
+      const nextChecklists = { ...prev.stageChecklists, [checklistId]: !prev.stageChecklists[checklistId] };
       const next = {
         ...prev,
         stageChecklists: nextChecklists,
-        completedStages,
+        completedStages: computeCompletedStages(nextChecklists),
         lastUpdated: new Date().toISOString(),
       };
-      localStorage.setItem(MEETING_STATE_KEY, JSON.stringify(next));
       return next;
     });
   }, []);
@@ -315,18 +181,10 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         notes: { ...prev.notes, [stageId]: notes },
         lastUpdated: new Date().toISOString(),
       };
-      localStorage.setItem(MEETING_STATE_KEY, JSON.stringify(next));
       return next;
     });
   }, []);
 
-  // Debounced persistence for client inputs
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => {
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => saveClientData(inputs), 500);
-    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
-  }, [inputs]);
 
   // Auto-calibrate assumptions using extracted historical market-data CSV bundle
   useEffect(() => {
@@ -343,29 +201,21 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     return () => { active = false; };
   }, []);
 
-  const setManualTargets = useCallback((value: React.SetStateAction<Record<AssetCategory, number> | null>) => {
+  const setManualTargets = useCallback((update: React.SetStateAction<Record<AssetCategory, number> | null>) => {
     setManualTargetsState((prev) => {
-      const next = typeof value === 'function'
-        ? (value as (prev: Record<AssetCategory, number> | null) => Record<AssetCategory, number> | null)(prev)
-        : value;
-      if (next) localStorage.setItem(MANUAL_TARGETS_KEY, JSON.stringify(next));
-      else localStorage.removeItem(MANUAL_TARGETS_KEY);
+      const next = typeof update === 'function' ? update(prev) : update;
       return next;
     });
   }, []);
 
-  const setRiskAnswers = useCallback((value: React.SetStateAction<RiskAnswers>) => {
+  const setRiskAnswers = useCallback((update: React.SetStateAction<RiskAnswers>) => {
     setRiskAnswersState((prev) => {
-      const next = typeof value === 'function' ? (value as (prev: RiskAnswers) => RiskAnswers)(prev) : value;
-      saveRiskAnswers(next);
+      const next = typeof update === 'function' ? update(prev) : update;
       return next;
     });
   }, []);
 
   const riskScore = useMemo(() => {
-    // Same computation as the RiskQuestionnaire page (partial answers score
-    // unanswered questions as 0); only fall back to a neutral Balanced score
-    // when no answers exist at all.
     if (Object.keys(riskAnswers).length === 0) return 50;
     return calculateRiskScore(riskAnswers);
   }, [riskAnswers]);
@@ -375,16 +225,16 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
   }, [riskScore]);
 
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
+
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
   const showToast = useCallback((message: string, type: ToastNotification['type'] = 'success') => {
     const id = `toast-${Date.now()}-${Math.random()}`;
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   const updateClient = useCallback((patch: Partial<ClientProfile>) => {
@@ -403,7 +253,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       sip: { ...prev.sip, equitySplit, debtSplit: 100 - equitySplit },
       stp: { ...prev.stp, equitySplit, debtSplit: 100 - equitySplit },
     }));
-    setManualTargets(null); // Reset manual overrides to match risk profile
+    setManualTargets(null); 
     showToast(`Applied ${riskProfile.label} profile (${targets.equity}% Equity / ${targets.debt}% Debt) to allocation & SIP/STP!`, 'success');
   }, [riskProfile, setManualTargets, showToast]);
 
@@ -411,8 +261,8 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     setInputs(defaultClientInputs());
     setRiskAnswers({});
     setManualTargets(null);
-    resetClientData();
-    localStorage.removeItem(RISK_ANSWERS_KEY);
+    setDecisionHistory([]);
+    setMeetingState(DEFAULT_MEETING_STATE);
     setActivePlanIdState(null);
     setActivePlanId(null);
     showToast('Plan inputs and risk profile reset to defaults.', 'info');
@@ -546,6 +396,40 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     }));
   }, []);
 
+  const addLoan = useCallback((loan?: Partial<MasterPlanInputs['loans'][number]>) => {
+    const id = loan?.id || generateId('loan');
+    setInputs((prev) => {
+      const newLoan = {
+        name: 'New Loan',
+        principal: 1000000,
+        rate: 8.5,
+        tenureYears: 15,
+        includeInExpenses: true,
+        ...loan,
+        id,
+      };
+      return {
+        ...prev,
+        loans: [...(prev.loans || []), newLoan],
+      };
+    });
+  }, []);
+
+  const updateLoan = useCallback((id: string, patch: Partial<MasterPlanInputs['loans'][number]>) => {
+    setInputs((prev) => ({
+      ...prev,
+      loans: (prev.loans || []).map((l) => (l.id === id ? { ...l, ...patch, id: l.id } : l)),
+    }));
+  }, []);
+
+  const removeLoan = useCallback((id: string) => {
+    setInputs((prev) => ({
+      ...prev,
+      loans: (prev.loans || []).filter((l) => l.id !== id),
+    }));
+  }, []);
+
+
   const addGoal = useCallback((goal?: Partial<Goal>) => {
     const id = goal?.id || generateId('goal');
     setInputs((prev) => {
@@ -610,6 +494,9 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         updateSIP,
         updateSTP,
         updateSWP,
+        addLoan,
+        updateLoan,
+        removeLoan,
         addGoal,
         updateGoal,
         removeGoal,

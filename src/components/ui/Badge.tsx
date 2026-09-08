@@ -15,23 +15,23 @@ export const Badge = ({
   dot = true,
 }: BadgeProps) => {
   const variants = {
-    default: 'bg-zinc-100 text-zinc-800 border border-zinc-200/90',
-    gold: 'bg-amber-50 text-amber-900 border border-amber-200/80',
-    navy: 'bg-zinc-950 text-zinc-100 border border-zinc-800',
-    outline: 'bg-white text-zinc-700 border border-zinc-300/90',
-    success: 'bg-emerald-50 text-emerald-900 border border-emerald-200/80',
-    danger: 'bg-rose-50 text-rose-900 border border-rose-200/80',
-    warning: 'bg-amber-50 text-amber-900 border border-amber-200/90',
+    default: 'bg-raised text-ink-soft border border-border',
+    gold: 'bg-warning/10 text-warning border border-warning/25',
+    navy: 'bg-[#0d1420] text-ink border border-[#1c2940] print:bg-white print:text-zinc-900 print:border-zinc-300',
+    outline: 'bg-transparent text-muted border border-border-strong',
+    success: 'bg-positive/10 text-positive border border-positive/25',
+    danger: 'bg-negative/10 text-negative border border-negative/25',
+    warning: 'bg-warning/10 text-warning border border-warning/25',
   };
 
   const dotColors = {
-    default: 'bg-zinc-400',
-    gold: 'bg-amber-500',
-    navy: 'bg-zinc-400',
-    outline: 'bg-zinc-400',
-    success: 'bg-emerald-500',
-    danger: 'bg-rose-500',
-    warning: 'bg-amber-500',
+    default: 'bg-muted',
+    gold: 'bg-warning',
+    navy: 'bg-muted',
+    outline: 'bg-muted',
+    success: 'bg-positive',
+    danger: 'bg-negative',
+    warning: 'bg-warning',
   };
 
   return (

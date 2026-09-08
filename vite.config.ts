@@ -48,6 +48,10 @@ export default defineConfig({
         secure: true,
         rewrite: (path) => path.replace(/^\/api\/angelone/, ''),
       },
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
     },
   },
 })

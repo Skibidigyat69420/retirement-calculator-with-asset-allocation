@@ -1,30 +1,30 @@
 import type { AssetCategory } from '../types';
 
 export const COLORS = {
-  cream: '#f8fafc',
-  paper: '#ffffff',
-  warm: '#e2e8f0',
-  warmDark: '#94a3b8',
-  navy: '#0f172a',
-  navyDark: '#020617',
-  ink: '#0f172a',
-  gold: '#b45309',
-  red: '#be123c',
-  accent: '#f1f5f9',
-  textMain: '#0f172a',
-  textMuted: '#64748b',
+  cream: '#f2f5f9',
+  paper: '#161b26',
+  warm: '#2b3444',
+  warmDark: '#8b95a5',
+  navy: '#8cff2e',
+  navyDark: '#0a0d12',
+  ink: '#8cff2e',
+  gold: '#fbbf24',
+  red: '#fb7185',
+  accent: 'var(--color-border)',
+  textMain: '#f2f5f9',
+  textMuted: '#8b95a5',
   white: '#FFFFFF',
-  success: '#059669',
-  danger: '#be123c',
-  warning: '#b45309',
+  success: '#34d399',
+  danger: '#fb7185',
+  warning: '#fbbf24',
 };
 
 export const ASSET_COLORS: Record<AssetCategory, string> = {
-  equity: '#2563eb',
-  debt: '#64748b',
-  gold: '#b45309',
-  realestate: '#7c3aed',
-  liquid: '#059669',
+  equity: '#8cff2e',
+  debt: '#7dd3fc',
+  gold: '#fbbf24',
+  realestate: '#a78bfa',
+  liquid: '#34d399',
   other: '#94a3b8',
 };
 
@@ -54,6 +54,15 @@ export const DEFAULT_ALLOCATION = {
 };
 
 export const RISK_FREE_RATE = 0.06;
+
+/**
+ * Domain-engine version. Bump per spec §143 (calculation versioning) whenever a
+ * bug fix or formula change alters engine outputs, so stored results can be tied
+ * to the engine that produced them. v2.1.0 = quantitative-correctness gate fixes
+ * (audit Phase 1: Monte Carlo volatility scaling, STP/SIP state handling,
+ * covariance mutation, full-covariance portfolio variance, MVO gradient).
+ */
+export const ENGINE_VERSION = '2.1.0';
 
 export const CATEGORY_SIGMAS: Record<AssetCategory, number> = {
   equity: 0.15,

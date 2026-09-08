@@ -1,18 +1,18 @@
 import {
   Activity,
-  Shield,
   PieChart,
   Target,
-  Calculator,
   TrendingUp,
   BarChart3,
   FileText,
   PiggyBank,
   Printer,
-  Compass,
   Layers,
-  Briefcase,
   History,
+  Users,
+  CheckSquare,
+  Settings,
+  FolderOpen,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -26,139 +26,145 @@ export interface NavItem {
 }
 
 export const navItems: NavItem[] = [
-  // Overview
+  // OVERVIEW
   {
     path: '/',
     label: 'Dashboard',
     icon: Activity,
     section: 'Overview',
-    description: 'Executive overview & plan health check',
+    description: 'Executive overview & practice health',
   },
 
-  // 1. Discover & Inventory
+  // CLIENTS
+  {
+    path: '/clients',
+    label: 'All Clients',
+    icon: Users,
+    section: 'Clients',
+    description: 'Manage clients and practices',
+  },
+  {
+    path: '/reviews',
+    label: 'Reviews',
+    icon: History,
+    section: 'Clients',
+    description: 'Upcoming client reviews',
+  },
+  {
+    path: '/tasks',
+    label: 'Tasks',
+    icon: CheckSquare,
+    section: 'Clients',
+    description: 'Practice task queue',
+  },
+
+  // PLANNING
   {
     path: '/master-plan',
-    label: 'Client & Balance Sheet',
-    icon: PieChart,
-    section: '1. Discover',
-    step: '01',
-    description: 'Profile, assets, cashflows & liabilities',
+    label: 'Plans',
+    icon: FolderOpen,
+    section: 'Planning',
+    description: 'Wealth plans & balance sheets',
   },
   {
     path: '/goal',
-    label: 'Goal Planner',
+    label: 'Scenario Lab',
     icon: Target,
-    section: '1. Discover',
-    description: 'Goal milestones & conflict matrix',
+    section: 'Planning',
+    description: 'Goal scenarios and conflicts',
   },
-
-  // 2. Risk & Bounds
-  {
-    path: '/risk',
-    label: 'Risk Profile',
-    icon: Shield,
-    section: '2. Risk Profile',
-    step: '02',
-    description: 'Psychometric risk score & asset constraints',
-  },
-
-  // 3. Retirement & Cashflows
   {
     path: '/retirement',
-    label: 'Retirement & SWP',
+    label: 'Retirement',
     icon: PiggyBank,
-    section: '3. Retirement',
-    step: '03',
-    description: 'Corpus longevity, Monte Carlo & SWP',
-  },
-  {
-    path: '/reverse-planning',
-    label: 'Reverse Planning',
-    icon: Compass,
-    section: '3. Retirement',
-    description: 'Reverse solver for required SIP & feasible age',
+    section: 'Planning',
+    description: 'Corpus longevity & SWP',
   },
 
-  // 4. Portfolio & Optimization
+  // PORTFOLIO
   {
     path: '/allocation',
-    label: 'Portfolio Allocation',
-    icon: TrendingUp,
-    section: '4. Allocation',
-    step: '04',
-    description: 'Current vs target rebalancing & trade orders',
+    label: 'Allocation',
+    icon: PieChart,
+    section: 'Portfolio',
+    description: 'Asset allocation & rebalancing',
   },
   {
     path: '/advanced-portfolio',
-    label: 'Portfolio Lab',
+    label: 'Optimization',
     icon: Layers,
-    section: '4. Allocation',
-    description: 'Black-Litterman, risk parity & glide paths',
+    section: 'Portfolio',
+    description: 'Advanced portfolio analytics',
+  },
+  {
+    path: '/stress-tests',
+    label: 'Stress Tests',
+    icon: TrendingUp,
+    section: 'Portfolio',
+    description: 'Market stress & drift limits',
   },
 
-  // 5. Deliverables & Governance
-  {
-    path: '/ips',
-    label: 'Policy Statement (IPS)',
-    icon: FileText,
-    section: '5. Deliverables',
-    step: '05',
-    description: 'Investment Policy Statement with live sync toggle',
-  },
-  {
-    path: '/meeting-workflow',
-    label: 'Client Meeting',
-    icon: Briefcase,
-    section: '5. Deliverables',
-    description: 'Stage agenda & advisory meeting log',
-  },
-  {
-    path: '/decision-history',
-    label: 'Decision Audit Log',
-    icon: History,
-    section: '5. Deliverables',
-    description: 'Audit trail of plan modifications & reverts',
-  },
+  // DELIVER
   {
     path: '/reports',
-    label: 'Executive Reports',
+    label: 'Reports',
     icon: BarChart3,
-    section: '5. Deliverables',
-    description: 'Comprehensive client executive plan report',
+    section: 'Deliver',
+    description: 'Client executive reports',
+  },
+  {
+    path: '/ips',
+    label: 'IPS',
+    icon: FileText,
+    section: 'Deliver',
+    description: 'Investment Policy Statement',
   },
   {
     path: '/dossier',
-    label: 'Full Dossier (PDF)',
+    label: 'Dossiers',
     icon: Printer,
-    section: '5. Deliverables',
-    description: 'Printable institutional PDF portfolio dossier',
+    section: 'Deliver',
+    description: 'Printable dossiers',
   },
 
-  // Market & Tools
+  // PRACTICE
   {
-    path: '/calculators',
-    label: 'Calculators',
-    icon: Calculator,
-    section: 'Tools & Live Feed',
-    description: 'SIP, SWP, STP, EMI & lumpsum utilities',
+    path: '/team',
+    label: 'Team',
+    icon: Users,
+    section: 'Practice',
+    description: 'Manage practitioners',
+  },
+  {
+    path: '/activity',
+    label: 'Activity',
+    icon: Activity,
+    section: 'Practice',
+    description: 'Audit log & practice history',
+  },
+  {
+    path: '/settings',
+    label: 'Settings',
+    icon: Settings,
+    section: 'Practice',
+    description: 'Organization settings',
   },
 ];
 
-/* Short micro-label names for sidebar section headers (+ PLAN, + RISK, …) */
+/* Short micro-label names for sidebar section headers */
 export const SECTION_LABELS: Record<string, string> = {
-  Overview: 'Overview',
-  '1. Discover': 'Plan',
-  '2. Risk Profile': 'Risk',
-  '3. Retirement': 'Retire',
-  '4. Allocation': 'Allocate',
-  '5. Deliverables': 'Deliver',
-  'Tools & Live Feed': 'Tools',
+  'Overview': 'OVERVIEW',
+  'Clients': 'CLIENTS',
+  'Planning': 'PLANNING',
+  'Portfolio': 'PORTFOLIO',
+  'Deliver': 'DELIVER',
+  'Practice': 'PRACTICE',
 };
 
 export const utilityItem: NavItem = {
-  path: '/dossier',
-  label: 'Client Dossier (PDF)',
-  icon: Printer,
-  section: 'Deliverables',
-  description: 'Complete exportable plan dossier',
+  path: '/settings',
+  label: 'Practice Settings',
+  icon: Settings,
+  section: 'Practice',
+  description: 'Manage organization',
 };

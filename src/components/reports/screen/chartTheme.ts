@@ -1,12 +1,15 @@
 /** Shared Recharts styling — matches the existing chart wrappers. */
 export const CHART_TOOLTIP_STYLE = {
-  borderRadius: '14px',
-  border: '1px solid rgba(226, 232, 240, 0.9)',
-  backgroundColor: 'rgba(255, 255, 255, 0.96)',
+  borderRadius: '12px',
+  border: '1px solid #2b3444',
+  backgroundColor: '#161b26',
   backdropFilter: 'blur(10px)',
-  boxShadow: '0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04)',
+  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.55), 0 8px 10px -6px rgba(0, 0, 0, 0.45)',
   padding: '10px 14px',
 };
+
+export const CHART_TOOLTIP_LABEL_STYLE = { color: '#f2f5f9', fontWeight: 600, marginBottom: '4px' };
+export const CHART_TOOLTIP_ITEM_STYLE = { color: '#c6cdd8' };
 
 export const CHART_TICK = { fontSize: 11, fill: 'var(--color-muted)' };
 export const CHART_GRID_STROKE = 'var(--color-border)';

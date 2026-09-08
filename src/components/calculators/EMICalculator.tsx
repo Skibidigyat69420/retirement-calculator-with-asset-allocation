@@ -80,8 +80,8 @@ export const EMICalculator = () => {
           </div>
 
           <Card>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Yearly Amortisation</h4>
-            <p className="text-xs text-zinc-600 mb-3">
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-ink-soft mb-4">Yearly Amortisation</h4>
+            <p className="text-xs text-muted mb-3">
               Interest is front-loaded: {interestShare.toFixed(0)}% of every EMI rupee over the full tenure goes to interest, so the principal outstanding falls slowly in the early years.
             </p>
             <div className="h-72" role="img" aria-label={`Stacked bar chart of yearly principal and interest payments over ${years} years. Total interest is ${formatCurrency(result.totalInterest)} on a ${formatCurrency(principal)} loan.`}>
@@ -99,8 +99,8 @@ export const EMICalculator = () => {
                     formatter={(value: any) => formatCurrency(Number(value))}
                     contentStyle={{
                       borderRadius: '14px',
-                      border: '1px solid rgba(226, 232, 240, 0.9)',
-                      backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                      border: '1px solid var(--color-border)',
+                      backgroundColor: 'var(--color-surface)',
                       backdropFilter: 'blur(10px)',
                       boxShadow: '0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04)',
                       padding: '10px 14px',
@@ -130,8 +130,8 @@ export const EMICalculator = () => {
           </Card>
 
           <Card>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Outstanding Balance Curve</h4>
-            <p className="text-xs text-zinc-600 mb-3">
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-ink-soft mb-4">Outstanding Balance Curve</h4>
+            <p className="text-xs text-muted mb-3">
               Half the principal is still outstanding around the midpoint of the tenure despite paying half the EMIs — the balance only accelerates down once the interest component shrinks.
             </p>
             <div className="h-64" role="img" aria-label={`Area chart of the remaining loan balance by year, starting at ${formatCurrency(principal)} and reaching zero in year ${years}.`}>
@@ -155,8 +155,8 @@ export const EMICalculator = () => {
                     formatter={(value: any) => [formatCurrency(Number(value)), 'Outstanding balance']}
                     contentStyle={{
                       borderRadius: '14px',
-                      border: '1px solid rgba(226, 232, 240, 0.9)',
-                      backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                      border: '1px solid var(--color-border)',
+                      backgroundColor: 'var(--color-surface)',
                       padding: '10px 14px',
                     }}
                   />

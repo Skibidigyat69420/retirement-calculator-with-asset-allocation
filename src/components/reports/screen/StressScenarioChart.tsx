@@ -99,6 +99,7 @@ export const StressScenarioChart = ({ results }: StressScenarioChartProps) => {
             <XAxis dataKey="name" tick={CHART_TICK} axisLine={false} tickLine={false} tickMargin={8} interval={0} />
             <YAxis tickFormatter={formatCurrencyCompact} tick={CHART_TICK} axisLine={false} tickLine={false} width={64} />
             <Tooltip
+              cursor={{ fill: 'rgba(139, 149, 165, 0.06)' }}
               formatter={(value: any, name: any) => [formatCurrencyCompact(typeof value === 'number' ? value : Number(value)), name]}
               contentStyle={CHART_TOOLTIP_STYLE}
             />

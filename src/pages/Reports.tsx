@@ -114,7 +114,7 @@ export const Reports = () => {
             <FileDown size={16} />
             Export Full Dossier (PDF)
           </Button>
-          <Button onClick={handlePrint} variant="outline" className="flex items-center gap-2 border-zinc-300 text-zinc-700 hover:bg-zinc-100">
+          <Button onClick={handlePrint} variant="outline" className="flex items-center gap-2 border-border-strong text-ink-soft hover:bg-sunken">
             <Printer size={16} />
             Print Page
           </Button>
@@ -122,17 +122,17 @@ export const Reports = () => {
       </div>
 
       {/* Executive Client Header Banner */}
-      <Card className="bg-white border border-zinc-200/90 shadow-2xs print:border-none print:shadow-none print:p-0">
+      <Card className="bg-surface border border-border/90 shadow-2xs print:border-none print:shadow-none print:p-0">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Institutional Wealth Plan</div>
-            <h2 className="text-xl sm:text-2xl font-sans text-zinc-950 font-bold mt-0.5">{inputs.client?.name || 'Private Client Plan'}</h2>
-            <p className="text-xs text-zinc-600 mt-1">
-              Advisor: <strong className="text-zinc-900 font-semibold">{inputs.client?.advisor || 'Sound Thesis Wealth Advisory'}</strong> · Review Date: <strong className="text-zinc-900 font-semibold">{inputs.client?.reviewDate || new Date().toISOString().split('T')[0]}</strong>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-muted">Institutional Wealth Plan</div>
+            <h2 className="text-xl sm:text-2xl font-sans text-ink font-bold mt-0.5">{inputs.client?.name || 'Private Client Plan'}</h2>
+            <p className="text-xs text-muted mt-1">
+              Advisor: <strong className="text-ink font-semibold">{inputs.client?.advisor || 'Sound Thesis Wealth Advisory'}</strong> · Review Date: <strong className="text-ink font-semibold">{inputs.client?.reviewDate || new Date().toISOString().split('T')[0]}</strong>
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs px-3 py-1 font-semibold border-zinc-300 text-slate-800">
+            <Badge variant="outline" className="text-xs px-3 py-1 font-semibold border-border-strong text-ink-soft">
               Risk: {riskProfile.label}
             </Badge>
             <Badge variant={wealthResult.sustainable ? 'success' : 'danger'} className="text-xs px-3 py-1">
@@ -177,56 +177,56 @@ export const Reports = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border border-zinc-200/90 shadow-2xs">
-          <h3 className="text-lg font-sans text-zinc-950 font-bold mb-4 flex items-center gap-2"><FileText size={18} className="text-zinc-600" /> Plan Summary</h3>
+        <Card className="border border-border/90 shadow-2xs">
+          <h3 className="text-lg font-sans text-ink font-bold mb-4 flex items-center gap-2"><FileText size={18} className="text-muted" /> Plan Summary</h3>
           <div className="space-y-3 text-sm">
-            <div className="flex justify-between py-2 border-b border-zinc-200/70"><span className="text-zinc-600 font-medium">Client age</span><span className="font-semibold text-zinc-900">{inputs.currentAge}</span></div>
-            <div className="flex justify-between py-2 border-b border-zinc-200/70"><span className="text-zinc-600 font-medium">Retirement age</span><span className="font-semibold text-zinc-900">{inputs.retirementAge}</span></div>
-            <div className="flex justify-between py-2 border-b border-zinc-200/70"><span className="text-zinc-600 font-medium">Life expectancy</span><span className="font-semibold text-zinc-900">{inputs.lifeExpectancy}</span></div>
-            <div className="flex justify-between py-2 border-b border-zinc-200/70"><span className="text-zinc-600 font-medium">Annual income</span><span className="font-semibold text-zinc-900">{formatCurrency(wealthResult.annualIncome)}</span></div>
-            <div className="flex justify-between py-2 border-b border-zinc-200/70"><span className="text-zinc-600 font-medium">Monthly expenditure</span><span className="font-semibold text-zinc-900">{formatCurrency(inputs.monthlyExpenditure)}</span></div>
-            <div className="flex justify-between py-2 border-b border-zinc-200/70"><span className="text-zinc-600 font-medium">Annual expenses (today)</span><span className="font-semibold text-zinc-900">{formatCurrency(wealthResult.annualExpenses)}</span></div>
-            <div className="flex justify-between py-2 border-b border-zinc-200/70"><span className="text-zinc-600 font-medium">Net annual savings</span><span className="font-semibold text-zinc-900">{formatCurrency(wealthResult.annualSavings)} ({formatPercent(wealthResult.savingsRate)})</span></div>
-            <div className="flex justify-between py-2 border-b border-zinc-200/70"><span className="text-zinc-600 font-medium">Invested / deployed</span><span className="font-semibold text-zinc-900">{formatCurrency(wealthResult.annualInvested)} ({formatPercent(wealthResult.investmentRate)})</span></div>
-            <div className="flex justify-between py-2 border-b border-zinc-200/70"><span className="text-zinc-600 font-medium">Monthly SIP</span><span className="font-semibold text-zinc-900">{formatCurrency(wealthResult.monthlySIP)}</span></div>
-            <div className="flex justify-between py-2 border-b border-zinc-200/70"><span className="text-zinc-600 font-medium">Total invested (projected)</span><span className="font-semibold text-zinc-900">{formatCurrency(wealthResult.totalInvested)}</span></div>
-            <div className="flex justify-between py-2 border-b border-zinc-200/70"><span className="text-zinc-600 font-medium">CAGR nominal</span><span className="font-semibold text-zinc-900">{formatPercent(wealthResult.cagrNominal)}</span></div>
-            <div className="flex justify-between py-2"><span className="text-zinc-600 font-medium">CAGR real</span><span className="font-semibold text-zinc-900">{formatPercent(wealthResult.cagrReal)}</span></div>
+            <div className="flex justify-between py-2 border-b border-border/70"><span className="text-muted font-medium">Client age</span><span className="font-semibold text-ink">{inputs.currentAge}</span></div>
+            <div className="flex justify-between py-2 border-b border-border/70"><span className="text-muted font-medium">Retirement age</span><span className="font-semibold text-ink">{inputs.retirementAge}</span></div>
+            <div className="flex justify-between py-2 border-b border-border/70"><span className="text-muted font-medium">Life expectancy</span><span className="font-semibold text-ink">{inputs.lifeExpectancy}</span></div>
+            <div className="flex justify-between py-2 border-b border-border/70"><span className="text-muted font-medium">Annual income</span><span className="font-semibold text-ink">{formatCurrency(wealthResult.annualIncome)}</span></div>
+            <div className="flex justify-between py-2 border-b border-border/70"><span className="text-muted font-medium">Monthly expenditure</span><span className="font-semibold text-ink">{formatCurrency(inputs.monthlyExpenditure)}</span></div>
+            <div className="flex justify-between py-2 border-b border-border/70"><span className="text-muted font-medium">Annual expenses (today)</span><span className="font-semibold text-ink">{formatCurrency(wealthResult.annualExpenses)}</span></div>
+            <div className="flex justify-between py-2 border-b border-border/70"><span className="text-muted font-medium">Net annual savings</span><span className="font-semibold text-ink">{formatCurrency(wealthResult.annualSavings)} ({formatPercent(wealthResult.savingsRate)})</span></div>
+            <div className="flex justify-between py-2 border-b border-border/70"><span className="text-muted font-medium">Invested / deployed</span><span className="font-semibold text-ink">{formatCurrency(wealthResult.annualInvested)} ({formatPercent(wealthResult.investmentRate)})</span></div>
+            <div className="flex justify-between py-2 border-b border-border/70"><span className="text-muted font-medium">Monthly SIP</span><span className="font-semibold text-ink">{formatCurrency(wealthResult.monthlySIP)}</span></div>
+            <div className="flex justify-between py-2 border-b border-border/70"><span className="text-muted font-medium">Total invested (projected)</span><span className="font-semibold text-ink">{formatCurrency(wealthResult.totalInvested)}</span></div>
+            <div className="flex justify-between py-2 border-b border-border/70"><span className="text-muted font-medium">CAGR nominal</span><span className="font-semibold text-ink">{formatPercent(wealthResult.cagrNominal)}</span></div>
+            <div className="flex justify-between py-2"><span className="text-muted font-medium">CAGR real</span><span className="font-semibold text-ink">{formatPercent(wealthResult.cagrReal)}</span></div>
           </div>
         </Card>
 
-        <Card className="border border-zinc-200/90 shadow-2xs">
-          <h3 className="text-lg font-sans text-zinc-950 font-bold mb-4 flex items-center gap-2"><ShieldCheck size={18} className="text-zinc-600" /> Risk Profile</h3>
-          <div className="p-4 bg-zinc-950 text-white rounded-xl mb-4 shadow-xs">
+        <Card className="border border-border/90 shadow-2xs">
+          <h3 className="text-lg font-sans text-ink font-bold mb-4 flex items-center gap-2"><ShieldCheck size={18} className="text-muted" /> Risk Profile</h3>
+          <div className="p-4 bg-sunken text-ink rounded-xl mb-4 shadow-xs">
             <div className="text-2xl font-sans font-bold">{riskProfile.label}</div>
-            <p className="text-sm text-zinc-300 mt-1">{riskProfile.description}</p>
+            <p className="text-sm text-ink-soft mt-1">{riskProfile.description}</p>
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="p-3 bg-zinc-50 border border-zinc-200/60 rounded-xl"><div className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Max drawdown</div><div className="font-semibold text-zinc-900 mt-0.5">{formatPercent(riskProfile.maxDrawdown)}</div></div>
-            <div className="p-3 bg-zinc-50 border border-zinc-200/60 rounded-xl"><div className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Volatility target</div><div className="font-semibold text-zinc-900 mt-0.5">{formatPercent(riskProfile.targetVolatility)}</div></div>
-            <div className="p-3 bg-zinc-50 border border-zinc-200/60 rounded-xl"><div className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Goal threshold</div><div className="font-semibold text-zinc-900 mt-0.5">{formatPercent(riskProfile.goalSuccessThreshold)}</div></div>
-            <div className="p-3 bg-zinc-50 border border-zinc-200/60 rounded-xl"><div className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Max drawdown prob</div><div className="font-semibold text-zinc-900 mt-0.5">{formatPercent(wealthResult.maxDrawdownProbability * 100)}</div></div>
+            <div className="p-3 bg-sunken border border-border/60 rounded-xl"><div className="text-xs text-muted font-semibold uppercase tracking-wider">Max drawdown</div><div className="font-semibold text-ink mt-0.5">{formatPercent(riskProfile.maxDrawdown)}</div></div>
+            <div className="p-3 bg-sunken border border-border/60 rounded-xl"><div className="text-xs text-muted font-semibold uppercase tracking-wider">Volatility target</div><div className="font-semibold text-ink mt-0.5">{formatPercent(riskProfile.targetVolatility)}</div></div>
+            <div className="p-3 bg-sunken border border-border/60 rounded-xl"><div className="text-xs text-muted font-semibold uppercase tracking-wider">Goal threshold</div><div className="font-semibold text-ink mt-0.5">{formatPercent(riskProfile.goalSuccessThreshold)}</div></div>
+            <div className="p-3 bg-sunken border border-border/60 rounded-xl"><div className="text-xs text-muted font-semibold uppercase tracking-wider">Max drawdown prob</div><div className="font-semibold text-ink mt-0.5">{formatPercent(wealthResult.maxDrawdownProbability * 100)}</div></div>
           </div>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border border-zinc-200/90 shadow-2xs">
-          <h3 className="text-lg font-sans text-zinc-950 font-bold mb-4 flex items-center gap-2"><PieChart size={18} className="text-zinc-600" /> Current vs Target Allocation</h3>
+        <Card className="border border-border/90 shadow-2xs">
+          <h3 className="text-lg font-sans text-ink font-bold mb-4 flex items-center gap-2"><PieChart size={18} className="text-muted" /> Current vs Target Allocation</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-xs font-semibold text-zinc-600 mb-2 text-center">Current</div>
+              <div className="text-xs font-semibold text-muted mb-2 text-center">Current</div>
               <DonutChart data={currentAllocationData} innerRadius={40} outerRadius={70} />
             </div>
             <div>
-              <div className="text-xs font-semibold text-zinc-600 mb-2 text-center">Target</div>
+              <div className="text-xs font-semibold text-muted mb-2 text-center">Target</div>
               <DonutChart data={targetAllocationData} innerRadius={40} outerRadius={70} />
             </div>
           </div>
         </Card>
 
-        <Card className="border border-zinc-200/90 shadow-2xs">
-          <h3 className="text-lg font-sans text-zinc-950 font-bold mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-zinc-600" /> Monte Carlo Fan Chart</h3>
+        <Card className="border border-border/90 shadow-2xs">
+          <h3 className="text-lg font-sans text-ink font-bold mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-muted" /> Monte Carlo Fan Chart</h3>
           <MonteCarloFanChart data={wealthResult.monteCarlo.yearlyPercentiles} />
         </Card>
       </div>
@@ -237,62 +237,62 @@ export const Reports = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border border-zinc-200/90 shadow-2xs">
-          <h3 className="text-lg font-sans text-zinc-950 font-bold mb-4 flex items-center gap-2"><HeartPulse size={18} className="text-zinc-600" /> Plan Health</h3>
+        <Card className="border border-border/90 shadow-2xs">
+          <h3 className="text-lg font-sans text-ink font-bold mb-4 flex items-center gap-2"><HeartPulse size={18} className="text-muted" /> Plan Health</h3>
           <PlanHealthPanel health={planHealth} />
         </Card>
 
-        <Card className="border border-zinc-200/90 shadow-2xs">
-          <h3 className="text-lg font-sans text-zinc-950 font-bold mb-4 flex items-center gap-2"><Lightbulb size={18} className="text-zinc-600" /> Priority Recommendations</h3>
+        <Card className="border border-border/90 shadow-2xs">
+          <h3 className="text-lg font-sans text-ink font-bold mb-4 flex items-center gap-2"><Lightbulb size={18} className="text-muted" /> Priority Recommendations</h3>
           {recommendations.length > 0 ? (
             <div className="space-y-3">
               {recommendations.slice(0, 5).map((rec) => (
-                <div key={rec.id} className="p-3.5 rounded-xl border border-zinc-200 bg-zinc-50/60 space-y-1.5">
+                <div key={rec.id} className="p-3.5 rounded-xl border border-border bg-sunken/60 space-y-1.5">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-950 text-white">P{rec.priority}</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-zinc-700">{rec.category}</span>
-                    <span className="text-xs font-semibold text-zinc-900">{rec.title}</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-sunken text-ink">P{rec.priority}</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-sunken text-ink-soft">{rec.category}</span>
+                    <span className="text-xs font-semibold text-ink">{rec.title}</span>
                   </div>
-                  <p className="text-xs text-zinc-600 leading-relaxed">{rec.impact}</p>
-                  <p className="text-[11px] text-zinc-500">
-                    Confidence: <span className="font-mono font-semibold text-zinc-800">{rec.confidence}%</span>
+                  <p className="text-xs text-muted leading-relaxed">{rec.impact}</p>
+                  <p className="text-[11px] text-muted">
+                    Confidence: <span className="font-mono font-semibold text-ink-soft">{rec.confidence}%</span>
                   </p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-zinc-500">No active recommendations — the plan is on track across all diagnostic components.</p>
+            <p className="text-sm text-muted">No active recommendations — the plan is on track across all diagnostic components.</p>
           )}
         </Card>
       </div>
 
-      <Card className="border border-zinc-200/90 shadow-2xs">
-        <h3 className="text-lg font-sans text-zinc-950 font-bold mb-4 flex items-center gap-2"><Target size={18} className="text-zinc-600" /> Goal Probability Summary</h3>
+      <Card className="border border-border/90 shadow-2xs">
+        <h3 className="text-lg font-sans text-ink font-bold mb-4 flex items-center gap-2"><Target size={18} className="text-muted" /> Goal Probability Summary</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200/80">
-            <div className="text-xs font-semibold text-zinc-600 uppercase tracking-wider">Essential goals</div>
-            <div className="text-xl font-sans font-bold text-zinc-900 mt-1">{formatPercent(wealthResult.essentialSuccessRate * 100)}</div>
-            <div className="text-xs text-zinc-600 mt-1 font-medium">{essentialGoals.length} goals</div>
+          <div className="p-4 bg-sunken rounded-xl border border-border/80">
+            <div className="text-xs font-semibold text-muted uppercase tracking-wider">Essential goals</div>
+            <div className="text-xl font-sans font-bold text-ink mt-1">{formatPercent(wealthResult.essentialSuccessRate * 100)}</div>
+            <div className="text-xs text-muted mt-1 font-medium">{essentialGoals.length} goals</div>
           </div>
-          <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200/80">
-            <div className="text-xs font-semibold text-zinc-600 uppercase tracking-wider">Important goals</div>
-            <div className="text-xl font-sans font-bold text-zinc-900 mt-1">
+          <div className="p-4 bg-sunken rounded-xl border border-border/80">
+            <div className="text-xs font-semibold text-muted uppercase tracking-wider">Important goals</div>
+            <div className="text-xl font-sans font-bold text-ink mt-1">
               {importantGoals.length > 0 ? formatPercent((importantGoals.reduce((s, g) => s + g.successRate, 0) / importantGoals.length) * 100) : '—'}
             </div>
-            <div className="text-xs text-zinc-600 mt-1 font-medium">{importantGoals.length} goals</div>
+            <div className="text-xs text-muted mt-1 font-medium">{importantGoals.length} goals</div>
           </div>
-          <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200/80">
-            <div className="text-xs font-semibold text-zinc-600 uppercase tracking-wider">Aspirational goals</div>
-            <div className="text-xl font-sans font-bold text-zinc-900 mt-1">
+          <div className="p-4 bg-sunken rounded-xl border border-border/80">
+            <div className="text-xs font-semibold text-muted uppercase tracking-wider">Aspirational goals</div>
+            <div className="text-xl font-sans font-bold text-ink mt-1">
               {aspirationalGoals.length > 0 ? formatPercent((aspirationalGoals.reduce((s, g) => s + g.successRate, 0) / aspirationalGoals.length) * 100) : '—'}
             </div>
-            <div className="text-xs text-zinc-600 mt-1 font-medium">{aspirationalGoals.length} goals</div>
+            <div className="text-xs text-muted mt-1 font-medium">{aspirationalGoals.length} goals</div>
           </div>
         </div>
         <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
           <table className="w-full min-w-[900px] text-sm">
             <thead>
-              <tr className="border-b-2 border-slate-900 text-left text-[11px] uppercase tracking-wider text-zinc-900 font-bold">
+              <tr className="border-b-2 border-border-strong text-left text-[11px] uppercase tracking-wider text-ink font-bold">
                 <th className="py-2.5 pr-4">Goal</th>
                 <th className="py-2.5 pr-4">Priority</th>
                 <th className="py-2.5 pr-4 text-right">Target</th>
@@ -305,22 +305,22 @@ export const Reports = () => {
                 <th className="py-2.5 pr-4 w-44">Outcome Distribution</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border">
               {wealthResult.goalResults.map((g) => (
-                <tr key={g.goal.id} className="hover:bg-zinc-50/50">
-                  <td className="py-2.5 pr-4 font-semibold text-zinc-900">{g.goal.name}</td>
+                <tr key={g.goal.id} className="hover:bg-sunken/50">
+                  <td className="py-2.5 pr-4 font-semibold text-ink">{g.goal.name}</td>
                   <td className="py-2.5 pr-4"><Badge variant={g.goal.priority === 'essential' ? 'danger' : g.goal.priority === 'important' ? 'default' : 'outline'}>{g.goal.priority}</Badge></td>
-                  <td className="py-2.5 pr-4 text-right font-mono text-zinc-700">{formatCurrency(g.goal.targetAmount)}</td>
-                  <td className="py-2.5 pr-4 text-right font-mono text-zinc-700">{formatCurrency(g.futureValue)}</td>
-                  <td className="py-2.5 pr-4 text-right font-mono text-zinc-700">{formatCurrencyCompact(g.pvNeeded)}</td>
+                  <td className="py-2.5 pr-4 text-right font-mono text-ink-soft">{formatCurrency(g.goal.targetAmount)}</td>
+                  <td className="py-2.5 pr-4 text-right font-mono text-ink-soft">{formatCurrency(g.futureValue)}</td>
+                  <td className="py-2.5 pr-4 text-right font-mono text-ink-soft">{formatCurrencyCompact(g.pvNeeded)}</td>
                   <td className="py-2.5 pr-4 text-right font-mono font-bold">
-                    <span className={g.successRate >= riskProfile.goalSuccessThreshold / 100 ? 'text-emerald-700' : g.successRate >= (riskProfile.goalSuccessThreshold / 100) * 0.6 ? 'text-amber-700' : 'text-rose-700'}>
+                    <span className={g.successRate >= riskProfile.goalSuccessThreshold / 100 ? 'text-positive' : g.successRate >= (riskProfile.goalSuccessThreshold / 100) * 0.6 ? 'text-warning' : 'text-negative'}>
                       {formatPercent(g.successRate * 100)}
                     </span>
                   </td>
-                  <td className="py-2.5 pr-4 text-right font-mono text-rose-600">{formatPercent(g.shortfallProbability * 100)}</td>
-                  <td className="py-2.5 pr-4 text-right font-mono text-zinc-700">{formatCurrencyCompact(g.expectedShortfall)}</td>
-                  <td className="py-2.5 pr-4 text-right font-mono font-semibold text-zinc-900">{formatCurrency(g.requiredSIP)}</td>
+                  <td className="py-2.5 pr-4 text-right font-mono text-negative">{formatPercent(g.shortfallProbability * 100)}</td>
+                  <td className="py-2.5 pr-4 text-right font-mono text-ink-soft">{formatCurrencyCompact(g.expectedShortfall)}</td>
+                  <td className="py-2.5 pr-4 text-right font-mono font-semibold text-ink">{formatCurrency(g.requiredSIP)}</td>
                   <td className="py-2.5 pr-4">
                     <GoalDistributionBars distribution={g.probabilityDistribution} targetAmount={g.futureValue} />
                   </td>
@@ -332,9 +332,9 @@ export const Reports = () => {
       </Card>
 
       {stressResults.length > 0 && (
-        <Card className="border border-zinc-200/90 shadow-2xs">
-          <h3 className="text-lg font-sans text-zinc-950 font-bold mb-1 flex items-center gap-2"><ShieldCheck size={18} className="text-zinc-600" /> Stress Matrix — Historical Crisis Scenarios</h3>
-          <p className="text-xs text-zinc-500 mb-4">
+        <Card className="border border-border/90 shadow-2xs">
+          <h3 className="text-lg font-sans text-ink font-bold mb-1 flex items-center gap-2"><ShieldCheck size={18} className="text-muted" /> Stress Matrix — Historical Crisis Scenarios</h3>
+          <p className="text-xs text-muted mb-4">
             Four historical crises re-applied to current holdings; the plan is then re-projected to retirement under each shock.
           </p>
           <StressMatrixTable results={stressResults} />
@@ -346,73 +346,73 @@ export const Reports = () => {
         <StressScenarioChart results={stressResults} />
       </div>
 
-      <Card className="border border-zinc-200/90 shadow-2xs">
+      <Card className="border border-border/90 shadow-2xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1">
-          <h3 className="text-lg font-sans text-zinc-950 font-bold flex items-center gap-2"><Route size={18} className="text-zinc-600" /> Reverse-Planning Pathways</h3>
-          <span className="text-xs text-zinc-500 font-medium">
+          <h3 className="text-lg font-sans text-ink font-bold flex items-center gap-2"><Route size={18} className="text-muted" /> Reverse-Planning Pathways</h3>
+          <span className="text-xs text-muted font-medium">
             Target corpus {formatCurrencyCompact(reverseResult.targetCorpus)} by age {reverseResult.targetAge}
           </span>
         </div>
-        <p className="text-xs text-zinc-500 mb-4">
+        <p className="text-xs text-muted mb-4">
           Four levers to close the funding gap: {formatCurrencyCompact(reverseResult.requiredMonthlySip)}/mo required SIP · feasible retirement at age{' '}
           {reverseResult.feasibleRetirementAge} · max sustainable spend {formatCurrency(reverseResult.maxSustainableMonthlySpend)}/mo.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {reverseResult.pathways.map((p) => (
-            <div key={p.id} className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/50 space-y-2.5">
+            <div key={p.id} className="p-4 rounded-xl border border-border bg-sunken/50 space-y-2.5">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-semibold text-zinc-900">{p.name}</span>
+                <span className="text-sm font-semibold text-ink">{p.name}</span>
                 <Badge variant={p.successProbability >= 95 ? 'success' : 'outline'}>{p.successProbability}% success</Badge>
               </div>
-              <p className="text-[11px] text-zinc-500 leading-snug">{p.tagline}</p>
+              <p className="text-[11px] text-muted leading-snug">{p.tagline}</p>
               <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="p-2 bg-white rounded-lg border border-zinc-200/70">
-                  <div className="text-[10px] uppercase tracking-wide text-zinc-500 font-semibold">Required SIP</div>
-                  <div className="text-xs font-mono font-bold text-zinc-900 mt-0.5">{formatCurrencyCompact(p.requiredSipMonthly)}</div>
+                <div className="p-2 bg-surface rounded-lg border border-border/70">
+                  <div className="text-[10px] uppercase tracking-wide text-muted font-semibold">Required SIP</div>
+                  <div className="text-xs font-mono font-bold text-ink mt-0.5">{formatCurrencyCompact(p.requiredSipMonthly)}</div>
                 </div>
-                <div className="p-2 bg-white rounded-lg border border-zinc-200/70">
-                  <div className="text-[10px] uppercase tracking-wide text-zinc-500 font-semibold">Retire At</div>
-                  <div className="text-xs font-mono font-bold text-zinc-900 mt-0.5">Age {p.projectedRetirementAge}</div>
+                <div className="p-2 bg-surface rounded-lg border border-border/70">
+                  <div className="text-[10px] uppercase tracking-wide text-muted font-semibold">Retire At</div>
+                  <div className="text-xs font-mono font-bold text-ink mt-0.5">Age {p.projectedRetirementAge}</div>
                 </div>
-                <div className="p-2 bg-white rounded-lg border border-zinc-200/70">
-                  <div className="text-[10px] uppercase tracking-wide text-zinc-500 font-semibold">Spend / Mo</div>
-                  <div className="text-xs font-mono font-bold text-zinc-900 mt-0.5">{formatCurrencyCompact(p.monthlyRetirementSpending)}</div>
+                <div className="p-2 bg-surface rounded-lg border border-border/70">
+                  <div className="text-[10px] uppercase tracking-wide text-muted font-semibold">Spend / Mo</div>
+                  <div className="text-xs font-mono font-bold text-ink mt-0.5">{formatCurrencyCompact(p.monthlyRetirementSpending)}</div>
                 </div>
               </div>
-              <p className="text-[11px] text-zinc-600 leading-snug">{p.tradeOffDescription}</p>
+              <p className="text-[11px] text-muted leading-snug">{p.tradeOffDescription}</p>
             </div>
           ))}
         </div>
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border border-zinc-200/90 shadow-2xs">
-          <h3 className="text-lg font-sans text-zinc-950 font-bold mb-4 flex items-center gap-2"><Wallet size={18} className="text-zinc-600" /> Tax Summary</h3>
+        <Card className="border border-border/90 shadow-2xs">
+          <h3 className="text-lg font-sans text-ink font-bold mb-4 flex items-center gap-2"><Wallet size={18} className="text-muted" /> Tax Summary</h3>
           <div className="space-y-3 text-sm">
-            <div className="flex justify-between py-2 border-b border-zinc-200/70"><span className="text-zinc-600 font-medium">Annual income</span><span className="font-semibold text-zinc-900">{formatCurrency(wealthResult.annualIncome)}</span></div>
-            <div className="flex justify-between py-2 border-b border-zinc-200/70"><span className="text-zinc-600 font-medium">Estimated tax</span><span className="font-semibold text-zinc-900">{formatCurrency(wealthResult.taxSummary.annualTax)}</span></div>
-            <div className="flex justify-between py-2 border-b border-zinc-200/70"><span className="text-zinc-600 font-medium">Effective tax rate</span><span className="font-semibold text-zinc-900">{formatPercent(wealthResult.taxSummary.effectiveRate * 100)}</span></div>
-            <div className="flex justify-between py-2 border-b border-zinc-200/70"><span className="text-zinc-600 font-medium">Post-tax income</span><span className="font-semibold text-zinc-900">{formatCurrency(wealthResult.taxSummary.postTaxIncome)}</span></div>
-            <div className="flex justify-between py-2"><span className="text-zinc-600 font-medium">Recommended tax saving</span><span className="font-semibold text-zinc-900">{formatCurrency(wealthResult.taxSummary.recommendedTaxSaving)}</span></div>
+            <div className="flex justify-between py-2 border-b border-border/70"><span className="text-muted font-medium">Annual income</span><span className="font-semibold text-ink">{formatCurrency(wealthResult.annualIncome)}</span></div>
+            <div className="flex justify-between py-2 border-b border-border/70"><span className="text-muted font-medium">Estimated tax</span><span className="font-semibold text-ink">{formatCurrency(wealthResult.taxSummary.annualTax)}</span></div>
+            <div className="flex justify-between py-2 border-b border-border/70"><span className="text-muted font-medium">Effective tax rate</span><span className="font-semibold text-ink">{formatPercent(wealthResult.taxSummary.effectiveRate * 100)}</span></div>
+            <div className="flex justify-between py-2 border-b border-border/70"><span className="text-muted font-medium">Post-tax income</span><span className="font-semibold text-ink">{formatCurrency(wealthResult.taxSummary.postTaxIncome)}</span></div>
+            <div className="flex justify-between py-2"><span className="text-muted font-medium">Recommended tax saving</span><span className="font-semibold text-ink">{formatCurrency(wealthResult.taxSummary.recommendedTaxSaving)}</span></div>
           </div>
         </Card>
 
-        <Card className="border border-zinc-200/90 shadow-2xs">
-          <h3 className="text-lg font-sans text-zinc-950 font-bold mb-4 flex items-center gap-2"><Globe size={18} className="text-zinc-600" /> Currency Exposure</h3>
+        <Card className="border border-border/90 shadow-2xs">
+          <h3 className="text-lg font-sans text-ink font-bold mb-4 flex items-center gap-2"><Globe size={18} className="text-muted" /> Currency Exposure</h3>
           <div className="space-y-3">
             {wealthResult.currencyExposure.map((c) => (
-              <div key={c.currency} className="p-3 bg-zinc-50 rounded-xl border border-zinc-200/80">
+              <div key={c.currency} className="p-3 bg-sunken rounded-xl border border-border/80">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-zinc-900">{c.currency}</span>
+                  <span className="font-semibold text-ink">{c.currency}</span>
                   <Badge variant={c.currency === 'INR' ? 'outline' : 'gold'}>{formatPercent(c.percentage)}</Badge>
                 </div>
-                <div className="mt-2 h-2 rounded-full bg-zinc-200/70 overflow-hidden">
+                <div className="mt-2 h-2 rounded-full bg-sunken overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-zinc-700"
+                    className="h-full rounded-full bg-faint"
                     style={{ width: `${Math.min(100, c.percentage)}%` }}
                   />
                 </div>
-                <div className="text-xs text-zinc-600 font-mono mt-1.5">{formatCurrency(c.amount)}</div>
+                <div className="text-xs text-muted font-mono mt-1.5">{formatCurrency(c.amount)}</div>
               </div>
             ))}
           </div>
@@ -443,7 +443,7 @@ export const Reports = () => {
       )}
 
       {wealthResult.sustainable ? (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3 text-green-800">
+        <div className="bg-positive-soft border border-green-200 rounded-xl p-4 flex items-start gap-3 text-green-800">
           <CheckCircle2 size={20} className="shrink-0 mt-0.5" />
           <div className="text-sm">
             <strong>Plan is sustainable.</strong> The projected corpus is expected to last through age {inputs.lifeExpectancy} under mean assumptions.
@@ -461,24 +461,24 @@ export const Reports = () => {
       {(decisionHistory.length > 0 || meetingNotes.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {decisionHistory.length > 0 && (
-            <Card className="border border-zinc-200/90 shadow-2xs">
+            <Card className="border border-border/90 shadow-2xs">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-sans text-zinc-950 font-bold flex items-center gap-2"><History size={18} className="text-zinc-600" /> Decision Log Summary</h3>
-                <Button variant="outline" size="sm" onClick={() => navigate('/decision-history')} className="border-zinc-300 text-zinc-700 hover:bg-zinc-100">
+                <h3 className="text-lg font-sans text-ink font-bold flex items-center gap-2"><History size={18} className="text-muted" /> Decision Log Summary</h3>
+                <Button variant="outline" size="sm" onClick={() => navigate('/decision-history')} className="border-border-strong text-ink-soft hover:bg-sunken">
                   View all
                 </Button>
               </div>
               <div className="space-y-2.5">
                 {decisionHistory.slice(0, 5).map((dec) => (
-                  <div key={dec.id} className="flex items-start justify-between gap-3 py-2 border-b border-zinc-200/70 last:border-0">
+                  <div key={dec.id} className="flex items-start justify-between gap-3 py-2 border-b border-border/70 last:border-0">
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold text-zinc-900 truncate">
+                      <p className="text-xs font-semibold text-ink truncate">
                         {dec.actionTitle}
-                        {dec.reverted && <span className="ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-zinc-200 text-zinc-600">REVERTED</span>}
+                        {dec.reverted && <span className="ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-sunken text-muted">REVERTED</span>}
                       </p>
-                      {dec.rationale && <p className="text-[11px] text-zinc-500 truncate mt-0.5">{dec.rationale}</p>}
+                      {dec.rationale && <p className="text-[11px] text-muted truncate mt-0.5">{dec.rationale}</p>}
                     </div>
-                    <span className="text-[10px] text-zinc-500 whitespace-nowrap shrink-0">{dec.dateFormatted} · {dec.author}</span>
+                    <span className="text-[10px] text-muted whitespace-nowrap shrink-0">{dec.dateFormatted} · {dec.author}</span>
                   </div>
                 ))}
               </div>
@@ -486,16 +486,16 @@ export const Reports = () => {
           )}
 
           {meetingNotes.length > 0 && (
-            <Card className="border border-zinc-200/90 shadow-2xs">
+            <Card className="border border-border/90 shadow-2xs">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-sans text-zinc-950 font-bold flex items-center gap-2"><StickyNote size={18} className="text-zinc-600" /> Meeting Notes</h3>
+                <h3 className="text-lg font-sans text-ink font-bold flex items-center gap-2"><StickyNote size={18} className="text-muted" /> Meeting Notes</h3>
                 <Badge variant="outline">{meetingNotes.length} of 4 stages recorded</Badge>
               </div>
               <div className="space-y-2.5">
                 {meetingNotes.map((s) => (
-                  <div key={s.stageId} className="py-2 border-b border-zinc-200/70 last:border-0">
-                    <p className="text-xs font-semibold text-zinc-900">{MEETING_STAGE_NAMES[s.stageId]}</p>
-                    <p className="text-[11px] text-zinc-500 leading-snug mt-0.5 line-clamp-2">{s.note}</p>
+                  <div key={s.stageId} className="py-2 border-b border-border/70 last:border-0">
+                    <p className="text-xs font-semibold text-ink">{MEETING_STAGE_NAMES[s.stageId]}</p>
+                    <p className="text-[11px] text-muted leading-snug mt-0.5 line-clamp-2">{s.note}</p>
                   </div>
                 ))}
               </div>

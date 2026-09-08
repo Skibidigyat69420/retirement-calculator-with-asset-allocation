@@ -22,17 +22,17 @@ interface MonteCarloFanChartProps {
 const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 };
 
 const TOOLTIP_STYLE = {
-  borderRadius: '14px',
-  border: '1px solid rgba(226, 232, 240, 0.9)',
-  backgroundColor: 'rgba(255, 255, 255, 0.96)',
+  borderRadius: '12px',
+  border: '1px solid #2b3444',
+  backgroundColor: '#161b26',
   backdropFilter: 'blur(10px)',
-  boxShadow: '0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04)',
+  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.55), 0 8px 10px -6px rgba(0, 0, 0, 0.45)',
   padding: '10px 14px',
 };
 
-const LEGEND_WRAPPER_STYLE = { fontSize: '11px', paddingBottom: '8px' };
+const LEGEND_WRAPPER_STYLE = { fontSize: '11px', paddingBottom: '8px', color: 'var(--color-muted)' };
 
-const XAXIS_LABEL = { value: 'Age', position: 'insideBottom' as const, offset: -5, fill: '#78716c', fontSize: 12 };
+const XAXIS_LABEL = { value: 'Age', position: 'insideBottom' as const, offset: -5, fill: 'var(--color-muted)', fontSize: 11 };
 
 export const MonteCarloFanChart = ({ data, className, ariaLabel }: MonteCarloFanChartProps) => {
   const chartData = data.map((d) => ({
@@ -70,7 +70,7 @@ export const MonteCarloFanChart = ({ data, className, ariaLabel }: MonteCarloFan
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
           <XAxis
             dataKey="age"
-            tick={{ fontSize: 12, fill: '#78716c' }}
+            tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
             axisLine={false}
             tickLine={false}
             tickMargin={10}
@@ -78,7 +78,7 @@ export const MonteCarloFanChart = ({ data, className, ariaLabel }: MonteCarloFan
           />
           <YAxis
             tickFormatter={formatCurrencyCompact}
-            tick={{ fontSize: 12, fill: '#78716c' }}
+            tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
             axisLine={false}
             tickLine={false}
           />
@@ -96,7 +96,7 @@ export const MonteCarloFanChart = ({ data, className, ariaLabel }: MonteCarloFan
             type="monotone"
             dataKey="p95"
             name="95th Pct (Optimistic)"
-            stroke="#B68B40"
+            stroke="#7dd3fc"
             strokeDasharray="4 4"
             strokeWidth={1}
             fill="url(#colorFan90)"
@@ -105,7 +105,7 @@ export const MonteCarloFanChart = ({ data, className, ariaLabel }: MonteCarloFan
             type="monotone"
             dataKey="p75"
             name="75th Pct (Favorable)"
-            stroke="#1A233A"
+            stroke="var(--color-muted)"
             strokeWidth={1}
             fill="url(#colorFan50)"
           />
@@ -113,7 +113,7 @@ export const MonteCarloFanChart = ({ data, className, ariaLabel }: MonteCarloFan
             type="monotone"
             dataKey="p50"
             name="50th Pct (Median)"
-            stroke={COLORS.gold}
+            stroke="#8cff2e"
             strokeWidth={2.5}
             fill="none"
           />
@@ -121,7 +121,7 @@ export const MonteCarloFanChart = ({ data, className, ariaLabel }: MonteCarloFan
             type="monotone"
             dataKey="p25"
             name="25th Pct (Cautious)"
-            stroke="#78716c"
+            stroke="var(--color-muted)"
             strokeWidth={1}
             fill="none"
           />
@@ -129,7 +129,7 @@ export const MonteCarloFanChart = ({ data, className, ariaLabel }: MonteCarloFan
             type="monotone"
             dataKey="p5"
             name="5th Pct (Stress)"
-            stroke="#e11d48"
+            stroke="#fb7185"
             strokeDasharray="3 3"
             strokeWidth={1.5}
             fill="none"

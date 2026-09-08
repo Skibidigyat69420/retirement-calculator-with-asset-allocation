@@ -13,9 +13,9 @@ export const Layout = ({ children }: LayoutProps) => {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="min-h-screen flex relative selection:bg-zinc-900 selection:text-white text-zinc-900">
+      <div className="min-h-screen flex relative bg-background selection:bg-ink selection:text-background text-ink">
         <a href="#main-content" className="skip-to-content sr-only focus:not-sr-only">
-          <span className="inline-flex items-center rounded-xl bg-zinc-950 text-white px-4 py-2.5 shadow-lg font-medium text-xs">
+          <span className="inline-flex items-center rounded-xl bg-ink text-background px-4 py-2.5 shadow-lg font-medium text-xs">
             Skip to main content
           </span>
         </a>

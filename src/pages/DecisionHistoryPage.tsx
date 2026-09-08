@@ -56,21 +56,21 @@ export const DecisionHistoryPage = () => {
       />
 
       {decisionHistory.length > 1 && (
-        <Card className="border border-zinc-200/90 shadow-sm space-y-4">
-          <div className="border-b border-zinc-100 pb-3">
-            <h3 className="text-base font-sans font-bold text-zinc-900 flex items-center gap-2">
-              <Activity size={18} className="text-zinc-800" />
+        <Card className="border border-border/90 shadow-sm space-y-4">
+          <div className="border-b border-border pb-3">
+            <h3 className="text-base font-sans font-bold text-ink flex items-center gap-2">
+              <Activity size={18} className="text-ink-soft" />
               Decision Activity Timeline
             </h3>
-            <p className="text-xs text-zinc-500 mt-0.5">
+            <p className="text-xs text-muted mt-0.5">
               Cumulative recorded decisions plotted against the plan&rsquo;s projected net worth at the client&rsquo;s age on each decision date.
             </p>
           </div>
-          <p className="text-xs text-zinc-600">
+          <p className="text-xs text-muted">
             {decisionHistory.length} decisions span{' '}
             {formatDate(decisionHistory.reduce((a, b) => (new Date(a.timestamp) < new Date(b.timestamp) ? a : b)).timestamp)} –{' '}
             {formatDate(decisionHistory.reduce((a, b) => (new Date(a.timestamp) > new Date(b.timestamp) ? a : b)).timestamp)}; the plan&rsquo;s interpolated net worth at the latest decision is{' '}
-            <span className="font-mono font-bold text-zinc-900">{formatCurrency(timelineData[timelineData.length - 1]?.netWorth ?? wealthResult.netWorth)}</span>.
+            <span className="font-mono font-bold text-ink">{formatCurrency(timelineData[timelineData.length - 1]?.netWorth ?? wealthResult.netWorth)}</span>.
           </p>
           <div
             className="h-72 w-full"
@@ -106,7 +106,7 @@ export const DecisionHistoryPage = () => {
                   contentStyle={{
                     borderRadius: '14px',
                     border: '1px solid var(--color-border)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                    backgroundColor: 'var(--color-surface)',
                     padding: '10px 14px',
                   }}
                 />

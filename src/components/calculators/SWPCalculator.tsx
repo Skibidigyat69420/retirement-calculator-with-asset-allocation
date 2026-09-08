@@ -146,10 +146,10 @@ export const SWPCalculator = () => {
           />
 
           <div className="pt-2 space-y-2">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">Advisory Quick Levers</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-muted">Advisory Quick Levers</div>
             <div className="grid grid-cols-2 gap-2">
               <Button onClick={handleApplySustainable} variant="outline" size="sm" className="text-xs">
-                <Sparkles size={14} className="mr-1 text-zinc-600" /> Safe Rate
+                <Sparkles size={14} className="mr-1 text-muted" /> Safe Rate
               </Button>
               <Button onClick={handleApplyRuleOfFour} variant="outline" size="sm" className="text-xs">
                 <Percent size={14} className="mr-1 text-navy" /> 4% Rule
@@ -157,7 +157,7 @@ export const SWPCalculator = () => {
             </div>
           </div>
 
-          <div className="flex gap-2 pt-2 border-t border-zinc-100">
+          <div className="flex gap-2 pt-2 border-t border-border">
             <Button onClick={handleSyncFromPlan} className="flex-1 text-xs" variant="ghost">
               <RefreshCw size={13} className="mr-1.5" /> Sync from Plan
             </Button>
@@ -203,12 +203,12 @@ export const SWPCalculator = () => {
 
           {/* Solvency Warning / Advisory Alert */}
           {!result.sustainable && (
-            <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
+            <div className="bg-sunken border border-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
               <div className="flex items-start gap-3">
-                <AlertTriangle size={20} className="text-zinc-600 shrink-0 mt-0.5" />
+                <AlertTriangle size={20} className="text-muted shrink-0 mt-0.5" />
                 <div>
                   <div className="font-semibold text-navy">Drawdown Exceeds Sustainable Capacity</div>
-                  <div className="text-xs text-zinc-600 mt-0.5">
+                  <div className="text-xs text-muted mt-0.5">
                     Your current withdrawal of {formatCurrency(monthlyWithdrawal)}/mo is projected to deplete the corpus in{' '}
                     <strong>Year {result.depletionYear}</strong>. Maximum sustainable withdrawal is{' '}
                     <strong>{formatCurrency(Math.round(sustainableResult.monthlyWithdrawal))}/mo</strong>.
@@ -223,13 +223,13 @@ export const SWPCalculator = () => {
 
           {/* View toggle header */}
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700">Decumulation Trajectory & Schedule</h4>
-            <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-lg text-xs">
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-ink-soft">Decumulation Trajectory & Schedule</h4>
+            <div className="flex items-center gap-1 bg-sunken p-1 rounded-lg text-xs">
               <button
                 type="button"
                 onClick={() => setViewMode('both')}
                 className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
-                  viewMode === 'both' ? 'bg-white text-navy shadow-xs' : 'text-zinc-600 hover:text-navy'
+                  viewMode === 'both' ? 'bg-surface text-navy shadow-xs' : 'text-muted hover:text-navy'
                 }`}
               >
                 All
@@ -238,7 +238,7 @@ export const SWPCalculator = () => {
                 type="button"
                 onClick={() => setViewMode('chart')}
                 className={`px-2.5 py-1 rounded-md font-medium transition-colors flex items-center gap-1 ${
-                  viewMode === 'chart' ? 'bg-white text-navy shadow-xs' : 'text-zinc-600 hover:text-navy'
+                  viewMode === 'chart' ? 'bg-surface text-navy shadow-xs' : 'text-muted hover:text-navy'
                 }`}
               >
                 <ChartIcon size={13} /> Chart
@@ -247,7 +247,7 @@ export const SWPCalculator = () => {
                 type="button"
                 onClick={() => setViewMode('table')}
                 className={`px-2.5 py-1 rounded-md font-medium transition-colors flex items-center gap-1 ${
-                  viewMode === 'table' ? 'bg-white text-navy shadow-xs' : 'text-zinc-600 hover:text-navy'
+                  viewMode === 'table' ? 'bg-surface text-navy shadow-xs' : 'text-muted hover:text-navy'
                 }`}
               >
                 <TableIcon size={13} /> Table
@@ -261,13 +261,13 @@ export const SWPCalculator = () => {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h4 className="text-sm font-semibold text-navy">Corpus Drawdown Over Time</h4>
-                  <p className="text-xs text-zinc-500">Compounded remaining capital net of annual withdrawals</p>
+                  <p className="text-xs text-muted">Compounded remaining capital net of annual withdrawals</p>
                 </div>
                 <Badge variant={result.sustainable ? 'success' : 'danger'}>
                   {result.sustainable ? `Sustains ${horizonYears}+ Yrs` : `Depletes Year ${result.depletionYear}`}
                 </Badge>
               </div>
-              <p className="text-xs text-zinc-600 mb-3">
+              <p className="text-xs text-muted mb-3">
                 {result.sustainable
                   ? `Withdrawals of ${formatCurrency(monthlyWithdrawal)}/mo (inflation-indexed) are comfortably funded — the corpus still stands at ${formatCurrency(chartData[chartData.length - 1]?.corpus ?? 0)} after ${horizonYears} years.`
                   : `At ${formatCurrency(monthlyWithdrawal)}/mo the corpus runs dry in year ${result.depletionYear}; cutting to the sustainable ${formatCurrency(Math.round(sustainableResult.monthlyWithdrawal))}/mo preserves capital through the full horizon.`}
@@ -302,7 +302,7 @@ export const SWPCalculator = () => {
                       labelFormatter={(label) => `Horizon ${label}`}
                       contentStyle={{
                         borderRadius: '12px',
-                        border: '1px solid #e2e8f0',
+                        border: '1px solid var(--color-border)',
                         boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                       }}
                     />
@@ -341,7 +341,7 @@ export const SWPCalculator = () => {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h4 className="text-sm font-semibold text-navy">Year-by-Year Withdrawal Schedule</h4>
-                  <p className="text-xs text-zinc-500">Inflation-adjusted monthly needs vs. ending balances</p>
+                  <p className="text-xs text-muted">Inflation-adjusted monthly needs vs. ending balances</p>
                 </div>
                 {result.yearlyData.length > 15 && (
                   <Button
@@ -358,20 +358,20 @@ export const SWPCalculator = () => {
               <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="SWP schedule table">
                 <table className="w-full text-sm min-w-[500px]">
                   <thead>
-                    <tr className="border-b border-zinc-200 text-left text-[10px] uppercase tracking-wider text-zinc-700">
+                    <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-ink-soft">
                       <th className="py-2.5 pr-4">Year</th>
                       <th className="py-2.5 pr-4 text-right">Monthly SWP</th>
                       <th className="py-2.5 pr-4 text-right">Annual Outflow</th>
                       <th className="py-2.5 pr-4 text-right">Corpus Balance</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 font-sans">
+                  <tbody className="divide-y divide-border font-sans">
                     {scheduleRows.map((d) => {
                       const isDepleted = d.corpusLeft <= 0;
                       return (
                         <tr
                           key={d.year}
-                          className={`hover:bg-zinc-50/80 transition-colors ${
+                          className={`hover:bg-sunken/80 transition-colors ${
                             isDepleted ? 'bg-rose-50/50 text-rose-900' : ''
                           }`}
                         >
@@ -380,7 +380,7 @@ export const SWPCalculator = () => {
                           <td className="py-2.5 pr-4 text-right">{formatCurrency(d.withdrawn)}</td>
                           <td
                             className={`py-2.5 pr-4 text-right font-medium ${
-                              isDepleted ? 'text-rose-600 font-bold' : 'text-zinc-900'
+                              isDepleted ? 'text-negative font-bold' : 'text-ink'
                             }`}
                           >
                             {formatCurrency(d.corpusLeft)}
@@ -393,7 +393,7 @@ export const SWPCalculator = () => {
               </div>
 
               {!showAllYears && result.yearlyData.length > 15 && (
-                <p className="text-xs text-zinc-500 mt-3 pt-2 border-t border-zinc-100">
+                <p className="text-xs text-muted mt-3 pt-2 border-t border-border">
                   Showing first 10 years and final year of {result.yearlyData.length}-year horizon. Click "Show All" above for complete table.
                 </p>
               )}

@@ -1,6 +1,6 @@
 import type { MasterPlanInputs, RiskAnswers, AssetCategory } from '../types';
 import type { AssumptionSet } from './assumptions';
-import { createStore, localStorageStore, type StoredPlan } from './store';
+import { localStorageStore, type StoredPlan } from './store';
 
 export interface PlanBundle {
   inputs: MasterPlanInputs;
@@ -28,8 +28,10 @@ function buildStoredPlan(bundle: PlanBundle, id?: string, name?: string): Stored
   };
 }
 
+import { apiStore } from './store/apiStore';
+
 export function getActiveStore() {
-  return createStore();
+  return apiStore;
 }
 
 export async function listPlans() {

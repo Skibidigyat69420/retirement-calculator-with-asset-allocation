@@ -40,7 +40,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
 
   return (
     <>
-      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-zinc-200/80 px-4 sm:px-6 lg:px-8 py-2.5 transition-all shadow-xs">
+      <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border px-4 sm:px-6 lg:px-8 py-2.5 transition-all">
         <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto min-w-0">
           {/* Mobile hamburger & title */}
           <div className="flex items-center gap-3 lg:hidden min-w-0 flex-1">
@@ -48,15 +48,15 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
               onClick={onMenuClick}
               aria-label="Toggle menu"
               aria-expanded={mobileOpen}
-              className="p-2 -ml-2 min-h-11 min-w-11 flex items-center justify-center text-zinc-600 hover:text-zinc-950 rounded-xl hover:bg-zinc-100 transition-colors shrink-0"
+              className="p-2 -ml-2 min-h-11 min-w-11 flex items-center justify-center text-muted hover:text-ink rounded-xl hover:bg-raised transition-colors shrink-0"
             >
               <Menu size={20} />
             </button>
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-6 h-6 bg-zinc-950 rounded-lg flex items-center justify-center shrink-0 shadow-2xs">
-                <span className="text-white font-sans font-extrabold text-[10px]">ST</span>
+              <div className="w-6 h-6 bg-surface border border-border-strong rounded-lg flex items-center justify-center shrink-0">
+                <span className="text-ink font-serif text-[11px] leading-none">S<span className="text-accent">.</span></span>
               </div>
-              <span className="text-sm font-sans text-zinc-950 font-bold truncate max-w-[140px] sm:max-w-[220px]">
+              <span className="text-sm font-sans text-ink font-bold truncate max-w-[140px] sm:max-w-[220px]">
                 {label}
               </span>
             </div>
@@ -64,11 +64,11 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
 
           {/* Desktop Breadcrumbs */}
           <div className="hidden lg:flex items-center gap-2 text-xs min-w-0">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-zinc-400">
+            <span className="micro-label">
               {section}
             </span>
-            <ChevronRight size={13} className="text-zinc-300 shrink-0" />
-            <span className="font-sans text-zinc-950 font-bold text-sm tracking-tight">
+            <ChevronRight size={13} className="text-border-strong shrink-0" />
+            <span className="font-sans text-ink font-bold text-sm tracking-tight">
               {label}
             </span>
           </div>
@@ -80,9 +80,9 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
               to="/master-plan"
               title="Click to edit client profile in Master Plan"
               aria-label={`Client profile: ${inputs.client?.name || 'Client Plan'}`}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 min-h-9 rounded-xl bg-white/90 hover:bg-white border border-zinc-200/80 hover:border-zinc-300 text-xs font-semibold text-zinc-700 hover:text-zinc-950 transition-all shadow-2xs focus:outline-none focus:ring-2 focus:ring-zinc-400 group"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 min-h-9 rounded-full bg-raised border border-border hover:border-border-strong text-xs font-semibold text-ink-soft hover:text-ink transition-all"
             >
-              <User size={13} className="text-zinc-500 shrink-0" />
+              <User size={13} className="text-faint shrink-0" />
               <span className="hidden sm:inline max-w-[120px] sm:max-w-[150px] truncate">
                 {inputs.client?.name || 'Client Plan'}
               </span>
@@ -93,11 +93,11 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
               to="/risk"
               title={`Risk Score: ${riskScore}/100. Click to view Questionnaire`}
               aria-label={`Risk profile: ${riskProfile.label} (${riskScore})`}
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 min-h-9 rounded-xl bg-white/90 hover:bg-white border border-zinc-200/80 hover:border-zinc-300 text-xs font-semibold text-zinc-700 hover:text-zinc-950 transition-all shadow-2xs focus:outline-none focus:ring-2 focus:ring-zinc-400"
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 min-h-9 rounded-full bg-raised border border-border hover:border-border-strong text-xs font-semibold text-ink-soft hover:text-ink transition-all"
             >
-              <ShieldCheck size={13} className="text-zinc-500 shrink-0" />
+              <ShieldCheck size={13} className="text-faint shrink-0" />
               <span className="capitalize">{riskProfile.label}</span>
-              <span className="text-[10px] text-zinc-600 bg-zinc-100 px-1.5 py-0.5 rounded-md font-mono font-bold tabular-nums">
+              <span className="text-[10px] text-muted bg-sunken border border-border px-1.5 py-0.5 rounded-md font-mono font-bold tabular-nums">
                 {riskScore}
               </span>
             </Link>
@@ -107,16 +107,12 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
               to="/retirement"
               title={wealthResult.sustainable ? 'Plan sustainable through life expectancy' : `Plan depletes at age ${wealthResult.depletionAge}`}
               aria-label={wealthResult.sustainable ? 'Plan sustainable through life expectancy' : `Plan depletes at age ${wealthResult.depletionAge}`}
-              className={`hidden sm:flex items-center gap-2 px-3 py-1.5 min-h-9 rounded-xl border text-xs font-semibold transition-all shadow-2xs focus:outline-none focus:ring-2 focus:ring-zinc-400 ${
-                wealthResult.sustainable
-                  ? 'bg-emerald-50/90 text-emerald-800 border-emerald-200/80 hover:bg-emerald-100/80 hover:border-emerald-300'
-                  : 'bg-amber-50/90 text-amber-800 border-amber-200/80 hover:bg-amber-100/80 hover:border-amber-300'
-              }`}
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 min-h-9 rounded-full bg-raised border border-border hover:border-border-strong text-xs font-semibold text-ink-soft hover:text-ink transition-all"
             >
               {wealthResult.sustainable ? (
-                <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
+                <CheckCircle2 size={13} className="text-positive shrink-0" />
               ) : (
-                <AlertTriangle size={13} className="text-amber-600 shrink-0" />
+                <AlertTriangle size={13} className="text-warning shrink-0" />
               )}
               <span>
                 {wealthResult.sustainable
@@ -126,8 +122,8 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
             </Link>
 
             {/* Net Worth Chip */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-950 text-white text-xs font-semibold shadow-xs ring-1 ring-zinc-800/80 min-w-0">
-              <Wallet size={13} className="text-emerald-400 shrink-0" />
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-raised border border-border text-ink text-xs font-semibold min-w-0">
+              <Wallet size={13} className="text-accent shrink-0" />
               <span className="truncate max-w-[90px] sm:max-w-none font-mono tabular-nums font-bold">
                 {formatCurrencyCompact(wealthResult.netWorth)}
               </span>
@@ -136,7 +132,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
             {/* Export Complete PDF Button */}
             <Link
               to="/dossier?autoPrint=true"
-              className="flex items-center gap-1.5 px-3 py-1.5 min-h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all shadow-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30 shrink-0"
+              className="flex items-center gap-1.5 px-4 py-1.5 min-h-9 rounded-full bg-ink text-background hover:bg-ink-soft text-xs font-semibold transition-all shrink-0"
               title="Export complete snapshot of all pages as a PDF"
               aria-label="Export complete snapshot of all pages as a PDF"
             >
@@ -147,7 +143,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
             {/* Quick Reset Plan Button */}
             <button
               onClick={() => setShowResetConfirm(true)}
-              className="p-2 min-h-11 min-w-11 flex items-center justify-center text-zinc-400 hover:text-rose-600 rounded-xl hover:bg-rose-50/80 hover:border-rose-200 border border-transparent transition-all"
+              className="p-2 min-h-11 min-w-11 flex items-center justify-center text-faint hover:text-negative rounded-xl hover:bg-negative-soft border border-transparent transition-all"
               title="Reset plan inputs to defaults"
               aria-label="Reset plan inputs to defaults"
             >
@@ -160,7 +156,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
       {/* Reset Confirmation Modal */}
       {showResetConfirm && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-overlay-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-overlay-in"
           role="presentation"
           onClick={() => setShowResetConfirm(false)}
         >
@@ -168,18 +164,18 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="reset-title"
-            className="bg-white/95 backdrop-blur-xl rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-zinc-200/80 animate-drawer-in"
+            className="bg-surface rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-border animate-drawer-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-3.5 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200/80 flex items-center justify-center text-rose-600 shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-raised border border-border flex items-center justify-center text-negative shrink-0">
                 <RotateCcw size={18} />
               </div>
               <div>
-                <h3 id="reset-title" className="text-base font-sans font-bold text-zinc-950">
+                <h3 id="reset-title" className="text-base font-sans font-bold text-ink">
                   Reset Plan Inputs?
                 </h3>
-                <p className="text-xs text-zinc-500 mt-1 leading-relaxed text-pretty">
+                <p className="text-xs text-muted mt-1 leading-relaxed text-pretty">
                   This will revert all client profile information, assets, SIP/STP/SWP allocations, and questionnaire responses back to the default sample client.
                 </p>
               </div>
@@ -188,13 +184,13 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
               <button
                 ref={cancelButtonRef}
                 onClick={() => setShowResetConfirm(false)}
-                className="px-4 py-2 text-xs font-semibold text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-xl transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-muted hover:text-ink hover:bg-raised rounded-xl transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmReset}
-                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors shadow-xs glow-rose"
+                className="px-4 py-2 text-xs font-semibold text-white bg-negative hover:opacity-90 rounded-xl transition-all glow-rose"
               >
                 Reset to Defaults
               </button>

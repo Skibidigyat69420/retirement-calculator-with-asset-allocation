@@ -446,7 +446,7 @@ export const ReversePlanning = () => {
                   contentStyle={{
                     borderRadius: '14px',
                     border: '1px solid var(--color-border)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                    backgroundColor: 'var(--color-raised)',
                     padding: '10px 14px',
                   }}
                 />
@@ -512,7 +512,7 @@ export const ReversePlanning = () => {
                   contentStyle={{
                     borderRadius: '14px',
                     border: '1px solid var(--color-border)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                    backgroundColor: 'var(--color-raised)',
                     padding: '10px 14px',
                   }}
                 />

@@ -100,38 +100,38 @@ export const RetirementCorpusCalculator = () => {
           </div>
 
           <Card>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Retirement Math</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-ink-soft mb-4">Retirement Math</h4>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-zinc-700">Monthly need today</span>
+                <span className="text-ink-soft">Monthly need today</span>
                 <span className="font-medium">{formatCurrency(monthlyNeedToday)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-700">Monthly need at retirement ({result.yearsToRetirement} yrs)</span>
+                <span className="text-ink-soft">Monthly need at retirement ({result.yearsToRetirement} yrs)</span>
                 <span className="font-medium">{formatCurrency(result.monthlyNeedAtRetirement)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-700">Annual need at retirement</span>
+                <span className="text-ink-soft">Annual need at retirement</span>
                 <span className="font-medium">{formatCurrency(result.annualNeedAtRetirement)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-700">Retirement years</span>
+                <span className="text-ink-soft">Retirement years</span>
                 <span className="font-medium">{result.retirementYears}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-700">Required corpus</span>
+                <span className="text-ink-soft">Required corpus</span>
                 <span className="font-medium text-navy">{formatCurrency(result.requiredCorpus)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-700">Inflation-adjusted sustainable monthly draw</span>
+                <span className="text-ink-soft">Inflation-adjusted sustainable monthly draw</span>
                 <span className="font-medium">{formatCurrency(result.sustainableMonthlyWithdrawal)}</span>
               </div>
             </div>
           </Card>
 
           <Card>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Withdrawal Need Escalation</h4>
-            <p className="text-xs text-zinc-600 mb-3">
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-ink-soft mb-4">Withdrawal Need Escalation</h4>
+            <p className="text-xs text-muted mb-3">
               Inflation multiplies the monthly need by {(result.monthlyNeedAtRetirement / Math.max(1, monthlyNeedToday)).toFixed(2)}× over {result.yearsToRetirement} years — the required corpus is sized to the retirement-date need, not today&rsquo;s.
             </p>
             <div className="h-64" role="img" aria-label={`Bar chart comparing monthly withdrawal needs: ${formatCurrency(monthlyNeedToday)} today, ${formatCurrency(result.monthlyNeedAtRetirement)} at retirement, and a sustainable draw of ${formatCurrency(result.sustainableMonthlyWithdrawal)}.`}>
@@ -156,8 +156,8 @@ export const RetirementCorpusCalculator = () => {
                     formatter={(value: any) => [formatCurrency(Number(value)), 'Monthly need']}
                     contentStyle={{
                       borderRadius: '14px',
-                      border: '1px solid rgba(226, 232, 240, 0.9)',
-                      backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                      border: '1px solid var(--color-border)',
+                      backgroundColor: 'var(--color-surface)',
                       padding: '10px 14px',
                     }}
                   />

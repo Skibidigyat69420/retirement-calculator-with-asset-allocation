@@ -1,0 +1,15 @@
+import puppeteer from 'puppeteer-core';
+const browser = await puppeteer.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+const page = await browser.newPage();
+await page.setViewport({ width: 1440, height: 900 });
+await page.goto('https://www.soundthesis.com', { waitUntil: 'networkidle2', timeout: 60000 });
+await new Promise(r => setTimeout(r, 3000));
+await page.screenshot({ path: '/tmp/st-hero.png' });
+await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight * 0.35));
+await new Promise(r => setTimeout(r, 1500));
+await page.screenshot({ path: '/tmp/st-mid.png' });
+await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight * 0.7));
+await new Promise(r => setTimeout(r, 1500));
+await page.screenshot({ path: '/tmp/st-late.png' });
+await browser.close();
+console.log('done');

@@ -94,14 +94,14 @@ export const RecommendationsList = ({ recommendations }: RecommendationsListProp
 
   if (recommendations.length === 0) {
     return (
-      <Card className="p-6 bg-white border border-zinc-200/90 shadow-2xs">
+      <Card className="p-6 bg-surface border border-border/90 shadow-2xs">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-positive/40 text-positive flex items-center justify-center shrink-0">
             <CheckCircle2 size={20} />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-zinc-950">Plan Fully Calibrated & Optimized</h4>
-            <p className="text-xs text-zinc-500 mt-0.5">
+            <h4 className="text-sm font-bold text-ink">Plan Fully Calibrated & Optimized</h4>
+            <p className="text-xs text-muted mt-0.5">
               No critical funding gaps or strategic drift detected. All key advisory thresholds are currently satisfied.
             </p>
           </div>
@@ -113,19 +113,19 @@ export const RecommendationsList = ({ recommendations }: RecommendationsListProp
   const highPriorityCount = recommendations.filter((r) => r.priority === 1).length;
 
   return (
-    <Card className="p-5 sm:p-6 bg-white border border-zinc-200/90 shadow-2xs hover:shadow-card transition-all space-y-5">
+    <Card className="p-5 sm:p-6 bg-surface border border-border/90 shadow-2xs hover:shadow-card transition-all space-y-5">
       {/* Header with Title & Filter Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-100 pb-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-zinc-950 text-white flex items-center justify-center shadow-xs shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-sunken text-ink flex items-center justify-center shadow-xs shrink-0">
             <Zap size={18} className="text-amber-400" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-base sm:text-lg font-bold text-zinc-950 tracking-tight font-sans">
+              <h3 className="text-base sm:text-lg font-bold text-ink tracking-tight font-sans">
                 Prioritized Strategic Interventions
               </h3>
-              <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider text-zinc-700 border-zinc-300">
+              <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider text-ink-soft border-border-strong">
                 {recommendations.length} Available Action{recommendations.length > 1 ? 's' : ''}
               </Badge>
               {highPriorityCount > 0 && (
@@ -134,7 +134,7 @@ export const RecommendationsList = ({ recommendations }: RecommendationsListProp
                 </Badge>
               )}
             </div>
-            <p className="text-xs text-zinc-500 mt-0.5">
+            <p className="text-xs text-muted mt-0.5">
               Actionable fiduciary adjustments to close funding gaps, improve tax efficiency, and eliminate risk drift
             </p>
           </div>
@@ -146,8 +146,8 @@ export const RecommendationsList = ({ recommendations }: RecommendationsListProp
             onClick={() => setSelectedFilter('all')}
             className={`px-2.5 py-1 rounded-lg font-semibold text-xs transition-all ${
               selectedFilter === 'all'
-                ? 'bg-zinc-950 text-white shadow-2xs'
-                : 'bg-zinc-100 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/70'
+                ? 'bg-sunken text-ink shadow-2xs'
+                : 'bg-sunken text-muted hover:text-ink hover:bg-raised/70'
             }`}
           >
             All ({recommendations.length})
@@ -157,8 +157,8 @@ export const RecommendationsList = ({ recommendations }: RecommendationsListProp
               onClick={() => setSelectedFilter('high')}
               className={`px-2.5 py-1 rounded-lg font-semibold text-xs transition-all ${
                 selectedFilter === 'high'
-                  ? 'bg-rose-600 text-white shadow-2xs'
-                  : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
+                  ? 'bg-rose-600 text-ink shadow-2xs'
+                  : 'bg-negative-soft text-negative border border-negative/40 hover:bg-negative-soft'
               }`}
             >
               High ({highPriorityCount})
@@ -168,8 +168,8 @@ export const RecommendationsList = ({ recommendations }: RecommendationsListProp
             onClick={() => setSelectedFilter('retirement')}
             className={`px-2.5 py-1 rounded-lg font-semibold text-xs transition-all ${
               selectedFilter === 'retirement'
-                ? 'bg-zinc-950 text-white shadow-2xs'
-                : 'bg-zinc-100 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/70'
+                ? 'bg-sunken text-ink shadow-2xs'
+                : 'bg-sunken text-muted hover:text-ink hover:bg-raised/70'
             }`}
           >
             Retirement
@@ -178,8 +178,8 @@ export const RecommendationsList = ({ recommendations }: RecommendationsListProp
             onClick={() => setSelectedFilter('portfolio')}
             className={`px-2.5 py-1 rounded-lg font-semibold text-xs transition-all ${
               selectedFilter === 'portfolio'
-                ? 'bg-zinc-950 text-white shadow-2xs'
-                : 'bg-zinc-100 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/70'
+                ? 'bg-sunken text-ink shadow-2xs'
+                : 'bg-sunken text-muted hover:text-ink hover:bg-raised/70'
             }`}
           >
             Portfolio
@@ -195,17 +195,17 @@ export const RecommendationsList = ({ recommendations }: RecommendationsListProp
 
           // Priority badge formatting: High, Medium, Low
           let priorityLabel = 'Low';
-          let priorityClass = 'bg-zinc-100 text-zinc-700 border-zinc-300';
+          let priorityClass = 'bg-sunken text-ink-soft border-border-strong';
           let priorityDot = 'bg-zinc-400';
 
           if (rec.priority === 1) {
             priorityLabel = 'High';
-            priorityClass = 'bg-rose-50 text-rose-800 border-rose-200';
+            priorityClass = 'bg-rose-50 text-negative border-negative/40';
             priorityDot = 'bg-rose-600';
           } else if (rec.priority === 2) {
             priorityLabel = 'Medium';
-            priorityClass = 'bg-amber-50 text-amber-800 border-amber-200';
-            priorityDot = 'bg-amber-500';
+            priorityClass = 'bg-warning-soft text-warning border-warning/40';
+            priorityDot = 'bg-warning-soft0';
           }
 
           return (
@@ -214,7 +214,7 @@ export const RecommendationsList = ({ recommendations }: RecommendationsListProp
               className={`p-4 sm:p-5 rounded-2xl border transition-all ${
                 isApplied
                   ? 'bg-emerald-50/50 border-emerald-300 shadow-2xs'
-                  : 'bg-white border-zinc-200/90 hover:border-zinc-300 hover:shadow-2xs'
+                  : 'bg-surface border-border/90 hover:border-border-strong hover:shadow-2xs'
               }`}
             >
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -230,23 +230,23 @@ export const RecommendationsList = ({ recommendations }: RecommendationsListProp
                     </span>
 
                     {/* Category Badge */}
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-zinc-100 text-zinc-700 border border-zinc-200 uppercase tracking-wider">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-sunken text-ink-soft border border-border uppercase tracking-wider">
                       {rec.category}
                     </span>
 
                     {/* Impact Highlight Pill */}
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs">
-                      <TrendingUp size={12} className="text-emerald-600" />
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-positive-soft text-positive border border-positive/40 shadow-2xs">
+                      <TrendingUp size={12} className="text-positive" />
                       <span>Impact: {rec.impact}</span>
                     </span>
                   </div>
 
                   {/* Title and Reason */}
                   <div>
-                    <h4 className="text-sm font-bold text-zinc-950 font-sans tracking-tight">
+                    <h4 className="text-sm font-bold text-ink font-sans tracking-tight">
                       {rec.title}
                     </h4>
-                    <p className="text-xs text-zinc-600 mt-1 leading-relaxed max-w-3xl">
+                    <p className="text-xs text-muted mt-1 leading-relaxed max-w-3xl">
                       {rec.reason}
                     </p>
                   </div>
@@ -258,22 +258,22 @@ export const RecommendationsList = ({ recommendations }: RecommendationsListProp
                     variant="outline"
                     size="sm"
                     onClick={() => toggleWhy(rec.id)}
-                    className="text-xs h-8 px-3 text-zinc-700 border-zinc-200 hover:bg-zinc-100 hover:border-zinc-300 gap-1.5 rounded-xl"
+                    className="text-xs h-8 px-3 text-ink-soft border-border hover:bg-sunken hover:border-border-strong gap-1.5 rounded-xl"
                   >
-                    <HelpCircle size={13} className="text-zinc-500" />
+                    <HelpCircle size={13} className="text-muted" />
                     {isWhyOpen ? 'Hide Rationale' : 'View Rationale'}
                   </Button>
 
                   {isApplied ? (
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-100/80 px-2.5 py-1 rounded-xl">
+                      <span className="inline-flex items-center gap-1 text-xs font-bold text-positive bg-emerald-100/80 px-2.5 py-1 rounded-xl">
                         <CheckCircle2 size={13} /> Applied
                       </span>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleUndo(rec)}
-                        className="text-xs h-8 px-2.5 text-zinc-700 border-zinc-300 hover:bg-zinc-100 gap-1 rounded-xl"
+                        className="text-xs h-8 px-2.5 text-ink-soft border-border-strong hover:bg-sunken gap-1 rounded-xl"
                         title="Revert to previous plan state"
                       >
                         <RotateCcw size={12} />
@@ -285,11 +285,11 @@ export const RecommendationsList = ({ recommendations }: RecommendationsListProp
                       variant="primary"
                       size="sm"
                       onClick={() => handleApply(rec)}
-                      className="text-xs h-8 px-3.5 bg-zinc-950 text-white hover:bg-zinc-800 font-semibold gap-1.5 rounded-xl shadow-2xs transition-all hover:scale-[1.02]"
+                      className="text-xs h-8 px-3.5 bg-sunken text-ink hover:bg-raised font-semibold gap-1.5 rounded-xl shadow-2xs transition-all hover:scale-[1.02]"
                     >
                       <Sparkles size={13} className="text-amber-400" />
                       <span>{rec.actionLabel}</span>
-                      <ArrowRight size={13} className="text-zinc-400 ml-0.5" />
+                      <ArrowRight size={13} className="text-faint ml-0.5" />
                     </Button>
                   )}
                 </div>
@@ -297,36 +297,36 @@ export const RecommendationsList = ({ recommendations }: RecommendationsListProp
 
               {/* Rationale Drawer */}
               {isWhyOpen && (
-                <div className="mt-4 pt-4 border-t border-zinc-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-zinc-50/80 border border-zinc-200/80 p-4 rounded-xl text-xs animate-in fade-in duration-150">
+                <div className="mt-4 pt-4 border-t border-border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-sunken/80 border border-border/80 p-4 rounded-xl text-xs animate-in fade-in duration-150">
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider block">
+                    <span className="text-[10px] uppercase font-bold text-faint tracking-wider block">
                       Current Parameter
                     </span>
-                    <span className="font-semibold text-zinc-950 bg-white px-2 py-1 rounded border border-zinc-200 inline-block font-mono text-[11px]">
+                    <span className="font-semibold text-ink bg-surface px-2 py-1 rounded border border-border inline-block font-mono text-[11px]">
                       {rec.whyExplainer.current}
                     </span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider block">
+                    <span className="text-[10px] uppercase font-bold text-faint tracking-wider block">
                       Target Benchmark
                     </span>
-                    <span className="font-semibold text-emerald-800 bg-emerald-50 px-2 py-1 rounded border border-emerald-200 inline-block font-mono text-[11px]">
+                    <span className="font-semibold text-positive bg-emerald-50 px-2 py-1 rounded border border-positive/40 inline-block font-mono text-[11px]">
                       {rec.whyExplainer.target}
                     </span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider block">
+                    <span className="text-[10px] uppercase font-bold text-faint tracking-wider block">
                       Fiduciary Driver
                     </span>
-                    <span className="text-zinc-700 leading-snug block">
+                    <span className="text-ink-soft leading-snug block">
                       {rec.whyExplainer.driver}
                     </span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider block">
+                    <span className="text-[10px] uppercase font-bold text-faint tracking-wider block">
                       Projected Benefit
                     </span>
-                    <span className="font-semibold text-emerald-700 leading-snug block">
+                    <span className="font-semibold text-positive leading-snug block">
                       {rec.whyExplainer.benefit}
                     </span>
                   </div>

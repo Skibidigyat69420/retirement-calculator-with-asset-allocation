@@ -10,17 +10,17 @@ export interface AlertProps {
 
 export const Alert = ({ children, variant = 'info', icon: Icon, className }: AlertProps) => {
   const variants = {
-    info: 'bg-sky-50/70 text-sky-950 border-sky-200/80',
-    success: 'bg-emerald-50/70 text-emerald-950 border-emerald-200/80',
-    warning: 'bg-amber-50/70 text-amber-950 border-amber-200/80',
-    danger: 'bg-rose-50/70 text-rose-950 border-rose-200/80',
+    info: 'bg-info/[0.07] border-info/25',
+    success: 'bg-positive/[0.07] border-positive/25',
+    warning: 'bg-warning/[0.07] border-warning/25',
+    danger: 'bg-negative/[0.07] border-negative/25',
   };
 
   const iconStyles = {
-    info: 'text-sky-700 bg-sky-100/70 border-sky-200/60',
-    success: 'text-emerald-700 bg-emerald-100/70 border-emerald-200/60',
-    warning: 'text-amber-700 bg-amber-100/70 border-amber-200/60',
-    danger: 'text-rose-700 bg-rose-100/70 border-rose-200/60',
+    info: 'text-info bg-info/10 border-info/25',
+    success: 'text-positive bg-positive/10 border-positive/25',
+    warning: 'text-warning bg-warning/10 border-warning/25',
+    danger: 'text-negative bg-negative/10 border-negative/25',
   };
 
   return (
@@ -37,7 +37,7 @@ export const Alert = ({ children, variant = 'info', icon: Icon, className }: Ale
           <Icon size={16} />
         </div>
       )}
-      <div className="flex-1 leading-relaxed font-normal">{children}</div>
+      <div className="flex-1 leading-relaxed font-normal text-ink-soft">{children}</div>
     </div>
   );
 };

@@ -1,0 +1,12 @@
+import puppeteer from 'puppeteer-core';
+const browser = await puppeteer.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+const page = await browser.newPage();
+await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+await page.goto('http://localhost:5173/allocation', { waitUntil: 'networkidle2', timeout: 45000 });
+await new Promise(r => setTimeout(r, 2500));
+await page.evaluate(() => window.scrollTo({ top: 900, behavior: 'instant' }));
+await new Promise(r => setTimeout(r, 800));
+await page.mouse.move(1000, 620, { steps: 8 });
+await new Promise(r => setTimeout(r, 900));
+await page.screenshot({ path: '/tmp/t3-tooltip-fix.png' });
+await browser.close();

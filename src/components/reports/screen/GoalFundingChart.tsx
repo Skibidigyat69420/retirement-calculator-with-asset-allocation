@@ -102,6 +102,7 @@ export const GoalFundingChart = ({ conflict }: GoalFundingChartProps) => {
               <XAxis type="number" tickFormatter={formatCurrencyCompact} tick={CHART_TICK} axisLine={false} tickLine={false} />
               <YAxis type="category" dataKey="name" tick={CHART_TICK} axisLine={false} tickLine={false} width={120} />
               <Tooltip
+                cursor={{ fill: 'rgba(139, 149, 165, 0.06)' }}
                 formatter={(value: any, name: any) => [formatCurrencyCompact(typeof value === 'number' ? value : Number(value)), name]}
                 contentStyle={CHART_TOOLTIP_STYLE}
               />

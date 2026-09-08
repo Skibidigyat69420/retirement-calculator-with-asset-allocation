@@ -33,7 +33,7 @@ const CHART_MARGIN = { top: 10, right: 12, left: 0, bottom: 0 };
 const TOOLTIP_STYLE = {
   borderRadius: '10px',
   border: '1px solid var(--color-border)',
-  backgroundColor: '#ffffff',
+  backgroundColor: 'var(--color-surface)',
   fontSize: '12px',
   padding: '8px 12px',
 };

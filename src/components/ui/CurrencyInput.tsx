@@ -2,7 +2,7 @@ import { useState, useCallback, useId } from 'react';
 import { Plus, Minus, AlertCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-interface CurrencyInputProps {
+export interface CurrencyInputProps {
   label?: string;
   value: number;
   onChange: (val: number) => void;
@@ -77,14 +77,14 @@ export const CurrencyInput = ({
       {label && (
         <label
           htmlFor={inputId}
-          className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-600"
+          className="block text-[11px] font-semibold uppercase tracking-wider text-muted"
         >
           {label}
         </label>
       )}
 
       <div className="relative group">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-zinc-400 select-none pointer-events-none">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-faint select-none pointer-events-none">
           ₹
         </span>
 
@@ -106,10 +106,10 @@ export const CurrencyInput = ({
             if (e.key === 'ArrowDown') { e.preventDefault(); adjust(-step); }
           }}
           className={cn(
-            'w-full bg-white/95 border rounded-xl pl-8 pr-10 py-2.5 text-sm font-medium text-zinc-950 placeholder:text-zinc-400 transition-all shadow-2xs',
-            'focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none',
-            'hover:border-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed',
-            hasError ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/10' : 'border-zinc-200/80',
+            'w-full bg-raised/50 border rounded-xl pl-8 pr-10 py-2.5 text-sm font-medium text-ink placeholder:text-faint transition-all shadow-2xs',
+            'focus:border-accent focus:ring-2 focus:ring-accent/25 focus:outline-none',
+            'hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed',
+            hasError ? 'border-negative/60 focus:border-negative focus:ring-negative/20' : 'border-border',
           )}
         />
 
@@ -118,7 +118,7 @@ export const CurrencyInput = ({
             type="button"
             onClick={() => adjust(step)}
             disabled={disabled || (max !== undefined && value >= max)}
-            className="p-1 rounded text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors disabled:opacity-30 cursor-pointer"
+            className="p-1 rounded text-faint hover:text-ink hover:bg-raised transition-colors disabled:opacity-30 cursor-pointer"
             tabIndex={-1}
             aria-label={`Increase ${label || 'value'}`}
           >
@@ -128,7 +128,7 @@ export const CurrencyInput = ({
             type="button"
             onClick={() => adjust(-step)}
             disabled={disabled || (min !== undefined && value <= min)}
-            className="p-1 rounded text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors disabled:opacity-30 cursor-pointer"
+            className="p-1 rounded text-faint hover:text-ink hover:bg-raised transition-colors disabled:opacity-30 cursor-pointer"
             tabIndex={-1}
             aria-label={`Decrease ${label || 'value'}`}
           >
@@ -148,8 +148,8 @@ export const CurrencyInput = ({
               className={cn(
                 'px-2.5 py-0.5 text-[10px] font-semibold tracking-wide rounded-md border transition-all cursor-pointer select-none active:scale-95',
                 value === p.value
-                  ? 'bg-zinc-950 text-white border-zinc-950 shadow-2xs'
-                  : 'bg-white text-zinc-600 border-zinc-200/80 hover:border-zinc-300 hover:bg-zinc-50',
+                  ? 'bg-ink text-background border-ink shadow-2xs'
+                  : 'bg-transparent text-muted border-border hover:border-border-strong hover:text-ink',
                 'disabled:opacity-50 disabled:cursor-not-allowed',
               )}
             >
@@ -161,8 +161,8 @@ export const CurrencyInput = ({
 
       {(helper || error || hasError) && (
         <div className="flex items-start gap-1.5 pt-0.5">
-          {hasError && <AlertCircle size={13} className="text-rose-500 mt-0.5 shrink-0" />}
-          <p className={cn('text-[11px] leading-tight', hasError ? 'text-rose-600 font-medium' : 'text-zinc-500')}>
+          {hasError && <AlertCircle size={13} className="text-negative mt-0.5 shrink-0" />}
+          <p className={cn('text-[11px] leading-tight', hasError ? 'text-negative font-medium' : 'text-muted')}>
             {error || (hasError ? `Value must be between ₹${formatDisplay(min || 0)} and ₹${formatDisplay(max || 0)}` : helper)}
           </p>
         </div>

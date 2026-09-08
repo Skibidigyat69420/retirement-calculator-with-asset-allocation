@@ -1,7 +1,58 @@
 import type { AssetCategory, MasterPlanInputs, Goal, GoalPriority, Asset } from '../types';
 import type { AssumptionSet } from './assumptions';
+import { hashAssumptions } from './assumptions';
 import type { RiskProfile } from '../types';
 import { createSeededRandom } from './random';
+import { ENGINE_VERSION } from './constants';
+
+/**
+ * Reproducibility metadata attached to every engine result (spec §189).
+ * `source` is 'preview' for the bundled TS engine (frontend preview path);
+ * the authoritative backend execution should label its results 'server'.
+ */
+export interface CalculationMetadata {
+  engineVersion: string;
+  assumptionVersion: string;
+  simulationCount: number;
+  seed?: number;
+  calculatedAt: string;
+  source: 'server' | 'preview';
+}
+
+/**
+ * Normalize any accepted seed form (number, string, null) to a concrete
+ * numeric seed. When no seed is supplied, generate one per calculation so
+ * production results stay reproducible from their metadata (spec §146).
+ */
+export function resolveNumericSeed(seed?: string | number | null): number {
+  if (typeof seed === 'number' && Number.isFinite(seed)) return seed >>> 0;
+  if (typeof seed === 'string' && seed !== '') {
+    // Same string-hash as createSeededRandom so string seeds reproduce identically.
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) {
+      h = (h << 5) - h + seed.charCodeAt(i);
+      h |= 0;
+    }
+    return h >>> 0;
+  }
+  return Math.floor(Math.random() * 0x7fffffff);
+}
+
+export function buildCalculationMetadata(
+  seed: number,
+  simulationCount: number,
+  assumptions: AssumptionSet,
+  source: 'server' | 'preview' = 'preview',
+): CalculationMetadata {
+  return {
+    engineVersion: ENGINE_VERSION,
+    assumptionVersion: hashAssumptions(assumptions),
+    simulationCount,
+    seed,
+    calculatedAt: new Date().toISOString(),
+    source,
+  };
+}
 
 export interface CurrencyExposure {
   currency: string;
@@ -107,6 +158,7 @@ export interface WealthEngineResult {
   riskProfile?: RiskProfile;
   riskScore: number;
   maxDrawdownProbability: number;
+  metadata: CalculationMetadata;
 }
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
@@ -631,8 +683,9 @@ export function runWealthEngine(
   targetOverrides?: Record<AssetCategory, number> | null,
   seed?: string | number | null,
 ): WealthEngineResult {
-  const seededRandom = createSeededRandom(seed);
-  const randomSource = seededRandom ? seededRandom.random : Math.random;
+  const numericSeed = resolveNumericSeed(seed);
+  const seededRandom = createSeededRandom(numericSeed);
+  const randomSource = seededRandom!.random;
 
   const { lifeExpectancy, assets, sip, stp, goals, annualIncome, monthlyExpenditure } = inputs;
   const netWorth = assets.reduce((sum, a) => sum + a.value, 0);
@@ -746,5 +799,6 @@ export function runWealthEngine(
     riskProfile: riskProfile?.profile,
     riskScore: riskProfile?.score || 50,
     maxDrawdownProbability: round2(maxDrawdownCount / monteCarlo.outcomes.length),
+    metadata: buildCalculationMetadata(numericSeed, simCount, assumptions),
   };
 }

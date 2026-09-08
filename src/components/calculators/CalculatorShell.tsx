@@ -14,7 +14,7 @@ export const CalculatorShell = ({ title, description, inputs, results, children 
       <div className="lg:col-span-4 space-y-6">
         <Card className="border-l-4 border-l-navy">
           <h3 className="text-lg font-sans text-navy mb-1">{title}</h3>
-          {description && <p className="text-xs text-zinc-700 mb-5">{description}</p>}
+          {description && <p className="text-xs text-ink-soft mb-5">{description}</p>}
           <div className="space-y-4">{inputs}</div>
         </Card>
       </div>

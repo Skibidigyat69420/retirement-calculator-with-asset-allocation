@@ -56,7 +56,9 @@ export const PhaseTimelineBar = ({
           style={{ width: `${Math.max(0, accPct)}%` }}
         >
           {accPct > 14 && (
-            <span className="text-[10px] font-bold text-white truncate px-2">Accumulation · {accYears}y</span>
+            <span className="text-[10px] font-bold truncate px-2" style={{ color: 'var(--color-background)' }}>
+              Accumulation · {accYears}y
+            </span>
           )}
         </div>
         <div

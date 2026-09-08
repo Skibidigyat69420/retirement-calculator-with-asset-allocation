@@ -20,11 +20,11 @@ interface MonteCarloHistogramProps {
 }
 
 const TOOLTIP_STYLE = {
-  borderRadius: '14px',
-  border: '1px solid rgba(226, 232, 240, 0.9)',
-  backgroundColor: 'rgba(255, 255, 255, 0.96)',
+  borderRadius: '12px',
+  border: '1px solid #2b3444',
+  backgroundColor: '#161b26',
   backdropFilter: 'blur(10px)',
-  boxShadow: '0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04)',
+  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.55), 0 8px 10px -6px rgba(0, 0, 0, 0.45)',
   padding: '10px 14px',
 };
 
@@ -89,7 +89,7 @@ export const MonteCarloHistogram = ({ terminalValues, ariaLabel, summary }: Mont
   if (bins.length === 0) {
     return (
       <div className="h-80 w-full flex items-center justify-center" role="img" aria-label={ariaLabel}>
-        <p className="text-sm text-zinc-600 text-center px-6">No Monte Carlo outcomes available yet.</p>
+        <p className="text-sm text-muted text-center px-6">No Monte Carlo outcomes available yet.</p>
         <p className="sr-only">{summary}</p>
       </div>
     );
@@ -102,7 +102,7 @@ export const MonteCarloHistogram = ({ terminalValues, ariaLabel, summary }: Mont
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 9, fill: '#78716c' }}
+            tick={{ fontSize: 9, fill: 'var(--color-muted)' }}
             angle={-28}
             textAnchor="end"
             axisLine={false}
@@ -112,20 +112,20 @@ export const MonteCarloHistogram = ({ terminalValues, ariaLabel, summary }: Mont
             interval={bins.length > 6 ? 1 : 0}
           />
           <YAxis
-            tick={{ fontSize: 11, fill: '#78716c' }}
+            tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
             axisLine={false}
             tickLine={false}
             allowDecimals={false}
           />
           <Tooltip
-            cursor={{ fill: 'rgba(15, 23, 42, 0.04)' }}
+            cursor={{ fill: 'rgba(139, 149, 165, 0.06)' }}
             content={({ active, payload }) => {
               if (!active || !payload || payload.length === 0) return null;
               const bin = payload[0].payload as HistogramBin;
               return (
                 <div style={TOOLTIP_STYLE}>
-                  <div className="text-[11px] font-bold text-zinc-800">{bin.label}</div>
-                  <div className="text-[11px] text-zinc-600 tabular-nums">
+                  <div className="text-[11px] font-bold text-ink">{bin.label}</div>
+                  <div className="text-[11px] text-muted tabular-nums">
                     {bin.count.toLocaleString()} scenario{bin.count === 1 ? '' : 's'}
                   </div>
                 </div>
@@ -134,16 +134,16 @@ export const MonteCarloHistogram = ({ terminalValues, ariaLabel, summary }: Mont
           />
           <ReferenceLine
             x={bins.find((b) => median >= b.binStart && median <= b.binEnd)?.label}
-            stroke={COLORS.gold}
+            stroke="#8cff2e"
             strokeWidth={2}
             strokeDasharray="5 3"
-            label={{ value: 'Median', position: 'insideTop', fill: COLORS.gold, fontSize: 10, fontWeight: 700 }}
+            label={{ value: 'Median', position: 'insideTop', fill: '#8cff2e', fontSize: 10, fontWeight: 700 }}
           />
-          <Bar dataKey="count" name="Scenarios" radius={[4, 4, 0, 0]} fill={COLORS.navy}>
+          <Bar dataKey="count" name="Scenarios" radius={[4, 4, 0, 0]} fill="#8cff2e">
             {bins.map((bin, index) => (
               <Cell
                 key={`bin-${index}`}
-                fill={bin.midpoint >= median ? COLORS.navy : COLORS.warmDark}
+                fill={bin.midpoint >= median ? '#8cff2e' : '#2b3444'}
               />
             ))}
           </Bar>
