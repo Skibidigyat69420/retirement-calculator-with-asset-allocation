@@ -11,15 +11,6 @@ export interface Asset {
   source?: string; // e.g. 'mvo' for optimizer-imported proxy assets
 }
 
-export interface LoanLiability {
-  id: string;
-  name: string;
-  principal: number;
-  rate: number;
-  tenureYears: number;
-  includeInExpenses: boolean;
-}
-
 export interface SIPConfig {
   amount: number;
   equitySplit: number;
@@ -123,7 +114,6 @@ export interface MasterPlanInputs {
   annualIncome: number;
   monthlyExpenditure: number;
   assets: Asset[];
-  loans: LoanLiability[];
   sip: SIPConfig;
   stp: STPConfig;
   swp: SWPConfig;

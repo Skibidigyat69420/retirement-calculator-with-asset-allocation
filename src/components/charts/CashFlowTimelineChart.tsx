@@ -28,15 +28,15 @@ interface YearFlow {
 const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 };
 
 const TOOLTIP_STYLE = {
-  borderRadius: '12px',
-  border: '1px solid #2b3444',
-  backgroundColor: '#161b26',
+  borderRadius: '14px',
+  border: '1px solid rgba(226, 232, 240, 0.9)',
+  backgroundColor: 'rgba(255, 255, 255, 0.96)',
   backdropFilter: 'blur(10px)',
-  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.55), 0 8px 10px -6px rgba(0, 0, 0, 0.45)',
+  boxShadow: '0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04)',
   padding: '10px 14px',
 };
 
-const LEGEND_WRAPPER_STYLE = { fontSize: '11px', paddingBottom: '8px', color: 'var(--color-muted)' };
+const LEGEND_WRAPPER_STYLE = { fontSize: '11px', paddingBottom: '8px' };
 
 /**
  * Aggregates per-year cash flow events from the wealth engine snapshots:
@@ -88,22 +88,21 @@ export const CashFlowTimelineChart = ({
       <span className="sr-only">{summary}</span>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} margin={CHART_MARGIN}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4e4e7" />
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
+            tick={{ fontSize: 11, fill: 'var(--color-faint)' }}
             axisLine={false}
             tickLine={false}
             tickMargin={10}
           />
           <YAxis
             tickFormatter={formatCurrencyCompact}
-            tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
+            tick={{ fontSize: 11, fill: 'var(--color-faint)' }}
             axisLine={false}
             tickLine={false}
           />
           <Tooltip
-            cursor={{ fill: 'rgba(139, 149, 165, 0.06)' }}
             formatter={(value: any, name: any) => [
               formatCurrencyCompact(typeof value === 'number' ? value : Number(value)),
               String(name),

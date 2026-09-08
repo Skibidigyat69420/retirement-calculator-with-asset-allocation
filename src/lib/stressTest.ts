@@ -188,7 +188,6 @@ export function runStressTest(
       endAge: inputs?.lifeExpectancy ?? 85,
     },
     goals: inputs?.goals || [],
-    loans: inputs?.loans || [],
   };
 
   // 2. Compute baseline Master Plan

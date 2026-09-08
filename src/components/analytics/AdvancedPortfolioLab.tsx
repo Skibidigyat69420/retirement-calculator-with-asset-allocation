@@ -413,7 +413,7 @@ export const AdvancedPortfolioLab = () => {
                 contentStyle={{
                   borderRadius: '14px',
                   border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-raised)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.96)',
                   padding: '10px 14px',
                 }}
               />
@@ -480,7 +480,7 @@ export const AdvancedPortfolioLab = () => {
                 contentStyle={{
                   borderRadius: '14px',
                   border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-raised)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.96)',
                   padding: '10px 14px',
                 }}
               />
@@ -557,7 +557,7 @@ export const AdvancedPortfolioLab = () => {
                     contentStyle={{
                       borderRadius: '14px',
                       border: '1px solid var(--color-border)',
-                      backgroundColor: 'var(--color-raised)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.96)',
                       padding: '10px 14px',
                     }}
                   />

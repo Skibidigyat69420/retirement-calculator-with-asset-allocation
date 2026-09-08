@@ -598,18 +598,18 @@ export const IPSTemplate = () => {
         />
 
         {/* Dual Mode Switch */}
-        <div className="flex items-center gap-2 self-start md:self-auto bg-sunken p-1 rounded-xl border border-border print:hidden shadow-2xs">
+        <div className="flex items-center gap-2 self-start md:self-auto bg-zinc-100 p-1 rounded-xl border border-zinc-200 print:hidden shadow-2xs">
           <button
             type="button"
             onClick={() => handleSetLinkedMode(true)}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200',
               isLinkedToPlan
-                ? 'bg-sunken text-ink shadow-xs'
-                : 'text-muted hover:text-ink',
+                ? 'bg-zinc-950 text-white shadow-xs'
+                : 'text-zinc-600 hover:text-zinc-950',
             )}
           >
-            <Link2 size={13} className={isLinkedToPlan ? 'text-emerald-400' : 'text-faint'} />
+            <Link2 size={13} className={isLinkedToPlan ? 'text-emerald-400' : 'text-zinc-400'} />
             Linked to Active Plan
           </button>
           <button
@@ -618,11 +618,11 @@ export const IPSTemplate = () => {
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200',
               !isLinkedToPlan
-                ? 'bg-sunken text-ink shadow-xs'
-                : 'text-muted hover:text-ink',
+                ? 'bg-zinc-950 text-white shadow-xs'
+                : 'text-zinc-600 hover:text-zinc-950',
             )}
           >
-            <FileText size={13} className={!isLinkedToPlan ? 'text-ink-soft' : 'text-faint'} />
+            <FileText size={13} className={!isLinkedToPlan ? 'text-zinc-300' : 'text-zinc-400'} />
             Independent Draft
           </button>
         </div>
@@ -631,20 +631,20 @@ export const IPSTemplate = () => {
       {/* Mode Status Callout */}
       <div className="print:hidden">
         {isLinkedToPlan ? (
-          <Card className="bg-surface border-border shadow-2xs p-4">
+          <Card className="bg-white border-zinc-200 shadow-2xs p-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-positive/40 flex items-center justify-center shrink-0 mt-0.5">
-                  <Link2 size={16} className="text-positive" />
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0 mt-0.5">
+                  <Link2 size={16} className="text-emerald-700" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-positive">
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
                       Live Plan Synchronization Active
                     </span>
                     <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   </div>
-                  <p className="text-xs text-muted mt-0.5">
+                  <p className="text-xs text-zinc-600 mt-0.5">
                     Pre-filled from your active Master Plan. Edits to client profiles, asset holdings, goals, and target allocations immediately update Dashboard, Scenarios, and Reporting across the platform.
                   </p>
                 </div>
@@ -657,7 +657,7 @@ export const IPSTemplate = () => {
                   <button
                     type="button"
                     onClick={handleResetAllocationToRiskProfile}
-                    className="text-[11px] text-muted hover:text-ink underline font-medium"
+                    className="text-[11px] text-zinc-600 hover:text-zinc-950 underline font-medium"
                     title="Clear manual overrides and reset targets to risk model"
                   >
                     Reset Targets
@@ -667,17 +667,17 @@ export const IPSTemplate = () => {
             </div>
           </Card>
         ) : (
-          <Card className="bg-sunken/70 border-border p-4">
+          <Card className="bg-zinc-50/70 border-zinc-200 p-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-sunken border border-border-strong flex items-center justify-center shrink-0 mt-0.5">
-                  <Unlink size={16} className="text-ink-soft" />
+                <div className="w-8 h-8 rounded-lg bg-zinc-200/80 border border-zinc-300 flex items-center justify-center shrink-0 mt-0.5">
+                  <Unlink size={16} className="text-zinc-700" />
                 </div>
                 <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-800">
                     Independent Sandbox Draft Mode
                   </span>
-                  <p className="text-xs text-muted mt-0.5">
+                  <p className="text-xs text-zinc-600 mt-0.5">
                     Isolated local draft saved in your browser cache. Changes here do not modify your active Master Plan inputs or risk profile.
                   </p>
                 </div>
@@ -685,7 +685,7 @@ export const IPSTemplate = () => {
               <Button
                 variant="outline"
                 size="sm"
-                className="text-xs py-1.5 h-auto self-start sm:self-auto shrink-0 bg-surface"
+                className="text-xs py-1.5 h-auto self-start sm:self-auto shrink-0 bg-white"
                 onClick={handleCloneFromActivePlan}
               >
                 <Copy size={13} className="mr-1.5" /> Clone Active Plan into Draft
@@ -697,22 +697,22 @@ export const IPSTemplate = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Input Form Controls */}
-        <Card className="lg:col-span-1 space-y-6 bg-surface border-border print:hidden p-5 shadow-2xs">
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <h3 className="text-base font-semibold text-ink flex items-center gap-2">
-              <FileText size={18} className="text-ink" /> Policy Parameters
+        <Card className="lg:col-span-1 space-y-6 bg-white border-zinc-200 print:hidden p-5 shadow-2xs">
+          <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+            <h3 className="text-base font-semibold text-zinc-950 flex items-center gap-2">
+              <FileText size={18} className="text-zinc-900" /> Policy Parameters
             </h3>
-            <span className="text-[11px] font-mono text-muted">
+            <span className="text-[11px] font-mono text-zinc-500">
               {isLinkedToPlan ? 'LIVE SYNC' : 'STANDALONE'}
             </span>
           </div>
 
           {/* Client Profile Section */}
           <div className="space-y-3">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-ink flex items-center justify-between">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-900 flex items-center justify-between">
               <span>Client Identification</span>
               {isLinkedToPlan && (
-                <span className="text-[10px] font-normal text-positive flex items-center gap-1">
+                <span className="text-[10px] font-normal text-emerald-700 flex items-center gap-1">
                   <Check size={11} /> Plan Synced
                 </span>
               )}
@@ -775,15 +775,15 @@ export const IPSTemplate = () => {
           </div>
 
           {/* Investment Objectives & Risk Policy */}
-          <div className="space-y-3 pt-3 border-t border-border">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-ink">
+          <div className="space-y-3 pt-3 border-t border-zinc-200">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-900">
               Objectives & Risk Boundaries
             </div>
 
             <div>
               <label
                 htmlFor={fieldId('returnObjective')}
-                className="block text-[11px] font-semibold uppercase tracking-wider text-muted mb-1"
+                className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-600 mb-1"
               >
                 Return Objective & Hurdle Rate
               </label>
@@ -792,7 +792,7 @@ export const IPSTemplate = () => {
                 value={state.returnObjective}
                 onChange={(e) => dispatch({ type: 'updateField', payload: { returnObjective: e.target.value } })}
                 rows={3}
-                className="w-full bg-sunken border border-border rounded-xl p-3 text-sm text-ink focus:bg-surface focus:border-border focus:ring-1 focus:ring-focus-ring focus:outline-none transition-colors"
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm text-zinc-900 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:outline-none transition-colors"
                 placeholder="Codify the primary target return and purchasing power preservation goals..."
               />
             </div>
@@ -801,12 +801,12 @@ export const IPSTemplate = () => {
               <div className="flex items-center justify-between mb-1">
                 <label
                   htmlFor={fieldId('riskTolerance')}
-                  className="block text-[11px] font-semibold uppercase tracking-wider text-muted"
+                  className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-600"
                 >
                   Behavioral Risk Tolerance
                 </label>
                 {isLinkedToPlan && (
-                  <span className="text-[10px] text-muted font-medium">
+                  <span className="text-[10px] text-zinc-500 font-medium">
                     Profile: {riskProfile.label}
                   </span>
                 )}
@@ -820,7 +820,7 @@ export const IPSTemplate = () => {
                     payload: { riskTolerance: e.target.value as IPSState['riskTolerance'] },
                   })
                 }
-                className="w-full px-3 py-2 bg-sunken border border-border rounded-xl text-sm text-ink focus:bg-surface focus:border-border focus:ring-1 focus:ring-focus-ring focus:outline-none"
+                className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-sm text-zinc-900 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:outline-none"
               >
                 <option value="low">Low (Capital Preservation Focus)</option>
                 <option value="moderate">Moderate (Balanced Capital Growth)</option>
@@ -839,16 +839,16 @@ export const IPSTemplate = () => {
           </div>
 
           {/* Strategic Asset Allocation Targets */}
-          <div className="space-y-3 pt-3 border-t border-border">
+          <div className="space-y-3 pt-3 border-t border-zinc-200">
             <div className="flex items-center justify-between">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-ink">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-900">
                 Strategic Asset Allocation (SAA)
               </div>
               {isLinkedToPlan && manualTargets && (
                 <button
                   type="button"
                   onClick={handleResetAllocationToRiskProfile}
-                  className="text-[11px] text-muted hover:text-ink underline"
+                  className="text-[11px] text-zinc-600 hover:text-zinc-950 underline"
                 >
                   Reset to {riskProfile.label}
                 </button>
@@ -871,17 +871,17 @@ export const IPSTemplate = () => {
               className={cn(
                 'px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between border',
                 allocationOk
-                  ? 'bg-positive-soft text-positive border-positive/40'
-                  : 'bg-rose-50 text-negative border-negative/40',
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                  : 'bg-rose-50 text-rose-800 border-rose-200',
               )}
             >
               <span>Total SAA Target: {totalAllocation.toFixed(1)}%</span>
               {allocationOk ? (
-                <span className="flex items-center gap-1 text-positive">
+                <span className="flex items-center gap-1 text-emerald-700">
                   <CheckCircle size={14} /> 100% Validated
                 </span>
               ) : (
-                <span className="flex items-center gap-1 text-negative">
+                <span className="flex items-center gap-1 text-rose-700">
                   <AlertTriangle size={14} /> Must equal 100.0%
                 </span>
               )}
@@ -889,20 +889,20 @@ export const IPSTemplate = () => {
           </div>
 
           {/* Current Portfolio Holdings */}
-          <div className="space-y-3 pt-3 border-t border-border">
+          <div className="space-y-3 pt-3 border-t border-zinc-200">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-[11px] font-bold uppercase tracking-wider text-ink">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-900">
                   Holdings & Asset Inventory
                 </div>
-                <div className="text-[11px] text-muted font-mono">
+                <div className="text-[11px] text-zinc-500 font-mono">
                   Valuation: {formatCurrency(effectiveNetWorth)}
                 </div>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                className="text-xs py-1 h-auto bg-surface"
+                className="text-xs py-1 h-auto bg-white"
                 onClick={handleAddAsset}
               >
                 <Plus size={13} className="mr-1" /> Add Asset
@@ -911,9 +911,9 @@ export const IPSTemplate = () => {
 
             <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
               {effectiveAssets.map((a) => (
-                <div key={a.id} className="grid grid-cols-12 gap-1.5 items-end bg-sunken border border-border rounded-xl p-2 text-xs">
+                <div key={a.id} className="grid grid-cols-12 gap-1.5 items-end bg-zinc-50 border border-zinc-200 rounded-xl p-2 text-xs">
                   <div className="col-span-5">
-                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-muted mb-0.5" htmlFor={`asset-name-${a.id}`}>
+                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-zinc-500 mb-0.5" htmlFor={`asset-name-${a.id}`}>
                       Holding
                     </label>
                     <input
@@ -921,19 +921,19 @@ export const IPSTemplate = () => {
                       type="text"
                       value={a.name}
                       onChange={(e) => handleUpdateAsset(a.id, { name: e.target.value })}
-                      className="w-full bg-surface border border-border rounded-lg px-2 py-1 text-xs text-ink focus:outline-none focus:border-border"
+                      className="w-full bg-white border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900"
                       aria-label="Asset name"
                     />
                   </div>
                   <div className="col-span-3">
-                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-muted mb-0.5" htmlFor={`asset-category-${a.id}`}>
+                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-zinc-500 mb-0.5" htmlFor={`asset-category-${a.id}`}>
                       Class
                     </label>
                     <select
                       id={`asset-category-${a.id}`}
                       value={a.category}
                       onChange={(e) => handleUpdateAsset(a.id, { category: e.target.value as AssetCategory })}
-                      className="w-full bg-surface border border-border rounded-lg px-1.5 py-1 text-xs text-ink focus:outline-none focus:border-border"
+                      className="w-full bg-white border border-zinc-200 rounded-lg px-1.5 py-1 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900"
                       aria-label="Asset category"
                     >
                       {(Object.keys(categoryLabels) as AssetCategory[]).map((cat) => (
@@ -944,7 +944,7 @@ export const IPSTemplate = () => {
                     </select>
                   </div>
                   <div className="col-span-3">
-                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-muted mb-0.5" htmlFor={`asset-value-${a.id}`}>
+                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-zinc-500 mb-0.5" htmlFor={`asset-value-${a.id}`}>
                       Value (₹)
                     </label>
                     <input
@@ -953,7 +953,7 @@ export const IPSTemplate = () => {
                       min={0}
                       value={a.value}
                       onChange={(e) => handleUpdateAsset(a.id, { value: Number(e.target.value) })}
-                      className="w-full bg-surface border border-border rounded-lg px-1.5 py-1 text-xs text-ink font-mono focus:outline-none focus:border-border"
+                      className="w-full bg-white border border-zinc-200 rounded-lg px-1.5 py-1 text-xs text-zinc-900 font-mono focus:outline-none focus:border-zinc-900"
                       aria-label="Asset value"
                     />
                   </div>
@@ -961,7 +961,7 @@ export const IPSTemplate = () => {
                     <button
                       type="button"
                       onClick={() => handleRemoveAsset(a.id)}
-                      className="p-1 text-faint hover:text-negative hover:bg-rose-50 rounded transition-colors"
+                      className="p-1 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
                       aria-label="Remove asset"
                     >
                       <Trash2 size={14} />
@@ -970,7 +970,7 @@ export const IPSTemplate = () => {
                 </div>
               ))}
               {effectiveAssets.length === 0 && (
-                <p className="text-xs text-muted italic p-2">No assets recorded in schedule.</p>
+                <p className="text-xs text-zinc-500 italic p-2">No assets recorded in schedule.</p>
               )}
             </div>
 
@@ -978,7 +978,7 @@ export const IPSTemplate = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full text-xs py-1 h-auto text-ink-soft hover:text-ink border border-border"
+                className="w-full text-xs py-1 h-auto text-zinc-700 hover:text-zinc-950 border border-zinc-200"
                 onClick={() => dispatch({ type: 'syncCurrentAllocationFromAssets' })}
               >
                 Recalculate Current Weights from Holdings
@@ -987,15 +987,15 @@ export const IPSTemplate = () => {
           </div>
 
           {/* Goals & Liabilities Section */}
-          <div className="space-y-3 pt-3 border-t border-border">
+          <div className="space-y-3 pt-3 border-t border-zinc-200">
             <div className="flex items-center justify-between">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-ink">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-900">
                 Goals & Target Liabilities
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                className="text-xs py-1 h-auto bg-surface"
+                className="text-xs py-1 h-auto bg-white"
                 onClick={handleAddGoal}
               >
                 <Plus size={13} className="mr-1" /> Add Goal
@@ -1004,9 +1004,9 @@ export const IPSTemplate = () => {
 
             <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
               {effectiveGoals.map((g) => (
-                <div key={g.id} className="grid grid-cols-12 gap-1.5 items-end bg-sunken border border-border rounded-xl p-2 text-xs">
+                <div key={g.id} className="grid grid-cols-12 gap-1.5 items-end bg-zinc-50 border border-zinc-200 rounded-xl p-2 text-xs">
                   <div className="col-span-4">
-                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-muted mb-0.5" htmlFor={`goal-name-${g.id}`}>
+                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-zinc-500 mb-0.5" htmlFor={`goal-name-${g.id}`}>
                       Goal
                     </label>
                     <input
@@ -1014,19 +1014,19 @@ export const IPSTemplate = () => {
                       type="text"
                       value={g.name}
                       onChange={(e) => handleUpdateGoal(g.id, { name: e.target.value })}
-                      className="w-full bg-surface border border-border rounded-lg px-2 py-1 text-xs text-ink focus:outline-none focus:border-border"
+                      className="w-full bg-white border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900"
                       aria-label="Goal name"
                     />
                   </div>
                   <div className="col-span-3">
-                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-muted mb-0.5" htmlFor={`goal-priority-${g.id}`}>
+                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-zinc-500 mb-0.5" htmlFor={`goal-priority-${g.id}`}>
                       Tier
                     </label>
                     <select
                       id={`goal-priority-${g.id}`}
                       value={g.priority}
                       onChange={(e) => handleUpdateGoal(g.id, { priority: e.target.value as GoalPriority })}
-                      className="w-full bg-surface border border-border rounded-lg px-1.5 py-1 text-xs text-ink focus:outline-none focus:border-border"
+                      className="w-full bg-white border border-zinc-200 rounded-lg px-1.5 py-1 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900"
                       aria-label="Goal priority"
                     >
                       <option value="essential">Essential</option>
@@ -1035,7 +1035,7 @@ export const IPSTemplate = () => {
                     </select>
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-muted mb-0.5" htmlFor={`goal-years-${g.id}`}>
+                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-zinc-500 mb-0.5" htmlFor={`goal-years-${g.id}`}>
                       Years
                     </label>
                     <input
@@ -1044,12 +1044,12 @@ export const IPSTemplate = () => {
                       min={0}
                       value={g.yearsToGoal}
                       onChange={(e) => handleUpdateGoal(g.id, { yearsToGoal: Number(e.target.value) })}
-                      className="w-full bg-surface border border-border rounded-lg px-1.5 py-1 text-xs text-ink font-mono focus:outline-none focus:border-border"
+                      className="w-full bg-white border border-zinc-200 rounded-lg px-1.5 py-1 text-xs text-zinc-900 font-mono focus:outline-none focus:border-zinc-900"
                       aria-label="Years to goal"
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-muted mb-0.5" htmlFor={`goal-target-${g.id}`}>
+                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-zinc-500 mb-0.5" htmlFor={`goal-target-${g.id}`}>
                       Target
                     </label>
                     <input
@@ -1058,7 +1058,7 @@ export const IPSTemplate = () => {
                       min={0}
                       value={g.targetAmount}
                       onChange={(e) => handleUpdateGoal(g.id, { targetAmount: Number(e.target.value) })}
-                      className="w-full bg-surface border border-border rounded-lg px-1.5 py-1 text-xs text-ink font-mono focus:outline-none focus:border-border"
+                      className="w-full bg-white border border-zinc-200 rounded-lg px-1.5 py-1 text-xs text-zinc-900 font-mono focus:outline-none focus:border-zinc-900"
                       aria-label="Goal target amount"
                     />
                   </div>
@@ -1066,7 +1066,7 @@ export const IPSTemplate = () => {
                     <button
                       type="button"
                       onClick={() => handleRemoveGoal(g.id)}
-                      className="p-1 text-faint hover:text-negative hover:bg-rose-50 rounded transition-colors"
+                      className="p-1 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
                       aria-label="Remove goal"
                     >
                       <Trash2 size={14} />
@@ -1075,14 +1075,14 @@ export const IPSTemplate = () => {
                 </div>
               ))}
               {effectiveGoals.length === 0 && (
-                <p className="text-xs text-muted italic p-2">No liabilities scheduled.</p>
+                <p className="text-xs text-zinc-500 italic p-2">No liabilities scheduled.</p>
               )}
             </div>
           </div>
 
           {/* Currency Architecture & Hedging */}
-          <div className="space-y-3 pt-3 border-t border-border">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-ink">
+          <div className="space-y-3 pt-3 border-t border-zinc-200">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-900">
               Currency & Hedging Architecture
             </div>
             <LabelledInput
@@ -1103,7 +1103,7 @@ export const IPSTemplate = () => {
             <div>
               <label
                 htmlFor={fieldId('hedgePolicy')}
-                className="block text-[11px] font-semibold uppercase tracking-wider text-muted mb-1"
+                className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-600 mb-1"
               >
                 Hedging Policy Mandate
               </label>
@@ -1112,20 +1112,20 @@ export const IPSTemplate = () => {
                 value={state.hedgePolicy}
                 onChange={(e) => dispatch({ type: 'updateField', payload: { hedgePolicy: e.target.value } })}
                 rows={2}
-                className="w-full bg-sunken border border-border rounded-xl p-3 text-sm text-ink focus:bg-surface focus:border-border focus:ring-1 focus:ring-focus-ring focus:outline-none transition-colors"
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm text-zinc-900 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:outline-none transition-colors"
               />
             </div>
           </div>
 
           {/* Implementation & Governance Rules */}
-          <div className="space-y-3 pt-3 border-t border-border">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-ink">
+          <div className="space-y-3 pt-3 border-t border-zinc-200">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-900">
               Rebalancing Protocols & Governance
             </div>
             <div>
               <label
                 htmlFor={fieldId('implementationReview')}
-                className="block text-[11px] font-semibold uppercase tracking-wider text-muted mb-1"
+                className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-600 mb-1"
               >
                 Rebalancing Trigger Policy
               </label>
@@ -1134,13 +1134,13 @@ export const IPSTemplate = () => {
                 value={state.implementationReview}
                 onChange={(e) => dispatch({ type: 'updateField', payload: { implementationReview: e.target.value } })}
                 rows={3}
-                className="w-full bg-sunken border border-border rounded-xl p-3 text-sm text-ink focus:bg-surface focus:border-border focus:ring-1 focus:ring-focus-ring focus:outline-none transition-colors"
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm text-zinc-900 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:outline-none transition-colors"
               />
             </div>
             <div>
               <label
                 htmlFor={fieldId('notes')}
-                className="block text-[11px] font-semibold uppercase tracking-wider text-muted mb-1"
+                className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-600 mb-1"
               >
                 Special Covenants & Exclusions
               </label>
@@ -1149,24 +1149,24 @@ export const IPSTemplate = () => {
                 value={state.notes}
                 onChange={(e) => dispatch({ type: 'updateField', payload: { notes: e.target.value } })}
                 rows={2}
-                className="w-full bg-sunken border border-border rounded-xl p-3 text-sm text-ink focus:bg-surface focus:border-border focus:ring-1 focus:ring-focus-ring focus:outline-none transition-colors"
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm text-zinc-900 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:outline-none transition-colors"
               />
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="space-y-2.5 pt-3 border-t border-border">
+          <div className="space-y-2.5 pt-3 border-t border-zinc-200">
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1 bg-surface" onClick={handlePrint}>
+              <Button variant="outline" className="flex-1 bg-white" onClick={handlePrint}>
                 <Printer size={15} className="mr-1.5" /> Print Policy
               </Button>
-              <Button className="flex-1 bg-sunken hover:bg-raised text-ink" onClick={handleDownload}>
+              <Button className="flex-1 bg-zinc-950 hover:bg-zinc-800 text-white" onClick={handleDownload}>
                 <Download size={15} className="mr-1.5" /> Export .md
               </Button>
             </div>
             <Button
               variant="secondary"
-              className="w-full bg-sunken hover:bg-raised text-ink border-border"
+              className="w-full bg-zinc-100 hover:bg-zinc-200 text-zinc-900 border-zinc-200"
               onClick={handleSave}
               disabled={saveStatus === 'saving'}
             >
@@ -1183,8 +1183,8 @@ export const IPSTemplate = () => {
                 className={cn(
                   'flex items-center gap-2 text-xs p-2 rounded-lg border',
                   saveStatus === 'error' || loadStatus === 'error' || showToast?.type === 'error'
-                    ? 'text-negative bg-rose-50 border-negative/40'
-                    : 'text-positive bg-emerald-50 border-positive/40',
+                    ? 'text-rose-700 bg-rose-50 border-rose-200'
+                    : 'text-emerald-700 bg-emerald-50 border-emerald-200',
                 )}
               >
                 {saveStatus === 'error' || loadStatus === 'error' ? (
@@ -1198,29 +1198,29 @@ export const IPSTemplate = () => {
           </div>
 
           {/* Saved Documents Drawer */}
-          <div className="pt-3 border-t border-border">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-ink flex items-center gap-2 mb-2">
-              <FolderOpen size={14} className="text-ink-soft" /> Saved Policy Documents
+          <div className="pt-3 border-t border-zinc-200">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-900 flex items-center gap-2 mb-2">
+              <FolderOpen size={14} className="text-zinc-700" /> Saved Policy Documents
             </h4>
             {savedFiles.length === 0 ? (
-              <p className="text-xs text-muted italic">No saved policy snapshots available.</p>
+              <p className="text-xs text-zinc-500 italic">No saved policy snapshots available.</p>
             ) : (
               <ul className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                 {savedFiles.map((file) => (
                   <li
                     key={file.name}
-                    className="flex items-center justify-between text-xs bg-sunken border border-border rounded-lg px-2.5 py-1.5"
+                    className="flex items-center justify-between text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5"
                   >
                     <div className="truncate max-w-[150px]" title={file.name}>
-                      <span className="font-medium text-ink">{file.name}</span>
+                      <span className="font-medium text-zinc-900">{file.name}</span>
                       {file.isLocal && (
-                        <span className="ml-1 text-[9px] text-muted font-mono">(local)</span>
+                        <span className="ml-1 text-[9px] text-zinc-500 font-mono">(local)</span>
                       )}
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-[10px] px-2 py-0.5 h-auto bg-surface"
+                      className="text-[10px] px-2 py-0.5 h-auto bg-white"
                       onClick={() => handleLoad(file.name)}
                     >
                       Load
@@ -1232,11 +1232,11 @@ export const IPSTemplate = () => {
           </div>
 
           {/* Reset Actions */}
-          <div className="pt-3 border-t border-border flex gap-2">
+          <div className="pt-3 border-t border-zinc-200 flex gap-2">
             <Button
               variant="ghost"
               size="sm"
-              className="flex-1 text-xs text-muted hover:text-ink"
+              className="flex-1 text-xs text-zinc-600 hover:text-zinc-950"
               onClick={() => dispatch({ type: 'reset', payload: defaultState() })}
             >
               <RotateCcw size={13} className="mr-1" /> Load Sample
@@ -1244,7 +1244,7 @@ export const IPSTemplate = () => {
             <Button
               variant="ghost"
               size="sm"
-              className="flex-1 text-xs text-negative hover:text-negative hover:bg-rose-50"
+              className="flex-1 text-xs text-rose-700 hover:text-rose-800 hover:bg-rose-50"
               onClick={() => dispatch({ type: 'reset' })}
             >
               <Eraser size={13} className="mr-1" /> Clear All
@@ -1253,40 +1253,40 @@ export const IPSTemplate = () => {
         </Card>
 
         {/* Right Column: Institutional Policy Document Preview */}
-        <Card className="lg:col-span-2 bg-surface border border-border shadow-sm rounded-2xl p-6 sm:p-8 md:p-10 text-ink print:p-0 print:border-none print:shadow-none print:rounded-none">
+        <Card className="lg:col-span-2 bg-white border border-zinc-200 shadow-sm rounded-2xl p-6 sm:p-8 md:p-10 text-zinc-900 print:p-0 print:border-none print:shadow-none print:rounded-none">
           <div className="space-y-8 max-w-none">
             {/* Institutional Header Banner */}
-            <div className="border-b-2 border-border-strong pb-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs uppercase tracking-widest text-muted font-semibold mb-2">
+            <div className="border-b-2 border-zinc-900 pb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs uppercase tracking-widest text-zinc-500 font-semibold mb-2">
                 <span>Sound Thesis Wealth Advisory • Private Wealth Management</span>
-                <span className="font-mono text-ink-soft">
+                <span className="font-mono text-zinc-700">
                   REF: IPS-{effectiveClient.reviewDate.replace(/-/g, '')}
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-serif font-bold text-ink tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-serif font-bold text-zinc-950 tracking-tight">
                 Investment Policy Statement
               </h1>
-              <p className="text-sm font-serif italic text-muted mt-1">
+              <p className="text-sm font-serif italic text-zinc-600 mt-1">
                 Sound Thesis Institutional Wealth Policy Standard
               </p>
 
               {/* Document Meta Row */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-4 border-t border-border text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-4 border-t border-zinc-200 text-xs">
                 <div>
-                  <span className="text-muted block text-[10px] font-semibold uppercase tracking-wider">Client Mandate</span>
-                  <span className="font-semibold text-ink">{effectiveClient.name || 'Private Client'}</span>
+                  <span className="text-zinc-500 block text-[10px] font-semibold uppercase tracking-wider">Client Mandate</span>
+                  <span className="font-semibold text-zinc-950">{effectiveClient.name || 'Private Client'}</span>
                 </div>
                 <div>
-                  <span className="text-muted block text-[10px] font-semibold uppercase tracking-wider">Fiduciary Advisor</span>
-                  <span className="font-semibold text-ink">{effectiveClient.advisor || 'Sound Thesis Advisory'}</span>
+                  <span className="text-zinc-500 block text-[10px] font-semibold uppercase tracking-wider">Fiduciary Advisor</span>
+                  <span className="font-semibold text-zinc-950">{effectiveClient.advisor || 'Sound Thesis Advisory'}</span>
                 </div>
                 <div>
-                  <span className="text-muted block text-[10px] font-semibold uppercase tracking-wider">Portfolio NAV</span>
-                  <span className="font-semibold text-ink font-mono">{formatCurrency(effectiveNetWorth)}</span>
+                  <span className="text-zinc-500 block text-[10px] font-semibold uppercase tracking-wider">Portfolio NAV</span>
+                  <span className="font-semibold text-zinc-950 font-mono">{formatCurrency(effectiveNetWorth)}</span>
                 </div>
                 <div>
-                  <span className="text-muted block text-[10px] font-semibold uppercase tracking-wider">Ratification Status</span>
-                  <span className="inline-flex items-center gap-1 font-semibold text-positive">
+                  <span className="text-zinc-500 block text-[10px] font-semibold uppercase tracking-wider">Ratification Status</span>
+                  <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
                     <ShieldCheck size={13} /> Active Mandate
                   </span>
                 </div>
@@ -1295,36 +1295,36 @@ export const IPSTemplate = () => {
 
             {/* Section 1: Client Profile & Governance Scope */}
             <div className="space-y-3">
-              <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
-                <span className="w-5 h-5 rounded-full bg-sunken text-ink text-[10px] flex items-center justify-center font-sans font-bold">1</span>
+              <h2 className="text-base font-serif font-bold text-zinc-950 flex items-center gap-2 border-b border-zinc-200 pb-1.5">
+                <span className="w-5 h-5 rounded-full bg-zinc-900 text-white text-[10px] flex items-center justify-center font-sans font-bold">1</span>
                 Client Profile & Governance Scope
               </h2>
-              <div className="overflow-x-auto rounded-xl border border-border" tabIndex={0} role="region" aria-label="Client Profile table">
+              <div className="overflow-x-auto rounded-xl border border-zinc-200" tabIndex={0} role="region" aria-label="Client Profile table">
                 <table className="w-full text-left text-xs sm:text-sm">
-                  <tbody className="divide-y divide-border">
-                    <tr className="hover:bg-sunken/50">
-                      <td className="py-2 px-3 font-semibold text-muted w-1/3">Client Name(s)</td>
-                      <td className="py-2 px-3 font-medium text-ink">{effectiveClient.name || '[To be completed]'}</td>
+                  <tbody className="divide-y divide-zinc-100">
+                    <tr className="hover:bg-zinc-50/50">
+                      <td className="py-2 px-3 font-semibold text-zinc-600 w-1/3">Client Name(s)</td>
+                      <td className="py-2 px-3 font-medium text-zinc-950">{effectiveClient.name || '[To be completed]'}</td>
                     </tr>
-                    <tr className="hover:bg-sunken/50">
-                      <td className="py-2 px-3 font-semibold text-muted">Current Age & Target Retirement</td>
-                      <td className="py-2 px-3 font-medium text-ink">
+                    <tr className="hover:bg-zinc-50/50">
+                      <td className="py-2 px-3 font-semibold text-zinc-600">Current Age & Target Retirement</td>
+                      <td className="py-2 px-3 font-medium text-zinc-950">
                         {effectiveClient.currentAge} years (Current) / {effectiveClient.retirementAge} years (Target Retirement)
                       </td>
                     </tr>
-                    <tr className="hover:bg-sunken/50">
-                      <td className="py-2 px-3 font-semibold text-muted">Planning Longevity Horizon</td>
-                      <td className="py-2 px-3 font-medium text-ink">
+                    <tr className="hover:bg-zinc-50/50">
+                      <td className="py-2 px-3 font-semibold text-zinc-600">Planning Longevity Horizon</td>
+                      <td className="py-2 px-3 font-medium text-zinc-950">
                         Age {effectiveClient.lifeExpectancy} ({Math.max(0, effectiveClient.lifeExpectancy - effectiveClient.currentAge)} years total horizon)
                       </td>
                     </tr>
-                    <tr className="hover:bg-sunken/50">
-                      <td className="py-2 px-3 font-semibold text-muted">Lead Fiduciary Advisor</td>
-                      <td className="py-2 px-3 font-medium text-ink">{effectiveClient.advisor}</td>
+                    <tr className="hover:bg-zinc-50/50">
+                      <td className="py-2 px-3 font-semibold text-zinc-600">Lead Fiduciary Advisor</td>
+                      <td className="py-2 px-3 font-medium text-zinc-950">{effectiveClient.advisor}</td>
                     </tr>
-                    <tr className="hover:bg-sunken/50">
-                      <td className="py-2 px-3 font-semibold text-muted">Mandate Review Date</td>
-                      <td className="py-2 px-3 font-medium text-ink">{effectiveClient.reviewDate}</td>
+                    <tr className="hover:bg-zinc-50/50">
+                      <td className="py-2 px-3 font-semibold text-zinc-600">Mandate Review Date</td>
+                      <td className="py-2 px-3 font-medium text-zinc-950">{effectiveClient.reviewDate}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -1333,39 +1333,39 @@ export const IPSTemplate = () => {
 
             {/* Section 2: Investment Objectives & Hurdle Rates */}
             <div className="space-y-3">
-              <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
-                <span className="w-5 h-5 rounded-full bg-sunken text-ink text-[10px] flex items-center justify-center font-sans font-bold">2</span>
+              <h2 className="text-base font-serif font-bold text-zinc-950 flex items-center gap-2 border-b border-zinc-200 pb-1.5">
+                <span className="w-5 h-5 rounded-full bg-zinc-900 text-white text-[10px] flex items-center justify-center font-sans font-bold">2</span>
                 Investment Objectives & Return Hurdle
               </h2>
-              <div className="bg-sunken/70 border border-border rounded-xl p-4 space-y-2 text-sm text-ink-soft leading-relaxed">
+              <div className="bg-zinc-50/70 border border-zinc-200 rounded-xl p-4 space-y-2 text-sm text-zinc-800 leading-relaxed">
                 <p>
                   <strong>Primary Return Mandate:</strong> {effectiveState.returnObjective}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
-                  <div className="bg-surface border border-border rounded-lg p-2.5">
-                    <span className="text-muted block uppercase font-semibold text-[10px]">Risk Profile</span>
-                    <span className="font-bold text-ink text-sm">
+                  <div className="bg-white border border-zinc-200 rounded-lg p-2.5">
+                    <span className="text-zinc-500 block uppercase font-semibold text-[10px]">Risk Profile</span>
+                    <span className="font-bold text-zinc-950 text-sm">
                       {effectiveRiskTolerance.charAt(0).toUpperCase() + effectiveRiskTolerance.slice(1)}
                     </span>
                     {isLinkedToPlan && (
-                      <span className="text-muted block text-[10px] mt-0.5 font-mono">
+                      <span className="text-zinc-500 block text-[10px] mt-0.5 font-mono">
                         {riskProfile.label} Model
                       </span>
                     )}
                   </div>
-                  <div className="bg-surface border border-border rounded-lg p-2.5">
-                    <span className="text-muted block uppercase font-semibold text-[10px]">Max Tolerable Drawdown</span>
-                    <span className="font-bold text-ink text-sm font-mono">
+                  <div className="bg-white border border-zinc-200 rounded-lg p-2.5">
+                    <span className="text-zinc-500 block uppercase font-semibold text-[10px]">Max Tolerable Drawdown</span>
+                    <span className="font-bold text-zinc-950 text-sm font-mono">
                       -{effectiveMaxDrawdown}% (12M Peak-to-Trough)
                     </span>
-                    <span className="text-muted block text-[10px] mt-0.5">Rolling stress ceiling</span>
+                    <span className="text-zinc-500 block text-[10px] mt-0.5">Rolling stress ceiling</span>
                   </div>
-                  <div className="bg-surface border border-border rounded-lg p-2.5">
-                    <span className="text-muted block uppercase font-semibold text-[10px]">Core Inflation Hurdle</span>
-                    <span className="font-bold text-ink text-sm font-mono">
+                  <div className="bg-white border border-zinc-200 rounded-lg p-2.5">
+                    <span className="text-zinc-500 block uppercase font-semibold text-[10px]">Core Inflation Hurdle</span>
+                    <span className="font-bold text-zinc-950 text-sm font-mono">
                       {effectiveClient.inflation}% Per Annum
                     </span>
-                    <span className="text-muted block text-[10px] mt-0.5">Purchasing power baseline</span>
+                    <span className="text-zinc-500 block text-[10px] mt-0.5">Purchasing power baseline</span>
                   </div>
                 </div>
               </div>
@@ -1373,25 +1373,25 @@ export const IPSTemplate = () => {
 
             {/* Section 3: Portfolio Constraints & Liquidity Architecture */}
             <div className="space-y-3">
-              <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
-                <span className="w-5 h-5 rounded-full bg-sunken text-ink text-[10px] flex items-center justify-center font-sans font-bold">3</span>
+              <h2 className="text-base font-serif font-bold text-zinc-950 flex items-center gap-2 border-b border-zinc-200 pb-1.5">
+                <span className="w-5 h-5 rounded-full bg-zinc-900 text-white text-[10px] flex items-center justify-center font-sans font-bold">3</span>
                 Portfolio Constraints & Liquidity Horizons
               </h2>
-              <div className="space-y-2 text-sm text-ink-soft leading-relaxed">
+              <div className="space-y-2 text-sm text-zinc-700 leading-relaxed">
                 <p>
                   <strong>Liquidity & Reserve Requirement:</strong> Current total liquid and investable net worth stands at{' '}
-                  <span className="font-semibold text-ink">{formatCurrency(effectiveNetWorth)}</span>. An emergency
+                  <span className="font-semibold text-zinc-950">{formatCurrency(effectiveNetWorth)}</span>. An emergency
                   liquidity reserve equal to 6–12 months of non-discretionary living expenses is maintained in overnight
                   and ultra-short instruments, isolated from market volatility.
                 </p>
                 <p>
                   <strong>Time Horizon & Life Phases:</strong> The accumulation phase extends for{' '}
-                  <span className="font-semibold text-ink">
+                  <span className="font-semibold text-zinc-950">
                     {Math.max(0, effectiveClient.retirementAge - effectiveClient.currentAge)} years
                   </span>{' '}
                   until age {effectiveClient.retirementAge}, followed by a distribution and capital preservation phase
                   projected at{' '}
-                  <span className="font-semibold text-ink">
+                  <span className="font-semibold text-zinc-950">
                     {Math.max(0, effectiveClient.lifeExpectancy - effectiveClient.retirementAge)} years
                   </span>.
                 </p>
@@ -1405,13 +1405,13 @@ export const IPSTemplate = () => {
 
             {/* Section 4: Priority-Tiered Goals & Liabilities */}
             <div className="space-y-3">
-              <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
-                <span className="w-5 h-5 rounded-full bg-sunken text-ink text-[10px] flex items-center justify-center font-sans font-bold">4</span>
+              <h2 className="text-base font-serif font-bold text-zinc-950 flex items-center gap-2 border-b border-zinc-200 pb-1.5">
+                <span className="w-5 h-5 rounded-full bg-zinc-900 text-white text-[10px] flex items-center justify-center font-sans font-bold">4</span>
                 Priority-Tiered Goals & Liabilities
               </h2>
-              <div className="overflow-x-auto rounded-xl border border-border" tabIndex={0} role="region" aria-label="Goals and Liabilities table">
+              <div className="overflow-x-auto rounded-xl border border-zinc-200" tabIndex={0} role="region" aria-label="Goals and Liabilities table">
                 <table className="w-full text-left text-xs sm:text-sm">
-                  <thead className="bg-sunken text-muted text-[11px] font-semibold uppercase tracking-wider border-b border-border">
+                  <thead className="bg-zinc-50 text-zinc-600 text-[11px] font-semibold uppercase tracking-wider border-b border-zinc-200">
                     <tr>
                       <th className="py-2.5 px-3">Goal Objective</th>
                       <th className="py-2.5 px-3">Priority Tier</th>
@@ -1419,33 +1419,33 @@ export const IPSTemplate = () => {
                       <th className="py-2.5 px-3 text-right">Target Liability (Today)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border">
+                  <tbody className="divide-y divide-zinc-100">
                     {effectiveGoals.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="py-4 text-center text-muted italic text-xs">
+                        <td colSpan={4} className="py-4 text-center text-zinc-500 italic text-xs">
                           No specific liabilities or goal targets defined.
                         </td>
                       </tr>
                     )}
                     {effectiveGoals.map((g) => (
-                      <tr key={g.id} className="hover:bg-sunken/50">
-                        <td className="py-2 px-3 font-medium text-ink">{g.name || '[Unnamed Goal]'}</td>
+                      <tr key={g.id} className="hover:bg-zinc-50/50">
+                        <td className="py-2 px-3 font-medium text-zinc-950">{g.name || '[Unnamed Goal]'}</td>
                         <td className="py-2 px-3">
                           <span
                             className={cn(
                               'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider',
                               g.priority === 'essential'
-                                ? 'bg-sunken text-ink'
+                                ? 'bg-zinc-900 text-white'
                                 : g.priority === 'important'
-                                ? 'bg-sunken text-ink-soft border border-border-strong'
-                                : 'bg-sunken text-muted border border-border',
+                                ? 'bg-zinc-100 text-zinc-800 border border-zinc-300'
+                                : 'bg-zinc-50 text-zinc-600 border border-zinc-200',
                             )}
                           >
                             {g.priority}
                           </span>
                         </td>
-                        <td className="py-2 px-3 text-right font-mono text-ink-soft">{g.yearsToGoal} yrs</td>
-                        <td className="py-2 px-3 text-right font-mono font-semibold text-ink">
+                        <td className="py-2 px-3 text-right font-mono text-zinc-700">{g.yearsToGoal} yrs</td>
+                        <td className="py-2 px-3 text-right font-mono font-semibold text-zinc-950">
                           {formatCurrency(g.targetAmount)}
                         </td>
                       </tr>
@@ -1457,27 +1457,27 @@ export const IPSTemplate = () => {
 
             {/* Section 5: Strategic Asset Allocation (SAA) & Rebalancing Corridors */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between border-b border-border pb-1.5">
-                <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-sunken text-ink text-[10px] flex items-center justify-center font-sans font-bold">5</span>
+              <div className="flex items-center justify-between border-b border-zinc-200 pb-1.5">
+                <h2 className="text-base font-serif font-bold text-zinc-950 flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-zinc-900 text-white text-[10px] flex items-center justify-center font-sans font-bold">5</span>
                   Strategic Asset Allocation (SAA) & Rebalancing Corridors
                 </h2>
                 <div className="flex items-center gap-2 text-xs">
                   {hasCorridorBreach ? (
-                    <span className="inline-flex items-center gap-1 text-negative font-semibold bg-rose-50 border border-negative/40 px-2 py-0.5 rounded-full text-[10px]">
+                    <span className="inline-flex items-center gap-1 text-rose-700 font-semibold bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full text-[10px]">
                       <AlertTriangle size={12} /> Drift Breach Detected
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-positive font-semibold bg-emerald-50 border border-positive/40 px-2 py-0.5 rounded-full text-[10px]">
+                    <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px]">
                       <CheckCircle size={12} /> All Corridors Compliant
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="overflow-x-auto rounded-xl border border-border" tabIndex={0} role="region" aria-label="Strategic Asset Allocation table">
+              <div className="overflow-x-auto rounded-xl border border-zinc-200" tabIndex={0} role="region" aria-label="Strategic Asset Allocation table">
                 <table className="w-full text-left text-xs sm:text-sm">
-                  <thead className="bg-sunken text-muted text-[11px] font-semibold uppercase tracking-wider border-b border-border">
+                  <thead className="bg-zinc-50 text-zinc-600 text-[11px] font-semibold uppercase tracking-wider border-b border-zinc-200">
                     <tr>
                       <th className="py-2.5 px-3">Asset Class</th>
                       <th className="py-2.5 px-3 text-right">Policy Target</th>
@@ -1487,7 +1487,7 @@ export const IPSTemplate = () => {
                       <th className="py-2.5 px-3 text-center">Policy Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border">
+                  <tbody className="divide-y divide-zinc-100">
                     {(Object.keys(categoryLabels) as AssetCategory[]).map((cat) => {
                       const target = effectiveAllocation[cat] || 0;
                       const current = effectiveCurrentAllocation[cat] || 0;
@@ -1496,40 +1496,40 @@ export const IPSTemplate = () => {
                       const isWithinCorridor = Math.abs(drift) <= 5.0;
 
                       return (
-                        <tr key={cat} className="hover:bg-sunken/50">
-                          <td className="py-2.5 px-3 font-semibold text-ink">{categoryLabels[cat]}</td>
-                          <td className="py-2.5 px-3 text-right font-mono text-ink font-medium">
+                        <tr key={cat} className="hover:bg-zinc-50/50">
+                          <td className="py-2.5 px-3 font-semibold text-zinc-950">{categoryLabels[cat]}</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-zinc-950 font-medium">
                             {target.toFixed(1)}%
                           </td>
-                          <td className="py-2.5 px-3 text-right font-mono text-ink font-medium">
+                          <td className="py-2.5 px-3 text-right font-mono text-zinc-950 font-medium">
                             {current.toFixed(1)}%
                           </td>
-                          <td className="py-2.5 px-3 text-right text-xs text-muted font-mono">
+                          <td className="py-2.5 px-3 text-right text-xs text-zinc-500 font-mono">
                             {Math.max(0, target - 5).toFixed(0)}% – {(target + 5).toFixed(0)}%
                           </td>
                           <td
                             className={cn(
                               'py-2.5 px-3 text-right font-mono text-xs font-bold',
                               isTargetMet
-                                ? 'text-positive'
+                                ? 'text-emerald-700'
                                 : isWithinCorridor
-                                ? 'text-ink-soft'
-                                : 'text-negative',
+                                ? 'text-zinc-700'
+                                : 'text-rose-700',
                             )}
                           >
                             {drift > 0 ? `+${drift.toFixed(1)}%` : `${drift.toFixed(1)}%`}
                           </td>
                           <td className="py-2.5 px-3 text-center">
                             {isTargetMet ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-positive-soft text-positive border border-positive/40">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
                                 Target Met
                               </span>
                             ) : isWithinCorridor ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sunken text-ink-soft border border-border">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-zinc-100 text-zinc-800 border border-zinc-200">
                                 Within Corridor
                               </span>
                             ) : (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-negative border border-negative/40">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-800 border border-rose-200">
                                 {drift > 0 ? 'Overweight' : 'Deficit / Rebalance'}
                               </span>
                             )}
@@ -1538,29 +1538,29 @@ export const IPSTemplate = () => {
                       );
                     })}
                   </tbody>
-                  <tfoot className="bg-sunken/80 font-semibold border-t-2 border-border-strong text-xs">
+                  <tfoot className="bg-zinc-50/80 font-semibold border-t-2 border-zinc-300 text-xs">
                     <tr>
-                      <td className="py-2.5 px-3 text-ink">Total SAA Weight</td>
-                      <td className="py-2.5 px-3 text-right font-mono text-ink">
+                      <td className="py-2.5 px-3 text-zinc-950">Total SAA Weight</td>
+                      <td className="py-2.5 px-3 text-right font-mono text-zinc-950">
                         {totalAllocation.toFixed(1)}%
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-ink">
+                      <td className="py-2.5 px-3 text-right font-mono text-zinc-950">
                         {Object.values(effectiveCurrentAllocation).reduce((a, b) => a + b, 0).toFixed(1)}%
                       </td>
                       <td colSpan={2} className="py-2.5 px-3 text-right">
                         {hasCorridorBreach ? (
-                          <span className="text-negative font-bold">Rebalancing Trigger Breached (±5.0% Rule)</span>
+                          <span className="text-rose-700 font-bold">Rebalancing Trigger Breached (±5.0% Rule)</span>
                         ) : (
-                          <span className="text-positive font-bold">Strategic Portfolio Within Policy Corridors</span>
+                          <span className="text-emerald-700 font-bold">Strategic Portfolio Within Policy Corridors</span>
                         )}
                       </td>
                       <td className="py-2.5 px-3 text-center">
                         {hasCorridorBreach ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-negative border border-negative/40">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-800 border border-rose-200">
                             Action Triggered
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-positive-soft text-positive border border-positive/40">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
                             Compliant
                           </span>
                         )}
@@ -1573,13 +1573,13 @@ export const IPSTemplate = () => {
 
             {/* Section 6: Balance Sheet Inventory & Holdings Schedule */}
             <div className="space-y-3">
-              <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
-                <span className="w-5 h-5 rounded-full bg-sunken text-ink text-[10px] flex items-center justify-center font-sans font-bold">6</span>
+              <h2 className="text-base font-serif font-bold text-zinc-950 flex items-center gap-2 border-b border-zinc-200 pb-1.5">
+                <span className="w-5 h-5 rounded-full bg-zinc-900 text-white text-[10px] flex items-center justify-center font-sans font-bold">6</span>
                 Balance Sheet Inventory & Asset Schedule
               </h2>
-              <div className="overflow-x-auto rounded-xl border border-border" tabIndex={0} role="region" aria-label="Current Holdings table">
+              <div className="overflow-x-auto rounded-xl border border-zinc-200" tabIndex={0} role="region" aria-label="Current Holdings table">
                 <table className="w-full text-left text-xs sm:text-sm">
-                  <thead className="bg-sunken text-muted text-[11px] font-semibold uppercase tracking-wider border-b border-border">
+                  <thead className="bg-zinc-50 text-zinc-600 text-[11px] font-semibold uppercase tracking-wider border-b border-zinc-200">
                     <tr>
                       <th className="py-2.5 px-3">Instrument / Asset Name</th>
                       <th className="py-2.5 px-3">Asset Category</th>
@@ -1587,10 +1587,10 @@ export const IPSTemplate = () => {
                       <th className="py-2.5 px-3 text-right">Portfolio Share</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border">
+                  <tbody className="divide-y divide-zinc-100">
                     {effectiveAssets.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="py-4 text-center text-muted italic text-xs">
+                        <td colSpan={4} className="py-4 text-center text-zinc-500 italic text-xs">
                           No asset holdings entered into balance sheet.
                         </td>
                       </tr>
@@ -1598,26 +1598,26 @@ export const IPSTemplate = () => {
                     {effectiveAssets.map((a) => {
                       const share = effectiveNetWorth > 0 ? (a.value / effectiveNetWorth) * 100 : 0;
                       return (
-                        <tr key={a.id} className="hover:bg-sunken/50">
-                          <td className="py-2 px-3 font-medium text-ink">{a.name || '[Unnamed Instrument]'}</td>
-                          <td className="py-2 px-3 text-muted">{categoryLabels[a.category]}</td>
-                          <td className="py-2 px-3 text-right font-mono font-semibold text-ink">
+                        <tr key={a.id} className="hover:bg-zinc-50/50">
+                          <td className="py-2 px-3 font-medium text-zinc-950">{a.name || '[Unnamed Instrument]'}</td>
+                          <td className="py-2 px-3 text-zinc-600">{categoryLabels[a.category]}</td>
+                          <td className="py-2 px-3 text-right font-mono font-semibold text-zinc-950">
                             {formatCurrency(a.value)}
                           </td>
-                          <td className="py-2 px-3 text-right font-mono text-muted text-xs">
+                          <td className="py-2 px-3 text-right font-mono text-zinc-500 text-xs">
                             {share.toFixed(1)}%
                           </td>
                         </tr>
                       );
                     })}
                   </tbody>
-                  <tfoot className="bg-sunken font-semibold border-t border-border text-xs">
+                  <tfoot className="bg-zinc-50 font-semibold border-t border-zinc-200 text-xs">
                     <tr>
-                      <td colSpan={2} className="py-2 px-3 text-ink">Total Portfolio Valuation</td>
-                      <td className="py-2 px-3 text-right font-mono text-ink text-sm">
+                      <td colSpan={2} className="py-2 px-3 text-zinc-950">Total Portfolio Valuation</td>
+                      <td className="py-2 px-3 text-right font-mono text-zinc-950 text-sm">
                         {formatCurrency(effectiveNetWorth)}
                       </td>
-                      <td className="py-2 px-3 text-right font-mono text-muted">100.0%</td>
+                      <td className="py-2 px-3 text-right font-mono text-zinc-500">100.0%</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -1626,19 +1626,19 @@ export const IPSTemplate = () => {
 
             {/* Section 7: Currency Policy & Hedging Architecture */}
             <div className="space-y-3">
-              <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
-                <span className="w-5 h-5 rounded-full bg-sunken text-ink text-[10px] flex items-center justify-center font-sans font-bold">7</span>
+              <h2 className="text-base font-serif font-bold text-zinc-950 flex items-center gap-2 border-b border-zinc-200 pb-1.5">
+                <span className="w-5 h-5 rounded-full bg-zinc-900 text-white text-[10px] flex items-center justify-center font-sans font-bold">7</span>
                 Currency Architecture & Hedging Mandate
               </h2>
-              <div className="bg-sunken/70 border border-border rounded-xl p-4 space-y-2 text-sm text-ink-soft leading-relaxed">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-2 border-b border-border text-xs">
+              <div className="bg-zinc-50/70 border border-zinc-200 rounded-xl p-4 space-y-2 text-sm text-zinc-800 leading-relaxed">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-2 border-b border-zinc-200 text-xs">
                   <div>
-                    <span className="text-muted block uppercase font-semibold text-[10px]">Base Reporting Currency</span>
-                    <span className="font-bold text-ink text-sm">{effectiveState.baseCurrency || 'INR'}</span>
+                    <span className="text-zinc-500 block uppercase font-semibold text-[10px]">Base Reporting Currency</span>
+                    <span className="font-bold text-zinc-950 text-sm">{effectiveState.baseCurrency || 'INR'}</span>
                   </div>
                   <div>
-                    <span className="text-muted block uppercase font-semibold text-[10px]">Offshore Exposure Cap</span>
-                    <span className="font-bold text-ink text-sm font-mono">{effectiveState.foreignExposure}% Maximum</span>
+                    <span className="text-zinc-500 block uppercase font-semibold text-[10px]">Offshore Exposure Cap</span>
+                    <span className="font-bold text-zinc-950 text-sm font-mono">{effectiveState.foreignExposure}% Maximum</span>
                   </div>
                 </div>
                 <p className="pt-1">
@@ -1649,11 +1649,11 @@ export const IPSTemplate = () => {
 
             {/* Section 8: Rebalancing Protocols & Governance Rules */}
             <div className="space-y-3">
-              <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
-                <span className="w-5 h-5 rounded-full bg-sunken text-ink text-[10px] flex items-center justify-center font-sans font-bold">8</span>
+              <h2 className="text-base font-serif font-bold text-zinc-950 flex items-center gap-2 border-b border-zinc-200 pb-1.5">
+                <span className="w-5 h-5 rounded-full bg-zinc-900 text-white text-[10px] flex items-center justify-center font-sans font-bold">8</span>
                 Execution Protocols & Rebalancing Rules
               </h2>
-              <div className="space-y-2.5 text-sm text-ink-soft leading-relaxed">
+              <div className="space-y-2.5 text-sm text-zinc-700 leading-relaxed">
                 <p>
                   <strong>1. Corridor Drift Monitoring:</strong> Asset allocation is tracked on a continuous basis. A formal
                   rebalancing execution is triggered whenever any strategic asset class deviates by more than ±5.0% absolute
@@ -1670,7 +1670,7 @@ export const IPSTemplate = () => {
                   events, employment changes, or risk profile shifts).
                 </p>
                 {effectiveState.implementationReview && (
-                  <div className="bg-sunken border-l-2 border-border-strong p-3 rounded-r-xl text-xs text-ink-soft italic mt-2">
+                  <div className="bg-zinc-50 border-l-2 border-zinc-900 p-3 rounded-r-xl text-xs text-zinc-800 italic mt-2">
                     "{effectiveState.implementationReview}"
                   </div>
                 )}
@@ -1680,57 +1680,57 @@ export const IPSTemplate = () => {
             {/* Section 9: Special Covenants & Mandate Exclusions */}
             {effectiveState.notes && (
               <div className="space-y-3">
-                <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
-                  <span className="w-5 h-5 rounded-full bg-sunken text-ink text-[10px] flex items-center justify-center font-sans font-bold">9</span>
+                <h2 className="text-base font-serif font-bold text-zinc-950 flex items-center gap-2 border-b border-zinc-200 pb-1.5">
+                  <span className="w-5 h-5 rounded-full bg-zinc-900 text-white text-[10px] flex items-center justify-center font-sans font-bold">9</span>
                   Special Covenants & Mandate Exclusions
                 </h2>
-                <div className="bg-sunken/70 border border-border rounded-xl p-4 text-sm text-ink-soft leading-relaxed">
+                <div className="bg-zinc-50/70 border border-zinc-200 rounded-xl p-4 text-sm text-zinc-800 leading-relaxed">
                   <p>{effectiveState.notes}</p>
                 </div>
               </div>
             )}
 
             {/* Section 10: Fiduciary Execution & Ratification */}
-            <div className="pt-6 border-t-2 border-border-strong space-y-6">
+            <div className="pt-6 border-t-2 border-zinc-900 space-y-6">
               <div>
-                <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-sunken text-ink text-[10px] flex items-center justify-center font-sans font-bold">10</span>
+                <h2 className="text-base font-serif font-bold text-zinc-950 flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-zinc-900 text-white text-[10px] flex items-center justify-center font-sans font-bold">10</span>
                   Fiduciary Execution & Ratification
                 </h2>
-                <p className="text-xs text-muted mt-1 italic">
+                <p className="text-xs text-zinc-500 mt-1 italic">
                   By signing below, the Client and the Lead Fiduciary Advisor acknowledge and ratify the governance
                   corridors, return hurdles, and asset allocation parameters set forth in this Investment Policy Statement.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-4">
-                <div className="space-y-5 bg-sunken/50 border border-border rounded-xl p-4">
-                  <div className="border-b border-border-strong pb-2">
-                    <span className="text-[10px] uppercase font-bold text-muted block">Primary Client</span>
-                    <span className="font-semibold text-ink text-sm">
+                <div className="space-y-5 bg-zinc-50/50 border border-zinc-200 rounded-xl p-4">
+                  <div className="border-b border-zinc-300 pb-2">
+                    <span className="text-[10px] uppercase font-bold text-zinc-500 block">Primary Client</span>
+                    <span className="font-semibold text-zinc-950 text-sm">
                       {effectiveClient.name || 'Client Name(s)'}
                     </span>
                   </div>
                   <div className="h-10 flex items-end">
                     <div className="w-full border-b border-zinc-400 border-dashed" />
                   </div>
-                  <div className="flex justify-between text-xs text-muted">
+                  <div className="flex justify-between text-xs text-zinc-500">
                     <span>Signature</span>
                     <span>Date: {effectiveClient.reviewDate}</span>
                   </div>
                 </div>
 
-                <div className="space-y-5 bg-sunken/50 border border-border rounded-xl p-4">
-                  <div className="border-b border-border-strong pb-2">
-                    <span className="text-[10px] uppercase font-bold text-muted block">Fiduciary Advisor</span>
-                    <span className="font-semibold text-ink text-sm">
+                <div className="space-y-5 bg-zinc-50/50 border border-zinc-200 rounded-xl p-4">
+                  <div className="border-b border-zinc-300 pb-2">
+                    <span className="text-[10px] uppercase font-bold text-zinc-500 block">Fiduciary Advisor</span>
+                    <span className="font-semibold text-zinc-950 text-sm">
                       {effectiveClient.advisor || 'Sound Thesis Wealth Advisory'}
                     </span>
                   </div>
                   <div className="h-10 flex items-end">
                     <div className="w-full border-b border-zinc-400 border-dashed" />
                   </div>
-                  <div className="flex justify-between text-xs text-muted">
+                  <div className="flex justify-between text-xs text-zinc-500">
                     <span>Authorized Fiduciary Signature</span>
                     <span>Date: {effectiveClient.reviewDate}</span>
                   </div>
@@ -1767,7 +1767,7 @@ function LabelledInput({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">
+      <label htmlFor={id} className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-600 mb-1">
         {label}
       </label>
       <input
@@ -1776,7 +1776,7 @@ function LabelledInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-sunken border border-border rounded-xl px-3 py-2 text-sm font-medium text-ink focus:bg-surface focus:border-border focus:ring-1 focus:ring-focus-ring focus:outline-none transition-colors"
+        className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm font-medium text-zinc-900 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:outline-none transition-colors"
       />
     </div>
   );
@@ -1795,7 +1795,7 @@ function LabelledDate({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">
+      <label htmlFor={id} className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-600 mb-1">
         {label}
       </label>
       <input
@@ -1803,7 +1803,7 @@ function LabelledDate({
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-sunken border border-border rounded-xl px-3 py-2 text-sm font-medium text-ink focus:bg-surface focus:border-border focus:ring-1 focus:ring-focus-ring focus:outline-none transition-colors"
+        className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm font-medium text-zinc-900 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:outline-none transition-colors"
       />
     </div>
   );

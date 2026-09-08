@@ -66,8 +66,8 @@ export const LumpsumCalculator = () => {
       }
     >
       <Card>
-        <h4 className="text-sm font-semibold uppercase tracking-wider text-ink-soft mb-4">Growth Curve</h4>
-        <p className="text-xs text-muted mb-3">
+        <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Growth Curve</h4>
+        <p className="text-xs text-zinc-600 mb-3">
           {formatCurrency(principal)} at {returnRate}% grows to {formatCurrency(result.total)} in {years} years — a {result.gained > principal ? `${(result.total / Math.max(1, principal)).toFixed(1)}× multiple` : `${formatCurrency(result.gained)} gain`} on the original investment.
         </p>
         <div
@@ -98,8 +98,8 @@ export const LumpsumCalculator = () => {
                 formatter={(value: any) => formatCurrency(Number(value))}
                 contentStyle={{
                   borderRadius: '14px',
-                  border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-surface)',
+                  border: '1px solid rgba(226, 232, 240, 0.9)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.96)',
                   backdropFilter: 'blur(10px)',
                   boxShadow: '0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04)',
                   padding: '10px 14px',

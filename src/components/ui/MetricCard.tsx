@@ -20,47 +20,47 @@ export const MetricCard = ({
 }: MetricCardProps) => {
   const variants = {
     default:
-      'bg-surface border border-border text-ink shadow-2xs hover:border-border-strong hover:shadow-card',
+      'bg-white/90 backdrop-blur-sm border border-zinc-200/80 shadow-2xs hover:shadow-card hover:border-zinc-300 text-zinc-900',
     navy:
-      'bg-[#0d1420] border border-[#1c2940] text-[#e8ecf2] shadow-2xs hover:border-[#2a3d5f] hover:shadow-card print:bg-white print:border-zinc-300 print:text-zinc-900',
+      'bg-zinc-950 border border-zinc-900 text-white shadow-xs hover:border-zinc-800 hover:shadow-sm',
     gold:
-      'bg-[#1a1404] border border-[#40330f] text-[#fef3c7] shadow-2xs hover:border-[#5a471a] hover:shadow-card print:bg-white print:border-zinc-300 print:text-zinc-900',
+      'bg-white/90 backdrop-blur-sm border border-amber-200/70 shadow-2xs hover:shadow-card hover:border-amber-300/80 text-zinc-900',
     success:
-      'bg-surface border border-positive/30 text-ink shadow-2xs hover:border-positive/50 hover:shadow-card',
+      'bg-white/90 backdrop-blur-sm border border-emerald-200/80 shadow-2xs hover:shadow-card hover:border-emerald-300/90 text-zinc-900',
     danger:
-      'bg-surface border border-negative/30 text-ink shadow-2xs hover:border-negative/50 hover:shadow-card',
+      'bg-white/90 backdrop-blur-sm border border-rose-200/80 shadow-2xs hover:shadow-card hover:border-rose-300/90 text-zinc-900',
   };
 
   const glowColors = {
-    default: 'bg-ink/[0.05]',
-    navy: 'bg-info/[0.08]',
-    gold: 'bg-warning/10',
-    success: 'bg-positive/10',
-    danger: 'bg-negative/10',
+    default: 'bg-zinc-400/[0.04]',
+    navy: 'bg-white/[0.04]',
+    gold: 'bg-amber-500/[0.08]',
+    success: 'bg-emerald-500/[0.08]',
+    danger: 'bg-rose-500/[0.08]',
   };
 
   const mutedColors = {
-    default: 'text-muted',
-    navy: 'text-[#8b95a5]',
-    gold: 'text-warning/90',
-    success: 'text-positive',
-    danger: 'text-negative',
+    default: 'text-zinc-500',
+    navy: 'text-zinc-400',
+    gold: 'text-amber-800/80',
+    success: 'text-emerald-800/80',
+    danger: 'text-rose-800/80',
   };
 
   const valueColors = {
-    default: 'text-ink',
-    navy: 'text-[#e8ecf2]',
-    gold: 'text-[#fde68a]',
-    success: 'text-positive',
-    danger: 'text-negative',
+    default: 'text-zinc-950',
+    navy: 'text-white',
+    gold: 'text-zinc-950',
+    success: 'text-emerald-700',
+    danger: 'text-rose-700',
   };
 
   const iconColors = {
-    default: 'text-ink bg-raised border border-border shadow-2xs',
-    navy: 'text-[#e8ecf2] bg-[#16233a] border border-[#1c2940] shadow-2xs',
-    gold: 'text-[#fde68a] bg-warning/10 border border-warning/25 shadow-2xs',
-    success: 'text-positive bg-positive/10 border border-positive/25 shadow-2xs',
-    danger: 'text-negative bg-negative/10 border border-negative/25 shadow-2xs',
+    default: 'text-zinc-700 bg-zinc-100/90 border border-zinc-200/60 shadow-2xs',
+    navy: 'text-zinc-200 bg-zinc-900/90 border border-zinc-800 shadow-2xs',
+    gold: 'text-amber-800 bg-amber-50 border border-amber-200/60 shadow-2xs',
+    success: 'text-emerald-800 bg-emerald-50 border border-emerald-200/60 shadow-2xs',
+    danger: 'text-rose-800 bg-rose-50 border border-rose-200/60 shadow-2xs',
   };
 
   return (

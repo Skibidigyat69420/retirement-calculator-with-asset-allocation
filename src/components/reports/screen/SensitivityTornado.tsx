@@ -165,7 +165,6 @@ export const SensitivityTornado = ({ inputs, wealthResult }: SensitivityTornadoP
             <XAxis type="number" tickFormatter={formatCurrencyCompact} tick={CHART_TICK} axisLine={false} tickLine={false} />
             <YAxis type="category" dataKey="label" tick={CHART_TICK} axisLine={false} tickLine={false} width={150} />
             <Tooltip
-              cursor={{ fill: 'rgba(139, 149, 165, 0.06)' }}
               formatter={(value: any, _name: any, item: any) => {
                 const row = item?.payload as TornadoRow | undefined;
                 if (!row) return [String(value), 'Surplus range'];

@@ -132,30 +132,6 @@ export function buildAssumptionsFromMarketData(marketData: MarketDataSet): Assum
   };
 }
 
-/**
- * Stable content hash of an AssumptionSet (FNV-1a over a canonical JSON
- * serialization). Used as `assumptionVersion` in calculation metadata so a
- * result can be tied to the exact assumption inputs that produced it.
- */
-export function hashAssumptions(assumptions: AssumptionSet): string {
-  const cats = (Object.keys(assumptions.categories) as AssetCategory[]).sort();
-  const canonical = {
-    categories: cats.map((c) => [c, assumptions.categories[c].mean, assumptions.categories[c].std]),
-    covariance: cats.map((a) => cats.map((b) => assumptions.covariance[a][b])),
-    correlation: cats.map((a) => cats.map((b) => assumptions.correlation[a][b])),
-    fx: Object.keys(assumptions.fx)
-      .sort()
-      .map((k) => [k, assumptions.fx[k].mean, assumptions.fx[k].std]),
-  };
-  const json = JSON.stringify(canonical);
-  let h = 0x811c9dc5;
-  for (let i = 0; i < json.length; i++) {
-    h ^= json.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return (h >>> 0).toString(16).padStart(8, '0');
-}
-
 export function getDefaultAssumptions(): AssumptionSet {
   return {
     categories: {

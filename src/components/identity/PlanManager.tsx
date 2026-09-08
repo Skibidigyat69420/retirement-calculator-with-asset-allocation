@@ -35,9 +35,9 @@ export const PlanManager = () => {
   };
 
   return (
-    <div className="p-4 bg-surface rounded-xl border border-border/90 shadow-2xs space-y-4">
-      <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-        <FolderOpen size={16} className="text-muted" />
+    <div className="p-4 bg-white rounded-xl border border-zinc-200/90 shadow-2xs space-y-4">
+      <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
+        <FolderOpen size={16} className="text-zinc-500" />
         <span>Saved Plans ({savedPlans.length})</span>
       </div>
 
@@ -56,10 +56,10 @@ export const PlanManager = () => {
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted">Local Plans</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Local Plans</span>
           <button
             onClick={() => refreshSavedPlans()}
-            className="text-xs text-muted hover:text-ink hover:underline"
+            className="text-xs text-zinc-600 hover:text-zinc-900 hover:underline"
             disabled={busy}
           >
             Refresh
@@ -67,17 +67,17 @@ export const PlanManager = () => {
         </div>
 
         {savedPlans.length === 0 ? (
-          <p className="text-xs text-muted italic">No saved plans yet. Name and save your current configuration above.</p>
+          <p className="text-xs text-zinc-500 italic">No saved plans yet. Name and save your current configuration above.</p>
         ) : (
           <ul className="space-y-2">
             {savedPlans.map((plan) => (
               <li
                 key={plan.id}
-                className="flex items-center justify-between p-2.5 bg-sunken rounded-lg border border-border"
+                className="flex items-center justify-between p-2.5 bg-zinc-50 rounded-lg border border-zinc-100"
               >
                 <div className="min-w-0 flex-1 mr-2">
-                  <p className="text-sm font-medium text-ink-soft truncate">{plan.name}</p>
-                  <p className="text-[10px] text-muted">
+                  <p className="text-sm font-medium text-zinc-800 truncate">{plan.name}</p>
+                  <p className="text-[10px] text-zinc-500">
                     {new Date(plan.updatedAt).toLocaleString()}
                   </p>
                 </div>
@@ -85,7 +85,7 @@ export const PlanManager = () => {
                   <Button variant="outline" size="sm" onClick={() => handleLoad(plan.id)} disabled={busy} title="Load plan">
                     <FolderOpen size={14} />
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDelete(plan.id)} disabled={busy} title="Delete plan" className="text-negative hover:text-negative">
+                  <Button variant="outline" size="sm" onClick={() => handleDelete(plan.id)} disabled={busy} title="Delete plan" className="text-rose-600 hover:text-rose-700">
                     <Trash2 size={14} />
                   </Button>
                 </div>

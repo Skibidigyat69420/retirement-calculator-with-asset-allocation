@@ -19,7 +19,7 @@ export const Tabs = ({ tabs, active, onChange, className }: TabsProps) => {
     <div
       role="tablist"
       className={cn(
-        'inline-flex items-center p-1.5 bg-sunken/80 border border-border rounded-2xl shadow-2xs overflow-x-auto max-w-full gap-1',
+        'inline-flex items-center p-1.5 bg-zinc-100/80 backdrop-blur-xs border border-zinc-200/70 rounded-2xl shadow-2xs overflow-x-auto max-w-full gap-1',
         className,
       )}
       style={{ scrollbarWidth: 'none' }}
@@ -37,15 +37,15 @@ export const Tabs = ({ tabs, active, onChange, className }: TabsProps) => {
             className={cn(
               'flex items-center px-3.5 sm:px-4 py-2 min-h-9 text-xs sm:text-sm rounded-xl whitespace-nowrap transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-1 cursor-pointer active:scale-[0.98] select-none',
               isActive
-                ? 'bg-raised text-ink font-semibold shadow-xs border border-border-strong'
-                : 'text-muted hover:text-ink hover:bg-raised/60 font-medium border border-transparent',
+                ? 'bg-white text-zinc-950 font-semibold shadow-xs border border-zinc-200/80'
+                : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/60 font-medium border border-transparent',
             )}
           >
             {tab.icon && (
               <span
                 className={cn(
                   'mr-2 transition-colors',
-                  isActive ? 'text-ink' : 'text-muted',
+                  isActive ? 'text-zinc-950' : 'text-zinc-500',
                 )}
               >
                 {tab.icon}

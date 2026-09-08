@@ -72,18 +72,18 @@ export const ClientMeetingPage = () => {
         badge="Advisor OS"
       />
 
-      <Card className="border border-border/90 shadow-sm space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
+      <Card className="border border-zinc-200/90 shadow-sm space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="p-1.5 bg-sunken text-ink rounded-lg">
+              <span className="p-1.5 bg-zinc-900 text-white rounded-lg">
                 <Users size={18} />
               </span>
-              <h3 className="text-xl font-sans font-bold text-ink tracking-tight">
+              <h3 className="text-xl font-sans font-bold text-zinc-900 tracking-tight">
                 Engagement Progress Overview
               </h3>
             </div>
-            <p className="text-xs text-muted mt-1">
+            <p className="text-xs text-zinc-500 mt-1">
               Onboarding completion across all four meetings: {totalDone} of {totalItems} checklist items done ({overallPct}%), {meetingState.completedStages.length} of 4 meetings completed{totalNoteWords > 0 ? `, ${totalNoteWords} words of meeting notes captured` : ''}.
             </p>
           </div>
@@ -102,25 +102,25 @@ export const ClientMeetingPage = () => {
                   ? 'bg-positive-soft border-positive/40'
                   : stage.isCurrent
                     ? 'bg-accent-soft border-accent/50'
-                    : 'bg-sunken border-border'
+                    : 'bg-zinc-50 border-zinc-200'
               }`}
               aria-current={stage.isCurrent ? 'step' : undefined}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted">{stage.name}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{stage.name}</span>
                 {stage.isComplete ? (
                   <CheckCircle2 size={16} className="text-positive shrink-0" aria-label="Completed" />
                 ) : (
-                  <Circle size={16} className="text-ink-soft shrink-0" aria-label={stage.isCurrent ? 'In progress' : 'Not started'} />
+                  <Circle size={16} className="text-zinc-300 shrink-0" aria-label={stage.isCurrent ? 'In progress' : 'Not started'} />
                 )}
               </div>
-              <div className="text-sm font-bold text-ink mt-1 leading-snug">{stage.title}</div>
+              <div className="text-sm font-bold text-zinc-900 mt-1 leading-snug">{stage.title}</div>
               <div className="mt-3">
-                <div className="flex items-center justify-between text-[11px] text-muted mb-1">
+                <div className="flex items-center justify-between text-[11px] text-zinc-600 mb-1">
                   <span>Checklist</span>
                   <span className="font-mono font-semibold">{stage.done}/{stage.total}</span>
                 </div>
-                <div className="h-2 bg-sunken rounded-full overflow-hidden">
+                <div className="h-2 bg-zinc-200/70 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full ${stage.isComplete ? 'bg-positive' : 'bg-accent'}`}
                     style={{ width: `${stage.pct}%` }}
@@ -134,10 +134,10 @@ export const ClientMeetingPage = () => {
         {/* Notes density indicator */}
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <FileText size={15} className="text-muted" />
-            <h4 className="text-xs font-bold uppercase tracking-wider text-ink-soft">Meeting Notes Density</h4>
+            <FileText size={15} className="text-zinc-600" />
+            <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-700">Meeting Notes Density</h4>
           </div>
-          <p className="text-xs text-muted mb-3">
+          <p className="text-xs text-zinc-600 mb-3">
             {totalNoteWords === 0
               ? 'No qualitative notes recorded yet — capture client reactions and commitments in each meeting to enrich the audit trail.'
               : `${notesRichStage.name} carries the richest record at ${notesRichStage.noteWords} words; notes feed the dossier and decision history.`}
@@ -146,14 +146,14 @@ export const ClientMeetingPage = () => {
             <div className="space-y-2">
               {stageStats.map((stage) => (
                 <div key={stage.id} className="flex items-center gap-3 text-xs">
-                  <span className="w-20 shrink-0 font-semibold text-ink-soft">{stage.name}</span>
-                  <div className="flex-1 h-4 bg-sunken rounded-md overflow-hidden">
+                  <span className="w-20 shrink-0 font-semibold text-zinc-700">{stage.name}</span>
+                  <div className="flex-1 h-4 bg-zinc-100 rounded-md overflow-hidden">
                     <div
                       className="h-full rounded-md bg-info"
                       style={{ width: `${totalNoteWords > 0 ? Math.max(2, (stage.noteWords / Math.max(...stageStats.map((s) => s.noteWords), 1)) * 100) : 0}%`, opacity: stage.noteWords > 0 ? 0.85 : 0 }}
                     />
                   </div>
-                  <span className="w-20 shrink-0 text-right font-mono text-muted">{stage.noteWords} words</span>
+                  <span className="w-20 shrink-0 text-right font-mono text-zinc-600">{stage.noteWords} words</span>
                 </div>
               ))}
             </div>

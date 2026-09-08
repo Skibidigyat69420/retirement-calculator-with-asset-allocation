@@ -33,7 +33,7 @@ export const GoalDistributionBars = ({ distribution, targetAmount, className }: 
   }, [distribution, targetAmount]);
 
   if (!distribution.length || maxProbability <= 0) {
-    return <span className="text-[11px] text-faint">Distribution unavailable</span>;
+    return <span className="text-[11px] text-zinc-400">Distribution unavailable</span>;
   }
 
   return (
@@ -56,10 +56,10 @@ export const GoalDistributionBars = ({ distribution, targetAmount, className }: 
           );
         })}
       </div>
-      <div className="flex justify-between mt-1 text-[9px] text-muted font-mono">
+      <div className="flex justify-between mt-1 text-[9px] text-zinc-500 font-mono">
         <span>{formatCurrencyCompact(distribution[0].binStart)}</span>
         {targetAmount !== undefined && shortfallMass > 0 && (
-          <span className="text-negative font-semibold">{(shortfallMass * 100).toFixed(0)}% below target</span>
+          <span className="text-rose-600 font-semibold">{(shortfallMass * 100).toFixed(0)}% below target</span>
         )}
         <span>{formatCurrencyCompact(distribution[distribution.length - 1].binEnd)}</span>
       </div>

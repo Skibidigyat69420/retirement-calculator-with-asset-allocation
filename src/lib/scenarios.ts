@@ -15,7 +15,6 @@ export const defaultClientInputs = (): MasterPlanInputs => ({
   inflation: DEFAULT_RATES.inflation,
   annualIncome: 2500000,
   monthlyExpenditure: 100000,
-  loans: [],
   assets: [
     {
       id: 're-plots',

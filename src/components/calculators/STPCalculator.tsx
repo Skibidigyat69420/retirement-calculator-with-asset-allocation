@@ -101,30 +101,30 @@ export const STPCalculator = () => {
           </div>
 
           <Card>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-ink-soft mb-4">Deployment Summary</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Deployment Summary</h4>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-ink-soft">Lumpsum deployed</span>
+                <span className="text-zinc-700">Lumpsum deployed</span>
                 <span className="font-medium">{formatCurrency(lumpsum)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-ink-soft">Monthly transfer</span>
+                <span className="text-zinc-700">Monthly transfer</span>
                 <span className="font-medium">{formatCurrency(monthlyTransfer)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-ink-soft">Un deployed liquid left</span>
+                <span className="text-zinc-700">Un deployed liquid left</span>
                 <span className="font-medium">{formatCurrency(result.liquid)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-ink-soft">Wealth gained vs idle cash</span>
+                <span className="text-zinc-700">Wealth gained vs idle cash</span>
                 <span className="font-medium">{formatCurrency(result.total - lumpsum)}</span>
               </div>
             </div>
           </Card>
 
           <Card>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-ink-soft mb-4">Capital Deployment Schedule</h4>
-            <p className="text-xs text-muted mb-3">
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Capital Deployment Schedule</h4>
+            <p className="text-xs text-zinc-600 mb-3">
               The lumpsum stays in the liquid fund earning {liquidReturn}% while {formatCurrency(monthlyTransfer)}/mo is systematically routed into the target portfolio — full deployment takes {result.months} months.
             </p>
             <div className="h-64" role="img" aria-label={`Area chart of STP deployment over ${result.months} months: liquid fund balance falls from ${formatCurrencyCompact(lumpsum)} to ${formatCurrencyCompact(result.liquid)} while the target portfolio grows to ${formatCurrencyCompact(result.target)}.`}>
@@ -155,8 +155,8 @@ export const STPCalculator = () => {
                     ]}
                     contentStyle={{
                       borderRadius: '14px',
-                      border: '1px solid var(--color-border)',
-                      backgroundColor: 'var(--color-surface)',
+                      border: '1px solid rgba(226, 232, 240, 0.9)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.96)',
                       padding: '10px 14px',
                     }}
                   />

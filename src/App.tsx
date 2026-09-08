@@ -47,9 +47,6 @@ const AdvancedPortfolio = lazyNamed(() => import('./pages/AdvancedPortfolioPage'
 const ClientMeeting = lazyNamed(() => import('./pages/ClientMeetingPage'), 'ClientMeetingPage');
 const DecisionHistory = lazyNamed(() => import('./pages/DecisionHistoryPage'), 'DecisionHistoryPage');
 
-const ClientDirectory = lazyNamed(() => import('./pages/ClientDirectory'), 'ClientDirectory');
-const ClientDetail = lazyNamed(() => import('./pages/ClientDetail'), 'ClientDetail');
-
 function App() {
   return (
     <CalculatorProvider>
@@ -57,8 +54,6 @@ function App() {
         <Layout>
           <Suspense fallback={<Skeleton />}>
             <Routes>
-              <Route path="/clients/:id" element={<ClientDetail />} />
-              <Route path="/clients" element={<ClientDirectory />} />
               <Route path="/" element={<Dashboard />} />
               <Route path="/risk" element={<RiskQuestionnaire />} />
               <Route path="/master-plan" element={<MasterPlan />} />

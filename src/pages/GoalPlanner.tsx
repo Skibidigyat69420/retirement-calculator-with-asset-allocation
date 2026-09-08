@@ -25,8 +25,8 @@ import type { GoalResult } from '../lib/wealthEngine';
 const HISTOGRAM_MARGIN = { top: 10, right: 10, left: 0, bottom: 40 };
 const HISTOGRAM_TOOLTIP_STYLE = {
   borderRadius: '12px',
-  border: '1px solid var(--color-border)',
-  backgroundColor: 'var(--color-surface)',
+  border: '1px solid #e4e4e7',
+  backgroundColor: '#ffffff',
   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
   padding: '10px 14px',
 };
@@ -213,12 +213,12 @@ export const GoalPlanner = () => {
           subtitle="Monte Carlo goal feasibility, required SIP sizing, and cash flow priority analysis."
           badge="Monte Carlo"
         />
-        <Card className="flex flex-col items-center justify-center py-14 text-center bg-surface border border-border">
-          <div className="w-14 h-14 rounded-2xl bg-sunken flex items-center justify-center text-faint mb-4 border border-border">
+        <Card className="flex flex-col items-center justify-center py-14 text-center bg-white border border-zinc-200">
+          <div className="w-14 h-14 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-400 mb-4 border border-zinc-200">
             <Target size={28} />
           </div>
-          <h3 className="text-lg font-bold text-ink mb-1.5">No Goals Configured</h3>
-          <p className="text-muted mb-6 max-w-md text-sm">
+          <h3 className="text-lg font-bold text-zinc-900 mb-1.5">No Goals Configured</h3>
+          <p className="text-zinc-600 mb-6 max-w-md text-sm">
             Add financial milestone goals or choose a template below to evaluate capital requirements and simulated success rates.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2 max-w-lg mb-4">
@@ -257,12 +257,12 @@ export const GoalPlanner = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Left Column: Goal Navigation & Selector */}
-        <Card className="lg:col-span-1 bg-surface border border-border/90 shadow-2xs">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+        <Card className="lg:col-span-1 bg-white border border-zinc-200/90 shadow-2xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
             <div className="flex items-center gap-2">
-              <Target size={18} className="text-muted" />
-              <h3 className="text-base font-bold text-ink">Milestones</h3>
-              <span className="text-xs font-mono font-bold text-muted bg-sunken px-2 py-0.5 rounded-full border border-border">
+              <Target size={18} className="text-zinc-500" />
+              <h3 className="text-base font-bold text-zinc-900">Milestones</h3>
+              <span className="text-xs font-mono font-bold text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full border border-zinc-200">
                 {inputs.goals.length}
               </span>
             </div>
@@ -271,13 +271,13 @@ export const GoalPlanner = () => {
             </Button>
           </div>
 
-          <div className="flex flex-wrap gap-1.5 mb-3 pb-3 border-b border-border">
+          <div className="flex flex-wrap gap-1.5 mb-3 pb-3 border-b border-zinc-100">
             {GOAL_PRESETS.map((p) => (
               <button
                 key={p.label}
                 type="button"
                 onClick={() => handleAddGoal(p)}
-                className="text-[11px] font-medium text-muted bg-sunken hover:bg-sunken hover:text-ink border border-border px-2 py-0.5 rounded-md transition-colors"
+                className="text-[11px] font-medium text-zinc-600 bg-zinc-50 hover:bg-zinc-100 hover:text-zinc-950 border border-zinc-200 px-2 py-0.5 rounded-md transition-colors"
                 title={`Quick add ${p.name}`}
               >
                 + {p.label}
@@ -307,8 +307,8 @@ export const GoalPlanner = () => {
                   className={cn(
                     "w-full text-left p-3 rounded-xl border transition-all cursor-pointer",
                     isSelected
-                      ? "bg-sunken text-ink border-border shadow-xs"
-                      : "bg-surface border-border text-ink hover:border-border-strong hover:bg-sunken/70"
+                      ? "bg-zinc-950 text-white border-zinc-950 shadow-xs"
+                      : "bg-white border-zinc-200 text-zinc-900 hover:border-zinc-300 hover:bg-zinc-50/70"
                   )}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -324,10 +324,10 @@ export const GoalPlanner = () => {
                                 ? 'bg-blue-950/80 text-blue-300 border-blue-800'
                                 : 'bg-amber-950/80 text-amber-300 border-amber-800'
                             : goal.priority === 'essential'
-                              ? 'bg-negative-soft text-negative border-negative/40'
+                              ? 'bg-rose-50 text-rose-700 border-rose-200'
                               : goal.priority === 'important'
-                                ? 'bg-blue-50 text-info border-info/40'
-                                : 'bg-warning-soft text-warning border-warning/40'
+                                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                : 'bg-amber-50 text-amber-700 border-amber-200'
                         )}
                       >
                         {goal.priority}
@@ -340,7 +340,7 @@ export const GoalPlanner = () => {
                               e.stopPropagation();
                               handleDeleteGoal(goal.id);
                             }}
-                            className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-ink rounded text-[10px] font-bold shadow-xs transition-colors"
+                            className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[10px] font-bold shadow-xs transition-colors"
                           >
                             Confirm
                           </button>
@@ -353,8 +353,8 @@ export const GoalPlanner = () => {
                             className={cn(
                               "px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors border",
                               isSelected
-                                ? "bg-raised text-ink-soft border-border hover:bg-faint"
-                                : "bg-sunken text-ink-soft border-border hover:bg-raised"
+                                ? "bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700"
+                                : "bg-zinc-100 text-zinc-700 border-zinc-200 hover:bg-zinc-200"
                             )}
                           >
                             Cancel
@@ -369,7 +369,7 @@ export const GoalPlanner = () => {
                           }}
                           className={cn(
                             "p-1 rounded transition-colors",
-                            isSelected ? "text-faint hover:text-rose-400" : "text-faint hover:text-negative"
+                            isSelected ? "text-zinc-400 hover:text-rose-400" : "text-zinc-400 hover:text-rose-600"
                           )}
                           title={`Delete ${goal.name}`}
                           aria-label={`Delete ${goal.name}`}
@@ -382,16 +382,16 @@ export const GoalPlanner = () => {
 
                   {/* Progress Bar & Success Metric */}
                   <div className="mt-2">
-                    <div className={cn("w-full h-1.5 rounded-full overflow-hidden", isSelected ? "bg-raised" : "bg-sunken")}>
+                    <div className={cn("w-full h-1.5 rounded-full overflow-hidden", isSelected ? "bg-zinc-800" : "bg-zinc-100")}>
                       <div
                         className={cn(
                           "h-full rounded-full transition-all duration-300",
-                          isFunded ? "bg-emerald-500" : isLow ? "bg-rose-500" : "bg-warning-soft0"
+                          isFunded ? "bg-emerald-500" : isLow ? "bg-rose-500" : "bg-amber-500"
                         )}
                         style={{ width: `${Math.min(100, Math.max(5, successRate * 100))}%` }}
                       />
                     </div>
-                    <div className={cn("text-xs mt-1.5 flex items-center justify-between", isSelected ? "text-faint" : "text-muted")}>
+                    <div className={cn("text-xs mt-1.5 flex items-center justify-between", isSelected ? "text-zinc-400" : "text-zinc-500")}>
                       <span
                         className={
                           isSelected
@@ -401,12 +401,12 @@ export const GoalPlanner = () => {
                                 ? 'text-rose-400 font-semibold'
                                 : 'text-amber-400 font-semibold'
                             : !g
-                              ? 'text-muted font-medium'
+                              ? 'text-zinc-500 font-medium'
                               : isFunded
-                                ? 'text-positive font-semibold'
+                                ? 'text-emerald-700 font-semibold'
                                 : isLow
-                                  ? 'text-negative font-semibold'
-                                  : 'text-warning font-semibold'
+                                  ? 'text-rose-700 font-semibold'
+                                  : 'text-amber-700 font-semibold'
                         }
                       >
                         {g ? `${formatPercent(successRate * 100)} success` : 'Simulating...'}
@@ -424,9 +424,9 @@ export const GoalPlanner = () => {
         <div className="lg:col-span-3 space-y-6 min-w-0">
           {/* Required SIP Gap / Surplus Banner */}
           {sipGap > 0 ? (
-            <div className="p-4 rounded-xl border border-negative/40 bg-gradient-to-r from-rose-50/90 via-rose-50/50 to-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+            <div className="p-4 rounded-xl border border-rose-200 bg-gradient-to-r from-rose-50/90 via-rose-50/50 to-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-negative-soft text-negative shrink-0 mt-0.5">
+                <div className="p-2 rounded-lg bg-rose-100 text-rose-700 shrink-0 mt-0.5">
                   <AlertTriangle size={18} />
                 </div>
                 <div>
@@ -438,7 +438,7 @@ export const GoalPlanner = () => {
                       Underfunded
                     </Badge>
                   </div>
-                  <p className="text-xs text-negative/90 mt-0.5 leading-relaxed">
+                  <p className="text-xs text-rose-800/90 mt-0.5 leading-relaxed">
                     Allocated SIP for <strong className="font-semibold">{selectedGoal.name}</strong> is{' '}
                     <span className="font-mono font-medium">{formatCurrency(allocatedSIP)}/mo</span> vs required{' '}
                     <span className="font-mono font-semibold">{formatCurrency(simulation.requiredSIP)}/mo</span>. Increase portfolio SIP to hit the {riskProfile.goalSuccessThreshold}% success probability threshold.
@@ -448,7 +448,7 @@ export const GoalPlanner = () => {
               <Button
                 type="button"
                 size="sm"
-                className="bg-rose-600 hover:bg-rose-700 text-ink font-semibold shrink-0 gap-1.5 shadow-xs"
+                className="bg-rose-600 hover:bg-rose-700 text-white font-semibold shrink-0 gap-1.5 shadow-xs"
                 onClick={() => {
                   const neededIncrease = Math.ceil(sipGap);
                   updateSIP({ amount: wealthResult.monthlySIP + neededIncrease });
@@ -460,9 +460,9 @@ export const GoalPlanner = () => {
               </Button>
             </div>
           ) : (
-            <div className="p-4 rounded-xl border border-positive/40 bg-gradient-to-r from-emerald-50/90 via-emerald-50/50 to-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+            <div className="p-4 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50/90 via-emerald-50/50 to-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-emerald-100 text-positive shrink-0 mt-0.5">
+                <div className="p-2 rounded-lg bg-emerald-100 text-emerald-700 shrink-0 mt-0.5">
                   <CheckCircle2 size={18} />
                 </div>
                 <div>
@@ -474,7 +474,7 @@ export const GoalPlanner = () => {
                       On Track
                     </Badge>
                   </div>
-                  <p className="text-xs text-positive/90 mt-0.5 leading-relaxed">
+                  <p className="text-xs text-emerald-800/90 mt-0.5 leading-relaxed">
                     Allocated SIP of <span className="font-mono font-medium">{formatCurrency(allocatedSIP)}/mo</span> exceeds the required{' '}
                     <span className="font-mono font-medium">{formatCurrency(simulation.requiredSIP)}/mo</span> with a{' '}
                     <span className="font-semibold">{formatPercent(simulation.successRate * 100)}</span> simulated probability of success.
@@ -486,31 +486,31 @@ export const GoalPlanner = () => {
           {/* Top Section: Goal Form & Topline Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Goal Configuration Card */}
-            <Card className="bg-surface border border-border/90 shadow-2xs min-w-0">
-              <div className="flex justify-between items-start gap-2 mb-3 pb-3 border-b border-border">
+            <Card className="bg-white border border-zinc-200/90 shadow-2xs min-w-0">
+              <div className="flex justify-between items-start gap-2 mb-3 pb-3 border-b border-zinc-100">
                 <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted">Selected Goal</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Selected Goal</div>
                   <div className="flex items-center gap-2 mt-1">
                     <input
                       type="text"
                       value={selectedGoal.name}
                       onChange={(e) => updateGoal(selectedGoal.id, { name: e.target.value })}
                       aria-label={`Goal name: ${selectedGoal.name}`}
-                      className="text-lg font-bold text-ink bg-transparent border-b border-border hover:border-border-strong focus:border-border focus:outline-none transition-colors w-full min-w-0 py-0.5"
+                      className="text-lg font-bold text-zinc-950 bg-transparent border-b border-zinc-200 hover:border-zinc-400 focus:border-zinc-950 focus:outline-none transition-colors w-full min-w-0 py-0.5"
                     />
                     {confirmDeleteId === selectedGoal.id ? (
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           type="button"
                           onClick={() => handleDeleteGoal(selectedGoal.id)}
-                          className="px-2.5 py-1 bg-rose-600 text-ink rounded-md text-xs font-semibold hover:bg-rose-700 transition-colors"
+                          className="px-2.5 py-1 bg-rose-600 text-white rounded-md text-xs font-semibold hover:bg-rose-700 transition-colors"
                         >
                           Delete
                         </button>
                         <button
                           type="button"
                           onClick={() => setConfirmDeleteId(null)}
-                          className="px-2 py-1 bg-sunken text-ink-soft rounded-md text-xs font-medium hover:bg-raised border border-border transition-colors"
+                          className="px-2 py-1 bg-zinc-100 text-zinc-700 rounded-md text-xs font-medium hover:bg-zinc-200 border border-zinc-200 transition-colors"
                         >
                           Cancel
                         </button>
@@ -519,7 +519,7 @@ export const GoalPlanner = () => {
                       <button
                         type="button"
                         onClick={() => setConfirmDeleteId(selectedGoal.id)}
-                        className="text-faint hover:text-negative transition-colors p-1.5 rounded-lg border border-transparent hover:border-border hover:bg-sunken shrink-0"
+                        className="text-zinc-400 hover:text-rose-600 transition-colors p-1.5 rounded-lg border border-transparent hover:border-zinc-200 hover:bg-zinc-50 shrink-0"
                         aria-label="Delete selected goal"
                         title="Delete goal"
                       >
@@ -563,12 +563,12 @@ export const GoalPlanner = () => {
                   options={priorityOptions}
                 />
                 <div className="col-span-2 flex items-center justify-between pt-1">
-                  <label className="flex items-center gap-2 text-xs font-medium text-ink-soft cursor-pointer select-none">
+                  <label className="flex items-center gap-2 text-xs font-medium text-zinc-700 cursor-pointer select-none">
                     <input
                       type="checkbox"
                       checked={selectedGoal.recurring}
                       onChange={(e) => updateGoal(selectedGoal.id, { recurring: e.target.checked })}
-                      className="w-4 h-4 rounded border-border-strong text-ink focus:ring-focus-ring accent-ink"
+                      className="w-4 h-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 accent-zinc-900"
                     />
                     <span>Recurring annual milestone (funds renew each horizon)</span>
                   </label>
@@ -618,13 +618,13 @@ export const GoalPlanner = () => {
           {/* Middle Section: Outcome Distribution Histogram & Goal Insights */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Outcome Distribution Histogram */}
-            <Card className="bg-surface border border-border/90 shadow-2xs">
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+            <Card className="bg-white border border-zinc-200/90 shadow-2xs">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
                 <div className="flex items-center gap-2">
-                  <BarChart3 size={18} className="text-muted" />
-                  <h3 className="text-base font-bold text-ink">Outcome Distribution</h3>
+                  <BarChart3 size={18} className="text-zinc-500" />
+                  <h3 className="text-base font-bold text-zinc-900">Outcome Distribution</h3>
                 </div>
-                <div className="text-xs font-mono font-medium text-muted">
+                <div className="text-xs font-mono font-medium text-zinc-500">
                   {wealthResult.monteCarlo.outcomes.length.toLocaleString()} simulated paths
                 </div>
               </div>
@@ -633,7 +633,7 @@ export const GoalPlanner = () => {
                 {histogramData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={histogramData} margin={HISTOGRAM_MARGIN}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4e4e7" />
                       <XAxis
                         dataKey="midpoint"
                         tickFormatter={(v) => formatCurrencyCompact(Number(v))}
@@ -658,44 +658,44 @@ export const GoalPlanner = () => {
                       />
                       <ReferenceLine
                         x={simulation.futureValue}
-                        stroke="var(--color-ink)"
+                        stroke="#18181b"
                         strokeWidth={1.5}
                         strokeDasharray="4 4"
-                        label={{ value: 'Target FV', position: 'top', fill: 'var(--color-ink)', fontSize: 10, fontWeight: 600 }}
+                        label={{ value: 'Target FV', position: 'top', fill: '#18181b', fontSize: 10, fontWeight: 600 }}
                       />
                       <Bar dataKey="probability" name="Probability" radius={[3, 3, 0, 0]}>
                         {histogramData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.isSuccess ? 'var(--color-ink)' : 'var(--color-border-strong)'} />
+                          <Cell key={`cell-${index}`} fill={entry.isSuccess ? '#18181b' : '#d4d4d8'} />
                         ))}
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-faint text-xs gap-2">
-                    <BarChart3 size={24} className="animate-pulse text-ink-soft" />
+                  <div className="h-full flex flex-col items-center justify-center text-zinc-400 text-xs gap-2">
+                    <BarChart3 size={24} className="animate-pulse text-zinc-300" />
                     <span>Running Monte Carlo simulation paths...</span>
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center justify-center gap-6 mt-3 text-xs text-muted border-t border-border pt-3">
+              <div className="flex items-center justify-center gap-6 mt-3 text-xs text-zinc-600 border-t border-zinc-100 pt-3">
                 <span className="flex items-center gap-1.5 font-medium">
-                  <span className="w-3 h-3 rounded-xs bg-sunken inline-block" />
+                  <span className="w-3 h-3 rounded-xs bg-zinc-900 inline-block" />
                   Funded region (≥ Target FV)
                 </span>
                 <span className="flex items-center gap-1.5 font-medium">
-                  <span className="w-3 h-3 rounded-xs bg-faint inline-block" />
+                  <span className="w-3 h-3 rounded-xs bg-zinc-300 inline-block" />
                   Shortfall region (&lt; Target FV)
                 </span>
               </div>
             </Card>
 
             {/* Feasibility Breakdown & Cash Flow Allocation */}
-            <Card className="bg-surface border border-border/90 shadow-2xs">
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+            <Card className="bg-white border border-zinc-200/90 shadow-2xs">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
                 <div className="flex items-center gap-2">
-                  <TrendingUp size={18} className="text-muted" />
-                  <h3 className="text-base font-bold text-ink">Goal Feasibility & Cash Flow</h3>
+                  <TrendingUp size={18} className="text-zinc-500" />
+                  <h3 className="text-base font-bold text-zinc-900">Goal Feasibility & Cash Flow</h3>
                 </div>
               </div>
 
@@ -704,18 +704,18 @@ export const GoalPlanner = () => {
                 <div
                   className={`p-3.5 rounded-xl border flex items-start gap-3 ${
                     isSelectedGoalFullyFunded
-                      ? 'bg-emerald-50/70 border-positive/40 text-emerald-950'
+                      ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
                       : isSelectedGoalModerate
-                        ? 'bg-sunken border-border text-ink'
-                        : 'bg-rose-50/70 border-negative/40 text-rose-950'
+                        ? 'bg-zinc-50 border-zinc-200 text-zinc-900'
+                        : 'bg-rose-50/70 border-rose-200 text-rose-950'
                   }`}
                 >
                   {isSelectedGoalFullyFunded ? (
-                    <CheckCircle2 size={18} className="text-positive shrink-0 mt-0.5" />
+                    <CheckCircle2 size={18} className="text-emerald-700 shrink-0 mt-0.5" />
                   ) : isSelectedGoalModerate ? (
-                    <AlertTriangle size={18} className="text-ink-soft shrink-0 mt-0.5" />
+                    <AlertTriangle size={18} className="text-zinc-700 shrink-0 mt-0.5" />
                   ) : (
-                    <AlertTriangle size={18} className="text-negative shrink-0 mt-0.5" />
+                    <AlertTriangle size={18} className="text-rose-700 shrink-0 mt-0.5" />
                   )}
                   <div>
                     <div className="text-sm font-semibold">
@@ -728,10 +728,10 @@ export const GoalPlanner = () => {
                     <p
                       className={`text-xs mt-0.5 leading-relaxed ${
                         isSelectedGoalFullyFunded
-                          ? 'text-positive'
+                          ? 'text-emerald-800'
                           : isSelectedGoalModerate
-                            ? 'text-muted'
-                            : 'text-negative'
+                            ? 'text-zinc-600'
+                            : 'text-rose-800'
                       }`}
                     >
                       {isSelectedGoalFullyFunded
@@ -744,40 +744,40 @@ export const GoalPlanner = () => {
                 </div>
 
                 {/* Quantitative Details */}
-                <div className="space-y-2 text-xs border border-border rounded-xl p-3.5 bg-sunken/50">
-                  <div className="flex justify-between py-1 border-b border-border">
-                    <span className="text-muted">Goal target (today's ₹)</span>
-                    <span className="font-mono font-medium text-ink">{formatCurrency(selectedGoal.targetAmount)}</span>
+                <div className="space-y-2 text-xs border border-zinc-100 rounded-xl p-3.5 bg-zinc-50/50">
+                  <div className="flex justify-between py-1 border-b border-zinc-100">
+                    <span className="text-zinc-500">Goal target (today's ₹)</span>
+                    <span className="font-mono font-medium text-zinc-900">{formatCurrency(selectedGoal.targetAmount)}</span>
                   </div>
-                  <div className="flex justify-between py-1 border-b border-border">
-                    <span className="text-muted">Inflation-adjusted target FV</span>
-                    <span className="font-mono font-medium text-ink">{formatCurrency(simulation.futureValue)}</span>
+                  <div className="flex justify-between py-1 border-b border-zinc-100">
+                    <span className="text-zinc-500">Inflation-adjusted target FV</span>
+                    <span className="font-mono font-medium text-zinc-900">{formatCurrency(simulation.futureValue)}</span>
                   </div>
-                  <div className="flex justify-between py-1 border-b border-border">
-                    <span className="text-muted">Present value needed today</span>
-                    <span className="font-mono font-medium text-ink">{formatCurrency(simulation.pvNeeded)}</span>
+                  <div className="flex justify-between py-1 border-b border-zinc-100">
+                    <span className="text-zinc-500">Present value needed today</span>
+                    <span className="font-mono font-medium text-zinc-900">{formatCurrency(simulation.pvNeeded)}</span>
                   </div>
-                  <div className="flex justify-between py-1 border-b border-border">
-                    <span className="text-muted">Required monthly SIP</span>
-                    <span className="font-mono font-semibold text-ink">{formatCurrency(simulation.requiredSIP)}</span>
+                  <div className="flex justify-between py-1 border-b border-zinc-100">
+                    <span className="text-zinc-500">Required monthly SIP</span>
+                    <span className="font-mono font-semibold text-zinc-900">{formatCurrency(simulation.requiredSIP)}</span>
                   </div>
-                  <div className="flex justify-between py-1 border-b border-border">
-                    <span className="text-muted">Total portfolio SIP</span>
-                    <span className="font-mono font-medium text-ink">{formatCurrency(wealthResult.monthlySIP)}</span>
+                  <div className="flex justify-between py-1 border-b border-zinc-100">
+                    <span className="text-zinc-500">Total portfolio SIP</span>
+                    <span className="font-mono font-medium text-zinc-900">{formatCurrency(wealthResult.monthlySIP)}</span>
                   </div>
-                  <div className="flex justify-between py-1 border-b border-border">
-                    <span className="text-muted">Combined SIP demand (all goals)</span>
-                    <span className="font-mono font-medium text-ink">{formatCurrency(totalRequiredSIP)}</span>
+                  <div className="flex justify-between py-1 border-b border-zinc-100">
+                    <span className="text-zinc-500">Combined SIP demand (all goals)</span>
+                    <span className="font-mono font-medium text-zinc-900">{formatCurrency(totalRequiredSIP)}</span>
                   </div>
-                  <div className="flex justify-between py-1 border-b border-border">
-                    <span className="text-muted">Allocated monthly SIP (proportional)</span>
-                    <span className="font-mono font-medium text-ink">{formatCurrency(allocatedSIP)}</span>
+                  <div className="flex justify-between py-1 border-b border-zinc-100">
+                    <span className="text-zinc-500">Allocated monthly SIP (proportional)</span>
+                    <span className="font-mono font-medium text-zinc-900">{formatCurrency(allocatedSIP)}</span>
                   </div>
                   <div className="flex justify-between py-1 pt-2 font-medium">
-                    <span className="text-ink-soft">Monthly SIP gap / surplus</span>
+                    <span className="text-zinc-700">Monthly SIP gap / surplus</span>
                     <span
                       className={`font-mono font-bold ${
-                        sipGap <= 0 ? 'text-positive' : 'text-negative'
+                        sipGap <= 0 ? 'text-emerald-700' : 'text-rose-700'
                       }`}
                     >
                       {sipGap <= 0
@@ -791,20 +791,20 @@ export const GoalPlanner = () => {
           </div>
 
           {/* Bottom Section: All Goals Summary Table */}
-          <Card className="bg-surface border border-border/90 shadow-2xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-border">
+          <Card className="bg-white border border-zinc-200/90 shadow-2xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-zinc-100">
               <div className="flex items-center gap-2">
-                <PieChart size={18} className="text-muted" />
-                <h3 className="text-base font-bold text-ink">All Goals Summary</h3>
+                <PieChart size={18} className="text-zinc-500" />
+                <h3 className="text-base font-bold text-zinc-900">All Goals Summary</h3>
               </div>
               <div className="flex items-center gap-3">
                 <Link
                   to="/master-plan?tab=goals"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-ink-soft hover:text-ink px-2.5 py-1 rounded-lg bg-sunken hover:bg-raised/70 border border-border transition-colors"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-zinc-700 hover:text-zinc-950 px-2.5 py-1 rounded-lg bg-zinc-100 hover:bg-zinc-200/70 border border-zinc-200 transition-colors"
                 >
                   Master Plan Editor <ArrowUpRight size={12} />
                 </Link>
-                <span className="text-xs font-mono text-muted">
+                <span className="text-xs font-mono text-zinc-500">
                   {inputs.goals.length} configured milestone{inputs.goals.length !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -813,7 +813,7 @@ export const GoalPlanner = () => {
             <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Goals summary table">
               <table className="w-full text-xs text-left">
                 <thead>
-                  <tr className="border-b border-border text-[10px] uppercase tracking-wider text-muted font-semibold">
+                  <tr className="border-b border-zinc-200 text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
                     <th className="py-2.5 pr-4">Goal</th>
                     <th className="py-2.5 pr-4">Priority</th>
                     <th className="py-2.5 pr-4 text-right">Horizon</th>
@@ -826,7 +826,7 @@ export const GoalPlanner = () => {
                     <th className="py-2.5 pr-2 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-zinc-100">
                   {inputs.goals.map((goal) => {
                     const g = wealthResult.goalResults.find((res) => res.goal.id === goal.id);
                     const isSelected = selectedGoalId === goal.id;
@@ -843,12 +843,12 @@ export const GoalPlanner = () => {
                         key={goal.id}
                         onClick={() => setSelectedGoalId(goal.id)}
                         className={`transition-colors cursor-pointer ${
-                          isSelected ? 'bg-sunken/70 font-medium' : 'hover:bg-sunken/80'
+                          isSelected ? 'bg-zinc-100/70 font-medium' : 'hover:bg-zinc-50/80'
                         }`}
                       >
-                        <td className="py-2.5 pr-4 font-semibold text-ink">
+                        <td className="py-2.5 pr-4 font-semibold text-zinc-950">
                           {goal.name}
-                          {isSelected && <span className="ml-2 text-[10px] font-mono text-muted">(Selected)</span>}
+                          {isSelected && <span className="ml-2 text-[10px] font-mono text-zinc-500">(Selected)</span>}
                         </td>
                         <td className="py-2.5 pr-4">
                           <Badge
@@ -863,16 +863,16 @@ export const GoalPlanner = () => {
                             {goal.priority}
                           </Badge>
                         </td>
-                        <td className="py-2.5 pr-4 text-right font-mono text-muted">
+                        <td className="py-2.5 pr-4 text-right font-mono text-zinc-600">
                           {goal.yearsToGoal}y
                         </td>
-                        <td className="py-2.5 pr-4 text-right font-mono font-medium text-ink">
+                        <td className="py-2.5 pr-4 text-right font-mono font-medium text-zinc-900">
                           {formatCurrencyCompact(futureVal)}
                         </td>
-                        <td className="py-2.5 pr-4 text-right font-mono text-muted">
+                        <td className="py-2.5 pr-4 text-right font-mono text-zinc-600">
                           {formatCurrencyCompact(pvNeeded)}
                         </td>
-                        <td className="py-2.5 pr-4 text-right font-mono font-semibold text-ink">
+                        <td className="py-2.5 pr-4 text-right font-mono font-semibold text-zinc-900">
                           {requiredSIP > 0 ? formatCurrency(requiredSIP) : '—'}
                         </td>
                         <td className="py-2.5 pr-4 text-right font-mono font-bold">
@@ -880,25 +880,25 @@ export const GoalPlanner = () => {
                             <span
                               className={
                                 isFunded
-                                  ? 'text-positive'
+                                  ? 'text-emerald-700'
                                   : isLow
-                                    ? 'text-negative'
-                                    : 'text-ink-soft'
+                                    ? 'text-rose-700'
+                                    : 'text-zinc-800'
                               }
                             >
                               {formatPercent(successRate * 100)}
                             </span>
                           ) : (
-                            <span className="text-faint font-normal">Simulating...</span>
+                            <span className="text-zinc-400 font-normal">Simulating...</span>
                           )}
                         </td>
-                        <td className="py-2.5 pr-4 text-right font-mono text-muted">
+                        <td className="py-2.5 pr-4 text-right font-mono text-zinc-600">
                           {g ? (
-                            <span className={g.shortfallProbability > 0.3 ? 'text-negative font-semibold' : ''}>
+                            <span className={g.shortfallProbability > 0.3 ? 'text-rose-700 font-semibold' : ''}>
                               {formatPercent(g.shortfallProbability * 100)}
                             </span>
                           ) : (
-                            <span className="text-faint">—</span>
+                            <span className="text-zinc-400">—</span>
                           )}
                         </td>
                         <td className="py-2.5 pl-2 text-center">
@@ -921,7 +921,7 @@ export const GoalPlanner = () => {
                                   e.stopPropagation();
                                   handleDeleteGoal(goal.id);
                                 }}
-                                className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-ink rounded text-[11px] font-bold shadow-xs transition-colors"
+                                className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[11px] font-bold shadow-xs transition-colors"
                               >
                                 Confirm
                               </button>
@@ -931,7 +931,7 @@ export const GoalPlanner = () => {
                                   e.stopPropagation();
                                   setConfirmDeleteId(null);
                                 }}
-                                className="px-1.5 py-0.5 bg-sunken hover:bg-raised text-ink-soft border border-border rounded text-[11px] font-medium transition-colors"
+                                className="px-1.5 py-0.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200 rounded text-[11px] font-medium transition-colors"
                               >
                                 Cancel
                               </button>
@@ -944,8 +944,8 @@ export const GoalPlanner = () => {
                                 className={cn(
                                   "px-2 py-1 rounded text-xs font-semibold transition-colors",
                                   isSelected
-                                    ? "bg-sunken text-ink"
-                                    : "text-muted hover:text-ink hover:bg-sunken"
+                                    ? "bg-zinc-900 text-white"
+                                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
                                 )}
                               >
                                 {isSelected ? 'Active' : 'Edit'}
@@ -956,7 +956,7 @@ export const GoalPlanner = () => {
                                   e.stopPropagation();
                                   setConfirmDeleteId(goal.id);
                                 }}
-                                className="text-faint hover:text-negative p-1 rounded hover:bg-sunken transition-colors"
+                                className="text-zinc-400 hover:text-rose-600 p-1 rounded hover:bg-zinc-100 transition-colors"
                                 title={`Delete ${goal.name}`}
                                 aria-label={`Delete ${goal.name}`}
                               >
@@ -969,21 +969,21 @@ export const GoalPlanner = () => {
                     );
                   })}
                 </tbody>
-                <tfoot className="border-t-2 border-border bg-sunken/80 font-semibold text-ink">
+                <tfoot className="border-t-2 border-zinc-200 bg-zinc-50/80 font-semibold text-zinc-900">
                   <tr>
-                    <td colSpan={3} className="py-3 pr-4 text-xs font-bold text-ink">
+                    <td colSpan={3} className="py-3 pr-4 text-xs font-bold text-zinc-950">
                       Total Portfolio Demand ({inputs.goals.length} Goal{inputs.goals.length !== 1 ? 's' : ''})
                     </td>
-                    <td className="py-3 pr-4 text-right font-mono font-bold text-ink">
+                    <td className="py-3 pr-4 text-right font-mono font-bold text-zinc-950">
                       {formatCurrencyCompact(summaryTotals.totalFV)}
                     </td>
-                    <td className="py-3 pr-4 text-right font-mono font-bold text-ink-soft">
+                    <td className="py-3 pr-4 text-right font-mono font-bold text-zinc-700">
                       {formatCurrencyCompact(summaryTotals.totalPV)}
                     </td>
-                    <td className="py-3 pr-4 text-right font-mono font-bold text-ink">
+                    <td className="py-3 pr-4 text-right font-mono font-bold text-zinc-950">
                       {formatCurrency(summaryTotals.totalReqSIP)}
                     </td>
-                    <td colSpan={4} className="py-3 pr-2 text-right text-[11px] font-medium text-muted">
+                    <td colSpan={4} className="py-3 pr-2 text-right text-[11px] font-medium text-zinc-500">
                       Allocated monthly SIP: {formatCurrency(wealthResult.monthlySIP)}
                     </td>
                   </tr>
@@ -996,38 +996,38 @@ export const GoalPlanner = () => {
 
       {/* Goal Priority Funding Waterfall & Monte Carlo Feasibility */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-surface border border-border/90 shadow-2xs">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+        <Card className="bg-white border border-zinc-200/90 shadow-2xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
             <div className="flex items-center gap-2">
-              <PieChart size={18} className="text-muted" />
-              <h3 className="text-base font-bold text-ink">Priority Funding Waterfall</h3>
+              <PieChart size={18} className="text-zinc-500" />
+              <h3 className="text-base font-bold text-zinc-900">Priority Funding Waterfall</h3>
             </div>
             <Badge variant={conflictResult.isFullyFunded ? 'success' : 'danger'}>
               {conflictResult.isFullyFunded ? 'Fully Funded' : 'Deficit'}
             </Badge>
           </div>
           <GoalPriorityWaterfall result={conflictResult} />
-          <p className="text-xs text-muted mt-4 pt-3 border-t border-border">
-            <strong className="text-ink-soft">Insight:</strong>{' '}
+          <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
+            <strong className="text-zinc-700">Insight:</strong>{' '}
             {conflictResult.isFullyFunded
               ? 'Projected wealth covers every goal in priority order — surplus remains after the last milestone.'
               : 'Wealth runs out part-way down the priority list; the dashed segments show exactly which goals lose funding first.'}
           </p>
         </Card>
 
-        <Card className="bg-surface border border-border/90 shadow-2xs">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+        <Card className="bg-white border border-zinc-200/90 shadow-2xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
             <div className="flex items-center gap-2">
-              <BarChart3 size={18} className="text-muted" />
-              <h3 className="text-base font-bold text-ink">Monte Carlo Feasibility by Goal</h3>
+              <BarChart3 size={18} className="text-zinc-500" />
+              <h3 className="text-base font-bold text-zinc-900">Monte Carlo Feasibility by Goal</h3>
             </div>
-            <span className="text-xs font-mono font-medium text-muted">
+            <span className="text-xs font-mono font-medium text-zinc-500">
               Threshold {formatPercent(riskProfile.goalSuccessThreshold)}
             </span>
           </div>
           <GoalSuccessChart data={goalSuccessData} threshold={riskProfile.goalSuccessThreshold} />
-          <p className="text-xs text-muted mt-4 pt-3 border-t border-border">
-            <strong className="text-ink-soft">Insight:</strong>{' '}
+          <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
+            <strong className="text-zinc-700">Insight:</strong>{' '}
             {goalSuccessData.filter((g) => g.successRate >= riskProfile.goalSuccessThreshold).length === goalSuccessData.length
               ? 'Every goal clears the success threshold — feasibility is not the binding constraint.'
               : 'Bars below the dashed threshold are the goals to renegotiate, delay, or SIP-fund first.'}
@@ -1036,19 +1036,19 @@ export const GoalPlanner = () => {
       </div>
 
       {/* Goal Horizon Timeline */}
-      <Card className="bg-surface border border-border/90 shadow-2xs">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+      <Card className="bg-white border border-zinc-200/90 shadow-2xs">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
           <div className="flex items-center gap-2">
-            <Target size={18} className="text-muted" />
-            <h3 className="text-base font-bold text-ink">Goal Horizon Timeline</h3>
+            <Target size={18} className="text-zinc-500" />
+            <h3 className="text-base font-bold text-zinc-900">Goal Horizon Timeline</h3>
           </div>
-          <span className="text-xs font-mono text-muted">
+          <span className="text-xs font-mono text-zinc-500">
             {inputs.goals.length} milestone{inputs.goals.length !== 1 ? 's' : ''} on one axis
           </span>
         </div>
         <GoalHorizonTimeline goals={horizonGoals} currentAge={inputs.currentAge} />
-        <p className="text-xs text-muted mt-4 pt-3 border-t border-border">
-          <strong className="text-ink-soft">Insight:</strong> Clustered markers reveal cash-flow crunches — goals landing in the same year compete for the same corpus in the simulation.
+        <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
+          <strong className="text-zinc-700">Insight:</strong> Clustered markers reveal cash-flow crunches — goals landing in the same year compete for the same corpus in the simulation.
         </p>
       </Card>
 

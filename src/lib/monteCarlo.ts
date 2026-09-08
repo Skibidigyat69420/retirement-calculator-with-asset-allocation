@@ -1,7 +1,6 @@
 import type { AssetCategory, MonteCarloConfig, MonteCarloRun, MonteCarloOutcome, MonteCarloYearlyPercentile } from '../types';
 import { mean } from './returns';
 import { createBoxMuller, createSeededRandom } from './random';
-import { buildCalculationMetadata, resolveNumericSeed, type CalculationMetadata } from './wealthEngine';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
 
@@ -71,7 +70,7 @@ function normalizeWeights(weights: Record<AssetCategory, number>): Record<AssetC
   return recordFromArrays(buildArrays(weights).map((w) => w / total));
 }
 
-export function runRetirementMonteCarlo(params: RetirementSimParams): MonteCarloRun & { metadata: CalculationMetadata } {
+export function runRetirementMonteCarlo(params: RetirementSimParams): MonteCarloRun {
   const {
     currentAge,
     retirementAge,
@@ -89,9 +88,8 @@ export function runRetirementMonteCarlo(params: RetirementSimParams): MonteCarlo
     seed,
   } = params;
 
-  const numericSeed = resolveNumericSeed(seed);
-  const seeded = createSeededRandom(numericSeed);
-  const randomSource = seeded!.random;
+  const seeded = createSeededRandom(seed);
+  const randomSource = seeded ? seeded.random : Math.random;
 
   const accYears = Math.max(0, retirementAge - currentAge);
   const distYears = Math.max(0, lifeExpectancy - retirementAge);
@@ -183,25 +181,6 @@ export function runRetirementMonteCarlo(params: RetirementSimParams): MonteCarlo
   const successRate = outcomes.filter((o) => o.sustainable).length / outcomes.length;
   const depletionAges = outcomes.map((o) => o.depletionAge).filter((a): a is number => a !== null);
 
-  const covRecord = Object.fromEntries(
-    CATEGORIES.map((a) => [a, Object.fromEntries(CATEGORIES.map((b) => [b, covariance[a][b]]))]),
-  ) as Parameters<typeof buildCalculationMetadata>[2]['covariance'];
-  const assumptionSetForMetadata: Parameters<typeof buildCalculationMetadata>[2] = {
-    categories: {
-      equity: { mean: means.equity, std: stdArr[CATEGORIES.indexOf('equity')] },
-      debt: { mean: means.debt, std: stdArr[CATEGORIES.indexOf('debt')] },
-      gold: { mean: means.gold, std: stdArr[CATEGORIES.indexOf('gold')] },
-      realestate: { mean: means.realestate, std: stdArr[CATEGORIES.indexOf('realestate')] },
-      liquid: { mean: means.liquid, std: stdArr[CATEGORIES.indexOf('liquid')] },
-      other: { mean: means.other, std: stdArr[CATEGORIES.indexOf('other')] },
-    },
-    covariance: covRecord,
-    correlation: covRecord,
-    fx: {},
-    fetchedAt: '',
-    source: 'default',
-  };
-
   return {
     config: {
       simulations,
@@ -228,7 +207,6 @@ export function runRetirementMonteCarlo(params: RetirementSimParams): MonteCarlo
     medianDepletionAge: depletionAges.length > 0 ? median(depletionAges) : null,
     outcomes,
     yearlyPercentiles,
-    metadata: buildCalculationMetadata(numericSeed, simulations, assumptionSetForMetadata),
   };
 }
 

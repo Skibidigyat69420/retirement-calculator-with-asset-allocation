@@ -34,7 +34,7 @@ export const Select = ({
       {label && (
         <label
           htmlFor={selectId}
-          className="block text-[11px] font-semibold uppercase tracking-wider text-muted"
+          className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-600"
         >
           {label}
         </label>
@@ -46,20 +46,20 @@ export const Select = ({
           onChange={(e) => onChange(e.currentTarget.value)}
           aria-label={ariaLabel || label}
           className={cn(
-            'w-full appearance-none bg-raised/50 border border-border rounded-xl px-3.5 py-2.5 pr-10 text-sm font-medium text-ink shadow-2xs',
-            'focus:border-accent focus:ring-2 focus:ring-accent/25 focus:outline-none',
-            'hover:border-border-strong transition-all cursor-pointer',
+            'w-full appearance-none bg-white/95 border border-zinc-200/80 rounded-xl px-3.5 py-2.5 pr-10 text-sm font-medium text-zinc-950 shadow-2xs',
+            'focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none',
+            'hover:border-zinc-300 transition-all cursor-pointer',
           )}
         >
           {options.map((opt) => (
-            <option key={opt.value} value={opt.value} className="bg-raised text-ink py-1">
+            <option key={opt.value} value={opt.value} className="bg-white text-zinc-900 py-1">
               {opt.label}
             </option>
           ))}
         </select>
         <ChevronDown
           size={15}
-          className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-faint"
+          className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400"
         />
       </div>
     </div>

@@ -47,7 +47,7 @@ export const AllocationComparisonBars = ({ current, target, ariaLabel, className
               title={`${ASSET_LABELS[c]} ${formatPercent(pct)}`}
             >
               {pct >= 9 && (
-                <span className="text-[9px] font-bold text-ink whitespace-nowrap">{formatPercent(pct, 0)}</span>
+                <span className="text-[9px] font-bold text-white whitespace-nowrap">{formatPercent(pct, 0)}</span>
               )}
             </div>
           );

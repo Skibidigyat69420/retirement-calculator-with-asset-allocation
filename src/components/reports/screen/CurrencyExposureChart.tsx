@@ -21,7 +21,7 @@ function readTokenPalette(): string[] {
   const styles = getComputedStyle(document.documentElement);
   return TOKEN_PALETTE.map((token) => {
     const raw = styles.getPropertyValue(token.replace('var(', '').replace(')', '')).trim();
-    return raw || 'var(--color-muted)';
+    return raw || '#52525b';
   });
 }
 
