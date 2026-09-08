@@ -13,8 +13,6 @@ import {
   Layers,
   Briefcase,
   History,
-  Zap,
-  Database,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -144,21 +142,18 @@ export const navItems: NavItem[] = [
     section: 'Tools & Live Feed',
     description: 'SIP, SWP, STP, EMI & lumpsum utilities',
   },
-  {
-    path: '/angel-connect',
-    label: 'Angel One Connect',
-    icon: Zap,
-    section: 'Tools & Live Feed',
-    description: 'SmartAPI credentials, TOTP & authentication',
-  },
-  {
-    path: '/angel-data',
-    label: 'Angel Market Data',
-    icon: Database,
-    section: 'Tools & Live Feed',
-    description: 'Live tick feeds & real-time quotes',
-  },
 ];
+
+/* Short micro-label names for sidebar section headers (+ PLAN, + RISK, …) */
+export const SECTION_LABELS: Record<string, string> = {
+  Overview: 'Overview',
+  '1. Discover': 'Plan',
+  '2. Risk Profile': 'Risk',
+  '3. Retirement': 'Retire',
+  '4. Allocation': 'Allocate',
+  '5. Deliverables': 'Deliver',
+  'Tools & Live Feed': 'Tools',
+};
 
 export const utilityItem: NavItem = {
   path: '/dossier',
