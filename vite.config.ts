@@ -42,6 +42,11 @@ export default defineConfig({
   ],
   server: {
     proxy: {
+      // Wealth-practitioner backend (Fastify on :4000) — see server/
+      '/api/v1': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      },
       '/api/angelone': {
         target: 'https://apiconnect.angelone.in',
         changeOrigin: true,

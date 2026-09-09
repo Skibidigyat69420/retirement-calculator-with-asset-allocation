@@ -136,6 +136,14 @@ export const navItems: NavItem[] = [
     description: 'Printable institutional PDF portfolio dossier',
   },
 
+  {
+    path: '/practitioner',
+    label: 'Practice Clients (API)',
+    icon: Briefcase,
+    section: 'Practice Platform',
+    description: 'Live backend clients, plans & calculations',
+  },
+
   // Market & Tools
   {
     path: '/calculators',

@@ -4,7 +4,7 @@ import { SignJWT } from 'jose';
 import { eq } from 'drizzle-orm';
 import { env } from '../config.js';
 import { db } from '../db/client.js';
-import { users } from '../db/schema.js';
+import { users, organizationMemberships, organizations } from '../db/schema.js';
 import { ApiError } from '../http/errors.js';
 import { auditService } from '../audit/service.js';
 import { invitationService } from '../services/invitationService.js';
@@ -55,11 +55,27 @@ export default async function authRoutes(app: FastifyInstance): Promise<void> {
       .set({ lastLoginAt: new Date().toISOString() })
       .where(eq(users.id, user.id));
 
+    // Organizations the user belongs to, so the client can pick an org
+    // context (required via the x-organization-id header on every call).
+    const memberships = await db
+      .select({
+        organizationId: organizationMemberships.organizationId,
+        organizationName: organizations.name,
+        role: organizationMemberships.role,
+      })
+      .from(organizationMemberships)
+      .innerJoin(
+        organizations,
+        eq(organizationMemberships.organizationId, organizations.id),
+      )
+      .where(eq(organizationMemberships.userId, user.id));
+
     return reply.send({
       token,
       tokenType: 'Bearer',
       expiresIn: 12 * 3600,
       user: { id: user.id, email: user.email, fullName: user.fullName },
+      memberships,
     });
   });
 
