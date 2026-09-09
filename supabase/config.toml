@@ -1,0 +1,11 @@
+project_id = "sound-thesis-wealth"
+
+[api]
+# Port 54331 avoids clashing with the local test postgres on 54329.
+port = 54331
+
+[db]
+port = 54332
+
+[studio]
+port = 54333

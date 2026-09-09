@@ -40,3 +40,9 @@ qa-results.xml
 qa-screenshots/
 *.pdf
 
+# Local throwaway PostgreSQL data dir (tests/dev)
+.tmp-pg/
+
+
+# Throwaway smoke snippets
+.tmp-smoke.ts
