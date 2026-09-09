@@ -39,7 +39,9 @@ const {
 } = await import('./seedUtils.js');
 
 const RLS_ROLE = 'stw_rls_test';
-const RLS_URL = `postgres://${RLS_ROLE}:test@localhost:54330/stw_test`;
+const RLS_URL =
+  process.env['RLS_DATABASE_URL'] ??
+  `postgres://${RLS_ROLE}:test@localhost:54330/stw_test`;
 const TEST_LAST_NAME = 'RLS Direct Test Client';
 
 let rls: postgres.Sql;

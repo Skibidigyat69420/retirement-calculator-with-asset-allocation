@@ -32,7 +32,11 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
         : options.logger,
   });
 
-  await app.register(cors, { origin: true, credentials: true });
+  const allowedOrigins = env.CORS_ORIGIN?.split(',').map((o) => o.trim()).filter(Boolean);
+  await app.register(cors, {
+    origin: allowedOrigins && allowedOrigins.length > 0 ? allowedOrigins : true,
+    credentials: true,
+  });
 
   await app.register(rateLimit, {
     max: options.rateLimitMax ?? 300,

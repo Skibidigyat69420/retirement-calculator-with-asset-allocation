@@ -1,0 +1,53 @@
+# Render blueprint — deploys the full practitioner backend stack in one click.
+#
+# Dashboard → New → Blueprint → connect this repo → Render reads this file and
+# creates the database + API service + one-off seed job.
+#
+# SECURITY: AUTH_MODE=dev below mints a JWT for ANY email via POST
+# /api/v1/auth/dev-login. Fine for demos/staging — switch to AUTH_MODE=supabase
+# (plus SUPABASE_URL + SUPABASE_JWT_SECRET / JWKS) before real client data.
+
+databases:
+  - name: stw-postgres
+    plan: free
+    databaseName: stw
+    user: stw
+
+services:
+  - type: web
+    name: stw-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: stw-postgres
+          property: connectionString
+      - key: AUTH_MODE
+        value: dev
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      # Replace with your Vercel URL once deployed, e.g. https://app.vercel.app
+      - key: CORS_ORIGIN
+        sync: false
+
+  - type: job
+    name: stw-seed
+    runtime: docker
+    plan: free
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: .
+    startCommand: npx tsx scripts/seed.ts
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: stw-postgres
+          property: connectionString
+      - key: ALLOW_SEED
+        value: "true"

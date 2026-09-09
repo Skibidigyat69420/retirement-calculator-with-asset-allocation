@@ -11,6 +11,11 @@ const envSchema = z.object({
   SUPABASE_JWT_SECRET: z.string().min(1).default('dev-only-secret-change-me'),
   SUPABASE_JWKS_URL: z.string().url().optional(),
   ENGINE_VERSION: z.string().min(1).default('1.0.0'),
+  /**
+   * Comma-separated list of origins allowed by CORS. When unset, the API
+   * reflects any origin (dev convenience) — always set this in production.
+   */
+  CORS_ORIGIN: z.string().optional(),
   ALLOW_SEED: z
     .string()
     .default('false')

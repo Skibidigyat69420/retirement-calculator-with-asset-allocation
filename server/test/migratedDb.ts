@@ -26,7 +26,9 @@ import { fileURLToPath } from 'node:url';
  * postgres://postgres@localhost:54330/stw_test).
  */
 
-const MAINTENANCE_URL = 'postgres://postgres@localhost:54330/postgres';
+const MAINTENANCE_URL =
+  process.env['MAINTENANCE_DATABASE_URL'] ??
+  'postgres://postgres@localhost:54330/postgres';
 const SETUP_LOCK_KEY = 727_472; // arbitrary advisory-lock id for setup serialization
 
 let ready = false;
