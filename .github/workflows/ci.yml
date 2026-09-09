@@ -20,6 +20,24 @@ jobs:
       - run: npm run test:unit
       - run: npm run build
 
+  functions:
+    name: Firebase functions — build & test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit -p tsconfig.json
+      - run: npm run build
+      - run: npm test
+
   backend:
     name: Backend — typecheck & test
     runs-on: ubuntu-latest

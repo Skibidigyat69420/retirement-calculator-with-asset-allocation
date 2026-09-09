@@ -26,7 +26,7 @@ interface SnapshotIndex {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') return methodNotAllowed(res, req.method);
 
-  const root = join(process.cwd(), 'data', 'angel_one');
+  const root = join(process.env.DATA_DIR ?? process.cwd(), 'data', 'angel_one');
 
   let dirs: string[] = [];
   try {

@@ -46,3 +46,14 @@ qa-screenshots/
 
 # Throwaway smoke snippets
 .tmp-smoke.ts
+
+# Firebase
+.firebaserc
+.firebase/
+firebase-debug.log
+functions/lib/
+functions/_staged/
+functions/.env
+functions/.env.*
+functions/node_modules/
+functions/*.log

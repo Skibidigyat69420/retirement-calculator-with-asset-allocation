@@ -22,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   let diskFiles: Array<{ name: string; updatedAt: string }> = [];
   try {
-    const dir = join(process.cwd(), 'ips');
+    const dir = join(process.env.DATA_DIR ?? process.cwd(), 'ips');
     const entries = await readdir(dir, { withFileTypes: true });
     diskFiles = await Promise.all(
       entries

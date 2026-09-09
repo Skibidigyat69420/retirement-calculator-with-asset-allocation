@@ -30,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const embedded = IPS_DOCS.find((d) => d.name === name);
     if (embedded) return sendJson(res, { content: embedded.content });
-    const content = await readFile(join(process.cwd(), 'ips', name), 'utf8');
+    const content = await readFile(join(process.env.DATA_DIR ?? process.cwd(), 'ips', name), 'utf8');
     return sendJson(res, { content });
   } catch {
     return sendJson(res, { error: `Document not found: ${name}` }, 404);

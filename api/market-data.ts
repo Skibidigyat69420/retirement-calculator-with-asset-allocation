@@ -121,7 +121,7 @@ const CACHE_HEADERS = { 'Cache-Control': 'public, max-age=3600' };
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') return methodNotAllowed(res, req.method);
 
-  const filePath = join(process.cwd(), 'public', 'data', 'market-data.json');
+  const filePath = join(process.env.DATA_DIR ?? process.cwd(), 'public', 'data', 'market-data.json');
   let raw: string;
   try {
     raw = await readFile(filePath, 'utf8');
