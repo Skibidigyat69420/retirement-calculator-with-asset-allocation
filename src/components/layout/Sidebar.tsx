@@ -1,86 +1,82 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Check, X } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/utils';
-import { navItems, utilityItem, type NavItem } from './navItems';
+import { navItems, groupBySection, type NavItem } from './navItems';
+import { Lockup, LogoMark } from './BrandMark';
+import { Avatar } from '../ui/Avatar';
+import { StatusBadge } from '../ui/StatusBadge';
 import { useCalculator } from '../../context/CalculatorContext';
-import { isComplete } from '../../lib/riskQuestionnaire';
+import { isProfileConfigured, planStatus } from '../../lib/planState';
+
+const NAV_STORAGE_KEY = 'soundthesis_nav';
+const EXPANDED_WIDTH = 250;
+const COLLAPSED_WIDTH = 72;
+
+const loadCollapsed = (): boolean => {
+  try {
+    return localStorage.getItem(NAV_STORAGE_KEY) === 'collapsed';
+  } catch {
+    return false;
+  }
+};
 
 interface NavLinkProps {
   item: NavItem;
+  collapsed?: boolean;
   onClick?: () => void;
-  completed?: boolean;
 }
 
-const NavLink = ({ item, onClick, completed }: NavLinkProps) => {
+const NavLink = ({ item, collapsed, onClick }: NavLinkProps) => {
   const location = useLocation();
   const Icon = item.icon;
   const active = location.pathname === item.path;
 
-  return (
+  const link = (
     <Link
       to={item.path}
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
+      title={collapsed ? item.label : undefined}
       className={cn(
-        'group flex items-center gap-2.5 px-3 min-h-9 py-2 rounded-xl text-xs font-semibold transition-all duration-200 ease-out',
+        'group relative flex items-center gap-2.5 min-h-9 rounded-md text-[13px] font-medium transition-colors duration-150',
+        collapsed ? 'justify-center px-0 py-2' : 'px-3 py-1.5',
         active
-          ? 'bg-accent text-white shadow-xs ring-1 ring-accent/30'
+          ? 'bg-accent-soft text-ink'
           : 'text-muted hover:bg-sunken hover:text-ink',
       )}
     >
-      {item.step ? (
-        <span
-          className={cn(
-            'text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md transition-all tabular-nums',
-            active
-              ? 'bg-accent-strong text-white'
-              : 'bg-sunken text-muted group-hover:bg-raised group-hover:text-ink',
-          )}
-        >
-          {item.step}
-        </span>
-      ) : (
-        <Icon
-          size={16}
-          className={cn('transition-colors', active ? 'text-white' : 'text-faint group-hover:text-ink')}
-        />
-      )}
-      <span className="truncate">{item.label}</span>
-      {completed && (
-        <Check
-          size={13}
-          strokeWidth={2.5}
-          className={cn(
-            'ml-auto shrink-0 transition-colors',
-            active ? 'text-white' : 'text-positive'
-          )}
-          aria-label="Completed"
-        />
-      )}
+      <Icon
+        size={17}
+        strokeWidth={1.7}
+        className={cn('shrink-0 transition-colors', active ? 'text-accent-strong' : 'text-faint group-hover:text-ink')}
+      />
+      {!collapsed && <span className="truncate">{item.label}</span>}
     </Link>
   );
+
+  return link;
 };
 
-const BrandMark = () => (
-  <div className="flex items-center gap-3">
-    <div className="relative group/logo">
-      <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 via-amber-500/20 to-emerald-500/20 rounded-2xl blur-xs opacity-75 group-hover/logo:opacity-100 transition-opacity duration-300" />
-      <div className="relative w-9 h-9 rounded-xl bg-gradient-to-b from-zinc-900 to-black p-[1px] shadow-sm ring-1 ring-white/10">
-        <div className="w-full h-full bg-zinc-950 rounded-[11px] flex items-center justify-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.15),transparent_70%)]" />
-          <span className="relative text-white font-sans font-extrabold text-xs tracking-tight">ST</span>
-        </div>
+const NavSections = ({ collapsed, onClick }: { collapsed?: boolean; onClick?: () => void }) => (
+  <nav aria-label="Primary" className="flex-1 overflow-y-auto py-2" style={{ scrollbarWidth: 'none' }}>
+    {groupBySection(navItems).map(([section, items]) => (
+      <div key={section} className={cn(collapsed ? 'mt-1 first:mt-0' : 'mt-4 first:mt-1')}>
+        {!collapsed && (
+          <div className="px-3 mb-1">
+            <span className="eyebrow">{section}</span>
+          </div>
+        )}
+        <ul className={cn('space-y-px', collapsed && 'space-y-1')}>
+          {items.map((item) => (
+            <li key={item.path}>
+              <NavLink item={item} collapsed={collapsed} onClick={onClick} />
+            </li>
+          ))}
+        </ul>
       </div>
-    </div>
-    <div className="min-w-0">
-      <div className="flex items-center gap-1.5">
-        <span className="font-sans font-bold text-sm text-zinc-950 tracking-tight leading-none">Sound Thesis</span>
-        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/60 leading-none">PRO</span>
-      </div>
-      <div className="text-[10px] text-zinc-400 font-medium tracking-normal mt-0.5 truncate">Wealth Advisory Engine</div>
-    </div>
-  </div>
+    ))}
+  </nav>
 );
 
 interface SidebarProps {
@@ -89,29 +85,25 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
-  const { inputs, riskAnswers, wealthResult, manualTargets } = useCalculator();
+  const { inputs } = useCalculator();
+  const [collapsed, setCollapsed] = useState(loadCollapsed);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Workflow completion flags for the 5-step core journey
-  const completionMap: Record<string, boolean> = {
-    '/master-plan': inputs.assets.length > 0 && inputs.annualIncome > 0,
-    '/risk': isComplete(riskAnswers),
-    '/retirement': wealthResult.sustainable,
-    '/allocation': manualTargets !== null || isComplete(riskAnswers),
-    '/ips': Boolean(inputs.client?.name),
-    '/calculators': true,
-    '/decision-history': true,
-  };
-
-  const workflowSteps = ['/master-plan', '/risk', '/retirement', '/allocation', '/ips'];
-  const completedCount = workflowSteps.filter((path) => completionMap[path]).length;
-  const progressPercent = Math.round((completedCount / workflowSteps.length) * 100);
+  const toggleCollapsed = useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(NAV_STORAGE_KEY, next ? 'collapsed' : 'expanded');
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && mobileOpen) {
-        onClose();
-      }
+      if (e.key === 'Escape' && mobileOpen) onClose();
     };
 
     if (mobileOpen) {
@@ -128,81 +120,82 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
     };
   }, [mobileOpen, onClose]);
 
-  const groupedNavItems = navItems.reduce((acc, item) => {
-    const section = item.section || 'General';
-    if (!acc[section]) acc[section] = [];
-    acc[section].push(item);
-    return acc;
-  }, {} as Record<string, NavItem[]>);
+  const configured = isProfileConfigured(inputs);
 
-  const renderNavSections = (onClick?: () => void) => (
-    <nav className="flex-1 space-y-5 overflow-y-auto pb-4" style={{ scrollbarWidth: 'none' }}>
-      {Object.entries(groupedNavItems).map(([section, items]) => (
-        <div key={section} className="space-y-1">
-          <div className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-            {section}
-          </div>
-          {items.map((item) => (
-            <NavLink
-              key={item.path}
-              item={item}
-              onClick={onClick}
-              completed={completionMap[item.path]}
-            />
-          ))}
-        </div>
-      ))}
-    </nav>
+  const clientContext = collapsed ? (
+    configured ? (
+      <div className="flex justify-center pt-3 border-t border-border-subtle" title={inputs.client.name}>
+        <Avatar name={inputs.client.name} id={inputs.client.email} size="sm" />
+      </div>
+    ) : null
+  ) : (
+    <div className="pt-3 border-t border-border-subtle">
+      {configured ? (
+        <Link
+          to="/master-plan"
+          className="flex items-center gap-2.5 p-2 rounded-md hover:bg-sunken transition-colors group"
+        >
+          <Avatar name={inputs.client.name} id={inputs.client.email} size="sm" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13px] font-medium text-ink truncate group-hover:text-accent-strong transition-colors">
+              {inputs.client.name}
+            </span>
+            <span className="block mt-0.5">
+              <StatusBadge status={planStatus(inputs)} />
+            </span>
+          </span>
+        </Link>
+      ) : (
+        <Link
+          to="/master-plan"
+          className="block px-2 py-1.5 text-xs text-muted hover:text-ink transition-colors"
+        >
+          No client selected
+        </Link>
+      )}
+    </div>
   );
 
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 border-r border-border bg-surface px-4 py-5 text-ink">
-        <Link to="/" className="px-2 mb-6 block">
-          <BrandMark />
+      <aside
+        className="hidden lg:flex flex-col h-screen sticky top-0 shrink-0 border-r border-border bg-surface px-3 py-4 text-ink transition-[width] duration-200 ease-standard"
+        style={{ width: collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH }}
+        aria-label="Sidebar navigation"
+      >
+        <Link
+          to="/"
+          className={cn('mb-4 block', collapsed ? 'px-0 flex justify-center' : 'px-2')}
+          aria-label="Sound Thesis home"
+        >
+          {collapsed ? <LogoMark size={28} /> : <Lockup />}
         </Link>
 
-        {renderNavSections()}
+        <NavSections collapsed={collapsed} />
 
-        {/* Progress & Client Profile summary */}
-        <div className="p-3 my-2 bg-sunken rounded-2xl border border-border shadow-2xs">
-          <div className="flex items-center justify-between text-[11px] font-semibold text-muted mb-2">
-            <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-              Workflow Progress
-            </span>
-            <span className="text-ink font-mono text-[10px] px-2 py-0.5 bg-surface rounded-full border border-border font-bold shadow-2xs tabular-nums">
-              {completedCount}/5 Steps
-            </span>
-          </div>
-          <div className="w-full h-1.5 bg-border rounded-full overflow-hidden mb-3">
-            <div
-              className="h-full bg-accent rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-          <Link
-            to="/master-plan"
-            className="flex items-center gap-2.5 p-2 rounded-xl bg-surface border border-border hover:border-border-strong hover:shadow-2xs transition-all group"
+        <div className="mt-2 space-y-1">
+          {clientContext}
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-expanded={!collapsed}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className={cn(
+              'flex items-center gap-2.5 min-h-9 w-full rounded-md text-muted hover:text-ink hover:bg-sunken transition-colors text-[13px] font-medium',
+              collapsed ? 'justify-center px-0 py-2' : 'px-3 py-1.5',
+            )}
           >
-            <div className="relative w-7 h-7 rounded-lg bg-accent text-white text-[11px] font-bold flex items-center justify-center shrink-0 shadow-2xs">
-              {inputs.client?.name?.charAt(0) || 'C'}
-              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-positive ring-2 ring-surface" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-xs font-semibold text-ink truncate group-hover:text-accent transition-colors">
-                {inputs.client?.name || 'Private Client'}
-              </div>
-              <div className="text-[10px] text-muted truncate">
-                {inputs.client?.advisor || 'Sound Thesis'}
-              </div>
-            </div>
-          </Link>
-        </div>
-
-        <div className="pt-2 mt-auto border-t border-border">
-          <NavLink item={utilityItem} />
+            {collapsed ? (
+              <PanelLeftOpen size={17} strokeWidth={1.7} />
+            ) : (
+              <>
+                <PanelLeftClose size={17} strokeWidth={1.7} />
+                <span>Collapse</span>
+              </>
+            )}
+          </button>
         </div>
       </aside>
 
@@ -210,35 +203,33 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="fixed inset-0 bg-overlay backdrop-blur-sm animate-overlay-in transition-opacity"
+            className="fixed inset-0 bg-overlay backdrop-blur-sm animate-overlay-in"
             onClick={onClose}
             aria-hidden="true"
           />
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Navigation Menu"
-            className="fixed inset-y-0 left-0 w-72 bg-surface flex flex-col p-4 shadow-2xl animate-drawer-in z-10 border-r border-border text-ink"
+            aria-label="Navigation menu"
+            className="fixed inset-y-0 left-0 w-[280px] bg-surface flex flex-col px-4 py-4 shadow-popover animate-drawer-in z-10 border-r border-border text-ink"
           >
-            <div className="flex items-center justify-between pb-4 mb-2 border-b border-border">
-              <Link to="/" onClick={onClose} className="px-1">
-                <BrandMark />
+            <div className="flex items-center justify-between pb-3 mb-2 border-b border-border-subtle">
+              <Link to="/" onClick={onClose} aria-label="Sound Thesis home">
+                <Lockup />
               </Link>
               <button
                 ref={closeButtonRef}
                 onClick={onClose}
-                className="p-2 min-h-11 min-w-11 flex items-center justify-center rounded-xl text-muted hover:text-ink hover:bg-sunken transition-colors"
+                className="p-2 min-h-11 min-w-11 flex items-center justify-center rounded-md text-muted hover:text-ink hover:bg-sunken transition-colors"
                 aria-label="Close navigation menu"
               >
-                <X size={18} />
+                <X size={18} strokeWidth={1.7} />
               </button>
             </div>
 
-            {renderNavSections(onClose)}
+            <NavSections onClick={onClose} />
 
-            <div className="pt-2 border-t border-border">
-              <NavLink item={utilityItem} onClick={onClose} />
-            </div>
+            <div className="pt-3 mt-1 border-t border-border-subtle">{clientContext}</div>
           </div>
         </div>
       )}

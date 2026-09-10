@@ -1,7 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
-import { Menu, ChevronRight, CheckCircle2, AlertTriangle, RotateCcw, Wallet, User, ShieldCheck, FileDown } from 'lucide-react';
-import { useLocation, Link } from 'react-router-dom';
-import { navItems, utilityItem } from './navItems';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { Menu, Search, Wallet, ShieldCheck, User, FlaskConical, RotateCcw, ChevronDown } from 'lucide-react';
+import { navItems } from './navItems';
+import { LogoMark } from './BrandMark';
+import { CommandPalette } from './CommandPalette';
+import { ThemeToggle } from '../ui/ThemeToggle';
+import { Avatar } from '../ui/Avatar';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { useCalculator } from '../../context/CalculatorContext';
 import { formatCurrencyCompact } from '../../lib/formatters';
 
@@ -10,198 +15,239 @@ interface TopBarProps {
   mobileOpen?: boolean;
 }
 
+const isEditableTarget = (el: EventTarget | null): boolean => {
+  if (!(el instanceof HTMLElement)) return false;
+  return Boolean(
+    el.closest('input, textarea, select, [contenteditable="true"], [role="textbox"]'),
+  );
+};
+
 export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
   const location = useLocation();
-  const { inputs, riskProfile, riskScore, wealthResult, resetToDefaults } = useCalculator();
+  const navigate = useNavigate();
+  const { inputs, riskProfile, riskScore, hasRiskAnswers, wealthResult, loadDemoWorkspace, resetToDefaults } =
+    useCalculator();
+
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
-  const current =
-    navItems.find((item) => item.path === location.pathname) ||
-    (utilityItem.path === location.pathname ? utilityItem : null);
-  const label = current?.label || 'Overview';
-  const section = current?.section || 'Advisory';
+  const current = navItems.find((item) => item.path === location.pathname);
+  const label = current?.label || 'Dashboard';
+  const section = current?.section || 'Workspace';
 
-  const confirmReset = () => {
-    resetToDefaults();
-    setShowResetConfirm(false);
-  };
-
-  const cancelButtonRef = useRef<HTMLButtonElement>(null);
-
+  // Global ⌘K / Ctrl+K — ignored while typing in a field.
   useEffect(() => {
-    if (!showResetConfirm) return;
-    cancelButtonRef.current?.focus();
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowResetConfirm(false);
+    const handleKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        if (isEditableTarget(e.target)) return;
+        e.preventDefault();
+        setPaletteOpen((prev) => !prev);
+      }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showResetConfirm]);
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
+
+  // Close the profile menu on outside interaction.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handlePointer = (e: PointerEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', handlePointer);
+    return () => document.removeEventListener('pointerdown', handlePointer);
+  }, [menuOpen]);
+
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+
+  const menuItems: { label: string; icon: typeof User; run: () => void; danger?: boolean }[] = [
+    {
+      label: 'Client profile',
+      icon: User,
+      run: () => navigate('/master-plan'),
+    },
+    {
+      label: 'Load demo workspace',
+      icon: FlaskConical,
+      run: () => loadDemoWorkspace(),
+    },
+    {
+      label: 'Reset workspace…',
+      icon: RotateCcw,
+      run: () => setShowResetConfirm(true),
+      danger: true,
+    },
+  ];
+
+  const handleMenuKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      setMenuOpen(false);
+      menuButtonRef.current?.focus();
+      return;
+    }
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const buttons = Array.from(
+      menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [],
+    );
+    if (buttons.length === 0) return;
+    const idx = buttons.indexOf(document.activeElement as HTMLButtonElement);
+    const next =
+      e.key === 'ArrowDown'
+        ? (idx + 1) % buttons.length
+        : (idx - 1 + buttons.length) % buttons.length;
+    buttons[next]?.focus();
+  };
 
   return (
     <>
-      <header className="sticky top-0 z-30 bg-surface/85 backdrop-blur-md border-b border-border px-4 sm:px-6 lg:px-8 py-2.5 transition-all shadow-xs text-ink">
-        <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto min-w-0">
-          {/* Mobile hamburger & title */}
-          <div className="flex items-center gap-3 lg:hidden min-w-0 flex-1">
+      <header className="sticky top-0 z-30 glass-header px-4 sm:px-6 lg:px-10 py-2.5 text-ink">
+        <div className="flex items-center gap-3 max-w-[1440px] mx-auto w-full min-w-0">
+          {/* Mobile: hamburger + mark */}
+          <div className="flex items-center gap-2 lg:hidden min-w-0 flex-1">
             <button
               onClick={onMenuClick}
               aria-label="Toggle menu"
               aria-expanded={mobileOpen}
-              className="p-2 -ml-2 min-h-11 min-w-11 flex items-center justify-center text-muted hover:text-ink rounded-xl hover:bg-sunken transition-colors shrink-0"
+              className="p-2 -ml-2 min-h-11 min-w-11 flex items-center justify-center text-muted hover:text-ink rounded-md hover:bg-sunken transition-colors shrink-0"
             >
-              <Menu size={20} />
+              <Menu size={18} strokeWidth={1.7} />
             </button>
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-6 h-6 bg-accent rounded-lg flex items-center justify-center shrink-0 shadow-2xs">
-                <span className="text-white font-sans font-extrabold text-[10px]">ST</span>
-              </div>
-              <span className="text-sm font-sans text-ink font-bold truncate max-w-[140px] sm:max-w-[220px]">
-                {label}
-              </span>
-            </div>
+            <Link to="/" aria-label="Sound Thesis home" className="shrink-0 text-ink">
+              <LogoMark size={24} />
+            </Link>
+            <span className="text-[13px] font-medium text-ink truncate">{label}</span>
           </div>
 
-          {/* Desktop Breadcrumbs */}
-          <div className="hidden lg:flex items-center gap-2 text-xs min-w-0">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-faint">
-              {section}
-            </span>
-            <ChevronRight size={13} className="text-muted shrink-0" />
-            <span className="font-sans text-ink font-bold text-sm tracking-tight">
-              {label}
-            </span>
+          {/* Desktop: breadcrumb */}
+          <div className="hidden lg:flex items-baseline gap-2 min-w-0">
+            <span className="eyebrow">{section}</span>
+            <span className="text-muted text-xs" aria-hidden="true">/</span>
+            <span className="text-sm font-medium text-ink tracking-tight truncate">{label}</span>
           </div>
 
-          {/* Desktop & Mobile Top Badges */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 ml-auto shrink-0 min-w-0">
-            {/* Client Profile Chip */}
-            <Link
-              to="/master-plan"
-              title="Click to edit client profile in Master Plan"
-              aria-label={`Client profile: ${inputs.client?.name || 'Client Plan'}`}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 min-h-9 rounded-xl bg-sunken hover:bg-surface border border-border hover:border-border-strong text-xs font-semibold text-ink-soft hover:text-ink transition-all shadow-2xs focus:outline-none focus:ring-2 focus:ring-accent/40 group"
-            >
-              <User size={13} className="text-muted shrink-0" />
-              <span className="hidden sm:inline max-w-[120px] sm:max-w-[150px] truncate">
-                {inputs.client?.name || 'Client Plan'}
-              </span>
-            </Link>
-
-            {/* Risk Profile Pill (Desktop) */}
-            <Link
-              to="/risk"
-              title={`Risk Score: ${riskScore}/100. Click to view Questionnaire`}
-              aria-label={`Risk profile: ${riskProfile.label} (${riskScore})`}
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 min-h-9 rounded-xl bg-sunken hover:bg-surface border border-border hover:border-border-strong text-xs font-semibold text-ink-soft hover:text-ink transition-all shadow-2xs focus:outline-none focus:ring-2 focus:ring-accent/40"
-            >
-              <ShieldCheck size={13} className="text-muted shrink-0" />
-              <span className="capitalize">{riskProfile.label}</span>
-              <span className="text-[10px] text-ink bg-raised border border-border px-1.5 py-0.5 rounded-md font-mono font-bold tabular-nums">
-                {riskScore}
-              </span>
-            </Link>
-
-            {/* Plan Longevity Pill */}
-            <Link
-              to="/retirement"
-              title={wealthResult.sustainable ? 'Plan sustainable through life expectancy' : `Plan depletes at age ${wealthResult.depletionAge}`}
-              aria-label={wealthResult.sustainable ? 'Plan sustainable through life expectancy' : `Plan depletes at age ${wealthResult.depletionAge}`}
-              className={`hidden sm:flex items-center gap-2 px-3 py-1.5 min-h-9 rounded-xl border text-xs font-semibold transition-all shadow-2xs focus:outline-none focus:ring-2 focus:ring-accent/40 ${
-                wealthResult.sustainable
-                  ? 'bg-positive-soft text-positive border-positive/30 hover:bg-positive-soft/80'
-                  : 'bg-warning-soft text-warning border-warning/30 hover:bg-warning-soft/80'
-              }`}
-            >
-              {wealthResult.sustainable ? (
-                <CheckCircle2 size={13} className="text-positive shrink-0" />
-              ) : (
-                <AlertTriangle size={13} className="text-warning shrink-0" />
-              )}
-              <span>
-                {wealthResult.sustainable
-                  ? 'Sustainable'
-                  : `Depletion: Age ${wealthResult.depletionAge ?? '—'}`}
-              </span>
-            </Link>
-
-            {/* Net Worth Chip */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface border border-border-strong text-ink text-xs font-semibold shadow-xs min-w-0">
-              <Wallet size={13} className="text-accent shrink-0" />
-              <span className="truncate max-w-[90px] sm:max-w-none font-mono tabular-nums font-bold">
-                {formatCurrencyCompact(wealthResult.netWorth)}
-              </span>
-            </div>
-
-            {/* Export Complete PDF Button */}
-            <Link
-              to="/dossier?autoPrint=true"
-              className="flex items-center gap-1.5 px-3 py-1.5 min-h-9 rounded-xl bg-accent hover:bg-accent-strong text-white text-xs font-semibold transition-all shadow-xs focus:outline-none focus:ring-2 focus:ring-accent/40 shrink-0"
-              title="Export complete snapshot of all pages as a PDF"
-              aria-label="Export complete snapshot of all pages as a PDF"
-            >
-              <FileDown size={13} />
-              <span className="hidden sm:inline">Export PDF</span>
-            </Link>
-
-            {/* Quick Reset Plan Button */}
+          <div className="flex items-center gap-2 sm:gap-3 ml-auto shrink-0 min-w-0">
+            {/* Command palette trigger */}
             <button
-              onClick={() => setShowResetConfirm(true)}
-              className="p-2 min-h-11 min-w-11 flex items-center justify-center text-muted hover:text-negative rounded-xl hover:bg-negative-soft hover:border-negative/30 border border-transparent transition-all"
-              title="Reset plan inputs to defaults"
-              aria-label="Reset plan inputs to defaults"
+              type="button"
+              onClick={() => setPaletteOpen(true)}
+              className="hidden md:flex items-center gap-2 pl-2.5 pr-2 py-1.5 min-h-8 rounded-md border border-border bg-surface text-muted hover:text-ink hover:border-border-strong transition-colors"
+              aria-label="Open search (Command K)"
             >
-              <RotateCcw size={14} />
+              <Search size={14} strokeWidth={1.7} />
+              <span className="text-[13px]">Search</span>
+              <kbd className="text-[10px] text-muted border border-border rounded-sm px-1 font-mono leading-[14px]">
+                ⌘K
+              </kbd>
             </button>
+
+            {/* Net worth — only when a plan is configured */}
+            {wealthResult.isConfigured && (
+              <div
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-surface text-ink"
+                title="Net worth"
+              >
+                <Wallet size={14} strokeWidth={1.7} className="text-accent-strong shrink-0" />
+                <span className="text-[13px] font-medium tabular-nums">
+                  {formatCurrencyCompact(wealthResult.netWorth)}
+                </span>
+              </div>
+            )}
+
+            {/* Risk profile — only when the questionnaire has real answers */}
+            {hasRiskAnswers && (
+              <Link
+                to="/risk"
+                title={`Risk profile: ${riskProfile.label} (${riskScore}/100)`}
+                className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-surface text-ink hover:border-border-strong transition-colors"
+              >
+                <ShieldCheck size={14} strokeWidth={1.7} className="text-accent-strong shrink-0" />
+                <span className="text-[13px] font-medium capitalize">{riskProfile.label}</span>
+                <span className="text-[11px] text-muted tabular-nums">{riskScore}</span>
+              </Link>
+            )}
+
+            <ThemeToggle variant="segmented" className="hidden sm:inline-flex" />
+
+            {/* Profile menu */}
+            <div ref={menuRef} className="relative">
+              <button
+                ref={menuButtonRef}
+                type="button"
+                onClick={() => setMenuOpen((prev) => !prev)}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                aria-label="Workspace menu"
+                className="flex items-center rounded-md transition-colors hover:bg-sunken"
+              >
+                <Avatar name={inputs.client.advisor || 'Sound Thesis'} id={inputs.client.email} size="sm" />
+                <ChevronDown
+                  size={13}
+                  strokeWidth={1.7}
+                  className="hidden sm:block text-faint ml-0.5 transition-transform duration-150"
+                  style={{ transform: menuOpen ? 'rotate(180deg)' : undefined }}
+                />
+              </button>
+
+              {menuOpen && (
+                <div
+                  role="menu"
+                  aria-label="Workspace menu"
+                  onKeyDown={handleMenuKeyDown}
+                  className="absolute right-0 top-full mt-1.5 w-56 bg-raised border border-border rounded-md shadow-popover py-1 z-50"
+                >
+                  {menuItems.map((item, i) => (
+                    <div key={item.label}>
+                      {i === menuItems.length - 1 && (
+                        <div className="my-1 border-t border-border-subtle" role="separator" />
+                      )}
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          closeMenu();
+                          item.run();
+                        }}
+                        className={`flex w-full items-center gap-2.5 px-3 py-2 text-[13px] font-medium transition-colors ${
+                          item.danger
+                            ? 'text-negative hover:bg-negative-soft'
+                            : 'text-ink hover:bg-sunken'
+                        }`}
+                      >
+                        <item.icon size={15} strokeWidth={1.7} className={item.danger ? 'text-negative' : 'text-faint'} />
+                        {item.label}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Reset Confirmation Modal */}
-      {showResetConfirm && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-overlay backdrop-blur-sm animate-overlay-in"
-          role="presentation"
-          onClick={() => setShowResetConfirm(false)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="reset-title"
-            className="bg-surface rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-border animate-drawer-in text-ink"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start gap-3.5 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-negative-soft border border-negative/30 flex items-center justify-center text-negative shrink-0">
-                <RotateCcw size={18} />
-              </div>
-              <div>
-                <h3 id="reset-title" className="text-base font-sans font-bold text-ink">
-                  Reset Plan Inputs?
-                </h3>
-                <p className="text-xs text-muted mt-1 leading-relaxed text-pretty">
-                  This will revert all client profile information, assets, SIP/STP/SWP allocations, and questionnaire responses back to the default sample client.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-2.5 mt-5">
-              <button
-                ref={cancelButtonRef}
-                onClick={() => setShowResetConfirm(false)}
-                className="px-4 py-2 text-xs font-semibold text-muted hover:text-ink hover:bg-sunken rounded-xl transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmReset}
-                className="px-4 py-2 text-xs font-semibold text-white bg-negative hover:brightness-110 rounded-xl transition-colors shadow-xs"
-              >
-                Reset to Defaults
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        onRequestReset={() => setShowResetConfirm(true)}
+      />
+
+      <ConfirmDialog
+        open={showResetConfirm}
+        onConfirm={() => {
+          resetToDefaults();
+          setShowResetConfirm(false);
+        }}
+        onCancel={() => setShowResetConfirm(false)}
+        title="Reset this planning workspace?"
+        description="This will clear current inputs and return the workspace to a blank planning state."
+        confirmLabel="Reset"
+        danger
+      />
     </>
   );
 };

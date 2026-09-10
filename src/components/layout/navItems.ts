@@ -23,155 +23,148 @@ export interface NavItem {
   label: string;
   icon: LucideIcon;
   section: string;
-  step?: string;
   description?: string;
 }
 
+export const SECTION_ORDER = ['Workspace', 'Plan', 'Portfolio', 'Deliver', 'Practice', 'Tools & Feed'] as const;
+
 export const navItems: NavItem[] = [
-  // Overview
   {
     path: '/',
     label: 'Dashboard',
     icon: Activity,
-    section: 'Overview',
+    section: 'Workspace',
     description: 'Executive overview & plan health check',
   },
 
-  // 1. Discover & Inventory
+  // Plan
   {
     path: '/master-plan',
     label: 'Client & Balance Sheet',
     icon: PieChart,
-    section: '1. Discover',
-    step: '01',
+    section: 'Plan',
     description: 'Profile, assets, cashflows & liabilities',
   },
   {
     path: '/goal',
     label: 'Goal Planner',
     icon: Target,
-    section: '1. Discover',
+    section: 'Plan',
     description: 'Goal milestones & conflict matrix',
   },
-
-  // 2. Risk & Bounds
   {
     path: '/risk',
     label: 'Risk Profile',
     icon: Shield,
-    section: '2. Risk Profile',
-    step: '02',
+    section: 'Plan',
     description: 'Psychometric risk score & asset constraints',
   },
-
-  // 3. Retirement & Cashflows
   {
     path: '/retirement',
     label: 'Retirement & SWP',
     icon: PiggyBank,
-    section: '3. Retirement',
-    step: '03',
+    section: 'Plan',
     description: 'Corpus longevity, Monte Carlo & SWP',
   },
   {
     path: '/reverse-planning',
     label: 'Reverse Planning',
     icon: Compass,
-    section: '3. Retirement',
+    section: 'Plan',
     description: 'Reverse solver for required SIP & feasible age',
   },
 
-  // 4. Portfolio & Optimization
+  // Portfolio
   {
     path: '/allocation',
     label: 'Portfolio Allocation',
     icon: TrendingUp,
-    section: '4. Allocation',
-    step: '04',
+    section: 'Portfolio',
     description: 'Current vs target rebalancing & trade orders',
   },
   {
     path: '/advanced-portfolio',
     label: 'Portfolio Lab',
     icon: Layers,
-    section: '4. Allocation',
+    section: 'Portfolio',
     description: 'Black-Litterman, risk parity & glide paths',
   },
 
-  // 5. Deliverables & Governance
+  // Deliver
+  {
+    path: '/reports',
+    label: 'Executive Reports',
+    icon: BarChart3,
+    section: 'Deliver',
+    description: 'Comprehensive client executive plan report',
+  },
   {
     path: '/ips',
     label: 'Policy Statement (IPS)',
     icon: FileText,
-    section: '5. Deliverables',
-    step: '05',
+    section: 'Deliver',
     description: 'Investment Policy Statement with live sync toggle',
   },
   {
     path: '/meeting-workflow',
     label: 'Client Meeting',
     icon: Briefcase,
-    section: '5. Deliverables',
+    section: 'Deliver',
     description: 'Stage agenda & advisory meeting log',
   },
   {
     path: '/decision-history',
     label: 'Decision Audit Log',
     icon: History,
-    section: '5. Deliverables',
+    section: 'Deliver',
     description: 'Audit trail of plan modifications & reverts',
-  },
-  {
-    path: '/reports',
-    label: 'Executive Reports',
-    icon: BarChart3,
-    section: '5. Deliverables',
-    description: 'Comprehensive client executive plan report',
   },
   {
     path: '/dossier',
     label: 'Full Dossier (PDF)',
     icon: Printer,
-    section: '5. Deliverables',
+    section: 'Deliver',
     description: 'Printable institutional PDF portfolio dossier',
   },
 
+  // Practice
   {
     path: '/practitioner',
     label: 'Practice Clients (API)',
     icon: Briefcase,
-    section: 'Practice Platform',
+    section: 'Practice',
     description: 'Live backend clients, plans & calculations',
   },
 
-  // Market & Tools
+  // Tools & Feed
   {
     path: '/calculators',
     label: 'Calculators',
     icon: Calculator,
-    section: 'Tools & Live Feed',
+    section: 'Tools & Feed',
     description: 'SIP, SWP, STP, EMI & lumpsum utilities',
   },
   {
     path: '/angel-connect',
     label: 'Angel One Connect',
     icon: Zap,
-    section: 'Tools & Live Feed',
+    section: 'Tools & Feed',
     description: 'SmartAPI credentials, TOTP & authentication',
   },
   {
     path: '/angel-data',
     label: 'Angel Market Data',
     icon: Database,
-    section: 'Tools & Live Feed',
+    section: 'Tools & Feed',
     description: 'Live tick feeds & real-time quotes',
   },
 ];
 
-export const utilityItem: NavItem = {
-  path: '/dossier',
-  label: 'Client Dossier (PDF)',
-  icon: Printer,
-  section: 'Deliverables',
-  description: 'Complete exportable plan dossier',
+export const groupBySection = (items: NavItem[]): [string, NavItem[]][] => {
+  const groups = items.reduce((acc, item) => {
+    if (!acc[item.section]) acc[item.section] = [];
+    acc[item.section].push(item);
+    return acc;
+  }, {} as Record<string, NavItem[]>);
+  return SECTION_ORDER.filter((s) => groups[s]).map((s) => [s, groups[s]]);
 };
