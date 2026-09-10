@@ -4,3 +4,6 @@ runConfig:
   maxInstances: 5
   cpu: 1
   memoryMiB: 512
+scripts:
+  buildCommand: npm run build
+  runCommand: npm start

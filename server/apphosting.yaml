@@ -5,4 +5,5 @@ runConfig:
   cpu: 1
   memoryMiB: 512
 scripts:
-  runCommand: tsx src/server.ts
+  buildCommand: npm run build
+  runCommand: npm start

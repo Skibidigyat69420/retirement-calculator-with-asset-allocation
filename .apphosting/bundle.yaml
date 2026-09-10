@@ -1,0 +1,7 @@
+version: v1
+runConfig:
+  runCommand: npm start
+outputFiles:
+  serverApp:
+    include:
+      - .
