@@ -65,6 +65,8 @@ jobs:
       RLS_DATABASE_URL: postgres://stw_rls_test:test@localhost:54330/stw_test
     steps:
       - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install --yes postgresql-client
       - uses: actions/setup-node@v4
         with:
           node-version: 22

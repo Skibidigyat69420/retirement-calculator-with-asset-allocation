@@ -59,21 +59,40 @@ function applyMigrations(): void {
   if (files.length === 0) {
     throw new Error(`No migration files found in ${dir}`);
   }
-  for (const file of files) {
-    try {
-      execFileSync(
-        'psql',
-        ['-X', '-v', 'ON_ERROR_STOP=1', '-d', testDbUrl(), '-f', join(dir, file)],
-        { stdio: 'pipe', encoding: 'utf8' },
-      );
-    } catch (err) {
-      const detail =
-        err && typeof err === 'object' && 'stderr' in err
-          ? String((err as { stderr: unknown }).stderr)
-          : String(err);
-      throw new Error(`Migration ${file} failed:\n${detail}`);
-    }
+
+  let hasPsql = true;
+  try {
+    execFileSync('which', ['psql'], { stdio: 'ignore' });
+  } catch {
+    hasPsql = false;
   }
+
+  if (hasPsql) {
+    for (const file of files) {
+      try {
+        execFileSync(
+          'psql',
+          ['-X', '-v', 'ON_ERROR_STOP=1', '-d', testDbUrl(), '-f', join(dir, file)],
+          { stdio: 'pipe', encoding: 'utf8' },
+        );
+      } catch (err) {
+        const detail =
+          err && typeof err === 'object' && 'stderr' in err
+            ? String((err as { stderr: unknown }).stderr)
+            : String(err);
+        throw new Error(`Migration ${file} failed:\n${detail}`);
+      }
+    }
+    return;
+  }
+
+  // Fallback when psql is not available on PATH: run migrate.ts script
+  const scriptPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'scripts', 'migrate.ts');
+  execFileSync('npx', ['tsx', scriptPath], {
+    env: { ...process.env, DATABASE_URL: testDbUrl(), MIGRATIONS_DIR: dir },
+    stdio: 'pipe',
+    encoding: 'utf8',
+  });
 }
 
 /**
