@@ -33,6 +33,26 @@ export function PractitionerPage() {
   const [email, setEmail] = useState('you@soundthesis.local');
   const [authError, setAuthError] = useState<string | null>(null);
   const [loggingIn, setLoggingIn] = useState(false);
+  const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
+
+  // Dev convenience: skip the sign-in form entirely in the dev server by
+  // automatically establishing the demo practitioner session. Inert in
+  // production builds; manual login still appears if auto-login fails or
+  // after an explicit logout (logout does not reset the attempted flag).
+  useEffect(() => {
+    if (!import.meta.env.DEV || !ready || user || autoLoginAttempted) return;
+    setAutoLoginAttempted(true);
+    setLoggingIn(true);
+    login(import.meta.env.VITE_DEV_LOGIN_EMAIL ?? 'adviser@soundthesis.local').catch(
+      (error: unknown) => {
+        setAuthError(
+          error instanceof ApiRequestError
+            ? `${error.code}: ${error.message}`
+            : 'Auto sign-in failed — sign in manually below.',
+        );
+      },
+    ).finally(() => setLoggingIn(false));
+  }, [ready, user, autoLoginAttempted, login]);
 
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [clientsError, setClientsError] = useState<string | null>(null);
@@ -124,6 +144,9 @@ export function PractitionerPage() {
 
   // ------------------------------------------------------------- login
   if (!user) {
+    if (loggingIn && !authError) {
+      return <div className="p-6 text-sm text-zinc-500">Signing you in…</div>;
+    }
     return (
       <div className="max-w-md mx-auto mt-10">
         <Card variant="navy">
