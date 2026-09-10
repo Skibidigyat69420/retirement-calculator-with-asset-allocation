@@ -75,14 +75,14 @@ export const EnhancedNumberInput = ({
   return (
     <div className={cn('space-y-1.5', className)}>
       {label && (
-        <label htmlFor={inputId} className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">
+        <label htmlFor={inputId} className="block text-[11px] font-semibold uppercase tracking-wider text-muted">
           {label}
         </label>
       )}
 
       <div className="relative group">
         {prefix && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-zinc-400 select-none pointer-events-none">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-faint select-none pointer-events-none">
             {prefix}
           </span>
         )}
@@ -105,17 +105,17 @@ export const EnhancedNumberInput = ({
             if (e.key === 'ArrowDown') { e.preventDefault(); adjust(-step); }
           }}
           className={cn(
-            'w-full bg-white/95 border rounded-xl px-3.5 py-2.5 text-sm font-medium text-zinc-950 placeholder:text-zinc-400 transition-all shadow-2xs',
+            'w-full bg-surface border rounded-xl px-3.5 py-2.5 text-sm font-medium text-ink placeholder:text-faint transition-all shadow-2xs',
             'focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none',
-            'hover:border-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed',
+            'hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed',
             prefix && 'pl-8',
             suffix ? 'pr-16' : 'pr-9',
-            hasError ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/10' : 'border-zinc-200/80',
+            hasError ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/10' : 'border-border',
           )}
         />
 
         {suffix && (
-          <span className="absolute right-8 top-1/2 -translate-y-1/2 text-xs font-medium text-zinc-500 bg-zinc-100/90 border border-zinc-200/60 px-1.5 py-0.5 rounded select-none pointer-events-none">
+          <span className="absolute right-8 top-1/2 -translate-y-1/2 text-xs font-medium text-muted bg-sunken border border-border px-1.5 py-0.5 rounded select-none pointer-events-none">
             {suffix}
           </span>
         )}
@@ -125,7 +125,7 @@ export const EnhancedNumberInput = ({
             type="button"
             onClick={() => adjust(step)}
             disabled={disabled || (max !== undefined && value >= max)}
-            className="p-1 rounded text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors disabled:opacity-30 cursor-pointer"
+            className="p-1 rounded text-muted hover:text-ink hover:bg-sunken transition-colors disabled:opacity-30 cursor-pointer"
             tabIndex={-1}
             aria-label={`Increase ${label || 'value'}`}
           >
@@ -135,7 +135,7 @@ export const EnhancedNumberInput = ({
             type="button"
             onClick={() => adjust(-step)}
             disabled={disabled || (min !== undefined && value <= min)}
-            className="p-1 rounded text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors disabled:opacity-30 cursor-pointer"
+            className="p-1 rounded text-muted hover:text-ink hover:bg-sunken transition-colors disabled:opacity-30 cursor-pointer"
             tabIndex={-1}
             aria-label={`Decrease ${label || 'value'}`}
           >
@@ -155,8 +155,8 @@ export const EnhancedNumberInput = ({
               className={cn(
                 'px-2.5 py-0.5 text-[10px] font-semibold tracking-wide rounded-md border transition-all cursor-pointer select-none active:scale-95',
                 value === p.value
-                  ? 'bg-zinc-950 text-white border-zinc-950 shadow-2xs'
-                  : 'bg-white text-zinc-600 border-zinc-200/80 hover:border-zinc-300 hover:bg-zinc-50',
+                  ? 'bg-accent text-white border-accent shadow-2xs'
+                  : 'bg-surface text-muted border-border hover:border-border-strong hover:bg-sunken hover:text-ink',
                 'disabled:opacity-50 disabled:cursor-not-allowed',
               )}
             >
@@ -169,7 +169,7 @@ export const EnhancedNumberInput = ({
       {(helper || error || hasError) && (
         <div className="flex items-start gap-1.5 pt-0.5">
           {hasError && <AlertCircle size={13} className="text-rose-500 mt-0.5 shrink-0" />}
-          <p className={cn('text-[11px] leading-tight', hasError ? 'text-rose-600 font-medium' : 'text-zinc-500')}>
+          <p className={cn('text-[11px] leading-tight', hasError ? 'text-rose-600 font-medium' : 'text-faint')}>
             {error || (hasError ? `Value must be between ${min} and ${max}` : helper)}
           </p>
         </div>

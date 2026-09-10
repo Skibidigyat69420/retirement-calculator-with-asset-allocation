@@ -15,15 +15,15 @@ export const Card = ({
 }: CardProps) => {
   const variants = {
     default:
-      'bg-white/90 backdrop-blur-sm border border-zinc-200/80 shadow-card hover:shadow-card-hover hover:border-zinc-300 text-zinc-900',
+      'bg-surface border border-border shadow-card hover:shadow-card-hover hover:border-border-strong text-ink',
     elevated:
-      'bg-white/95 backdrop-blur-sm border border-zinc-200/80 shadow-card hover:shadow-card-hover hover:border-zinc-300/90 text-zinc-900',
+      'bg-raised border border-border shadow-card hover:shadow-card-hover hover:border-border-strong text-ink',
     navy:
-      'bg-zinc-950 text-white border border-zinc-800/90 shadow-card selection:bg-zinc-800 hover:border-zinc-700/80 hover:shadow-card-hover',
+      'bg-sunken text-ink border border-border-strong shadow-card selection:bg-border hover:border-accent/60 hover:shadow-card-hover',
     gold:
-      'bg-gradient-to-br from-amber-50/70 via-white/95 to-white backdrop-blur-sm border border-amber-200/70 shadow-card hover:shadow-card-hover hover:border-amber-300/80 text-zinc-900',
+      'bg-surface border border-warning/40 text-ink shadow-card hover:shadow-card-hover hover:border-warning/70',
     subtle:
-      'bg-zinc-50/80 backdrop-blur-xs border border-zinc-200/70 text-zinc-800 hover:border-zinc-300/80',
+      'bg-sunken/60 border border-border text-ink-soft hover:border-border-strong',
   };
 
   return (

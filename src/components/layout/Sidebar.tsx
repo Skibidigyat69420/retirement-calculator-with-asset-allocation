@@ -25,8 +25,8 @@ const NavLink = ({ item, onClick, completed }: NavLinkProps) => {
       className={cn(
         'group flex items-center gap-2.5 px-3 min-h-9 py-2 rounded-xl text-xs font-semibold transition-all duration-200 ease-out',
         active
-          ? 'bg-zinc-950 text-white shadow-xs ring-1 ring-zinc-800/80'
-          : 'text-zinc-600 hover:bg-zinc-100/90 hover:text-zinc-950',
+          ? 'bg-accent text-white shadow-xs ring-1 ring-accent/30'
+          : 'text-muted hover:bg-sunken hover:text-ink',
       )}
     >
       {item.step ? (
@@ -34,8 +34,8 @@ const NavLink = ({ item, onClick, completed }: NavLinkProps) => {
           className={cn(
             'text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md transition-all tabular-nums',
             active
-              ? 'bg-zinc-800 text-white ring-1 ring-zinc-700/60'
-              : 'bg-zinc-100 text-zinc-500 group-hover:bg-zinc-200 group-hover:text-zinc-900',
+              ? 'bg-accent-strong text-white'
+              : 'bg-sunken text-muted group-hover:bg-raised group-hover:text-ink',
           )}
         >
           {item.step}
@@ -43,7 +43,7 @@ const NavLink = ({ item, onClick, completed }: NavLinkProps) => {
       ) : (
         <Icon
           size={16}
-          className={cn('transition-colors', active ? 'text-white' : 'text-zinc-400 group-hover:text-zinc-900')}
+          className={cn('transition-colors', active ? 'text-white' : 'text-faint group-hover:text-ink')}
         />
       )}
       <span className="truncate">{item.label}</span>
@@ -53,7 +53,7 @@ const NavLink = ({ item, onClick, completed }: NavLinkProps) => {
           strokeWidth={2.5}
           className={cn(
             'ml-auto shrink-0 transition-colors',
-            active ? 'text-emerald-400' : 'text-emerald-600'
+            active ? 'text-white' : 'text-positive'
           )}
           aria-label="Completed"
         />
@@ -158,7 +158,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 border-r border-zinc-200/80 bg-white/95 backdrop-blur-sm px-4 py-5">
+      <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 border-r border-border bg-surface px-4 py-5 text-ink">
         <Link to="/" className="px-2 mb-6 block">
           <BrandMark />
         </Link>
@@ -166,42 +166,42 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
         {renderNavSections()}
 
         {/* Progress & Client Profile summary */}
-        <div className="p-3 my-2 bg-gradient-to-b from-zinc-50 to-zinc-100/70 rounded-2xl border border-zinc-200/80 shadow-2xs">
-          <div className="flex items-center justify-between text-[11px] font-semibold text-zinc-700 mb-2">
+        <div className="p-3 my-2 bg-sunken rounded-2xl border border-border shadow-2xs">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-muted mb-2">
             <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
               Workflow Progress
             </span>
-            <span className="text-zinc-900 font-mono text-[10px] px-2 py-0.5 bg-white rounded-full border border-zinc-200/80 font-bold shadow-2xs tabular-nums">
+            <span className="text-ink font-mono text-[10px] px-2 py-0.5 bg-surface rounded-full border border-border font-bold shadow-2xs tabular-nums">
               {completedCount}/5 Steps
             </span>
           </div>
-          <div className="w-full h-1.5 bg-zinc-200/80 rounded-full overflow-hidden mb-3">
+          <div className="w-full h-1.5 bg-border rounded-full overflow-hidden mb-3">
             <div
-              className="h-full bg-gradient-to-r from-zinc-950 via-emerald-600 to-emerald-500 rounded-full transition-all duration-500 ease-out"
+              className="h-full bg-accent rounded-full transition-all duration-500 ease-out"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
           <Link
             to="/master-plan"
-            className="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-zinc-200/70 hover:border-zinc-300 hover:shadow-2xs transition-all group"
+            className="flex items-center gap-2.5 p-2 rounded-xl bg-surface border border-border hover:border-border-strong hover:shadow-2xs transition-all group"
           >
-            <div className="relative w-7 h-7 rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-950 text-white text-[11px] font-bold flex items-center justify-center shrink-0 ring-1 ring-zinc-700/50 shadow-2xs">
+            <div className="relative w-7 h-7 rounded-lg bg-accent text-white text-[11px] font-bold flex items-center justify-center shrink-0 shadow-2xs">
               {inputs.client?.name?.charAt(0) || 'C'}
-              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-positive ring-2 ring-surface" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-semibold text-zinc-950 truncate group-hover:text-emerald-700 transition-colors">
+              <div className="text-xs font-semibold text-ink truncate group-hover:text-accent transition-colors">
                 {inputs.client?.name || 'Private Client'}
               </div>
-              <div className="text-[10px] text-zinc-500 truncate">
+              <div className="text-[10px] text-muted truncate">
                 {inputs.client?.advisor || 'Sound Thesis'}
               </div>
             </div>
           </Link>
         </div>
 
-        <div className="pt-2 mt-auto border-t border-zinc-200/70">
+        <div className="pt-2 mt-auto border-t border-border">
           <NavLink item={utilityItem} />
         </div>
       </aside>
@@ -210,7 +210,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-overlay-in transition-opacity"
+            className="fixed inset-0 bg-overlay backdrop-blur-sm animate-overlay-in transition-opacity"
             onClick={onClose}
             aria-hidden="true"
           />
@@ -218,16 +218,16 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
             role="dialog"
             aria-modal="true"
             aria-label="Navigation Menu"
-            className="fixed inset-y-0 left-0 w-72 bg-white/95 backdrop-blur-xl flex flex-col p-4 shadow-2xl animate-drawer-in z-10 border-r border-zinc-200/80"
+            className="fixed inset-y-0 left-0 w-72 bg-surface flex flex-col p-4 shadow-2xl animate-drawer-in z-10 border-r border-border text-ink"
           >
-            <div className="flex items-center justify-between pb-4 mb-2 border-b border-zinc-200/80">
+            <div className="flex items-center justify-between pb-4 mb-2 border-b border-border">
               <Link to="/" onClick={onClose} className="px-1">
                 <BrandMark />
               </Link>
               <button
                 ref={closeButtonRef}
                 onClick={onClose}
-                className="p-2 min-h-11 min-w-11 flex items-center justify-center rounded-xl text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
+                className="p-2 min-h-11 min-w-11 flex items-center justify-center rounded-xl text-muted hover:text-ink hover:bg-sunken transition-colors"
                 aria-label="Close navigation menu"
               >
                 <X size={18} />
@@ -236,7 +236,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
 
             {renderNavSections(onClose)}
 
-            <div className="pt-2 border-t border-zinc-200/80">
+            <div className="pt-2 border-t border-border">
               <NavLink item={utilityItem} onClick={onClose} />
             </div>
           </div>

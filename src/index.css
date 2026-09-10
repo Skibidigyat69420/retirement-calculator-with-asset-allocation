@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: `.dark` on <html> or any ancestor */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* ─────────────────────────────────────────────────────────────
      Semantic design tokens — Sound Thesis premium design language
@@ -17,19 +20,18 @@
   --color-border: #e4e4e7;
   --color-border-strong: #d4d4d8;
 
-  /* Ink (text) — contrast-checked on white/surfaces:
-     ink 18.9:1 · ink-soft 13.9:1 · muted 5.9:1 · faint 4.0:1 (large text / decorative only) */
+  /* Ink (text) — contrast-checked on white/surfaces */
   --color-ink: #09090b;
   --color-ink-soft: #27272a;
   --color-muted: #52525b;
   --color-faint: #71717a;
 
-  /* Accent — restrained emerald, used sparingly (4.8:1 on white) */
+  /* Accent — restrained emerald, used sparingly */
   --color-accent: #15803d;
   --color-accent-strong: #14532d;
   --color-accent-soft: #ecfdf5;
 
-  /* Semantic status colors (all ≥ 4.5:1 on white for text usage) */
+  /* Semantic status colors */
   --color-positive: #15803d;
   --color-positive-soft: #f0fdf4;
   --color-negative: #be123c;
@@ -39,11 +41,10 @@
   --color-info: #0369a1;
   --color-info-soft: #f0f9ff;
 
-  /* Focus ring (2px ring + offset, applied globally to focus-visible) */
+  /* Focus ring */
   --color-focus-ring: #15803d;
 
-  /* Legacy token aliases — kept so existing utility classes keep working.
-     New code should prefer the semantic names above. */
+  /* Legacy token aliases */
   --color-cream: var(--color-background);
   --color-paper: var(--color-surface);
   --color-warm: var(--color-sunken);
@@ -61,15 +62,12 @@
   --font-serif: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Premium shadows — soft, layered, low-opacity */
+  /* Premium shadows */
   --shadow-card: 0 1px 2px rgba(9, 9, 11, 0.04), 0 1px 3px rgba(9, 9, 11, 0.03);
   --shadow-card-hover: 0 4px 12px -2px rgba(9, 9, 11, 0.06), 0 2px 4px -1px rgba(9, 9, 11, 0.04);
   --shadow-elevated: 0 10px 28px -6px rgba(9, 9, 11, 0.08), 0 4px 10px -4px rgba(9, 9, 11, 0.05);
   --shadow-popover: 0 16px 40px -8px rgba(9, 9, 11, 0.14), 0 4px 12px -4px rgba(9, 9, 11, 0.08);
 
-  /* WCAG AA contrast refinements on the default scales — existing class
-     names keep working, failing text pairs get darker values:
-     zinc-500 4.7:1 · emerald-600 4.8:1 (w/ white) · rose-600 5.2:1 · amber-600 4.6:1 */
   --color-zinc-400: #90909a;
   --color-zinc-500: #63636d;
   --color-emerald-500: #0e9f6e;
@@ -78,6 +76,43 @@
   --color-rose-600: #be123c;
   --color-amber-500: #d97706;
   --color-amber-600: #b45309;
+}
+
+/* ── Dark Mode: Crisp, High-Contrast Institutional Dark Theme ── */
+.dark {
+  --color-background: #090d16;
+  --color-surface: #0f172a;
+  --color-raised: #1e293b;
+  --color-sunken: #050811;
+  --color-overlay: rgba(0, 0, 0, 0.75);
+
+  --color-border: #1e293b;
+  --color-border-strong: #334155;
+
+  --color-ink: #f8fafc;
+  --color-ink-soft: #e2e8f0;
+  --color-muted: #94a3b8;
+  --color-faint: #64748b;
+
+  --color-accent: #10b981;
+  --color-accent-strong: #34d399;
+  --color-accent-soft: rgba(16, 185, 129, 0.15);
+
+  --color-positive: #34d399;
+  --color-positive-soft: rgba(52, 211, 153, 0.12);
+  --color-negative: #fb7185;
+  --color-negative-soft: rgba(251, 113, 133, 0.12);
+  --color-warning: #fbbf24;
+  --color-warning-soft: rgba(251, 191, 36, 0.12);
+  --color-info: #38bdf8;
+  --color-info-soft: rgba(56, 189, 248, 0.12);
+
+  --color-focus-ring: #10b981;
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-card-hover: 0 6px 16px -2px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-elevated: 0 12px 32px -6px rgba(0, 0, 0, 0.6), 0 4px 12px -2px rgba(0, 0, 0, 0.5);
+  --shadow-popover: 0 20px 48px -8px rgba(0, 0, 0, 0.7), 0 6px 16px -4px rgba(0, 0, 0, 0.6);
 }
 
 @layer base {
@@ -95,6 +130,14 @@
       radial-gradient(ellipse 60% 40% at 100% 0%, rgba(21, 128, 61, 0.035), transparent);
     background-attachment: fixed;
     color-scheme: light;
+  }
+
+  .dark body {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(30, 41, 59, 0.4), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(16, 185, 129, 0.04), transparent);
+    background-attachment: fixed;
+    color-scheme: dark;
   }
 
   h1, h2, h3, h4, h5, h6 {
