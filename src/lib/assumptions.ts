@@ -1,8 +1,8 @@
-import type { AssetCategory } from '../types';
+import type { AssetCategory, CategoryAssumptions, FXAssumption, AssumptionSet } from '../types';
 import type { MarketDataSet } from './marketData';
 import { alignMarketData } from './marketData';
 import { DEFAULT_RATES, FX_ASSUMPTIONS } from './constants';
-export type { CategoryAssumptions, FXAssumption, AssumptionSet } from '../types';
+export type { CategoryAssumptions, FXAssumption, AssumptionSet };
 
 const CATEGORY_SYMBOL_MAP: Partial<Record<AssetCategory, string[]>> = {
   equity: ['NIFTY50', 'NIFTY500', 'BANKNIFTY'],
