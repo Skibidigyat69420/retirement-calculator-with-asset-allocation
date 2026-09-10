@@ -1,0 +1,93 @@
+# Full stack, self-hosted: edge proxy → frontend (SPA) + api-utils (public API)
+# + backend (practitioner API) → Postgres. No Vercel/Render/Supabase required.
+#
+#   docker compose up -d --build        # build + start everything
+#   open http://localhost               # the app (same-origin API via nginx)
+#
+# One-time DB seed after first start:
+#   docker compose exec -e ALLOW_SEED=true backend npx tsx scripts/seed.ts
+#
+# Data persists in the `postgres_data` volume. `docker compose down` keeps the
+# database; `docker compose down -v` DESTROYS it.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: stw-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stw
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - stw
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d stw']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: stw-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: '4000'
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/stw
+      AUTH_MODE: ${AUTH_MODE:-dev}
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:?set SUPABASE_JWT_SECRET in .env}
+      LOG_LEVEL: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - stw
+
+  api-utils:
+    build:
+      context: .
+      dockerfile: functions/Dockerfile
+    container_name: stw-api-utils
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - stw
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stw-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - stw
+
+  nginx:
+    image: nginx:alpine
+    container_name: stw-nginx
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+      - api-utils
+    networks:
+      - stw
+
+volumes:
+  postgres_data:
+
+networks:
+  stw:
