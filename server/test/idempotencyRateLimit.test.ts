@@ -54,7 +54,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await purgeTestOrg(orgIds, userIds, clientIds);
-  await close();
+  await close?.();
 });
 
 function reportCount(): Promise<{ count: string }[]> {

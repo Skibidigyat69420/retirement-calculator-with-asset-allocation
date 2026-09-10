@@ -102,7 +102,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await purgeTestOrg(orgIds, userIds, clientIds);
-  await close();
+  await close?.();
 });
 
 describe('cross-tenant access is invisible (spec §148)', () => {

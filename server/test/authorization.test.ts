@@ -123,7 +123,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await purgeTestOrg(orgIds, userIds, [...staticClientIds, ...createdClientIds]);
-  await close();
+  await close?.();
 });
 
 describe('create client (canCreateClient)', () => {

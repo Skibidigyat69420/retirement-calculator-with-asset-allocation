@@ -107,14 +107,20 @@ export async function setupMigratedDb(): Promise<string> {
   // 1. Create the database if missing (connect to the maintenance DB).
   const admin = postgres(MAINTENANCE_URL, { max: 1 });
   try {
-    const [existing] =
-      await admin`SELECT 1 FROM pg_database WHERE datname = 'stw_test'`;
-    if (!existing) {
-      try {
-        await admin`CREATE DATABASE stw_test`;
-      } catch (err) {
-        if ((err as { code?: string }).code !== '42P04') throw err; // race: another file created it
+    await admin`SELECT pg_advisory_lock(${SETUP_LOCK_KEY})`;
+    try {
+      const [existing] =
+        await admin`SELECT 1 FROM pg_database WHERE datname = 'stw_test'`;
+      if (!existing) {
+        try {
+          await admin`CREATE DATABASE stw_test`;
+        } catch (err) {
+          const code = (err as { code?: string }).code;
+          if (code !== '42P04' && code !== '23505') throw err; // race: another file created it
+        }
       }
+    } finally {
+      await admin`SELECT pg_advisory_unlock(${SETUP_LOCK_KEY})`;
     }
   } finally {
     await admin.end();

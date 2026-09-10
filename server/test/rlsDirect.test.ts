@@ -95,7 +95,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await rls.end();
+  await rls?.end();
   // Defensive cleanup of anything the sentinel rollback failed to undo.
   await dbQuery()`DELETE FROM clients WHERE last_name = ${TEST_LAST_NAME}`;
   await purgeTestOrg(orgIds, userIds, clientIds);
