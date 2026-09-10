@@ -26,6 +26,8 @@ The whole app — SPA, utility API, practitioner backend — runs on Firebase. T
    ALLOW_SEED=true ALLOW_PROD_SEED=true DATABASE_URL='postgresql://...' npm run db:seed
    ```
    (`db:migrate` is idempotent — safe to re-run. The seed guard requires the explicit `ALLOW_PROD_SEED=true` for supabase.co hosts.)
+
+   **Connection string:** use the **direct connection** or **session pooler** URI from Supabase → Connect. Do NOT use the transaction pooler (port 6543) — the backend's Drizzle/postgres.js driver relies on prepared statements, which transaction pooling doesn't support.
 5. **Wire the project + secrets:**
    ```bash
    npx firebase use --add            # pick your Firebase project
