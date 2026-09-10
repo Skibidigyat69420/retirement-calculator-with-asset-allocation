@@ -2,6 +2,7 @@ import { Suspense, lazy, type ComponentType } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { CalculatorProvider } from './context/CalculatorContext';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './lib/theme';
 import { Layout } from './components/layout/Layout';
 import { Skeleton } from './components/Skeleton';
 
@@ -48,38 +49,42 @@ const AdvancedPortfolio = lazyNamed(() => import('./pages/AdvancedPortfolioPage'
 const ClientMeeting = lazyNamed(() => import('./pages/ClientMeetingPage'), 'ClientMeetingPage');
 const DecisionHistory = lazyNamed(() => import('./pages/DecisionHistoryPage'), 'DecisionHistoryPage');
 const Practitioner = lazyNamed(() => import('./pages/PractitionerPage'), 'PractitionerPage');
+const StyleGuide = lazyNamed(() => import('./pages/StyleGuide'), 'StyleGuide');
 
 function App() {
   return (
     <AuthProvider>
-      <CalculatorProvider>
-        <BrowserRouter>
-          <Layout>
-            <Suspense fallback={<Skeleton />}>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/risk" element={<RiskQuestionnaire />} />
-                <Route path="/master-plan" element={<MasterPlan />} />
-                <Route path="/goal" element={<GoalPlanner />} />
-                <Route path="/retirement" element={<Retirement />} />
-                <Route path="/reverse-planning" element={<ReversePlanning />} />
-                <Route path="/allocation" element={<Allocation />} />
-                <Route path="/advanced-portfolio" element={<AdvancedPortfolio />} />
-                <Route path="/meeting-workflow" element={<ClientMeeting />} />
-                <Route path="/decision-history" element={<DecisionHistory />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/dossier" element={<Dossier />} />
-                <Route path="/calculators" element={<Calculators />} />
-                <Route path="/ips" element={<IPSTemplate />} />
-                <Route path="/angel-connect" element={<AngelConnect />} />
-                <Route path="/angel-data" element={<AngelData />} />
-                <Route path="/practitioner" element={<Practitioner />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Suspense>
-          </Layout>
-        </BrowserRouter>
-      </CalculatorProvider>
+      <ThemeProvider>
+        <CalculatorProvider>
+          <BrowserRouter>
+            <Layout>
+              <Suspense fallback={<Skeleton />}>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/risk" element={<RiskQuestionnaire />} />
+                  <Route path="/master-plan" element={<MasterPlan />} />
+                  <Route path="/goal" element={<GoalPlanner />} />
+                  <Route path="/retirement" element={<Retirement />} />
+                  <Route path="/reverse-planning" element={<ReversePlanning />} />
+                  <Route path="/allocation" element={<Allocation />} />
+                  <Route path="/advanced-portfolio" element={<AdvancedPortfolio />} />
+                  <Route path="/meeting-workflow" element={<ClientMeeting />} />
+                  <Route path="/decision-history" element={<DecisionHistory />} />
+                  <Route path="/reports" element={<Reports />} />
+                  <Route path="/dossier" element={<Dossier />} />
+                  <Route path="/calculators" element={<Calculators />} />
+                  <Route path="/ips" element={<IPSTemplate />} />
+                  <Route path="/angel-connect" element={<AngelConnect />} />
+                  <Route path="/angel-data" element={<AngelData />} />
+                  <Route path="/practitioner" element={<Practitioner />} />
+                  <Route path="/style-guide" element={<StyleGuide />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
+            </Layout>
+          </BrowserRouter>
+        </CalculatorProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

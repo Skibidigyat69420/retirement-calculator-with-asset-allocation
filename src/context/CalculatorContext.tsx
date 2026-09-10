@@ -652,24 +652,24 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`pointer-events-auto flex items-start gap-3 p-4 rounded-xl shadow-xl border text-sm transition-all duration-300 transform translate-y-0 ${
+            className={`pointer-events-auto flex items-start gap-3 p-3.5 rounded-md shadow-popover border text-sm transition-all duration-300 transform translate-y-0 bg-raised text-ink ${
               t.type === 'success'
-                ? 'bg-navy text-white border-amber-500/40'
+                ? 'border-positive/40'
                 : t.type === 'error'
-                ? 'bg-rose-900 text-white border-rose-700'
+                ? 'border-negative/40'
                 : t.type === 'warning'
-                ? 'bg-amber-900 text-white border-amber-700'
-                : 'bg-slate-900 text-white border-slate-700'
+                ? 'border-warning/40'
+                : 'border-border'
             }`}
           >
-            {t.type === 'success' && <CheckCircle2 className="text-amber-500 shrink-0 mt-0.5" size={18} />}
-            {t.type === 'error' && <AlertCircle className="text-rose-400 shrink-0 mt-0.5" size={18} />}
-            {t.type === 'warning' && <AlertTriangle className="text-amber-400 shrink-0 mt-0.5" size={18} />}
-            {t.type === 'info' && <Info className="text-blue-400 shrink-0 mt-0.5" size={18} />}
+            {t.type === 'success' && <CheckCircle2 className="text-positive shrink-0 mt-0.5" size={18} />}
+            {t.type === 'error' && <AlertCircle className="text-negative shrink-0 mt-0.5" size={18} />}
+            {t.type === 'warning' && <AlertTriangle className="text-warning shrink-0 mt-0.5" size={18} />}
+            {t.type === 'info' && <Info className="text-info shrink-0 mt-0.5" size={18} />}
             <div className="flex-1 font-medium leading-snug">{t.message}</div>
             <button
               onClick={() => removeToast(t.id)}
-              className="text-slate-300 hover:text-white shrink-0 ml-1"
+              className="text-muted hover:text-ink shrink-0 ml-1"
               aria-label="Close notification"
             >
               <X size={14} />
