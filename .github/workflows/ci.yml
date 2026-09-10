@@ -23,20 +23,22 @@ jobs:
   functions:
     name: Firebase functions — build & test
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: functions
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: functions/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
+            functions/package-lock.json
       - run: npm ci
-      - run: npx tsc --noEmit -p tsconfig.json
-      - run: npm run build
-      - run: npm test
+      - run: npm --prefix server ci
+      - run: npm --prefix functions ci
+      - run: npm --prefix functions run typecheck
+      - run: npm --prefix functions run build
+      - run: npm --prefix functions test
 
   backend:
     name: Backend — typecheck & test
@@ -57,6 +59,7 @@ jobs:
       run:
         working-directory: server
     env:
+      DATABASE_URL: postgres://postgres@localhost:54330/postgres
       TEST_DATABASE_URL: postgres://postgres@localhost:54330/stw_test
       MAINTENANCE_DATABASE_URL: postgres://postgres@localhost:54330/postgres
       RLS_DATABASE_URL: postgres://stw_rls_test:test@localhost:54330/stw_test

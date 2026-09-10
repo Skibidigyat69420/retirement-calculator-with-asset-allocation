@@ -9,7 +9,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "noEmit": true,
-    "types": ["node", "vite/client"]
+    "types": ["node"]
   },
-  "include": ["src/**/*.ts", "../api/**/*.ts", "../server/src/**/*.ts", "../src/lib/**/*.ts", "../src/types/**/*.ts"]
+  "include": ["src/**/*.ts", "../api/**/*.ts"]
 }

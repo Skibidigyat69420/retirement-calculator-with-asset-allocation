@@ -15,8 +15,7 @@ import {
   getRiskProfileById,
   type RiskProfile,
 } from '../../../src/lib/riskQuestionnaire.js';
-import type { MasterPlanInputs } from '../../../src/types/index.js';
-import type { AssumptionSet } from '../../../src/lib/assumptions.js';
+import type { MasterPlanInputs, AssumptionSet } from '../../../src/types/index.js';
 import { env } from '../config.js';
 import { withTenant, type Tx } from '../db/client.js';
 import {

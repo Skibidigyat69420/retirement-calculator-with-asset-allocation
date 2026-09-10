@@ -459,3 +459,23 @@ export interface ReversePlanningResult {
 
 // MVO Apply Destination
 export type MvoApplyDestination = 'portfolio' | 'sip' | 'stp' | 'investment' | 'targets';
+
+// Market and Category Return Assumptions
+export interface CategoryAssumptions {
+  mean: number; // annualized decimal return
+  std: number; // annualized decimal volatility
+}
+
+export interface FXAssumption {
+  mean: number; // annualized decimal return vs base currency (INR)
+  std: number;  // annualized decimal volatility
+}
+
+export interface AssumptionSet {
+  categories: Record<AssetCategory, CategoryAssumptions>;
+  covariance: Record<AssetCategory, Record<AssetCategory, number>>;
+  correlation: Record<AssetCategory, Record<AssetCategory, number>>;
+  fx: Record<string, FXAssumption>;
+  fetchedAt: string;
+  source: 'angel' | 'default';
+}

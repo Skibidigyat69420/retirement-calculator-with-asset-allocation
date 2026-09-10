@@ -4,11 +4,9 @@ import type {
   AssetCategory,
   MasterPlanInputs,
   RiskProfile,
-} from '../../../src/types/index.js';
-import type {
   AssumptionSet,
   CategoryAssumptions,
-} from '../../../src/lib/assumptions.js';
+} from '../../../src/types/index.js';
 import type {
   GoalResult,
   TaxSummary,

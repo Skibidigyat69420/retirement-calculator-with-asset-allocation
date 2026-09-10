@@ -1,6 +1,4 @@
-import type { AssetCategory, MasterPlanInputs, Goal, GoalPriority, Asset } from '../types';
-import type { AssumptionSet } from './assumptions';
-import type { RiskProfile } from '../types';
+import type { AssetCategory, MasterPlanInputs, Goal, GoalPriority, Asset, RiskProfile, AssumptionSet } from '../types';
 import { createSeededRandom } from './random';
 
 export interface CurrencyExposure {

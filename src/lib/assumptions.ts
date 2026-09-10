@@ -2,25 +2,7 @@ import type { AssetCategory } from '../types';
 import type { MarketDataSet } from './marketData';
 import { alignMarketData } from './marketData';
 import { DEFAULT_RATES, FX_ASSUMPTIONS } from './constants';
-
-export interface CategoryAssumptions {
-  mean: number; // annualized decimal return
-  std: number; // annualized decimal volatility
-}
-
-export interface FXAssumption {
-  mean: number; // annualized decimal return vs base currency (INR)
-  std: number;  // annualized decimal volatility
-}
-
-export interface AssumptionSet {
-  categories: Record<AssetCategory, CategoryAssumptions>;
-  covariance: Record<AssetCategory, Record<AssetCategory, number>>;
-  correlation: Record<AssetCategory, Record<AssetCategory, number>>;
-  fx: Record<string, FXAssumption>;
-  fetchedAt: string;
-  source: 'angel' | 'default';
-}
+export type { CategoryAssumptions, FXAssumption, AssumptionSet } from '../types';
 
 const CATEGORY_SYMBOL_MAP: Partial<Record<AssetCategory, string[]>> = {
   equity: ['NIFTY50', 'NIFTY500', 'BANKNIFTY'],
