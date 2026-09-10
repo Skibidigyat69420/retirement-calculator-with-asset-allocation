@@ -14,7 +14,7 @@ COPY api ./api
 COPY public/data ./public/data
 COPY ips ./ips
 COPY data/angel_one ./data/angel_one
-RUN cd functions && npm run build
+RUN cd functions && npm run build:standalone
 
 FROM node:22-alpine
 ENV NODE_ENV=production \
