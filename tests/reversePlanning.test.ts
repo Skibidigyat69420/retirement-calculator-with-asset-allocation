@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { runReversePlanning } from '../src/lib/reversePlanning';
 import { runWealthEngine } from '../src/lib/wealthEngine';
 import { getDefaultAssumptions } from '../src/lib/assumptions';
-import { defaultClientInputs } from '../src/lib/scenarios';
+import { demoClientInputs } from '../src/lib/scenarios';
 
 describe('reversePlanning', () => {
-  const inputs = defaultClientInputs();
+  const inputs = demoClientInputs();
   const assumptions = getDefaultAssumptions();
   const wealthResult = runWealthEngine(inputs, assumptions);
 

@@ -2,13 +2,13 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { runWealthEngine } from '../src/lib/wealthEngine';
 import { getDefaultAssumptions } from '../src/lib/assumptions';
-import { defaultClientInputs } from '../src/lib/scenarios';
+import { demoClientInputs } from '../src/lib/scenarios';
 import { evaluateGoalConflicts } from '../src/lib/goalConflictEngine';
 import type { Goal } from '../src/types';
 
 describe('Goal Connections & Enhancements', () => {
   it('funds post-retirement milestone goals during the distribution phase', () => {
-    const inputs = defaultClientInputs();
+    const inputs = demoClientInputs();
     inputs.currentAge = 40;
     inputs.retirementAge = 50; // 10 years accumulation
     inputs.lifeExpectancy = 70; // 20 years distribution
@@ -44,7 +44,7 @@ describe('Goal Connections & Enhancements', () => {
   });
 
   it('persists and prioritizes custom priorityRank in evaluateGoalConflicts', () => {
-    const inputs = defaultClientInputs();
+    const inputs = demoClientInputs();
     const assumptions = getDefaultAssumptions();
     const wealthResult = runWealthEngine(inputs, assumptions, undefined, 100, 42);
 
@@ -89,7 +89,7 @@ describe('Goal Connections & Enhancements', () => {
   });
 
   it('handles empty goals and dynamic goal addition without crashing', () => {
-    const inputs = defaultClientInputs();
+    const inputs = demoClientInputs();
     inputs.goals = []; // Test empty state
     const assumptions = getDefaultAssumptions();
     const wealthResult = runWealthEngine(inputs, assumptions, undefined, 50, 42);

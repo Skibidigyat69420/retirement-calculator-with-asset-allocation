@@ -11,7 +11,7 @@ import type {
   ClientMeetingStageId,
   AssumptionMode,
 } from '../types';
-import { defaultClientInputs } from '../lib/scenarios';
+import { defaultClientInputs, demoClientInputs } from '../lib/scenarios';
 import {
   loadAssumptions,
   buildAssumptionsFromMarketData,
@@ -55,10 +55,12 @@ interface CalculatorContextType {
   setRiskAnswers: React.Dispatch<React.SetStateAction<RiskAnswers>>;
   riskProfile: RiskProfile;
   riskScore: number;
+  hasRiskAnswers: boolean;
   applyRiskProfileToPlan: () => void;
   manualTargets: Record<AssetCategory, number> | null;
   setManualTargets: React.Dispatch<React.SetStateAction<Record<AssetCategory, number> | null>>;
   resetToDefaults: () => void;
+  loadDemoWorkspace: () => void;
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
   savedPlans: StoredPlan[];
   refreshSavedPlans: () => Promise<void>;
@@ -370,6 +372,8 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     return calculateRiskScore(riskAnswers);
   }, [riskAnswers]);
 
+  const hasRiskAnswers = useMemo(() => Object.keys(riskAnswers).length > 0, [riskAnswers]);
+
   const riskProfile = useMemo(() => {
     return getRiskProfile(riskScore);
   }, [riskScore]);
@@ -415,8 +419,13 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     localStorage.removeItem(RISK_ANSWERS_KEY);
     setActivePlanIdState(null);
     setActivePlanId(null);
-    showToast('Plan inputs and risk profile reset to defaults.', 'info');
+    showToast('Workspace reset to a blank planning state.', 'info');
   }, [setRiskAnswers, setManualTargets, showToast]);
+
+  const loadDemoWorkspace = useCallback(() => {
+    setInputs(demoClientInputs());
+    showToast('Demo workspace loaded', 'info');
+  }, [showToast]);
 
   const refreshSavedPlans = useCallback(async () => {
     try {
@@ -508,7 +517,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
           id: generateId('asset'),
           name: 'New Asset',
           value: 0,
-          returnRate: 8,
+          returnRate: 0,
           category: 'other' as AssetCategory,
           currency: 'INR',
           liquidateAtRetirement: false,
@@ -551,10 +560,10 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     setInputs((prev) => {
       const newGoal: Goal = {
         name: 'New Goal',
-        targetAmount: 1000000,
-        yearsToGoal: 5,
+        targetAmount: 0,
+        yearsToGoal: 0,
         priority: 'important',
-        inflation: prev.inflation ?? 5,
+        inflation: 0,
         recurring: false,
         ...goal,
         id,
@@ -620,10 +629,12 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         setRiskAnswers,
         riskProfile,
         riskScore,
+        hasRiskAnswers,
         applyRiskProfileToPlan,
         manualTargets,
         setManualTargets,
         resetToDefaults,
+        loadDemoWorkspace,
         showToast,
         savedPlans,
         refreshSavedPlans,

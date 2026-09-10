@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { defaultClientInputs } from '../src/lib/scenarios';
+import { demoClientInputs } from '../src/lib/scenarios';
 import { runWealthEngine } from '../src/lib/wealthEngine';
 import { getDefaultAssumptions } from '../src/lib/assumptions';
 import { computePlanHealthScore } from '../src/lib/planHealthScore';
@@ -9,7 +9,7 @@ import { runScenarioLab } from '../src/lib/scenarioLab';
 import { evaluateGoalConflicts } from '../src/lib/goalConflictEngine';
 
 describe('Adviser Operating System Engines', () => {
-  const inputs = defaultClientInputs();
+  const inputs = demoClientInputs();
   const wealthResult = runWealthEngine(inputs, getDefaultAssumptions());
 
   it('computes transparent Plan Health Score across all 7 dimensions', () => {

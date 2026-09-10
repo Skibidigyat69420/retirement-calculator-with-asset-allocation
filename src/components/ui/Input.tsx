@@ -5,11 +5,14 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   label?: string;
   suffix?: string;
   helper?: string;
+  /** Sentence-case error message. When set, renders in negative tone. */
+  error?: string;
 }
 
-export const Input = ({ label, suffix, helper, className, id, ...props }: InputProps) => {
+export const Input = ({ label, suffix, helper, error, className, id, ...props }: InputProps) => {
   const generatedId = useId();
   const inputId = id ?? generatedId;
+  const hasError = !!error;
 
   return (
     <div className={cn('space-y-1.5', className)}>
@@ -25,21 +28,28 @@ export const Input = ({ label, suffix, helper, className, id, ...props }: InputP
         <input
           id={inputId}
           {...props}
+          aria-invalid={hasError || undefined}
           className={cn(
-            'w-full bg-surface border border-border rounded-xl px-3.5 py-2.5 text-sm font-medium text-ink placeholder:text-faint transition-all shadow-2xs',
-            'focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none',
+            'w-full bg-surface border rounded-md px-3 py-2.5 text-sm text-ink placeholder:text-faint transition-colors',
+            'focus:border-accent focus:ring-2 focus:ring-accent-soft focus:outline-none',
             'hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed',
+            hasError
+              ? 'border-negative focus:border-negative focus:ring-negative-soft'
+              : 'border-border',
             suffix && 'pr-12',
           )}
         />
         {suffix && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted bg-sunken border border-border px-1.5 py-0.5 rounded select-none pointer-events-none">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted bg-sunken border border-border px-1.5 py-0.5 rounded-sm select-none pointer-events-none">
             {suffix}
           </span>
         )}
       </div>
-      {helper && <p className="text-[11px] text-faint leading-tight">{helper}</p>}
+      {(helper || error) && (
+        <p className={cn('text-xs leading-relaxed', hasError ? 'text-negative' : 'text-faint')}>
+          {error ?? helper}
+        </p>
+      )}
     </div>
   );
 };
-

@@ -2,15 +2,16 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { runWealthEngine } from '../src/lib/wealthEngine';
 import { getDefaultAssumptions } from '../src/lib/assumptions';
-import { defaultClientInputs } from '../src/lib/scenarios';
+import { createEmptyPlan, demoClientInputs } from '../src/lib/scenarios';
 
 describe('wealthEngine', () => {
   it('runWealthEngine returns the expected top-level keys', () => {
-    const inputs = defaultClientInputs();
+    const inputs = demoClientInputs();
     const assumptions = getDefaultAssumptions();
     const result = runWealthEngine(inputs, assumptions);
 
     const expectedKeys = [
+      'isConfigured',
       'netWorth',
       'totalInvested',
       'annualIncome',
@@ -57,7 +58,7 @@ describe('wealthEngine', () => {
   });
 
   it('runWealthEngine computes net worth from assets', () => {
-    const inputs = defaultClientInputs();
+    const inputs = demoClientInputs();
     const assumptions = getDefaultAssumptions();
     const result = runWealthEngine(inputs, assumptions);
     const expectedNetWorth = inputs.assets.reduce((sum, a) => sum + a.value, 0);
@@ -65,7 +66,7 @@ describe('wealthEngine', () => {
   });
 
   it('runWealthEngine returns financially sensible value ranges', () => {
-    const inputs = defaultClientInputs();
+    const inputs = demoClientInputs();
     const assumptions = getDefaultAssumptions();
     const result = runWealthEngine(inputs, assumptions);
 
@@ -83,7 +84,7 @@ describe('wealthEngine', () => {
   });
 
   it('runWealthEngine handles zero assets', () => {
-    const inputs = { ...defaultClientInputs(), assets: [] };
+    const inputs = { ...demoClientInputs(), assets: [] };
     const assumptions = getDefaultAssumptions();
     const result = runWealthEngine(inputs, assumptions);
     assert.equal(result.netWorth, 0);
@@ -91,16 +92,27 @@ describe('wealthEngine', () => {
     assert.ok(result.snapshots.length > 0);
   });
 
-  it('runWealthEngine handles retirement age equal to current age', () => {
-    const inputs = { ...defaultClientInputs(), retirementAge: defaultClientInputs().currentAge };
+  it('runWealthEngine handles retirement age equal to current age as unconfigured', () => {
+    const inputs = { ...demoClientInputs(), retirementAge: demoClientInputs().currentAge };
     const assumptions = getDefaultAssumptions();
     const result = runWealthEngine(inputs, assumptions);
-    assert.ok(Array.isArray(result.snapshots));
-    assert.ok(result.snapshots.length > 0);
+    assert.equal(result.isConfigured, false);
+    assert.deepEqual(result.snapshots, []);
+    assert.equal(result.sustainable, false);
+  });
+
+  it('runWealthEngine returns a neutral zero result for an empty plan', () => {
+    const inputs = createEmptyPlan();
+    const assumptions = getDefaultAssumptions();
+    const result = runWealthEngine(inputs, assumptions);
+    assert.equal(result.isConfigured, false);
+    assert.equal(result.netWorth, 0);
+    assert.equal(result.terminalValue, 0);
+    assert.deepEqual(result.goalResults, []);
   });
 
   it('runWealthEngine is deterministic when given the same seed', () => {
-    const inputs = defaultClientInputs();
+    const inputs = demoClientInputs();
     const assumptions = getDefaultAssumptions();
     const first = runWealthEngine(inputs, assumptions, undefined, null, 'audit-golden-seed');
     const second = runWealthEngine(inputs, assumptions, undefined, null, 'audit-golden-seed');

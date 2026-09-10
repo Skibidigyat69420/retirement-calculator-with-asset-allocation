@@ -12,16 +12,16 @@ export interface TabsProps {
   active: string;
   onChange: (id: string) => void;
   className?: string;
+  ariaLabel?: string;
 }
 
-export const Tabs = ({ tabs, active, onChange, className }: TabsProps) => {
+/** Hairline underline tabs — active tab gets a 2px moss underline, not a pill. */
+export const Tabs = ({ tabs, active, onChange, className, ariaLabel }: TabsProps) => {
   return (
     <div
       role="tablist"
-      className={cn(
-        'inline-flex items-center p-1.5 bg-zinc-100/80 backdrop-blur-xs border border-zinc-200/70 rounded-2xl shadow-2xs overflow-x-auto max-w-full gap-1',
-        className,
-      )}
+      aria-label={ariaLabel}
+      className={cn('inline-flex items-center gap-1 border-b border-border max-w-full overflow-x-auto', className)}
       style={{ scrollbarWidth: 'none' }}
     >
       {tabs.map((tab) => {
@@ -35,21 +35,14 @@ export const Tabs = ({ tabs, active, onChange, className }: TabsProps) => {
             aria-label={tab.label}
             onClick={() => onChange(tab.id)}
             className={cn(
-              'flex items-center px-3.5 sm:px-4 py-2 min-h-9 text-xs sm:text-sm rounded-xl whitespace-nowrap transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-1 cursor-pointer active:scale-[0.98] select-none',
+              'relative flex items-center gap-2 px-3.5 sm:px-4 py-2.5 -mb-px whitespace-nowrap text-sm font-medium border-b-2 transition-colors cursor-pointer select-none',
               isActive
-                ? 'bg-white text-zinc-950 font-semibold shadow-xs border border-zinc-200/80'
-                : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/60 font-medium border border-transparent',
+                ? 'border-accent text-ink'
+                : 'border-transparent text-muted hover:text-ink',
             )}
           >
             {tab.icon && (
-              <span
-                className={cn(
-                  'mr-2 transition-colors',
-                  isActive ? 'text-zinc-950' : 'text-zinc-500',
-                )}
-              >
-                {tab.icon}
-              </span>
+              <span className={cn(isActive ? 'text-accent' : 'text-faint')}>{tab.icon}</span>
             )}
             {tab.label}
           </button>
@@ -58,4 +51,3 @@ export const Tabs = ({ tabs, active, onChange, className }: TabsProps) => {
     </div>
   );
 };
-

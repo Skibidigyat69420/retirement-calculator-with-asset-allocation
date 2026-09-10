@@ -1,4 +1,5 @@
-import React from 'react';
+import type React from 'react';
+import { Info, CheckCircle2, AlertTriangle, AlertCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 export interface AlertProps {
@@ -8,37 +9,37 @@ export interface AlertProps {
   className?: string;
 }
 
-export const Alert = ({ children, variant = 'info', icon: Icon, className }: AlertProps) => {
-  const variants = {
-    info: 'bg-sky-50/70 text-sky-950 border-sky-200/80',
-    success: 'bg-emerald-50/70 text-emerald-950 border-emerald-200/80',
-    warning: 'bg-amber-50/70 text-amber-950 border-amber-200/80',
-    danger: 'bg-rose-50/70 text-rose-950 border-rose-200/80',
-  };
+const defaultIcons = {
+  info: Info,
+  success: CheckCircle2,
+  warning: AlertTriangle,
+  danger: AlertCircle,
+};
 
-  const iconStyles = {
-    info: 'text-sky-700 bg-sky-100/70 border-sky-200/60',
-    success: 'text-emerald-700 bg-emerald-100/70 border-emerald-200/60',
-    warning: 'text-amber-700 bg-amber-100/70 border-amber-200/60',
-    danger: 'text-rose-700 bg-rose-100/70 border-rose-200/60',
-  };
+const variants = {
+  info: 'bg-info-soft/60 text-ink border-info/25',
+  success: 'bg-positive-soft/60 text-ink border-positive/25',
+  warning: 'bg-warning-soft/60 text-ink border-warning/25',
+  danger: 'bg-negative-soft/60 text-ink border-negative/25',
+};
+
+const iconStyles = {
+  info: 'text-info',
+  success: 'text-positive',
+  warning: 'text-warning',
+  danger: 'text-negative',
+};
+
+export const Alert = ({ children, variant = 'info', icon: Icon, className }: AlertProps) => {
+  const IconComponent = Icon ?? defaultIcons[variant];
 
   return (
     <div
       role="alert"
-      className={cn(
-        'p-4 rounded-2xl border text-sm flex items-start gap-3.5 shadow-2xs backdrop-blur-xs transition-all',
-        variants[variant],
-        className,
-      )}
+      className={cn('p-3.5 rounded-md border text-sm flex items-start gap-3', variants[variant], className)}
     >
-      {Icon && (
-        <div className={cn('shrink-0 p-1.5 rounded-xl border flex items-center justify-center', iconStyles[variant])}>
-          <Icon size={16} />
-        </div>
-      )}
-      <div className="flex-1 leading-relaxed font-normal">{children}</div>
+      <IconComponent size={15} strokeWidth={1.8} className={cn('shrink-0 mt-0.5', iconStyles[variant])} />
+      <div className="flex-1 leading-relaxed text-pretty">{children}</div>
     </div>
   );
 };
-

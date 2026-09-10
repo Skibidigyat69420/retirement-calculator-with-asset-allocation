@@ -15,6 +15,8 @@ export interface SelectProps {
   className?: string;
   id?: string;
   'aria-label'?: string;
+  helper?: string;
+  disabled?: boolean;
 }
 
 export const Select = ({
@@ -25,6 +27,8 @@ export const Select = ({
   className,
   id,
   'aria-label': ariaLabel,
+  helper,
+  disabled,
 }: SelectProps) => {
   const generatedId = useId();
   const selectId = id ?? generatedId;
@@ -45,10 +49,11 @@ export const Select = ({
           value={value}
           onChange={(e) => onChange(e.currentTarget.value)}
           aria-label={ariaLabel || label}
+          disabled={disabled}
           className={cn(
-            'w-full appearance-none bg-surface border border-border rounded-xl px-3.5 py-2.5 pr-10 text-sm font-medium text-ink shadow-2xs',
-            'focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none',
-            'hover:border-border-strong transition-all cursor-pointer',
+            'w-full appearance-none bg-surface border border-border rounded-md px-3 py-2.5 pr-9 text-sm text-ink',
+            'focus:border-accent focus:ring-2 focus:ring-accent-soft focus:outline-none',
+            'hover:border-border-strong transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed',
           )}
         >
           {options.map((opt) => (
@@ -58,11 +63,12 @@ export const Select = ({
           ))}
         </select>
         <ChevronDown
-          size={15}
-          className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-muted"
+          size={14}
+          strokeWidth={1.8}
+          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
         />
       </div>
+      {helper && <p className="text-xs text-faint leading-relaxed">{helper}</p>}
     </div>
   );
 };
-

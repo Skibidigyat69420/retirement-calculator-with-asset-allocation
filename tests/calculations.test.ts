@@ -8,7 +8,7 @@ import {
   requiredLumpsumForGoal,
   calculateMasterPlan,
 } from '../src/lib/calculations';
-import { defaultClientInputs } from '../src/lib/scenarios';
+import { demoClientInputs } from '../src/lib/scenarios';
 
 describe('calculations', () => {
   it('calculateSIPMonthly compounds principal and contributions', () => {
@@ -82,14 +82,14 @@ describe('calculations', () => {
   });
 
   it('calculateMasterPlan handles zero income without crashing', () => {
-    const inputs = { ...defaultClientInputs(), annualIncome: 0 };
+    const inputs = { ...demoClientInputs(), annualIncome: 0 };
     const result = calculateMasterPlan(inputs);
     assert.ok(Array.isArray(result.snapshots));
     assert.ok(result.snapshots.length > 0);
   });
 
   it('calculateMasterPlan produces a full snapshot trail', () => {
-    const inputs = defaultClientInputs();
+    const inputs = demoClientInputs();
     const result = calculateMasterPlan(inputs);
     assert.ok(Array.isArray(result.snapshots));
     assert.ok(result.snapshots.length > 0);

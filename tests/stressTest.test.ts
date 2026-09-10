@@ -1,14 +1,14 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { runStressTest, CRISIS_PRESETS } from '../src/lib/stressTest';
-import { defaultClientInputs } from '../src/lib/scenarios';
+import { demoClientInputs } from '../src/lib/scenarios';
 
 describe('stressTest', () => {
   it('runs GFC 2008 stress test and detects drawdown and asset impacts', () => {
     const gfc = CRISIS_PRESETS.find((p) => p.id === 'gfc-2008')!;
     assert.ok(gfc, 'GFC preset should exist');
 
-    const result = runStressTest(defaultClientInputs(), gfc);
+    const result = runStressTest(demoClientInputs(), gfc);
 
     assert.ok(result.baselineNetWorth > 0, 'baseline net worth should be positive');
     assert.ok(result.shockedNetWorth > 0, 'shocked net worth should be positive');
@@ -33,7 +33,7 @@ describe('stressTest', () => {
 
   it('runs Stagflation shock and impacts retirement corpus and inflation', () => {
     const stagflation = CRISIS_PRESETS.find((p) => p.id === 'stagflation-1970s')!;
-    const result = runStressTest(defaultClientInputs(), stagflation);
+    const result = runStressTest(demoClientInputs(), stagflation);
 
     assert.ok(result.baselineCorpusAtRetirement > 0);
     assert.ok(result.shockedCorpusAtRetirement >= 0);
@@ -42,7 +42,7 @@ describe('stressTest', () => {
 
   it('handles zero or empty assets gracefully', () => {
     const zeroInputs = {
-      ...defaultClientInputs(),
+      ...demoClientInputs(),
       assets: [],
     };
     const gfc = CRISIS_PRESETS[0];

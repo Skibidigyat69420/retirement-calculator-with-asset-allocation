@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { cn } from '../../lib/utils';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -14,30 +14,19 @@ export const Card = ({
   ...props
 }: CardProps) => {
   const variants = {
-    default:
-      'bg-surface border border-border shadow-card hover:shadow-card-hover hover:border-border-strong text-ink',
-    elevated:
-      'bg-raised border border-border shadow-card hover:shadow-card-hover hover:border-border-strong text-ink',
-    navy:
-      'bg-sunken text-ink border border-border-strong shadow-card selection:bg-border hover:border-accent/60 hover:shadow-card-hover',
-    gold:
-      'bg-surface border border-warning/40 text-ink shadow-card hover:shadow-card-hover hover:border-warning/70',
-    subtle:
-      'bg-sunken/60 border border-border text-ink-soft hover:border-border-strong',
+    default: 'bg-raised border border-border shadow-card text-ink',
+    elevated: 'bg-raised border border-border shadow-elevated text-ink',
+    navy: 'bg-sunken border border-border-strong text-ink',
+    gold: 'bg-brass-soft border border-brass/30 text-ink',
+    subtle: 'bg-surface border border-border-subtle text-ink-soft',
   };
 
   return (
     <div
       {...props}
-      className={cn(
-        'rounded-2xl p-5 md:p-6 transition-all duration-200 ease-out print:break-inside-avoid',
-        (variant === 'default' || variant === 'elevated') && 'hover:-translate-y-0.5',
-        variants[variant],
-        className,
-      )}
+      className={cn('rounded-lg p-5 md:p-6 print:break-inside-avoid', variants[variant], className)}
     >
       {children}
     </div>
   );
 };
-

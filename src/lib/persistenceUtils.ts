@@ -1,13 +1,15 @@
 import type { MasterPlanInputs } from '../types';
 import { defaultClientInputs } from './scenarios';
 
-const CLIENT_DATA_KEY = 'soundthesis_client_inputs';
+const CLIENT_DATA_KEY = 'soundthesis_client_inputs_v2';
 
 /**
  * Storage schema version. Bump this when the persisted shape changes and add
- * a migration branch in loadClientData().
+ * a migration branch in loadClientData(). v2 accompanies the zero-state
+ * redesign: stale demo data persisted under the v1 key must not be silently
+ * loaded into the new zero-default app.
  */
-export const CLIENT_DATA_VERSION = 1;
+export const CLIENT_DATA_VERSION = 2;
 
 interface StoredClientData extends MasterPlanInputs {
   _version: number;

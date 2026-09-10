@@ -1,7 +1,57 @@
 import type { MasterPlanInputs } from '../types';
 import { DEFAULT_RATES, DEFAULT_ALLOCATION } from './constants';
 
-export const defaultClientInputs = (): MasterPlanInputs => ({
+/**
+ * Single source of truth for a blank planning workspace: every user-entered
+ * financial default is 0/empty so a zero-data state never produces invented
+ * outputs. Demo data is opt-in only via demoClientInputs().
+ */
+export const createEmptyPlan = (): MasterPlanInputs => ({
+  client: {
+    name: '',
+    email: '',
+    advisor: '',
+    reviewDate: '',
+    notes: '',
+  },
+  currentAge: 0,
+  retirementAge: 0,
+  lifeExpectancy: 0,
+  inflation: 0,
+  annualIncome: 0,
+  monthlyExpenditure: 0,
+  assets: [],
+  sip: {
+    amount: 0,
+    equitySplit: 0,
+    debtSplit: 0,
+    stepUp: 0,
+    equityReturn: 0,
+    debtReturn: 0,
+  },
+  stp: {
+    active: false,
+    source: 'idle-cash',
+    lumpsum: 0,
+    monthlyTransfer: 0,
+    liquidReturn: 0,
+    equitySplit: 0,
+    debtSplit: 0,
+    liquidCap: 0,
+  },
+  swp: {
+    monthlyNeedToday: 0,
+    postRetirementReturn: 0,
+    taxRate: 0,
+    startAge: 0,
+    endAge: 0,
+  },
+  goals: [],
+});
+
+export const defaultClientInputs = createEmptyPlan;
+
+export const demoClientInputs = (): MasterPlanInputs => ({
   client: {
     name: 'Vikram & Ananya Sharma',
     email: 'vikram.sharma@example.com',

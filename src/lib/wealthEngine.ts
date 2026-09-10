@@ -56,6 +56,8 @@ export interface MonteCarloOutcome {
 }
 
 export interface WealthEngineResult {
+  /** False when inputs were empty/invalid and every output below is a neutral zero. */
+  isConfigured: boolean;
   netWorth: number;
   totalInvested: number;
   annualIncome: number;
@@ -148,6 +150,94 @@ function sumByCategory(assets: Asset[]): Record<AssetCategory, number> {
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
+}
+
+/** Recursively replaces any non-finite number (NaN/±Infinity) with 0. */
+function sanitizeFinite<T>(value: T): T {
+  if (typeof value === 'number') return (Number.isFinite(value) ? value : 0) as T;
+  if (Array.isArray(value)) return value.map((v) => sanitizeFinite(v)) as T;
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = sanitizeFinite(v);
+    }
+    return out as T;
+  }
+  return value;
+}
+
+const ZERO_ALLOCATION: Record<AssetCategory, number> = {
+  equity: 0,
+  debt: 0,
+  gold: 0,
+  realestate: 0,
+  liquid: 0,
+  other: 0,
+};
+
+/**
+ * Neutral result for empty/invalid inputs: every financial output is 0 and
+ * every probability/sustainability flag is false/neutral, so a blank plan
+ * never surfaces fake "healthy" numbers. Real engine math is untouched.
+ */
+function emptyEngineResult(riskProfile?: { profile?: RiskProfile; score?: number }): WealthEngineResult {
+  return {
+    isConfigured: false,
+    netWorth: 0,
+    totalInvested: 0,
+    annualIncome: 0,
+    annualSavings: 0,
+    savingsRate: 0,
+    annualInvested: 0,
+    investmentRate: 0,
+    monthlySIP: 0,
+    annualExpenses: 0,
+    snapshots: [],
+    terminalValue: 0,
+    terminalRealValue: 0,
+    depletionAge: null,
+    sustainable: false,
+    cagrNominal: 0,
+    cagrReal: 0,
+    goalResults: [],
+    essentialSuccessRate: 0,
+    overallGoalSuccessRate: 0,
+    goalsAtRisk: [],
+    monteCarlo: {
+      successRate: 0,
+      medianTerminal: 0,
+      meanTerminal: 0,
+      percentile5: 0,
+      percentile25: 0,
+      percentile75: 0,
+      percentile95: 0,
+      medianDepletionAge: null,
+      outcomes: [],
+      yearlyPercentiles: [],
+    },
+    currentAllocation: { ...ZERO_ALLOCATION },
+    targetAllocation: { ...ZERO_ALLOCATION },
+    projectedAllocation: { ...ZERO_ALLOCATION },
+    rebalancingTrades: [],
+    taxSummary: { effectiveRate: 0, annualTax: 0, postTaxIncome: 0, recommendedTaxSaving: 0 },
+    currencyExposure: [],
+    riskProfile: riskProfile?.profile,
+    riskScore: riskProfile?.score ?? 50,
+    maxDrawdownProbability: 0,
+  };
+}
+
+/** True when the plan carries no financial data worth simulating. */
+function isEffectivelyEmpty(inputs: MasterPlanInputs): boolean {
+  return (
+    inputs.assets.length === 0 &&
+    inputs.annualIncome === 0 &&
+    inputs.monthlyExpenditure === 0 &&
+    inputs.sip.amount === 0 &&
+    inputs.stp.lumpsum === 0 &&
+    inputs.stp.monthlyTransfer === 0 &&
+    inputs.swp.monthlyNeedToday === 0
+  );
 }
 
 function calculateTax(income: number): TaxSummary {
@@ -633,6 +723,18 @@ export function runWealthEngine(
   const randomSource = seededRandom ? seededRandom.random : Math.random;
 
   const { lifeExpectancy, assets, sip, stp, goals, annualIncome, monthlyExpenditure } = inputs;
+  const { currentAge, retirementAge } = inputs;
+
+  // Input guards: an empty plan or an impossible timeline returns a neutral
+  // zero result instead of running math that would invent or corrupt numbers.
+  if (
+    isEffectivelyEmpty(inputs) ||
+    currentAge <= 0 ||
+    retirementAge <= currentAge ||
+    lifeExpectancy <= 0
+  ) {
+    return emptyEngineResult(riskProfile);
+  }
   const netWorth = assets.reduce((sum, a) => sum + a.value, 0);
   const annualExpenses = monthlyExpenditure * 12;
   const annualSavings = Math.max(0, annualIncome - annualExpenses);
@@ -706,7 +808,8 @@ export function runWealthEngine(
     if (maxDD > (riskProfile?.profile?.maxDrawdown || 20) / 100) maxDrawdownCount++;
   });
 
-  return {
+  return sanitizeFinite({
+    isConfigured: true,
     netWorth: round2(netWorth),
     totalInvested: round2(terminalSnapshot?.invested || 0),
     annualIncome: round2(annualIncome),
@@ -744,5 +847,5 @@ export function runWealthEngine(
     riskProfile: riskProfile?.profile,
     riskScore: riskProfile?.score || 50,
     maxDrawdownProbability: round2(maxDrawdownCount / monteCarlo.outcomes.length),
-  };
+  });
 }

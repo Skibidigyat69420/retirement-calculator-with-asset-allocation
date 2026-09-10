@@ -414,6 +414,21 @@ nav [aria-current="page"]::before {
 .animate-drawer-right-in { animation: drawer-right-in 0.28s var(--ease-standard); }
 .animate-overlay-in { animation: overlay-fade-in 0.2s ease-out; }
 
+/* Skeleton shimmer — quiet opacity sweep over sunken blocks */
+@keyframes shimmer {
+  0% { opacity: 1; }
+  50% { opacity: 0.55; }
+  100% { opacity: 1; }
+}
+.animate-shimmer {
+  animation: shimmer 1.8s var(--ease-standard) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-shimmer {
+    animation: none !important;
+  }
+}
+
 /* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
