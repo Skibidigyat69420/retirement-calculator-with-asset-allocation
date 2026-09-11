@@ -1,5 +1,12 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { formatCurrencyCompact } from '../../lib/formatters';
+import {
+  TOOLTIP_STYLE,
+  TOOLTIP_ITEM_STYLE,
+  TOOLTIP_LABEL_STYLE,
+  LEGEND_WRAPPER_STYLE,
+  resolveSliceColor,
+} from './chartPrimitives';
 
 interface DataPoint {
   name: string;
@@ -14,24 +21,13 @@ interface DonutChartProps {
   className?: string;
 }
 
-const TOOLTIP_STYLE = {
-  borderRadius: '14px',
-  border: '1px solid rgba(226, 232, 240, 0.9)',
-  backgroundColor: 'rgba(255, 255, 255, 0.96)',
-  backdropFilter: 'blur(10px)',
-  boxShadow: '0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04)',
-  padding: '10px 14px',
-};
-
-const LEGEND_WRAPPER_STYLE = { fontSize: '11px', lineHeight: '16px', width: '100%', overflow: 'hidden' };
-
 export const DonutChart = ({ data, innerRadius = 60, outerRadius = 90, className }: DonutChartProps) => {
   const total = data.reduce((acc, d) => acc + d.value, 0);
 
   if (total <= 0) {
     return (
       <div className={className || "h-72 w-full flex items-center justify-center"}>
-        <p className="text-sm text-zinc-600 text-center px-6">No allocation to display — the projected corpus is depleted at this horizon.</p>
+        <p className="text-sm text-muted text-center px-6">No allocation to display — the projected corpus is depleted at this horizon.</p>
       </div>
     );
   }
@@ -48,9 +44,11 @@ export const DonutChart = ({ data, innerRadius = 60, outerRadius = 90, className
             outerRadius={outerRadius}
             paddingAngle={2}
             dataKey="value"
+            stroke="var(--color-surface)"
+            strokeWidth={1}
           >
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color} />
+              <Cell key={`cell-${index}`} fill={resolveSliceColor(entry.name, entry.color, index)} />
             ))}
           </Pie>
           <Tooltip
@@ -59,6 +57,8 @@ export const DonutChart = ({ data, innerRadius = 60, outerRadius = 90, className
               String(name),
             ]}
             contentStyle={TOOLTIP_STYLE}
+            itemStyle={TOOLTIP_ITEM_STYLE}
+            labelStyle={TOOLTIP_LABEL_STYLE}
           />
           <Legend
             verticalAlign="bottom"
@@ -71,8 +71,8 @@ export const DonutChart = ({ data, innerRadius = 60, outerRadius = 90, className
       </ResponsiveContainer>
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ bottom: 48 }}>
         <div className="text-center">
-          <div className="text-[10px] uppercase tracking-wider text-zinc-600">Total</div>
-          <div className="text-sm font-sans font-semibold text-navy">{formatCurrencyCompact(total)}</div>
+          <div className="text-[10px] uppercase tracking-wider text-muted">Total</div>
+          <div className="text-sm font-mono tabular-nums text-ink">{formatCurrencyCompact(total)}</div>
         </div>
       </div>
     </div>

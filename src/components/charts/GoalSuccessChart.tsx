@@ -11,6 +11,13 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { formatPercent } from '../../lib/formatters';
+import {
+  getChartTheme,
+  useChartMotion,
+  TOOLTIP_STYLE,
+  TOOLTIP_ITEM_STYLE,
+  TOOLTIP_LABEL_STYLE,
+} from './chartPrimitives';
 
 export interface GoalSuccessDatum {
   name: string;
@@ -25,15 +32,6 @@ interface GoalSuccessChartProps {
 
 const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 };
 
-const TOOLTIP_STYLE = {
-  borderRadius: '14px',
-  border: '1px solid rgba(226, 232, 240, 0.9)',
-  backgroundColor: 'rgba(255, 255, 255, 0.96)',
-  backdropFilter: 'blur(10px)',
-  boxShadow: '0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04)',
-  padding: '10px 14px',
-};
-
 /**
  * Monte Carlo feasibility comparison: one bar per goal showing its simulated
  * success rate against the risk-profile success threshold.
@@ -43,6 +41,9 @@ export const GoalSuccessChart = ({
   threshold,
   ariaLabel,
 }: GoalSuccessChartProps) => {
+  const theme = getChartTheme();
+  const motion = useChartMotion();
+
   const { summary } = useMemo(() => {
     const funded = data.filter((d) => d.successRate >= threshold).length;
     const summaryText =
@@ -59,7 +60,7 @@ export const GoalSuccessChart = ({
     return (
       <div className="h-72 w-full flex items-center justify-center" role="img" aria-label={ariaLabel ?? 'Goal feasibility chart, no goals'}>
         <span className="sr-only">No goals configured.</span>
-        <p className="text-sm text-zinc-600">Add goals to compare Monte Carlo feasibility.</p>
+        <p className="text-sm text-muted">Add goals to compare Monte Carlo feasibility.</p>
       </div>
     );
   }
@@ -69,10 +70,10 @@ export const GoalSuccessChart = ({
       <span className="sr-only">{summary}</span>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={CHART_MARGIN}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4e4e7" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.grid} />
           <XAxis
             dataKey="name"
-            tick={{ fontSize: 11, fill: 'var(--color-faint)' }}
+            tick={{ fontSize: 11, fill: theme.axisLabel }}
             axisLine={false}
             tickLine={false}
             tickMargin={10}
@@ -84,31 +85,33 @@ export const GoalSuccessChart = ({
           <YAxis
             domain={[0, 100]}
             tickFormatter={(v) => `${v}%`}
-            tick={{ fontSize: 11, fill: 'var(--color-faint)' }}
+            tick={{ fontSize: 11, fill: theme.axisLabel, fontFamily: 'var(--font-mono)' }}
             axisLine={false}
             tickLine={false}
           />
           <Tooltip
-            formatter={(value: any) => [formatPercent(Number(value)), 'Success rate']}
+            formatter={(value: unknown) => [formatPercent(Number(value)), 'Success rate']}
             contentStyle={TOOLTIP_STYLE}
+            itemStyle={TOOLTIP_ITEM_STYLE}
+            labelStyle={TOOLTIP_LABEL_STYLE}
           />
           <ReferenceLine
             y={threshold}
-            stroke="var(--color-ink)"
-            strokeDasharray="4 4"
+            stroke={theme.reference}
+            strokeDasharray="4 3"
             strokeWidth={1.5}
-            label={{ value: `Target ${formatPercent(threshold)}`, position: 'insideTopRight', fill: 'var(--color-muted)', fontSize: 10, fontWeight: 600 }}
+            label={{ value: `Target ${formatPercent(threshold)}`, position: 'insideTopRight', fill: theme.axisLabel, fontSize: 10, fontWeight: 600 }}
           />
-          <Bar dataKey="successRate" name="Monte Carlo success rate" radius={[4, 4, 0, 0]} maxBarSize={56}>
+          <Bar dataKey="successRate" name="Monte Carlo success rate" radius={[4, 4, 0, 0]} maxBarSize={56} animationDuration={motion}>
             {data.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
                 fill={
                   entry.successRate >= threshold
-                    ? 'var(--color-positive)'
+                    ? theme.positive
                     : entry.successRate >= threshold * 0.6
-                      ? 'var(--color-warning)'
-                      : 'var(--color-negative)'
+                      ? theme.warning
+                      : theme.negative
                 }
               />
             ))}

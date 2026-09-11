@@ -48,7 +48,7 @@ export const CashflowWaterfallChart = ({ data, ariaLabel, summary }: CashflowWat
   if (!hasValues) {
     return (
       <div className="h-64 w-full flex items-center justify-center" role="img" aria-label={ariaLabel}>
-        <p className="text-sm text-zinc-600 text-center px-6">Add income and expenses in the Master Plan to see the annual cashflow waterfall.</p>
+        <p className="text-sm text-ink-soft text-center px-6">Add income and expenses in the Master Plan to see the annual cashflow waterfall.</p>
         <p className="sr-only">{summary}</p>
       </div>
     );
@@ -80,8 +80,8 @@ export const CashflowWaterfallChart = ({ data, ariaLabel, summary }: CashflowWat
               const datum = payload[0].payload as CashflowWaterfallDatum;
               return (
                 <div style={TOOLTIP_STYLE}>
-                  <div className="text-[11px] font-bold text-zinc-800">{datum.name}</div>
-                  <div className="text-[11px] text-zinc-600 tabular-nums">{formatCurrencyCompact(datum.value)}</div>
+                  <div className="text-[11px] font-bold text-ink">{datum.name}</div>
+                  <div className="text-[11px] text-ink-soft tabular-nums">{formatCurrencyCompact(datum.value)}</div>
                 </div>
               );
             }}

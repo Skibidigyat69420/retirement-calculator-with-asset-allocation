@@ -11,7 +11,14 @@ import {
   Legend,
 } from 'recharts';
 import { formatCurrencyCompact } from '../../lib/formatters';
-import { COLORS } from '../../lib/constants';
+import {
+  getChartTheme,
+  useChartMotion,
+  TOOLTIP_STYLE,
+  TOOLTIP_ITEM_STYLE,
+  TOOLTIP_LABEL_STYLE,
+  LEGEND_WRAPPER_STYLE,
+} from './chartPrimitives';
 
 export interface SWPDataPoint {
   label: string;
@@ -32,16 +39,10 @@ interface SWPDrawdownChartProps {
 
 const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 };
 
-const TOOLTIP_STYLE = {
-  borderRadius: '14px',
-  border: '1px solid rgba(226, 232, 240, 0.9)',
-  backgroundColor: 'rgba(255, 255, 255, 0.96)',
-  backdropFilter: 'blur(10px)',
-  boxShadow: '0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04)',
-  padding: '10px 14px',
-};
-
 export const SWPDrawdownChart = ({ data, xKey = 'label', ariaLabel }: SWPDrawdownChartProps) => {
+  const theme = getChartTheme();
+  const motion = useChartMotion();
+
   const hasWithdrawals = data.some((d) => d.withdrawal !== undefined && d.withdrawal > 0);
   const hasBand = data.some((d) => d.p5 !== undefined && d.p95 !== undefined);
   const first = data[0];
@@ -58,39 +59,35 @@ export const SWPDrawdownChart = ({ data, xKey = 'label', ariaLabel }: SWPDrawdow
 
   const bandAreas = hasBand ? (
     <>
-      <defs>
-        <linearGradient id="colorBand95" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="5%" stopColor={COLORS.navy} stopOpacity={0.08} />
-          <stop offset="95%" stopColor={COLORS.navy} stopOpacity={0.01} />
-        </linearGradient>
-      </defs>
       <Area
         type="monotone"
         dataKey="p95"
         name="P95 (Optimistic)"
-        stroke="#B68B40"
-        strokeDasharray="4 4"
+        stroke={theme.muted}
+        strokeDasharray="4 3"
         strokeWidth={1}
-        fill="url(#colorBand95)"
-        legendType="none"
+        fill="none"
+        animationDuration={motion}
       />
       <Area
         type="monotone"
         dataKey="p50"
         name="P50 (Median Path)"
-        stroke={COLORS.navy}
+        stroke={theme.reference}
         strokeWidth={1.5}
-        strokeDasharray="6 3"
+        strokeDasharray="4 3"
         fill="none"
+        animationDuration={motion}
       />
       <Area
         type="monotone"
         dataKey="p5"
         name="P5 (Stress Path)"
-        stroke="var(--color-negative)"
-        strokeDasharray="3 3"
+        stroke={theme.negative}
+        strokeDasharray="4 3"
         strokeWidth={1.5}
         fill="none"
+        animationDuration={motion}
       />
     </>
   ) : null;
@@ -101,16 +98,10 @@ export const SWPDrawdownChart = ({ data, xKey = 'label', ariaLabel }: SWPDrawdow
         <span className="sr-only">{summary}</span>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={CHART_MARGIN}>
-            <defs>
-              <linearGradient id="colorCorpus" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={COLORS.gold} stopOpacity={0.25} />
-                <stop offset="95%" stopColor={COLORS.gold} stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4e4e7" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.grid} />
             <XAxis
               dataKey={xKey}
-              tick={{ fontSize: 11, fill: '#71717a' }}
+              tick={{ fontSize: 11, fill: theme.axisLabel }}
               axisLine={false}
               tickLine={false}
               tickMargin={10}
@@ -118,7 +109,7 @@ export const SWPDrawdownChart = ({ data, xKey = 'label', ariaLabel }: SWPDrawdow
             <YAxis
               yAxisId="left"
               tickFormatter={formatCurrencyCompact}
-              tick={{ fontSize: 11, fill: '#71717a' }}
+              tick={{ fontSize: 11, fill: theme.axisLabel, fontFamily: 'var(--font-mono)' }}
               axisLine={false}
               tickLine={false}
             />
@@ -126,7 +117,7 @@ export const SWPDrawdownChart = ({ data, xKey = 'label', ariaLabel }: SWPDrawdow
               yAxisId="right"
               orientation="right"
               tickFormatter={formatCurrencyCompact}
-              tick={{ fontSize: 11, fill: '#0284c7' }}
+              tick={{ fontSize: 11, fill: theme.axisLabel, fontFamily: 'var(--font-mono)' }}
               axisLine={false}
               tickLine={false}
             />
@@ -136,21 +127,24 @@ export const SWPDrawdownChart = ({ data, xKey = 'label', ariaLabel }: SWPDrawdow
                 name,
               ]}
               contentStyle={TOOLTIP_STYLE}
+              itemStyle={TOOLTIP_ITEM_STYLE}
+              labelStyle={TOOLTIP_LABEL_STYLE}
             />
             <Legend
               verticalAlign="top"
               height={36}
               iconType="circle"
               iconSize={8}
-              wrapperStyle={{ fontSize: '11px', paddingBottom: '8px' }}
+              wrapperStyle={LEGEND_WRAPPER_STYLE}
             />
             <Bar
               yAxisId="right"
               dataKey="withdrawal"
               name="Annual SWP Cash Flow"
-              fill="#0ea5e9"
-              opacity={0.8}
+              fill={theme.secondary}
+              fillOpacity={0.35}
               radius={[4, 4, 0, 0]}
+              animationDuration={motion}
             />
             {bandAreas}
             <Area
@@ -158,9 +152,11 @@ export const SWPDrawdownChart = ({ data, xKey = 'label', ariaLabel }: SWPDrawdow
               type="monotone"
               dataKey="corpus"
               name="Remaining Corpus"
-              stroke={COLORS.gold}
-              strokeWidth={2.5}
-              fill="url(#colorCorpus)"
+              stroke={theme.primary}
+              strokeWidth={2}
+              fill={theme.primaryFill}
+              fillOpacity={0.1}
+              animationDuration={motion}
             />
           </ComposedChart>
         </ResponsiveContainer>
@@ -173,40 +169,38 @@ export const SWPDrawdownChart = ({ data, xKey = 'label', ariaLabel }: SWPDrawdow
       <span className="sr-only">{summary}</span>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={CHART_MARGIN}>
-          <defs>
-            <linearGradient id="colorCorpus" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={COLORS.gold} stopOpacity={0.2} />
-              <stop offset="95%" stopColor={COLORS.gold} stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.grid} />
           <XAxis
             dataKey={xKey}
-            tick={{ fontSize: 12, fill: '#78716c' }}
+            tick={{ fontSize: 11, fill: theme.axisLabel }}
             axisLine={false}
             tickLine={false}
             tickMargin={10}
           />
           <YAxis
             tickFormatter={formatCurrencyCompact}
-            tick={{ fontSize: 12, fill: '#78716c' }}
+            tick={{ fontSize: 11, fill: theme.axisLabel, fontFamily: 'var(--font-mono)' }}
             axisLine={false}
             tickLine={false}
           />
           <Tooltip
-            formatter={(value: any) =>
+            formatter={(value: unknown) =>
               formatCurrencyCompact(typeof value === 'number' ? value : Number(value))
             }
             contentStyle={TOOLTIP_STYLE}
+            itemStyle={TOOLTIP_ITEM_STYLE}
+            labelStyle={TOOLTIP_LABEL_STYLE}
           />
           {bandAreas}
           <Area
             type="monotone"
             dataKey="corpus"
             name="Corpus Left"
-            stroke={COLORS.gold}
-            strokeWidth={2.5}
-            fill="url(#colorCorpus)"
+            stroke={theme.primary}
+            strokeWidth={2}
+            fill={theme.primaryFill}
+            fillOpacity={0.1}
+            animationDuration={motion}
           />
         </AreaChart>
       </ResponsiveContainer>

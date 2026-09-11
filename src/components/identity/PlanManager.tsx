@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Save, FolderOpen, Trash2 } from 'lucide-react';
+import { FolderOpen, Save, Trash2 } from 'lucide-react';
 import { useCalculator } from '../../context/CalculatorContext';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -35,10 +35,10 @@ export const PlanManager = () => {
   };
 
   return (
-    <div className="p-4 bg-white rounded-xl border border-zinc-200/90 shadow-2xs space-y-4">
-      <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
-        <FolderOpen size={16} className="text-zinc-500" />
-        <span>Saved Plans ({savedPlans.length})</span>
+    <div className="p-4 rounded-lg bg-raised border border-border shadow-card space-y-4">
+      <div className="flex items-center gap-2 text-sm font-semibold tracking-tight text-ink">
+        <FolderOpen size={15} strokeWidth={1.6} className="text-muted" aria-hidden="true" />
+        <span>Saved plans ({savedPlans.length})</span>
       </div>
 
       <div className="flex gap-2">
@@ -50,16 +50,16 @@ export const PlanManager = () => {
           className="flex-1 text-xs"
         />
         <Button variant="primary" size="sm" onClick={handleSave} disabled={busy}>
-          <Save size={14} className="mr-1" /> Save
+          <Save size={13} strokeWidth={1.6} /> Save
         </Button>
       </div>
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Local Plans</span>
+          <span className="eyebrow">Local plans</span>
           <button
             onClick={() => refreshSavedPlans()}
-            className="text-xs text-zinc-600 hover:text-zinc-900 hover:underline"
+            className="text-xs text-muted hover:text-ink hover:underline cursor-pointer disabled:opacity-50"
             disabled={busy}
           >
             Refresh
@@ -67,26 +67,26 @@ export const PlanManager = () => {
         </div>
 
         {savedPlans.length === 0 ? (
-          <p className="text-xs text-zinc-500 italic">No saved plans yet. Name and save your current configuration above.</p>
+          <p className="text-xs text-faint">No saved plans yet. Name and save your current configuration above.</p>
         ) : (
           <ul className="space-y-2">
             {savedPlans.map((plan) => (
               <li
                 key={plan.id}
-                className="flex items-center justify-between p-2.5 bg-zinc-50 rounded-lg border border-zinc-100"
+                className="flex items-center justify-between p-2.5 bg-surface rounded-md border border-border"
               >
                 <div className="min-w-0 flex-1 mr-2">
-                  <p className="text-sm font-medium text-zinc-800 truncate">{plan.name}</p>
-                  <p className="text-[10px] text-zinc-500">
+                  <p className="text-sm font-medium text-ink truncate">{plan.name}</p>
+                  <p className="font-mono text-[10px] tabular-nums text-faint">
                     {new Date(plan.updatedAt).toLocaleString()}
                   </p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <Button variant="outline" size="sm" onClick={() => handleLoad(plan.id)} disabled={busy} title="Load plan">
-                    <FolderOpen size={14} />
+                    <FolderOpen size={13} strokeWidth={1.6} />
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDelete(plan.id)} disabled={busy} title="Delete plan" className="text-rose-600 hover:text-rose-700">
-                    <Trash2 size={14} />
+                  <Button variant="danger" size="sm" onClick={() => handleDelete(plan.id)} disabled={busy} title="Delete plan">
+                    <Trash2 size={13} strokeWidth={1.6} />
                   </Button>
                 </div>
               </li>

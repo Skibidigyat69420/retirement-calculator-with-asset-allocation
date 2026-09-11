@@ -83,20 +83,20 @@ export const ImplementationTransitionPlan = () => {
   };
 
   return (
-    <Card className="p-6 border border-zinc-200/90 shadow-sm space-y-5">
+    <Card className="p-6 border border-border/90 shadow-sm space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-subtle pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <ArrowRightLeft size={20} className="text-indigo-600" />
-            <h3 className="text-lg font-bold text-zinc-900 tracking-tight">
+            <ArrowRightLeft size={20} className="text-info" />
+            <h3 className="text-lg font-bold text-ink tracking-tight">
               Portfolio Transition & Implementation Plan
             </h3>
             <Badge variant="navy" className="text-[10px] tracking-wider uppercase font-semibold">
               Trade Execution
             </Badge>
           </div>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs text-muted mt-1">
             Exact rebalancing trades and SIP redirection needed to bridge Current Holdings to Target Allocation with tax friction awareness.
           </p>
         </div>
@@ -116,7 +116,7 @@ export const ImplementationTransitionPlan = () => {
       <div className="overflow-x-auto">
         <table className="w-full text-xs text-left">
           <thead>
-            <tr className="border-b border-zinc-200 text-zinc-500 uppercase tracking-wider text-[10px]">
+            <tr className="border-b border-border text-muted uppercase tracking-wider text-[10px]">
               <th className="pb-2">Asset Class</th>
               <th className="pb-2 text-right">Current Value</th>
               <th className="pb-2 text-right">Current %</th>
@@ -136,25 +136,25 @@ export const ImplementationTransitionPlan = () => {
               }
 
               return (
-                <tr key={t.category} className="hover:bg-zinc-50/70 transition-colors">
-                  <td className="py-3 font-bold text-zinc-900">{t.label}</td>
-                  <td className="py-3 text-right font-mono text-zinc-700">
+                <tr key={t.category} className="hover:bg-surface/70 transition-colors">
+                  <td className="py-3 font-bold text-ink">{t.label}</td>
+                  <td className="py-3 text-right font-mono text-ink-soft">
                     {formatCurrency(t.currentVal)}
                   </td>
-                  <td className="py-3 text-right font-mono text-zinc-600">
+                  <td className="py-3 text-right font-mono text-ink-soft">
                     {t.currentPct.toFixed(1)}%
                   </td>
-                  <td className="py-3 text-right font-mono font-bold text-zinc-900">
+                  <td className="py-3 text-right font-mono font-bold text-ink">
                     {formatCurrency(t.targetVal)}
                   </td>
-                  <td className="py-3 text-right font-mono font-bold text-indigo-700">
+                  <td className="py-3 text-right font-mono font-bold text-info">
                     {t.targetPct.toFixed(1)}%
                   </td>
                   <td className="py-3 text-right font-mono font-bold">
-                    <span className={t.deltaVal > 0 ? 'text-emerald-700' : t.deltaVal < 0 ? 'text-rose-700' : 'text-zinc-500'}>
+                    <span className={t.deltaVal > 0 ? 'text-accent-strong' : t.deltaVal < 0 ? 'text-negative' : 'text-muted'}>
                       {t.deltaVal > 0 ? `+${formatCurrencyCompact(t.deltaVal)}` : formatCurrencyCompact(t.deltaVal)}
                     </span>
-                    <span className="text-[10px] text-zinc-400 block font-normal">
+                    <span className="text-[10px] text-faint block font-normal">
                       {t.deltaPct > 0 ? `+${t.deltaPct.toFixed(1)}%` : `${t.deltaPct.toFixed(1)}%`}
                     </span>
                   </td>
@@ -167,29 +167,29 @@ export const ImplementationTransitionPlan = () => {
       </div>
 
       {/* Execution Friction Summary */}
-      <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-200/80 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+      <div className="p-4 rounded-xl bg-surface border border-border/80 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
         <div>
-          <span className="text-[10px] uppercase font-bold text-zinc-400 block">Total Rebalance Volume</span>
-          <span className="text-sm font-bold font-mono text-zinc-900">
+          <span className="text-[10px] uppercase font-bold text-faint block">Total Rebalance Volume</span>
+          <span className="text-sm font-bold font-mono text-ink">
             {formatCurrency(totalSellVolume)}
           </span>
-          <p className="text-[11px] text-zinc-500 mt-0.5">Capital shifting across asset classes</p>
+          <p className="text-[11px] text-muted mt-0.5">Capital shifting across asset classes</p>
         </div>
 
         <div>
-          <span className="text-[10px] uppercase font-bold text-zinc-400 block">Estimated LTCG Tax Drag</span>
-          <span className="text-sm font-bold font-mono text-zinc-700">
+          <span className="text-[10px] uppercase font-bold text-faint block">Estimated LTCG Tax Drag</span>
+          <span className="text-sm font-bold font-mono text-ink-soft">
             {formatCurrency(estimatedTaxDrag)}
           </span>
-          <p className="text-[11px] text-zinc-500 mt-0.5">Can be reduced to ₹0 by redirecting fresh SIPs</p>
+          <p className="text-[11px] text-muted mt-0.5">Can be reduced to ₹0 by redirecting fresh SIPs</p>
         </div>
 
         <div>
-          <span className="text-[10px] uppercase font-bold text-zinc-400 block">Est. Transaction Costs</span>
-          <span className="text-sm font-bold font-mono text-zinc-800">
+          <span className="text-[10px] uppercase font-bold text-faint block">Est. Transaction Costs</span>
+          <span className="text-sm font-bold font-mono text-ink">
             {formatCurrency(estimatedTransactionCosts)}
           </span>
-          <p className="text-[11px] text-zinc-500 mt-0.5">Brokerage, STT, and exchange turnover</p>
+          <p className="text-[11px] text-muted mt-0.5">Brokerage, STT, and exchange turnover</p>
         </div>
       </div>
     </Card>

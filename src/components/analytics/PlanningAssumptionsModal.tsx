@@ -61,19 +61,19 @@ export const PlanningAssumptionsModal = ({ isOpen, onClose }: PlanningAssumption
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/50 backdrop-blur-xs">
-      <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl border border-zinc-200 space-y-5 animate-drawer-in">
-        <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-deep/50 backdrop-blur-xs">
+      <div className="bg-raised rounded-2xl p-6 max-w-lg w-full shadow-2xl border border-border space-y-5 animate-drawer-in">
+        <div className="flex items-center justify-between border-b border-border-subtle pb-3">
           <div>
-            <h3 className="text-base font-sans font-bold text-zinc-900 flex items-center gap-2">
-              <Sliders size={18} className="text-zinc-800" />
+            <h3 className="text-base font-sans font-bold text-ink flex items-center gap-2">
+              <Sliders size={18} className="text-ink" />
               Planning Return Assumption Architecture
             </h3>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-muted">
               Select the standardized return assumption methodology applied across cashflows and the wealth engine.
             </p>
           </div>
-          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-700">
+          <button onClick={onClose} className="text-faint hover:text-ink-soft">
             <X size={18} />
           </button>
         </div>
@@ -113,8 +113,8 @@ export const PlanningAssumptionsModal = ({ isOpen, onClose }: PlanningAssumption
                 key={m.id}
                 className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer transition-all ${
                   isSelected
-                    ? 'bg-zinc-50 border-zinc-900 shadow-2xs'
-                    : 'border-zinc-200 hover:border-zinc-300'
+                    ? 'bg-surface border-ink shadow-2xs'
+                    : 'border-border hover:border-border'
                 }`}
               >
                 <input
@@ -127,10 +127,10 @@ export const PlanningAssumptionsModal = ({ isOpen, onClose }: PlanningAssumption
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <Icon size={14} className={isSelected ? 'text-zinc-900' : 'text-zinc-500'} />
-                    <span className="text-xs font-bold text-zinc-900">{m.name}</span>
+                    <Icon size={14} className={isSelected ? 'text-ink' : 'text-muted'} />
+                    <span className="text-xs font-bold text-ink">{m.name}</span>
                   </div>
-                  <p className="text-[11px] text-zinc-500 mt-0.5 leading-snug">{m.desc}</p>
+                  <p className="text-[11px] text-muted mt-0.5 leading-snug">{m.desc}</p>
                 </div>
               </label>
             );
@@ -139,8 +139,8 @@ export const PlanningAssumptionsModal = ({ isOpen, onClose }: PlanningAssumption
 
         {/* Manual Overrides Grid if Override Selected */}
         {selectedMode === 'override' && (
-          <div className="p-3.5 bg-zinc-50 rounded-xl border border-zinc-200 space-y-3">
-            <span className="text-[10px] uppercase font-bold text-zinc-700 block">
+          <div className="p-3.5 bg-surface rounded-xl border border-border space-y-3">
+            <span className="text-[10px] uppercase font-bold text-ink-soft block">
               Custom Category Return Rates (% p.a.):
             </span>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -157,11 +157,11 @@ export const PlanningAssumptionsModal = ({ isOpen, onClose }: PlanningAssumption
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100">
+        <div className="flex items-center justify-end gap-2 pt-3 border-t border-border-subtle">
           <Button variant="outline" size="sm" onClick={onClose}>
             Cancel
           </Button>
-          <Button size="sm" onClick={handleSave} className="bg-zinc-900 text-white hover:bg-zinc-800">
+          <Button size="sm" onClick={handleSave} className="bg-deep text-deep hover:bg-deep">
             Apply Methodology
           </Button>
         </div>

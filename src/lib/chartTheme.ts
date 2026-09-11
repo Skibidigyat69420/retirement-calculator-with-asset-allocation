@@ -14,6 +14,7 @@ export interface ChartTheme {
   reference: string;
   positive: string;
   negative: string;
+  warning: string;
   muted: string;
   tooltipBg: string;
   tooltipBorder: string;
@@ -30,6 +31,7 @@ export const getChartTheme = (): ChartTheme => ({
   reference: 'var(--color-brass)',
   positive: 'var(--color-positive)',
   negative: 'var(--color-negative)',
+  warning: 'var(--color-warning)',
   muted: 'var(--color-border-strong)',
   tooltipBg: 'var(--color-raised)',
   tooltipBorder: 'var(--color-border)',

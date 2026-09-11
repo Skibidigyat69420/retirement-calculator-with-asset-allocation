@@ -50,6 +50,7 @@ const ClientMeeting = lazyNamed(() => import('./pages/ClientMeetingPage'), 'Clie
 const DecisionHistory = lazyNamed(() => import('./pages/DecisionHistoryPage'), 'DecisionHistoryPage');
 const Practitioner = lazyNamed(() => import('./pages/PractitionerPage'), 'PractitionerPage');
 const StyleGuide = lazyNamed(() => import('./pages/StyleGuide'), 'StyleGuide');
+const UIReview = lazyNamed(() => import('./pages/UIReview'), 'UIReview');
 
 function App() {
   return (
@@ -78,6 +79,7 @@ function App() {
                   <Route path="/angel-data" element={<AngelData />} />
                   <Route path="/practitioner" element={<Practitioner />} />
                   <Route path="/style-guide" element={<StyleGuide />} />
+                  <Route path="/ui-review" element={<UIReview />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </Suspense>

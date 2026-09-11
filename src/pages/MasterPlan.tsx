@@ -1,9 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Sliders, Save, FileDown } from 'lucide-react';
+import { SlidersHorizontal, Save, FileDown } from 'lucide-react';
 import { useCalculator } from '../context/CalculatorContext';
+import { planStatus } from '../lib/planState';
+import { SaveIndicator } from '../components/ui/SaveIndicator';
+import { StatusBadge } from '../components/ui/StatusBadge';
 import { Button } from '../components/ui/Button';
-import { SectionTitle } from '../components/ui/SectionTitle';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import { PlanningAssumptionsModal } from '../components/analytics/PlanningAssumptionsModal';
 import { MasterPlanSidebar } from '../components/master-plan/MasterPlanSidebar';
@@ -18,6 +20,8 @@ import { ResultsStep } from '../components/master-plan/ResultsStep';
 import { calculateEMI } from '../lib/calculators';
 
 const LOANS_STORAGE_KEY = 'soundthesis_master_plan_loans';
+
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 export const MasterPlan = () => {
   const {
@@ -35,6 +39,7 @@ export const MasterPlan = () => {
     wealthResult,
     riskProfile,
     riskScore,
+    hasRiskAnswers,
     showToast,
     assumptionMode,
     setAssumptionMode,
@@ -64,6 +69,17 @@ export const MasterPlan = () => {
   };
 
   const [isAssumptionsModalOpen, setIsAssumptionsModalOpen] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+
+  const handleSave = async () => {
+    setSaveStatus('saving');
+    try {
+      await saveCurrentPlan();
+      setSaveStatus('saved');
+    } catch {
+      setSaveStatus('error');
+    }
+  };
 
   // Dedicated Loan Liabilities state, synced reactively with monthly expenditure and localStorage
   const [loans, setLoans] = useState<LoanLiability[]>(() => {
@@ -146,53 +162,63 @@ export const MasterPlan = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Top Header & Practitioner Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
-        <div>
-          <SectionTitle
-            title="Master Financial Plan"
-            subtitle="Architectural wealth blueprint: demographics, consolidated balance sheet, cashflow dynamics, and stochastic projections."
-            badge="Step 1 · Planning Foundation"
-          />
+    <div className="pb-8">
+      {/* Studio header — editable plan title, save state, plan status */}
+      <header className="border-b border-border pb-5 mb-8">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="eyebrow">Master Plan · Planning Studio</span>
+              <StatusBadge status={planStatus(inputs)} />
+            </div>
+            <input
+              type="text"
+              value={inputs.client?.name || ''}
+              onChange={(e) => updateClient({ name: e.target.value })}
+              placeholder="Untitled plan — client name"
+              aria-label="Plan title (client name)"
+              className="mt-2 w-full max-w-xl bg-transparent border-b border-transparent hover:border-border focus:border-accent focus:outline-none font-display text-3xl sm:text-4xl text-ink placeholder:text-faint transition-colors rounded-none pb-1"
+            />
+            <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
+              Demographics, balance sheet, cashflows, and stochastic projections — composed as one editorial plan.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <SaveIndicator status={saveStatus} />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAssumptionsModalOpen(true)}
+            >
+              <SlidersHorizontal size={14} aria-hidden="true" />
+              <span>Assumptions</span>
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleSave}
+              disabled={saveStatus === 'saving'}
+            >
+              <Save size={14} aria-hidden="true" />
+              <span>{saveStatus === 'saving' ? 'Saving…' : 'Save plan'}</span>
+            </Button>
+            <Link
+              to="/dossier?autoPrint=true"
+              className="inline-flex items-center gap-1.5 px-3 min-h-8 py-1.5 text-xs font-medium rounded-md border border-border-strong text-ink hover:border-ink hover:bg-surface transition-colors"
+            >
+              <FileDown size={14} aria-hidden="true" />
+              <span className="hidden md:inline">Export Dossier</span>
+              <span className="md:hidden">Export</span>
+            </Link>
+          </div>
         </div>
+      </header>
 
-        {/* Quick Utilities */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsAssumptionsModalOpen(true)}
-            className="flex items-center gap-1.5 text-xs h-9 border-border bg-surface hover:bg-sunken text-ink"
-          >
-            <Sliders size={14} className="text-accent" />
-            <span>Assumptions</span>
-          </Button>
-
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => saveCurrentPlan()}
-            className="flex items-center gap-1.5 text-xs h-9"
-          >
-            <Save size={14} />
-            <span>Quick Save</span>
-          </Button>
-
-          <Link
-            to="/dossier?autoPrint=true"
-            className="flex items-center gap-1.5 text-xs h-9 px-3 rounded-xl border border-border bg-surface hover:bg-sunken text-ink font-semibold transition-all shadow-2xs"
-          >
-            <FileDown size={14} />
-            <span className="hidden md:inline">Export Dossier</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* 3-Column Progressive Desktop Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Progressive Step Navigation Rail */}
-        <aside className="lg:col-span-3 lg:sticky lg:top-20 z-10">
+      {/* Studio layout: rail · active section · outlook */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-8 gap-y-10 items-start">
+        {/* Left: vertical progress rail */}
+        <aside className="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-20 z-10">
           <MasterPlanSidebar
             activeStep={activeStep}
             onSelectStep={handleStepChange}
@@ -200,8 +226,8 @@ export const MasterPlan = () => {
           />
         </aside>
 
-        {/* Center Column: Active Step Interactive Canvas */}
-        <main className="lg:col-span-6 min-w-0">
+        {/* Center: active section */}
+        <main className="lg:col-span-8 xl:col-span-6 min-w-0">
           {activeStep === 'profile' && (
             <ProfileStep
               inputs={inputs}
@@ -251,6 +277,7 @@ export const MasterPlan = () => {
               inputs={inputs}
               riskProfile={riskProfile}
               riskScore={riskScore}
+              hasRiskAnswers={hasRiskAnswers}
               manualTargets={manualTargets}
               setManualTargets={setManualTargets}
               onNext={() => handleStepChange('assumptions')}
@@ -280,15 +307,17 @@ export const MasterPlan = () => {
           )}
         </main>
 
-        {/* Right Column: Sticky Real-time Plan Summary */}
-        <aside className="lg:col-span-3 lg:sticky lg:top-20 z-10">
+        {/* Right: persistent plan outlook (desktop xl+) */}
+        <aside className="hidden xl:block xl:col-span-3 xl:sticky xl:top-20 z-10">
           <MasterPlanSummary
             inputs={inputs}
             wealthResult={wealthResult}
             totalLiabilities={totalLiabilities}
             netBalanceSheet={netBalanceSheet}
             debtToAssetRatio={debtToAssetRatio}
-            onSavePlan={() => saveCurrentPlan()}
+            hasRiskAnswers={hasRiskAnswers}
+            onSavePlan={handleSave}
+            onViewDetails={() => handleStepChange('results')}
           />
         </aside>
       </div>

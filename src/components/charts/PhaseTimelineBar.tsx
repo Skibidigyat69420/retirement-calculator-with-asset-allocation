@@ -56,7 +56,7 @@ export const PhaseTimelineBar = ({
           style={{ width: `${Math.max(0, accPct)}%` }}
         >
           {accPct > 14 && (
-            <span className="text-[10px] font-bold text-white truncate px-2">Accumulation · {accYears}y</span>
+            <span className="text-[10px] font-bold text-deep truncate px-2">Accumulation · {accYears}y</span>
           )}
         </div>
         <div
@@ -64,7 +64,7 @@ export const PhaseTimelineBar = ({
           style={{ width: `${Math.max(0, fundedPct)}%` }}
         >
           {fundedPct > 16 && (
-            <span className="text-[10px] font-bold text-white truncate px-2">Funded SWP · {fundedYears}y</span>
+            <span className="text-[10px] font-bold text-deep truncate px-2">Funded SWP · {fundedYears}y</span>
           )}
         </div>
         {gapPct > 0 && (
@@ -73,7 +73,7 @@ export const PhaseTimelineBar = ({
             style={{ width: `${Math.max(0, gapPct)}%` }}
           >
             {gapPct > 12 && (
-              <span className="text-[10px] font-bold text-white truncate px-2">Gap · {gapYears}y</span>
+              <span className="text-[10px] font-bold text-deep truncate px-2">Gap · {gapYears}y</span>
             )}
           </div>
         )}

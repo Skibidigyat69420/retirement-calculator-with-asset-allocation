@@ -1,1059 +1,547 @@
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { Target, TrendingUp, PieChart, Plus, AlertTriangle, CheckCircle2, BarChart3, Trash2, ArrowUpRight, Zap } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
-import { Card } from '../components/ui/Card';
-import { NumberInput } from '../components/ui/NumberInput';
-import { CurrencyInput } from '../components/ui/CurrencyInput';
-import { SectionTitle } from '../components/ui/SectionTitle';
-import { MetricCard } from '../components/ui/MetricCard';
-import { Badge } from '../components/ui/Badge';
+import { useMemo, useState } from 'react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
+import { Tabs } from '../components/ui/Tabs';
+import { Drawer } from '../components/ui/Drawer';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { EmptyState } from '../components/ui/EmptyState';
+import { StatusBadge } from '../components/ui/StatusBadge';
+import type { Status } from '../components/ui/StatusBadge';
+import { ProgressBar } from '../components/ui/ProgressBar';
+import { Badge } from '../components/ui/Badge';
+import { Input } from '../components/ui/Input';
+import { CurrencyInput } from '../components/ui/CurrencyInput';
+import { NumberInput } from '../components/ui/NumberInput';
 import { Select } from '../components/ui/Select';
-import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
+import { FinancialMetric } from '../components/ui/FinancialMetric';
+import { SectionHeader } from '../components/ui/SectionHeader';
 import { useCalculator } from '../context/CalculatorContext';
-import { WorkflowFooter } from '../components/layout/WorkflowFooter';
+import { evaluateGoalConflicts } from '../lib/goalConflictEngine';
+import { formatCurrency, formatCurrencyCompact } from '../lib/formatters';
+import { guardNumber } from '../lib/planState';
 import { GoalConflictMatrix } from '../components/analytics/GoalConflictMatrix';
-import { GoalPriorityWaterfall } from '../components/charts/GoalPriorityWaterfall';
 import { GoalSuccessChart } from '../components/charts/GoalSuccessChart';
 import { GoalHorizonTimeline } from '../components/charts/GoalHorizonTimeline';
-import { evaluateGoalConflicts } from '../lib/goalConflictEngine';
+import { GoalPriorityWaterfall } from '../components/charts/GoalPriorityWaterfall';
+import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import { cn } from '../lib/utils';
-import type { GoalPriority, Goal } from '../types';
-import type { GoalResult } from '../lib/wealthEngine';
+import type { Goal, GoalPriority } from '../types';
 
-const HISTOGRAM_MARGIN = { top: 10, right: 10, left: 0, bottom: 40 };
-const HISTOGRAM_TOOLTIP_STYLE = {
-  borderRadius: '12px',
-  border: '1px solid #e4e4e7',
-  backgroundColor: '#ffffff',
-  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-  padding: '10px 14px',
-};
+const CURRENT_YEAR = new Date().getFullYear();
 
 const priorityOptions: { value: GoalPriority; label: string }[] = [
-  { value: 'essential', label: 'Essential (Non-negotiable)' },
-  { value: 'important', label: 'Important (High Priority)' },
-  { value: 'aspirational', label: 'Aspirational (Discretionary)' },
+  { value: 'essential', label: 'Essential (non-negotiable)' },
+  { value: 'important', label: 'Important (high priority)' },
+  { value: 'aspirational', label: 'Aspirational (discretionary)' },
 ];
 
-const GOAL_PRESETS = [
-  { label: 'Higher Education', name: 'Child Higher Education', targetAmount: 3500000, yearsToGoal: 8, priority: 'essential' as GoalPriority, inflation: 8 },
-  { label: 'Home Downpayment', name: 'Home Downpayment', targetAmount: 5000000, yearsToGoal: 5, priority: 'essential' as GoalPriority, inflation: 6 },
-  { label: 'Vehicle', name: 'Vehicle Upgrade', targetAmount: 2000000, yearsToGoal: 3, priority: 'important' as GoalPriority, inflation: 5 },
-  { label: 'Vacation', name: 'Family Vacation', targetAmount: 1000000, yearsToGoal: 2, priority: 'aspirational' as GoalPriority, inflation: 5 },
-];
+const priorityTone: Record<GoalPriority, 'negative' | 'accent' | 'brass'> = {
+  essential: 'negative',
+  important: 'accent',
+  aspirational: 'brass',
+};
+
+interface TimelineRow {
+  goal: Goal;
+  year: number | null;
+  yearsAway: number | null;
+  futureCost: number | null;
+  coverage: number | null;
+  status: Status;
+}
 
 export const GoalPlanner = () => {
-  const { inputs, riskProfile, wealthResult, updateGoal, addGoal, removeGoal, updateSIP, showToast } = useCalculator();
-  const [selectedGoalId, setSelectedGoalId] = useState<string>(inputs.goals[0]?.id || '');
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const { inputs, riskProfile, wealthResult, addGoal, updateGoal, removeGoal, updateSIP, showToast } = useCalculator();
+  const reduceMotion = useReducedMotion();
+  const [activeTab, setActiveTab] = useState('timeline');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
-  // Synchronize selected goal if goals are added, removed, or switched
-  // externally — adjusted during render (derived-state pattern) rather than
-  // in an effect.
-  const [prevGoals, setPrevGoals] = useState(inputs.goals);
-  if (prevGoals !== inputs.goals) {
-    setPrevGoals(inputs.goals);
-    if (inputs.goals.length > 0 && !inputs.goals.some((g) => g.id === selectedGoalId)) {
-      setSelectedGoalId(inputs.goals[0].id);
-    } else if (inputs.goals.length === 0 && selectedGoalId !== '') {
-      setSelectedGoalId('');
-    }
-  }
-
-  const selectedGoal = useMemo(
-    () => inputs.goals.find((g) => g.id === selectedGoalId) || inputs.goals[0],
-    [inputs.goals, selectedGoalId],
-  );
-
-  const simulation = useMemo((): GoalResult | null => {
-    if (!selectedGoal) return null;
-    const found = wealthResult.goalResults.find((g) => g.goal.id === selectedGoal.id);
-    if (found) return found;
-
-    // Instant fallback simulation while deferred Monte Carlo calculation runs
-    const inflationRate = selectedGoal.inflation ?? inputs.inflation ?? 5;
-    const fv = selectedGoal.targetAmount * Math.pow(1 + inflationRate / 100, selectedGoal.yearsToGoal);
-    const expectedReturn = 0.11;
-    const r = expectedReturn / 12;
-    const n = Math.max(1, selectedGoal.yearsToGoal * 12);
-    const requiredSIP = r === 0 ? fv / n : (fv * r) / (Math.pow(1 + r, n) - 1);
-    const pvNeeded = fv / Math.pow(1 + expectedReturn, selectedGoal.yearsToGoal);
-
-    return {
-      goal: { ...selectedGoal, futureValue: Math.round(fv) },
-      futureValue: Math.round(fv),
-      pvNeeded: Math.round(pvNeeded),
-      successRate: 0.85,
-      requiredSIP: Math.round(requiredSIP),
-      probabilityDistribution: [],
-      shortfallProbability: 0.15,
-      expectedShortfall: 0,
-    };
-  }, [wealthResult.goalResults, selectedGoal, inputs.inflation]);
-
-  // Total required SIP across all configured goals
-  const totalRequiredSIP = useMemo(() => {
-    return inputs.goals.reduce((sum, goal) => {
-      const g = wealthResult.goalResults.find((res) => res.goal.id === goal.id);
-      if (g) return sum + g.requiredSIP;
-      const inflationRate = goal.inflation ?? inputs.inflation ?? 5;
-      const fv = goal.targetAmount * Math.pow(1 + inflationRate / 100, goal.yearsToGoal);
-      const r = 0.11 / 12;
-      const n = Math.max(1, goal.yearsToGoal * 12);
-      const req = r === 0 ? fv / n : (fv * r) / (Math.pow(1 + r, n) - 1);
-      return sum + Math.round(req);
-    }, 0);
-  }, [inputs.goals, inputs.inflation, wealthResult.goalResults]);
-
-  // Allocate total portfolio SIP proportionally based on each goal's required SIP weight
-  const allocatedSIP = useMemo(() => {
-    if (!simulation || totalRequiredSIP <= 0) return 0;
-    return (wealthResult.monthlySIP * simulation.requiredSIP) / totalRequiredSIP;
-  }, [simulation, totalRequiredSIP, wealthResult.monthlySIP]);
-
-  // Aggregate portfolio totals across all configured goals
-  const summaryTotals = useMemo(() => {
-    return inputs.goals.reduce(
-      (acc, goal) => {
-        const g = wealthResult.goalResults.find((res) => res.goal.id === goal.id);
-        const inflationRate = goal.inflation ?? inputs.inflation ?? 5;
-        const fv = g?.futureValue ?? Math.round(goal.targetAmount * Math.pow(1 + inflationRate / 100, goal.yearsToGoal));
-        const pv = g?.pvNeeded ?? Math.round(fv / Math.pow(1.11, goal.yearsToGoal));
-        const req = g?.requiredSIP ?? 0;
-        return {
-          totalFV: acc.totalFV + fv,
-          totalPV: acc.totalPV + pv,
-          totalReqSIP: acc.totalReqSIP + req,
-        };
-      },
-      { totalFV: 0, totalPV: 0, totalReqSIP: 0 },
-    );
-  }, [inputs.goals, inputs.inflation, wealthResult.goalResults]);
-
-  // Priority-order funding waterfall: projected wealth cascaded across goals
-  // (retirement demand is funded first by the conflict engine).
   const conflictResult = useMemo(
     () => evaluateGoalConflicts(inputs, wealthResult),
     [inputs, wealthResult],
   );
+  const fundingById = useMemo(
+    () => new Map(conflictResult.evaluatedGoals.map((g) => [g.id, g])),
+    [conflictResult],
+  );
+  const successById = useMemo(
+    () => new Map(wealthResult.goalResults.map((g) => [g.goal.id, g])),
+    [wealthResult.goalResults],
+  );
 
-  // Per-goal Monte Carlo feasibility (0–100) for the comparison bar chart.
+  // Timeline rows sorted by horizon; every derived number is guarded so
+  // NaN/Infinity and engine fallbacks never render as results.
+  const timelineRows = useMemo((): TimelineRow[] => {
+    return [...inputs.goals]
+      .sort((a, b) => (a.yearsToGoal || 0) - (b.yearsToGoal || 0))
+      .map((goal) => {
+        const funding = fundingById.get(goal.id);
+        const sim = successById.get(goal.id);
+        const usable = wealthResult.isConfigured && goal.targetAmount > 0 && goal.yearsToGoal > 0;
+
+        const coverageRaw = funding ? funding.coveragePercent : sim ? sim.successRate * 100 : null;
+        const coverage =
+          usable && guardNumber(coverageRaw) !== null
+            ? Math.min(100, Math.max(0, coverageRaw as number))
+            : null;
+
+        let status: Status = 'incomplete';
+        if (usable && coverage !== null) {
+          status = coverage >= 100 ? 'on-track' : coverage >= 60 ? 'needs-review' : 'at-risk';
+        }
+
+        const futureCost = usable
+          ? guardNumber(sim?.futureValue ?? funding?.futureCost ?? null)
+          : null;
+
+        return {
+          goal,
+          year: goal.yearsToGoal > 0 ? CURRENT_YEAR + goal.yearsToGoal : null,
+          yearsAway: goal.yearsToGoal > 0 ? goal.yearsToGoal : null,
+          futureCost,
+          coverage,
+          status,
+        };
+      });
+  }, [inputs.goals, wealthResult.isConfigured, fundingById, successById]);
+
+  // Portfolio-level summary across fully-specified goals only.
+  const summary = useMemo(() => {
+    if (!wealthResult.isConfigured) return { demand: null, coverage: null, passRate: null };
+    const usable = inputs.goals.filter((g) => g.targetAmount > 0 && g.yearsToGoal > 0);
+    if (usable.length === 0) return { demand: null, coverage: null, passRate: null };
+    let demand = 0;
+    let allocated = 0;
+    usable.forEach((g) => {
+      const f = fundingById.get(g.id);
+      if (!f) return;
+      demand += f.futureCost;
+      allocated += f.allocatedWealth;
+    });
+    const passRate = guardNumber(wealthResult.overallGoalSuccessRate);
+    return {
+      demand: demand > 0 ? demand : null,
+      coverage: demand > 0 ? Math.min(100, Math.round((allocated / demand) * 100)) : null,
+      passRate,
+    };
+  }, [wealthResult.isConfigured, wealthResult.overallGoalSuccessRate, inputs.goals, fundingById]);
+
   const goalSuccessData = useMemo(
     () =>
       wealthResult.goalResults.map((g) => ({
         name: g.goal.name,
-        successRate: g.successRate * 100,
+        successRate: Math.round(g.successRate * 1000) / 10,
       })),
     [wealthResult.goalResults],
   );
 
-  // All goals on a single horizon axis, annotated with future values.
   const horizonGoals = useMemo(
     () =>
-      inputs.goals.map((goal) => {
-        const g = wealthResult.goalResults.find((res) => res.goal.id === goal.id);
-        return {
-          id: goal.id,
-          name: goal.name,
-          yearsToGoal: goal.yearsToGoal,
-          priority: goal.priority,
-          futureValue: g?.futureValue,
-        };
-      }),
-    [inputs.goals, wealthResult.goalResults],
+      inputs.goals.map((goal) => ({
+        id: goal.id,
+        name: goal.name,
+        yearsToGoal: goal.yearsToGoal,
+        priority: goal.priority,
+        futureValue: successById.get(goal.id)?.futureValue,
+      })),
+    [inputs.goals, successById],
   );
 
-  const histogramData = useMemo(() => {
-    if (!simulation || !simulation.probabilityDistribution || simulation.probabilityDistribution.length === 0) return [];
-    return simulation.probabilityDistribution.map((bin) => ({
-      label: `${formatCurrency(bin.binStart)} - ${formatCurrency(bin.binEnd)}`,
-      midpoint: (bin.binStart + bin.binEnd) / 2,
-      probability: Number((bin.probability * 100).toFixed(1)),
-      count: bin.count,
-      isSuccess: bin.binStart >= simulation.futureValue,
-    }));
-  }, [simulation]);
+  // Combined required SIP across goals vs the current portfolio SIP.
+  const sipGap = useMemo(() => {
+    if (!wealthResult.isConfigured) return null;
+    const required = wealthResult.goalResults.reduce((sum, g) => {
+      const v = guardNumber(g.requiredSIP);
+      return v === null ? sum : sum + v;
+    }, 0);
+    const current = guardNumber(wealthResult.monthlySIP) ?? 0;
+    return required > 0 && required > current ? Math.ceil(required - current) : null;
+  }, [wealthResult.isConfigured, wealthResult.goalResults, wealthResult.monthlySIP]);
 
-  const handleAddGoal = (preset?: Partial<Goal>) => {
-    const goalName = preset?.name || `Goal ${inputs.goals.length + 1}`;
-    const newId = addGoal({
-      name: goalName,
-      targetAmount: preset?.targetAmount ?? 2500000,
-      yearsToGoal: preset?.yearsToGoal ?? 5,
-      priority: preset?.priority ?? 'important',
-      inflation: preset?.inflation ?? (inputs.inflation || 5),
-    });
-    if (newId) {
-      setSelectedGoalId(newId);
-      showToast(`Added goal "${goalName}"`, 'success');
-    }
+  const editingGoal = editingId ? inputs.goals.find((g) => g.id === editingId) ?? null : null;
+  const pendingDeleteGoal = pendingDeleteId
+    ? inputs.goals.find((g) => g.id === pendingDeleteId) ?? null
+    : null;
+
+  const handleAddGoal = () => {
+    // addGoal defaults to a blank goal (0 amount, 0 years); the edit drawer
+    // opens immediately so the target and horizon are set explicitly.
+    const id = addGoal();
+    setEditingId(id);
   };
 
-  const handleDeleteGoal = (id: string) => {
-    const targetGoal = inputs.goals.find((g) => g.id === id);
-    const goalName = targetGoal ? targetGoal.name : 'Goal';
-    const remaining = inputs.goals.filter((g) => g.id !== id);
-    removeGoal(id);
-    setConfirmDeleteId(null);
-    if (remaining.length > 0) {
-      setSelectedGoalId(remaining[0].id);
-    } else {
-      setSelectedGoalId('');
-    }
-    showToast(`Removed "${goalName}"`, 'info');
+  const handleDeleteGoal = () => {
+    if (!pendingDeleteGoal) return;
+    removeGoal(pendingDeleteGoal.id);
+    showToast(`Removed "${pendingDeleteGoal.name}"`, 'info');
+    if (editingId === pendingDeleteGoal.id) setEditingId(null);
+    setPendingDeleteId(null);
   };
 
-  if (inputs.goals.length === 0 || !selectedGoal || !simulation) {
-    return (
-      <div className="space-y-6">
-        <SectionTitle
-          title="Goal Planner"
-          subtitle="Monte Carlo goal feasibility, required SIP sizing, and cash flow priority analysis."
-          badge="Monte Carlo"
-        />
-        <Card className="flex flex-col items-center justify-center py-14 text-center bg-white border border-zinc-200">
-          <div className="w-14 h-14 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-400 mb-4 border border-zinc-200">
-            <Target size={28} />
-          </div>
-          <h3 className="text-lg font-bold text-zinc-900 mb-1.5">No Goals Configured</h3>
-          <p className="text-zinc-600 mb-6 max-w-md text-sm">
-            Add financial milestone goals or choose a template below to evaluate capital requirements and simulated success rates.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-2 max-w-lg mb-4">
-            {GOAL_PRESETS.map((p) => (
-              <Button
-                key={p.label}
-                variant="outline"
-                size="sm"
-                type="button"
-                onClick={() => handleAddGoal(p)}
-                className="text-xs font-semibold"
-              >
-                + {p.label}
-              </Button>
-            ))}
-          </div>
-          <Button type="button" onClick={() => handleAddGoal()} className="flex items-center gap-2">
-            <Plus size={16} /> Add Custom Goal
-          </Button>
-        </Card>
-      </div>
-    );
-  }
-
-  const isSelectedGoalFullyFunded = simulation.successRate >= riskProfile.goalSuccessThreshold / 100;
-  const isSelectedGoalModerate = simulation.successRate >= (riskProfile.goalSuccessThreshold / 100) * 0.6;
-  const sipGap = simulation.requiredSIP - allocatedSIP;
+  // One-click top-up preserved from the previous planner: raises the portfolio
+  // SIP by the exact combined gap across goals.
+  const handleFundGap = () => {
+    if (sipGap === null) return;
+    updateSIP({ amount: Math.round((wealthResult.monthlySIP || 0) + sipGap) });
+    showToast(`Increased portfolio SIP by ${formatCurrency(sipGap)}/mo to close the goal funding gap`, 'success');
+  };
 
   return (
-    <div className="space-y-6">
-      <SectionTitle
-        title="Goal Planner"
-        subtitle="Monte Carlo goal feasibility, required SIP sizing, and cash flow priority analysis."
-        badge="Monte Carlo"
+    <div className="pb-10">
+      <PageHeader
+        variant="hero"
+        eyebrow="Goals"
+        title="Every milestone, on one timeline."
+        description="Lay each financial goal on the horizon, fund it in priority order, and see where the capital claims collide."
+        actions={
+          <Button onClick={handleAddGoal}>
+            <Plus size={15} strokeWidth={1.8} aria-hidden="true" />
+            Add goal
+          </Button>
+        }
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Column: Goal Navigation & Selector */}
-        <Card className="lg:col-span-1 bg-white border border-zinc-200/90 shadow-2xs">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
-            <div className="flex items-center gap-2">
-              <Target size={18} className="text-zinc-500" />
-              <h3 className="text-base font-bold text-zinc-900">Milestones</h3>
-              <span className="text-xs font-mono font-bold text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full border border-zinc-200">
-                {inputs.goals.length}
-              </span>
-            </div>
-            <Button variant="outline" size="sm" type="button" onClick={() => handleAddGoal()} aria-label="Add goal" className="h-8 px-2.5">
-              <Plus size={14} className="mr-1" /> Add
+      {inputs.goals.length === 0 ? (
+        <EmptyState
+          icon={Plus}
+          eyebrow="Goals"
+          title="No goals yet"
+          description="Add the first financial goal for this client."
+          action={
+            <Button onClick={handleAddGoal}>
+              <Plus size={15} strokeWidth={1.8} aria-hidden="true" />
+              Add goal
             </Button>
-          </div>
-
-          <div className="flex flex-wrap gap-1.5 mb-3 pb-3 border-b border-zinc-100">
-            {GOAL_PRESETS.map((p) => (
-              <button
-                key={p.label}
-                type="button"
-                onClick={() => handleAddGoal(p)}
-                className="text-[11px] font-medium text-zinc-600 bg-zinc-50 hover:bg-zinc-100 hover:text-zinc-950 border border-zinc-200 px-2 py-0.5 rounded-md transition-colors"
-                title={`Quick add ${p.name}`}
-              >
-                + {p.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="space-y-2">
-            {inputs.goals.map((goal) => {
-              const g = wealthResult.goalResults.find((res) => res.goal.id === goal.id);
-              const isSelected = selectedGoalId === goal.id;
-              const successRate = g ? g.successRate : 0.85;
-              const isFunded = g ? successRate >= riskProfile.goalSuccessThreshold / 100 : false;
-              const isLow = g ? successRate < (riskProfile.goalSuccessThreshold / 100) * 0.6 : false;
-
-              return (
-                <div
-                  key={goal.id}
-                  onClick={() => setSelectedGoalId(goal.id)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      setSelectedGoalId(goal.id);
-                    }
-                  }}
-                  className={cn(
-                    "w-full text-left p-3 rounded-xl border transition-all cursor-pointer",
-                    isSelected
-                      ? "bg-zinc-950 text-white border-zinc-950 shadow-xs"
-                      : "bg-white border-zinc-200 text-zinc-900 hover:border-zinc-300 hover:bg-zinc-50/70"
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold truncate">{goal.name}</span>
-                    <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                      <span
-                        className={cn(
-                          "text-[10px] font-mono uppercase tracking-wider font-bold px-2 py-0.5 rounded-md border",
-                          isSelected
-                            ? goal.priority === 'essential'
-                              ? 'bg-rose-950/80 text-rose-300 border-rose-800'
-                              : goal.priority === 'important'
-                                ? 'bg-blue-950/80 text-blue-300 border-blue-800'
-                                : 'bg-amber-950/80 text-amber-300 border-amber-800'
-                            : goal.priority === 'essential'
-                              ? 'bg-rose-50 text-rose-700 border-rose-200'
-                              : goal.priority === 'important'
-                                ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                : 'bg-amber-50 text-amber-700 border-amber-200'
-                        )}
-                      >
-                        {goal.priority}
-                      </span>
-                      {confirmDeleteId === goal.id ? (
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteGoal(goal.id);
-                            }}
-                            className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[10px] font-bold shadow-xs transition-colors"
-                          >
-                            Confirm
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setConfirmDeleteId(null);
-                            }}
-                            className={cn(
-                              "px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors border",
-                              isSelected
-                                ? "bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700"
-                                : "bg-zinc-100 text-zinc-700 border-zinc-200 hover:bg-zinc-200"
-                            )}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setConfirmDeleteId(goal.id);
-                          }}
-                          className={cn(
-                            "p-1 rounded transition-colors",
-                            isSelected ? "text-zinc-400 hover:text-rose-400" : "text-zinc-400 hover:text-rose-600"
-                          )}
-                          title={`Delete ${goal.name}`}
-                          aria-label={`Delete ${goal.name}`}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Progress Bar & Success Metric */}
-                  <div className="mt-2">
-                    <div className={cn("w-full h-1.5 rounded-full overflow-hidden", isSelected ? "bg-zinc-800" : "bg-zinc-100")}>
-                      <div
-                        className={cn(
-                          "h-full rounded-full transition-all duration-300",
-                          isFunded ? "bg-emerald-500" : isLow ? "bg-rose-500" : "bg-amber-500"
-                        )}
-                        style={{ width: `${Math.min(100, Math.max(5, successRate * 100))}%` }}
-                      />
-                    </div>
-                    <div className={cn("text-xs mt-1.5 flex items-center justify-between", isSelected ? "text-zinc-400" : "text-zinc-500")}>
-                      <span
-                        className={
-                          isSelected
-                            ? isFunded
-                              ? 'text-emerald-400 font-semibold'
-                              : isLow
-                                ? 'text-rose-400 font-semibold'
-                                : 'text-amber-400 font-semibold'
-                            : !g
-                              ? 'text-zinc-500 font-medium'
-                              : isFunded
-                                ? 'text-emerald-700 font-semibold'
-                                : isLow
-                                  ? 'text-rose-700 font-semibold'
-                                  : 'text-amber-700 font-semibold'
-                        }
-                      >
-                        {g ? `${formatPercent(successRate * 100)} success` : 'Simulating...'}
-                      </span>
-                      <span className="font-mono">{formatCurrencyCompact(goal.targetAmount)}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-
-        {/* Right Columns: Active Goal Detail, Metrics, Histogram & Summary */}
-        <div className="lg:col-span-3 space-y-6 min-w-0">
-          {/* Required SIP Gap / Surplus Banner */}
-          {sipGap > 0 ? (
-            <div className="p-4 rounded-xl border border-rose-200 bg-gradient-to-r from-rose-50/90 via-rose-50/50 to-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-rose-100 text-rose-700 shrink-0 mt-0.5">
-                  <AlertTriangle size={18} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-rose-950">
-                      SIP Shortfall: {formatCurrency(Math.ceil(sipGap))} / month
-                    </span>
-                    <Badge variant="danger" className="text-[10px] uppercase font-bold tracking-wider">
-                      Underfunded
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-rose-800/90 mt-0.5 leading-relaxed">
-                    Allocated SIP for <strong className="font-semibold">{selectedGoal.name}</strong> is{' '}
-                    <span className="font-mono font-medium">{formatCurrency(allocatedSIP)}/mo</span> vs required{' '}
-                    <span className="font-mono font-semibold">{formatCurrency(simulation.requiredSIP)}/mo</span>. Increase portfolio SIP to hit the {riskProfile.goalSuccessThreshold}% success probability threshold.
-                  </p>
-                </div>
-              </div>
-              <Button
-                type="button"
+          }
+        />
+      ) : (
+        <>
+          {/* Portfolio summary strip — hairline grid, all values guarded. */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-border border border-border rounded-lg overflow-hidden mb-8">
+            <div className="bg-surface px-4 py-3.5">
+              <FinancialMetric
                 size="sm"
-                className="bg-rose-600 hover:bg-rose-700 text-white font-semibold shrink-0 gap-1.5 shadow-xs"
-                onClick={() => {
-                  const neededIncrease = Math.ceil(sipGap);
-                  updateSIP({ amount: wealthResult.monthlySIP + neededIncrease });
-                  showToast(`Increased portfolio SIP by ${formatCurrency(neededIncrease)}/mo to fund goal gap`, 'success');
-                }}
-              >
-                <Zap size={14} className="fill-current" />
-                Fund Gap (+{formatCurrency(Math.ceil(sipGap))}/mo)
-              </Button>
+                label="Goals on the horizon"
+                value={String(inputs.goals.length)}
+              />
             </div>
-          ) : (
-            <div className="p-4 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50/90 via-emerald-50/50 to-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-emerald-100 text-emerald-700 shrink-0 mt-0.5">
-                  <CheckCircle2 size={18} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-emerald-950">
-                      Goal Fully Funded (Surplus +{formatCurrency(Math.abs(Math.round(sipGap)))}/mo)
-                    </span>
-                    <Badge variant="success" className="text-[10px] uppercase font-bold tracking-wider">
-                      On Track
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-emerald-800/90 mt-0.5 leading-relaxed">
-                    Allocated SIP of <span className="font-mono font-medium">{formatCurrency(allocatedSIP)}/mo</span> exceeds the required{' '}
-                    <span className="font-mono font-medium">{formatCurrency(simulation.requiredSIP)}/mo</span> with a{' '}
-                    <span className="font-semibold">{formatPercent(simulation.successRate * 100)}</span> simulated probability of success.
-                  </p>
-                </div>
-              </div>
+            <div className="bg-surface px-4 py-3.5">
+              <FinancialMetric
+                size="sm"
+                label="Total future demand"
+                value={summary.demand}
+                prefix="₹"
+                hint={summary.demand === null ? 'Configure the plan to evaluate demand.' : 'Inflation-adjusted, all goals'}
+              />
             </div>
-          )}
-          {/* Top Section: Goal Form & Topline Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Goal Configuration Card */}
-            <Card className="bg-white border border-zinc-200/90 shadow-2xs min-w-0">
-              <div className="flex justify-between items-start gap-2 mb-3 pb-3 border-b border-zinc-100">
-                <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Selected Goal</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <input
-                      type="text"
-                      value={selectedGoal.name}
-                      onChange={(e) => updateGoal(selectedGoal.id, { name: e.target.value })}
-                      aria-label={`Goal name: ${selectedGoal.name}`}
-                      className="text-lg font-bold text-zinc-950 bg-transparent border-b border-zinc-200 hover:border-zinc-400 focus:border-zinc-950 focus:outline-none transition-colors w-full min-w-0 py-0.5"
-                    />
-                    {confirmDeleteId === selectedGoal.id ? (
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteGoal(selectedGoal.id)}
-                          className="px-2.5 py-1 bg-rose-600 text-white rounded-md text-xs font-semibold hover:bg-rose-700 transition-colors"
-                        >
-                          Delete
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setConfirmDeleteId(null)}
-                          className="px-2 py-1 bg-zinc-100 text-zinc-700 rounded-md text-xs font-medium hover:bg-zinc-200 border border-zinc-200 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setConfirmDeleteId(selectedGoal.id)}
-                        className="text-zinc-400 hover:text-rose-600 transition-colors p-1.5 rounded-lg border border-transparent hover:border-zinc-200 hover:bg-zinc-50 shrink-0"
-                        aria-label="Delete selected goal"
-                        title="Delete goal"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <Badge
-                  variant={selectedGoal.priority === 'essential' ? 'navy' : selectedGoal.priority === 'important' ? 'default' : 'outline'}
-                >
-                  {selectedGoal.priority}
-                </Badge>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <CurrencyInput
-                  label="Target Cost (Today's ₹)"
-                  value={selectedGoal.targetAmount}
-                  onChange={(v) => updateGoal(selectedGoal.id, { targetAmount: v })}
-                />
-                <NumberInput
-                  label="Years to Goal"
-                  value={selectedGoal.yearsToGoal}
-                  onChange={(v) => updateGoal(selectedGoal.id, { yearsToGoal: v })}
-                  min={1}
-                  max={50}
-                />
-                <NumberInput
-                  label="Category Inflation"
-                  value={selectedGoal.inflation}
-                  onChange={(v) => updateGoal(selectedGoal.id, { inflation: v })}
-                  suffix="%"
-                  min={0}
-                  max={25}
-                />
-                <Select
-                  label="Priority Tier"
-                  value={selectedGoal.priority}
-                  onChange={(v) => updateGoal(selectedGoal.id, { priority: v as GoalPriority })}
-                  options={priorityOptions}
-                />
-                <div className="col-span-2 flex items-center justify-between pt-1">
-                  <label className="flex items-center gap-2 text-xs font-medium text-zinc-700 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={selectedGoal.recurring}
-                      onChange={(e) => updateGoal(selectedGoal.id, { recurring: e.target.checked })}
-                      className="w-4 h-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 accent-zinc-900"
-                    />
-                    <span>Recurring annual milestone (funds renew each horizon)</span>
-                  </label>
-                </div>
-              </div>
-            </Card>
-
-            {/* Metric Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
-              <MetricCard
-                label="Simulated Success Rate"
-                value={formatPercent(simulation.successRate * 100)}
-                subtext={`Target threshold: ≥${riskProfile.goalSuccessThreshold}%`}
-                icon={<CheckCircle2 size={16} />}
-                variant={
-                  isSelectedGoalFullyFunded
-                    ? 'success'
-                    : isSelectedGoalModerate
-                      ? 'default'
-                      : 'danger'
+            <div className="bg-surface px-4 py-3.5">
+              <FinancialMetric
+                size="sm"
+                label="Funded by projected wealth"
+                value={summary.coverage}
+                suffix="%"
+                hint={
+                  summary.coverage === null
+                    ? undefined
+                    : summary.coverage >= 100
+                      ? 'All goals fully funded'
+                      : 'Retirement is funded first'
                 }
               />
-              <MetricCard
-                label="Future Value Demand"
-                value={formatCurrencyCompact(simulation.futureValue)}
-                subtext={`In ${selectedGoal.yearsToGoal}y (${formatCurrency(simulation.futureValue)})`}
-                icon={<Target size={16} />}
-                variant="navy"
-              />
-              <MetricCard
-                label="PV Needed Today"
-                value={formatCurrencyCompact(simulation.pvNeeded)}
-                subtext={`Discounted lump sum (${formatCurrency(simulation.pvNeeded)})`}
-                icon={<TrendingUp size={16} />}
-                variant="default"
-              />
-              <MetricCard
-                label="Required Monthly SIP"
-                value={formatCurrencyCompact(simulation.requiredSIP)}
-                subtext={`Targeted SIP (${formatCurrency(simulation.requiredSIP)})`}
-                icon={<PieChart size={16} />}
-                variant="default"
+            </div>
+            <div className="bg-surface px-4 py-3.5">
+              <FinancialMetric
+                size="sm"
+                label="Monte Carlo pass rate"
+                value={summary.passRate}
+                suffix="%"
+                hint={`Threshold ≥${riskProfile.goalSuccessThreshold}%`}
               />
             </div>
           </div>
 
-          {/* Middle Section: Outcome Distribution Histogram & Goal Insights */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Outcome Distribution Histogram */}
-            <Card className="bg-white border border-zinc-200/90 shadow-2xs">
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
-                <div className="flex items-center gap-2">
-                  <BarChart3 size={18} className="text-zinc-500" />
-                  <h3 className="text-base font-bold text-zinc-900">Outcome Distribution</h3>
-                </div>
-                <div className="text-xs font-mono font-medium text-zinc-500">
-                  {wealthResult.monteCarlo.outcomes.length.toLocaleString()} simulated paths
-                </div>
-              </div>
+          {sipGap !== null && (
+            <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3">
+              <p className="text-sm text-ink leading-relaxed">
+                The goals need a combined SIP above the current portfolio contribution — shortfall{' '}
+                <span className="font-mono tabular-nums font-medium">{formatCurrency(sipGap)}/mo</span>.
+              </p>
+              <Button variant="outline" size="sm" onClick={handleFundGap} className="shrink-0">
+                Fund gap (+{formatCurrency(sipGap)}/mo)
+              </Button>
+            </div>
+          )}
 
-              <div className="h-72 w-full">
-                {histogramData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={histogramData} margin={HISTOGRAM_MARGIN}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4e4e7" />
-                      <XAxis
-                        dataKey="midpoint"
-                        tickFormatter={(v) => formatCurrencyCompact(Number(v))}
-                        tick={{ fontSize: 10, fill: '#71717a' }}
-                        angle={-45}
-                        textAnchor="end"
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        tickFormatter={(v) => `${v}%`}
-                        tick={{ fontSize: 11, fill: '#71717a' }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <Tooltip
-                        formatter={(value: any, _name: any, props: any) => {
-                          const p = props?.payload;
-                          return [`${formatPercent(Number(value))} chance`, `Range: ${formatCurrency(p?.midpoint)}`];
-                        }}
-                        contentStyle={HISTOGRAM_TOOLTIP_STYLE}
-                      />
-                      <ReferenceLine
-                        x={simulation.futureValue}
-                        stroke="#18181b"
-                        strokeWidth={1.5}
-                        strokeDasharray="4 4"
-                        label={{ value: 'Target FV', position: 'top', fill: '#18181b', fontSize: 10, fontWeight: 600 }}
-                      />
-                      <Bar dataKey="probability" name="Probability" radius={[3, 3, 0, 0]}>
-                        {histogramData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.isSuccess ? '#18181b' : '#d4d4d8'} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-zinc-400 text-xs gap-2">
-                    <BarChart3 size={24} className="animate-pulse text-zinc-300" />
-                    <span>Running Monte Carlo simulation paths...</span>
-                  </div>
-                )}
-              </div>
+          <Tabs
+            className="mb-8"
+            ariaLabel="Goal planner views"
+            active={activeTab}
+            onChange={setActiveTab}
+            tabs={[
+              { id: 'timeline', label: 'Timeline' },
+              { id: 'conflicts', label: 'Conflicts' },
+              { id: 'feasibility', label: 'Feasibility' },
+            ]}
+          />
 
-              <div className="flex items-center justify-center gap-6 mt-3 text-xs text-zinc-600 border-t border-zinc-100 pt-3">
-                <span className="flex items-center gap-1.5 font-medium">
-                  <span className="w-3 h-3 rounded-xs bg-zinc-900 inline-block" />
-                  Funded region (≥ Target FV)
-                </span>
-                <span className="flex items-center gap-1.5 font-medium">
-                  <span className="w-3 h-3 rounded-xs bg-zinc-300 inline-block" />
-                  Shortfall region (&lt; Target FV)
-                </span>
-              </div>
-            </Card>
+          {activeTab === 'timeline' && (
+            <motion.section
+              key="timeline"
+              initial={reduceMotion ? undefined : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              aria-label="Goal timeline"
+            >
+              <SectionHeader
+                title="Horizon"
+                description="Earliest milestone first. Markers turn moss when a goal is fully funded."
+                hairline
+              />
 
-            {/* Feasibility Breakdown & Cash Flow Allocation */}
-            <Card className="bg-white border border-zinc-200/90 shadow-2xs">
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
-                <div className="flex items-center gap-2">
-                  <TrendingUp size={18} className="text-zinc-500" />
-                  <h3 className="text-base font-bold text-zinc-900">Goal Feasibility & Cash Flow</h3>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {/* Feasibility Banner */}
+              <ol className="relative mt-6">
+                {/* Vertical rail */}
                 <div
-                  className={`p-3.5 rounded-xl border flex items-start gap-3 ${
-                    isSelectedGoalFullyFunded
-                      ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
-                      : isSelectedGoalModerate
-                        ? 'bg-zinc-50 border-zinc-200 text-zinc-900'
-                        : 'bg-rose-50/70 border-rose-200 text-rose-950'
-                  }`}
-                >
-                  {isSelectedGoalFullyFunded ? (
-                    <CheckCircle2 size={18} className="text-emerald-700 shrink-0 mt-0.5" />
-                  ) : isSelectedGoalModerate ? (
-                    <AlertTriangle size={18} className="text-zinc-700 shrink-0 mt-0.5" />
-                  ) : (
-                    <AlertTriangle size={18} className="text-rose-700 shrink-0 mt-0.5" />
-                  )}
-                  <div>
-                    <div className="text-sm font-semibold">
-                      {isSelectedGoalFullyFunded
-                        ? 'Goal Fully Funded'
-                        : isSelectedGoalModerate
-                          ? 'Moderate Funding Gap'
-                          : 'Significant Unfunded Gap'}
+                  aria-hidden="true"
+                  className="absolute left-[5.05rem] sm:left-[6.3rem] top-2 bottom-8 w-px bg-border"
+                />
+                {timelineRows.map((row) => (
+                  <li key={row.goal.id} className="relative flex gap-3 sm:gap-4 pb-8">
+                    {/* Year column */}
+                    <div className="w-16 sm:w-20 shrink-0 text-right pt-0.5">
+                      <div className="font-mono tabular-nums text-sm text-ink">
+                        {row.year ?? '—'}
+                      </div>
+                      <div className="font-mono text-[10px] uppercase tracking-[0.08em] text-faint mt-0.5">
+                        {row.yearsAway !== null ? `${row.yearsAway}y out` : 'Set horizon'}
+                      </div>
                     </div>
-                    <p
-                      className={`text-xs mt-0.5 leading-relaxed ${
-                        isSelectedGoalFullyFunded
-                          ? 'text-emerald-800'
-                          : isSelectedGoalModerate
-                            ? 'text-zinc-600'
-                            : 'text-rose-800'
-                      }`}
-                    >
-                      {isSelectedGoalFullyFunded
-                        ? `${formatPercent(simulation.successRate * 100)} simulated probability of fully funding this goal with current allocation and SIP.`
-                        : isSelectedGoalModerate
-                          ? `${formatPercent(simulation.successRate * 100)} simulated probability. Consider raising monthly SIP or extending target horizon.`
-                          : `${formatPercent(simulation.successRate * 100)} simulated probability. Substantial shortfall risk under current parameters.`}
-                    </p>
-                  </div>
-                </div>
 
-                {/* Quantitative Details */}
-                <div className="space-y-2 text-xs border border-zinc-100 rounded-xl p-3.5 bg-zinc-50/50">
-                  <div className="flex justify-between py-1 border-b border-zinc-100">
-                    <span className="text-zinc-500">Goal target (today's ₹)</span>
-                    <span className="font-mono font-medium text-zinc-900">{formatCurrency(selectedGoal.targetAmount)}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-zinc-100">
-                    <span className="text-zinc-500">Inflation-adjusted target FV</span>
-                    <span className="font-mono font-medium text-zinc-900">{formatCurrency(simulation.futureValue)}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-zinc-100">
-                    <span className="text-zinc-500">Present value needed today</span>
-                    <span className="font-mono font-medium text-zinc-900">{formatCurrency(simulation.pvNeeded)}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-zinc-100">
-                    <span className="text-zinc-500">Required monthly SIP</span>
-                    <span className="font-mono font-semibold text-zinc-900">{formatCurrency(simulation.requiredSIP)}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-zinc-100">
-                    <span className="text-zinc-500">Total portfolio SIP</span>
-                    <span className="font-mono font-medium text-zinc-900">{formatCurrency(wealthResult.monthlySIP)}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-zinc-100">
-                    <span className="text-zinc-500">Combined SIP demand (all goals)</span>
-                    <span className="font-mono font-medium text-zinc-900">{formatCurrency(totalRequiredSIP)}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-zinc-100">
-                    <span className="text-zinc-500">Allocated monthly SIP (proportional)</span>
-                    <span className="font-mono font-medium text-zinc-900">{formatCurrency(allocatedSIP)}</span>
-                  </div>
-                  <div className="flex justify-between py-1 pt-2 font-medium">
-                    <span className="text-zinc-700">Monthly SIP gap / surplus</span>
-                    <span
-                      className={`font-mono font-bold ${
-                        sipGap <= 0 ? 'text-emerald-700' : 'text-rose-700'
-                      }`}
-                    >
-                      {sipGap <= 0
-                        ? `+${formatCurrency(Math.abs(sipGap))} surplus`
-                        : `-${formatCurrency(sipGap)} gap`}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </div>
+                    {/* Marker */}
+                    <div className="relative shrink-0 pt-2" aria-hidden="true">
+                      <span
+                        className={cn(
+                          'block w-2.5 h-2.5 rounded-full border-2 border-surface shadow-card',
+                          row.status === 'on-track' ? 'bg-positive' : 'bg-brass',
+                        )}
+                      />
+                    </div>
 
-          {/* Bottom Section: All Goals Summary Table */}
-          <Card className="bg-white border border-zinc-200/90 shadow-2xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-zinc-100">
-              <div className="flex items-center gap-2">
-                <PieChart size={18} className="text-zinc-500" />
-                <h3 className="text-base font-bold text-zinc-900">All Goals Summary</h3>
-              </div>
-              <div className="flex items-center gap-3">
-                <Link
-                  to="/master-plan?tab=goals"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-zinc-700 hover:text-zinc-950 px-2.5 py-1 rounded-lg bg-zinc-100 hover:bg-zinc-200/70 border border-zinc-200 transition-colors"
-                >
-                  Master Plan Editor <ArrowUpRight size={12} />
-                </Link>
-                <span className="text-xs font-mono text-zinc-500">
-                  {inputs.goals.length} configured milestone{inputs.goals.length !== 1 ? 's' : ''}
-                </span>
-              </div>
-            </div>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0 border-b border-border-subtle pb-6">
+                      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-[15px] font-semibold tracking-tight text-ink truncate">
+                              {row.goal.name}
+                            </h3>
+                            <Badge tone={priorityTone[row.goal.priority]}>{row.goal.priority}</Badge>
+                            <StatusBadge status={row.status} />
+                          </div>
+                          <p className="mt-1 text-xs text-muted">
+                            {row.futureCost !== null ? (
+                              <>
+                                Future cost{' '}
+                                <span className="font-mono tabular-nums text-ink-soft">
+                                  {formatCurrencyCompact(row.futureCost)}
+                                </span>{' '}
+                                after inflation
+                              </>
+                            ) : (
+                              'Add a target amount and horizon to evaluate funding.'
+                            )}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="font-mono tabular-nums text-base text-ink">
+                            {row.goal.targetAmount > 0 ? formatCurrencyCompact(row.goal.targetAmount) : '—'}
+                          </div>
+                          <div className="text-[10px] uppercase tracking-[0.08em] text-faint">
+                            Target (today's ₹)
+                          </div>
+                        </div>
+                      </div>
 
-            <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Goals summary table">
-              <table className="w-full text-xs text-left">
-                <thead>
-                  <tr className="border-b border-zinc-200 text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
-                    <th className="py-2.5 pr-4">Goal</th>
-                    <th className="py-2.5 pr-4">Priority</th>
-                    <th className="py-2.5 pr-4 text-right">Horizon</th>
-                    <th className="py-2.5 pr-4 text-right">Future Value</th>
-                    <th className="py-2.5 pr-4 text-right">PV Needed</th>
-                    <th className="py-2.5 pr-4 text-right">Required SIP</th>
-                    <th className="py-2.5 pr-4 text-right">Success Rate</th>
-                    <th className="py-2.5 pr-4 text-right">Shortfall Risk</th>
-                    <th className="py-2.5 pl-2 text-center">Status</th>
-                    <th className="py-2.5 pr-2 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100">
-                  {inputs.goals.map((goal) => {
-                    const g = wealthResult.goalResults.find((res) => res.goal.id === goal.id);
-                    const isSelected = selectedGoalId === goal.id;
-                    const inflationRate = goal.inflation ?? inputs.inflation ?? 5;
-                    const futureVal = g?.futureValue ?? Math.round(goal.targetAmount * Math.pow(1 + inflationRate / 100, goal.yearsToGoal));
-                    const pvNeeded = g?.pvNeeded ?? Math.round(futureVal / Math.pow(1.11, goal.yearsToGoal));
-                    const requiredSIP = g?.requiredSIP ?? 0;
-                    const successRate = g?.successRate ?? 0.85;
-                    const isFunded = g ? successRate >= riskProfile.goalSuccessThreshold / 100 : false;
-                    const isLow = g ? successRate < (riskProfile.goalSuccessThreshold / 100) * 0.6 : false;
-
-                    return (
-                      <tr
-                        key={goal.id}
-                        onClick={() => setSelectedGoalId(goal.id)}
-                        className={`transition-colors cursor-pointer ${
-                          isSelected ? 'bg-zinc-100/70 font-medium' : 'hover:bg-zinc-50/80'
-                        }`}
-                      >
-                        <td className="py-2.5 pr-4 font-semibold text-zinc-950">
-                          {goal.name}
-                          {isSelected && <span className="ml-2 text-[10px] font-mono text-zinc-500">(Selected)</span>}
-                        </td>
-                        <td className="py-2.5 pr-4">
-                          <Badge
-                            variant={
-                              goal.priority === 'essential'
-                                ? 'navy'
-                                : goal.priority === 'important'
-                                  ? 'default'
-                                  : 'outline'
-                            }
+                      <div className="mt-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+                        <div className="w-full max-w-xs">
+                          {row.coverage !== null ? (
+                            <ProgressBar value={row.coverage} label="Funded" showValue />
+                          ) : (
+                            <p className="text-xs text-faint">Funding —</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => setEditingId(row.goal.id)}>
+                            <Pencil size={13} strokeWidth={1.6} aria-hidden="true" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="hover:text-negative"
+                            onClick={() => setPendingDeleteId(row.goal.id)}
+                            aria-label={`Delete ${row.goal.name}`}
                           >
-                            {goal.priority}
-                          </Badge>
-                        </td>
-                        <td className="py-2.5 pr-4 text-right font-mono text-zinc-600">
-                          {goal.yearsToGoal}y
-                        </td>
-                        <td className="py-2.5 pr-4 text-right font-mono font-medium text-zinc-900">
-                          {formatCurrencyCompact(futureVal)}
-                        </td>
-                        <td className="py-2.5 pr-4 text-right font-mono text-zinc-600">
-                          {formatCurrencyCompact(pvNeeded)}
-                        </td>
-                        <td className="py-2.5 pr-4 text-right font-mono font-semibold text-zinc-900">
-                          {requiredSIP > 0 ? formatCurrency(requiredSIP) : '—'}
-                        </td>
-                        <td className="py-2.5 pr-4 text-right font-mono font-bold">
-                          {g ? (
-                            <span
-                              className={
-                                isFunded
-                                  ? 'text-emerald-700'
-                                  : isLow
-                                    ? 'text-rose-700'
-                                    : 'text-zinc-800'
-                              }
-                            >
-                              {formatPercent(successRate * 100)}
-                            </span>
-                          ) : (
-                            <span className="text-zinc-400 font-normal">Simulating...</span>
-                          )}
-                        </td>
-                        <td className="py-2.5 pr-4 text-right font-mono text-zinc-600">
-                          {g ? (
-                            <span className={g.shortfallProbability > 0.3 ? 'text-rose-700 font-semibold' : ''}>
-                              {formatPercent(g.shortfallProbability * 100)}
-                            </span>
-                          ) : (
-                            <span className="text-zinc-400">—</span>
-                          )}
-                        </td>
-                        <td className="py-2.5 pl-2 text-center">
-                          {!g ? (
-                            <Badge variant="outline">Pending</Badge>
-                          ) : isFunded ? (
-                            <Badge variant="success">Funded</Badge>
-                          ) : isLow ? (
-                            <Badge variant="danger">Gap</Badge>
-                          ) : (
-                            <Badge variant="warning">At Risk</Badge>
-                          )}
-                        </td>
-                        <td className="py-2.5 pr-2 text-right" onClick={(e) => e.stopPropagation()}>
-                          {confirmDeleteId === goal.id ? (
-                            <div className="flex items-center justify-end gap-1">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteGoal(goal.id);
-                                }}
-                                className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[11px] font-bold shadow-xs transition-colors"
-                              >
-                                Confirm
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setConfirmDeleteId(null);
-                                }}
-                                className="px-1.5 py-0.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200 rounded text-[11px] font-medium transition-colors"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-end gap-1">
-                              <button
-                                type="button"
-                                onClick={() => setSelectedGoalId(goal.id)}
-                                className={cn(
-                                  "px-2 py-1 rounded text-xs font-semibold transition-colors",
-                                  isSelected
-                                    ? "bg-zinc-900 text-white"
-                                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
-                                )}
-                              >
-                                {isSelected ? 'Active' : 'Edit'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setConfirmDeleteId(goal.id);
-                                }}
-                                className="text-zinc-400 hover:text-rose-600 p-1 rounded hover:bg-zinc-100 transition-colors"
-                                title={`Delete ${goal.name}`}
-                                aria-label={`Delete ${goal.name}`}
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot className="border-t-2 border-zinc-200 bg-zinc-50/80 font-semibold text-zinc-900">
-                  <tr>
-                    <td colSpan={3} className="py-3 pr-4 text-xs font-bold text-zinc-950">
-                      Total Portfolio Demand ({inputs.goals.length} Goal{inputs.goals.length !== 1 ? 's' : ''})
-                    </td>
-                    <td className="py-3 pr-4 text-right font-mono font-bold text-zinc-950">
-                      {formatCurrencyCompact(summaryTotals.totalFV)}
-                    </td>
-                    <td className="py-3 pr-4 text-right font-mono font-bold text-zinc-700">
-                      {formatCurrencyCompact(summaryTotals.totalPV)}
-                    </td>
-                    <td className="py-3 pr-4 text-right font-mono font-bold text-zinc-950">
-                      {formatCurrency(summaryTotals.totalReqSIP)}
-                    </td>
-                    <td colSpan={4} className="py-3 pr-2 text-right text-[11px] font-medium text-zinc-500">
-                      Allocated monthly SIP: {formatCurrency(wealthResult.monthlySIP)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
+                            <Trash2 size={13} strokeWidth={1.6} aria-hidden="true" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </motion.section>
+          )}
+
+          {activeTab === 'conflicts' && (
+            <motion.section
+              key="conflicts"
+              initial={reduceMotion ? undefined : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              className="space-y-10"
+              aria-label="Goal conflicts"
+            >
+              <GoalConflictMatrix />
+              <div>
+                <SectionHeader
+                  title="Priority funding waterfall"
+                  description="Projected wealth cascades down the priority list — retirement first, then each goal in rank order."
+                  hairline
+                />
+                <div className="mt-4 rounded-lg border border-border bg-surface p-5">
+                  <GoalPriorityWaterfall result={conflictResult} />
+                </div>
+              </div>
+            </motion.section>
+          )}
+
+          {activeTab === 'feasibility' && (
+            <motion.section
+              key="feasibility"
+              initial={reduceMotion ? undefined : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              className="space-y-10"
+              aria-label="Goal feasibility"
+            >
+              {!wealthResult.isConfigured ? (
+                <div className="rounded-lg border border-border bg-surface px-5 py-10 text-center">
+                  <p className="text-sm text-muted max-w-md mx-auto">
+                    Feasibility is evaluated once the plan has income, assets and a SIP. Until
+                    then, every probability would be a placeholder — not a result.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <SectionHeader
+                      title="Monte Carlo feasibility by goal"
+                      description={`Simulated probability of fully funding each goal against the ${riskProfile.goalSuccessThreshold}% threshold.`}
+                      hairline
+                    />
+                    <div className="mt-4 rounded-lg border border-border bg-surface p-5">
+                      <GoalSuccessChart
+                        data={goalSuccessData}
+                        threshold={riskProfile.goalSuccessThreshold}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <SectionHeader
+                      title="Goal horizon"
+                      description="All milestones on one axis — clustered markers reveal cash-flow crunches."
+                      hairline
+                    />
+                    <div className="mt-4 rounded-lg border border-border bg-surface p-5">
+                      <GoalHorizonTimeline goals={horizonGoals} currentAge={inputs.currentAge} />
+                    </div>
+                  </div>
+                </>
+              )}
+            </motion.section>
+          )}
+        </>
+      )}
+
+      {/* Edit drawer — also the immediate destination of the add flow. */}
+      <Drawer
+        open={editingGoal !== null}
+        onClose={() => setEditingId(null)}
+        title={editingGoal ? `Edit goal — ${editingGoal.name}` : 'Edit goal'}
+        width={460}
+      >
+        {editingGoal && (
+          <div className="space-y-5">
+            <Input
+              label="Goal name"
+              value={editingGoal.name}
+              onChange={(e) => updateGoal(editingGoal.id, { name: e.target.value })}
+              placeholder="e.g. Child higher education"
+            />
+            <CurrencyInput
+              label="Target amount"
+              value={editingGoal.targetAmount}
+              onChange={(v) => updateGoal(editingGoal.id, { targetAmount: v })}
+              helper="What this goal should cost in today's rupees."
+            />
+            <NumberInput
+              label="Years to goal"
+              value={editingGoal.yearsToGoal}
+              onChange={(v) => updateGoal(editingGoal.id, { yearsToGoal: v })}
+              min={0}
+              max={50}
+              helper="Years from now until the money is needed."
+            />
+            <NumberInput
+              label="Inflation"
+              value={editingGoal.inflation}
+              onChange={(v) => updateGoal(editingGoal.id, { inflation: v })}
+              suffix="%"
+              min={0}
+              max={25}
+              helper="Expected annual price rise for this goal."
+            />
+            <Select
+              label="Priority"
+              value={editingGoal.priority}
+              onChange={(v) => updateGoal(editingGoal.id, { priority: v as GoalPriority })}
+              options={priorityOptions}
+              helper="Essential goals are funded first when capital is scarce."
+            />
+            <label className="flex items-start gap-2.5 text-sm text-ink-soft cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={editingGoal.recurring}
+                onChange={(e) => updateGoal(editingGoal.id, { recurring: e.target.checked })}
+                className="mt-0.5 w-4 h-4 rounded border-border accent-accent"
+              />
+              <span>Recurring milestone — the goal renews each horizon.</span>
+            </label>
+            <div className="pt-3 border-t border-border flex items-center justify-between">
+              <Button variant="danger" size="sm" onClick={() => setPendingDeleteId(editingGoal.id)}>
+                <Trash2 size={13} strokeWidth={1.6} aria-hidden="true" />
+                Delete goal
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => setEditingId(null)}>
+                Done
+              </Button>
             </div>
-          </Card>
-        </div>
-      </div>
-
-      {/* Goal Priority Funding Waterfall & Monte Carlo Feasibility */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-white border border-zinc-200/90 shadow-2xs">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
-            <div className="flex items-center gap-2">
-              <PieChart size={18} className="text-zinc-500" />
-              <h3 className="text-base font-bold text-zinc-900">Priority Funding Waterfall</h3>
-            </div>
-            <Badge variant={conflictResult.isFullyFunded ? 'success' : 'danger'}>
-              {conflictResult.isFullyFunded ? 'Fully Funded' : 'Deficit'}
-            </Badge>
           </div>
-          <GoalPriorityWaterfall result={conflictResult} />
-          <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
-            <strong className="text-zinc-700">Insight:</strong>{' '}
-            {conflictResult.isFullyFunded
-              ? 'Projected wealth covers every goal in priority order — surplus remains after the last milestone.'
-              : 'Wealth runs out part-way down the priority list; the dashed segments show exactly which goals lose funding first.'}
-          </p>
-        </Card>
+        )}
+      </Drawer>
 
-        <Card className="bg-white border border-zinc-200/90 shadow-2xs">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
-            <div className="flex items-center gap-2">
-              <BarChart3 size={18} className="text-zinc-500" />
-              <h3 className="text-base font-bold text-zinc-900">Monte Carlo Feasibility by Goal</h3>
-            </div>
-            <span className="text-xs font-mono font-medium text-zinc-500">
-              Threshold {formatPercent(riskProfile.goalSuccessThreshold)}
-            </span>
-          </div>
-          <GoalSuccessChart data={goalSuccessData} threshold={riskProfile.goalSuccessThreshold} />
-          <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
-            <strong className="text-zinc-700">Insight:</strong>{' '}
-            {goalSuccessData.filter((g) => g.successRate >= riskProfile.goalSuccessThreshold).length === goalSuccessData.length
-              ? 'Every goal clears the success threshold — feasibility is not the binding constraint.'
-              : 'Bars below the dashed threshold are the goals to renegotiate, delay, or SIP-fund first.'}
-          </p>
-        </Card>
-      </div>
-
-      {/* Goal Horizon Timeline */}
-      <Card className="bg-white border border-zinc-200/90 shadow-2xs">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
-          <div className="flex items-center gap-2">
-            <Target size={18} className="text-zinc-500" />
-            <h3 className="text-base font-bold text-zinc-900">Goal Horizon Timeline</h3>
-          </div>
-          <span className="text-xs font-mono text-zinc-500">
-            {inputs.goals.length} milestone{inputs.goals.length !== 1 ? 's' : ''} on one axis
-          </span>
-        </div>
-        <GoalHorizonTimeline goals={horizonGoals} currentAge={inputs.currentAge} />
-        <p className="text-xs text-zinc-500 mt-4 pt-3 border-t border-zinc-100">
-          <strong className="text-zinc-700">Insight:</strong> Clustered markers reveal cash-flow crunches — goals landing in the same year compete for the same corpus in the simulation.
-        </p>
-      </Card>
-
-      {/* Goal Conflict Matrix & Capital Waterfall */}
-      <GoalConflictMatrix />
+      <ConfirmDialog
+        open={pendingDeleteGoal !== null}
+        onConfirm={handleDeleteGoal}
+        onCancel={() => setPendingDeleteId(null)}
+        title={`Delete ${pendingDeleteGoal?.name ?? 'goal'}?`}
+        description="This removes the goal and its funding evaluation from the plan. You can add it again at any time."
+        confirmLabel="Delete goal"
+        danger
+      />
 
       <WorkflowFooter
         prev={{ path: '/master-plan', label: 'Master Plan' }}

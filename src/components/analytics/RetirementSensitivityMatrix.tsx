@@ -89,33 +89,33 @@ export const RetirementSensitivityMatrix = () => {
   };
 
   return (
-    <Card className="p-6 border border-zinc-200/90 shadow-sm space-y-5">
+    <Card className="p-6 border border-border/90 shadow-sm space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border-subtle pb-3">
         <div>
           <div className="flex items-center gap-2">
-            <Grid size={18} className="text-indigo-600" />
-            <h3 className="text-lg font-bold text-zinc-900 tracking-tight">
+            <Grid size={18} className="text-info" />
+            <h3 className="text-lg font-bold text-ink tracking-tight">
               Retirement Age vs Lifestyle Expense Sensitivity Matrix
             </h3>
           </div>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             Evaluate portfolio sustainability across 25 combinations of early/delayed retirement and living expenditures.
           </p>
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-3 text-[11px] text-zinc-600 self-start sm:self-center">
+        <div className="flex items-center gap-3 text-[11px] text-ink-soft self-start sm:self-center">
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block" />
+            <span className="w-2.5 h-2.5 rounded-sm bg-accent-softer0 inline-block" />
             Comfortable Surplus
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-amber-400 inline-block" />
+            <span className="w-2.5 h-2.5 rounded-sm bg-brass inline-block" />
             Borderline
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-rose-500 inline-block" />
+            <span className="w-2.5 h-2.5 rounded-sm bg-negative-soft0 inline-block" />
             Depletion Risk
           </span>
         </div>
@@ -126,18 +126,18 @@ export const RetirementSensitivityMatrix = () => {
         <table className="w-full text-xs text-center border-collapse">
           <thead>
             <tr>
-              <th className="p-2.5 text-left font-bold text-zinc-500 uppercase tracking-wider bg-zinc-50/80 border border-zinc-200">
+              <th className="p-2.5 text-left font-bold text-muted uppercase tracking-wider bg-surface/80 border border-border">
                 Retirement Age
               </th>
               {EXPENSE_MULTIPLIERS.map((m) => (
                 <th
                   key={m}
-                  className="p-2.5 font-bold text-zinc-700 bg-zinc-50/80 border border-zinc-200"
+                  className="p-2.5 font-bold text-ink-soft bg-surface/80 border border-border"
                 >
                   <div>
                     {m === 1.0 ? 'Current Budget' : m > 1.0 ? `+${Math.round((m - 1) * 100)}%` : `-${Math.round((1 - m) * 100)}%`}
                   </div>
-                  <div className="text-[10px] font-mono text-zinc-500 font-normal">
+                  <div className="text-[10px] font-mono text-muted font-normal">
                     {formatCurrencyCompact(inputs.swp.monthlyNeedToday * m)}/mo
                   </div>
                 </th>
@@ -152,14 +152,14 @@ export const RetirementSensitivityMatrix = () => {
               return (
                 <tr key={retAge}>
                   <td
-                    className={`p-2.5 text-left font-bold border border-zinc-200 ${
-                      isBaseAge ? 'bg-indigo-50 text-indigo-900' : 'bg-zinc-50/50 text-zinc-800'
+                    className={`p-2.5 text-left font-bold border border-border ${
+                      isBaseAge ? 'bg-info-soft text-ink' : 'bg-surface/50 text-ink'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-1">
                       <span>Age {retAge}</span>
                       {isBaseAge && (
-                        <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-indigo-200 text-indigo-800">
+                        <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-info-soft text-info">
                           Target
                         </span>
                       )}
@@ -172,17 +172,17 @@ export const RetirementSensitivityMatrix = () => {
                       selectedCell?.expenseMultiplier === cell.expenseMultiplier;
 
                     // Color code cell
-                    let bgClass = 'bg-rose-50 text-rose-900 border-rose-200 hover:bg-rose-100/80';
+                    let bgClass = 'bg-negative-soft text-negative border-negative hover:bg-negative-soft/80';
                     if (cell.surplusPercent >= 15) {
-                      bgClass = 'bg-emerald-50 text-emerald-950 border-emerald-200 hover:bg-emerald-100/80';
+                      bgClass = 'bg-accent-softer text-accent-strong border-accent-soft hover:bg-accent-soft/80';
                     } else if (cell.surplusPercent >= 0) {
                       bgClass = 'bg-sky-50 text-sky-950 border-sky-200 hover:bg-sky-100/80';
                     } else if (cell.surplusPercent >= -15) {
-                      bgClass = 'bg-zinc-50 text-amber-950 border-zinc-200 hover:bg-zinc-100/80';
+                      bgClass = 'bg-surface text-ink border-border hover:bg-sunken/80';
                     }
 
                     if (isSelected) {
-                      bgClass += ' ring-2 ring-indigo-600 ring-offset-1';
+                      bgClass += ' ring-2 ring-accent ring-offset-1';
                     }
 
                     return (
@@ -210,10 +210,10 @@ export const RetirementSensitivityMatrix = () => {
 
       {/* Selected Cell Snapshot Callout */}
       {selectedCell && (
-        <div className="p-4 rounded-xl border border-indigo-200 bg-indigo-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-150">
+        <div className="p-4 rounded-xl border border-info bg-info-soft/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-150">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-sm text-indigo-950">
+              <span className="font-bold text-sm text-ink">
                 Scenario: Retire at Age {selectedCell.retAge} with{' '}
                 {formatCurrencyCompact(selectedCell.monthlyExpense)}/mo
               </span>
@@ -224,14 +224,14 @@ export const RetirementSensitivityMatrix = () => {
                 {selectedCell.sustainable ? 'Fully Funded' : 'Requires Extra Capital'}
               </Badge>
             </div>
-            <p className="text-xs text-zinc-600">
-              Projected Corpus: <span className="font-bold text-zinc-800 font-mono">{formatCurrencyCompact(selectedCell.projectedCorpus)}</span> | Required Corpus: <span className="font-bold text-zinc-800 font-mono">{formatCurrencyCompact(selectedCell.requiredCorpus)}</span> ({selectedCell.surplus >= 0 ? 'Surplus' : 'Shortfall'}: {formatCurrencyCompact(Math.abs(selectedCell.surplus))})
+            <p className="text-xs text-ink-soft">
+              Projected Corpus: <span className="font-bold text-ink font-mono">{formatCurrencyCompact(selectedCell.projectedCorpus)}</span> | Required Corpus: <span className="font-bold text-ink font-mono">{formatCurrencyCompact(selectedCell.requiredCorpus)}</span> ({selectedCell.surplus >= 0 ? 'Surplus' : 'Shortfall'}: {formatCurrencyCompact(Math.abs(selectedCell.surplus))})
             </p>
           </div>
 
           <button
             onClick={() => handleApplyScenario(selectedCell)}
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-xs flex items-center gap-1 self-start sm:self-center shrink-0"
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-info text-deep hover:bg-info shadow-xs flex items-center gap-1 self-start sm:self-center shrink-0"
           >
             Apply to Active Plan
             <ArrowRight size={13} />

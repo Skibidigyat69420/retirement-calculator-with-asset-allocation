@@ -6,8 +6,8 @@ import {
   ShieldCheck,
   Sliders,
   BarChart2,
-  CheckCircle2,
-  ChevronRight,
+  Check,
+  ArrowRight,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { MasterPlanInputs } from '../../types';
@@ -24,50 +24,50 @@ export const PLAN_STEPS: PlanStepItem[] = [
   {
     id: 'profile',
     stepNumber: '01',
-    label: 'Client Profile',
-    subtitle: 'Demographics & Horizon',
+    label: 'Profile',
+    subtitle: 'Client & horizon',
     icon: User,
   },
   {
     id: 'financials',
     stepNumber: '02',
-    label: 'Financials & Debt',
-    subtitle: 'Assets & Liabilities',
+    label: 'Financials',
+    subtitle: 'Assets & liabilities',
     icon: Building2,
   },
   {
     id: 'cashflows',
     stepNumber: '03',
-    label: 'Cashflow Dynamics',
-    subtitle: 'Income, Spend & SIP',
+    label: 'Cashflow',
+    subtitle: 'Income, spend & SIP',
     icon: Wallet,
   },
   {
     id: 'goals',
     stepNumber: '04',
-    label: 'Goals & Milestones',
-    subtitle: 'Demand & Conflicts',
+    label: 'Goals',
+    subtitle: 'Milestones & conflicts',
     icon: Target,
   },
   {
     id: 'risk',
     stepNumber: '05',
-    label: 'Risk & Allocation',
-    subtitle: 'Targets & Glidepath',
+    label: 'Risk',
+    subtitle: 'Profile & targets',
     icon: ShieldCheck,
   },
   {
     id: 'assumptions',
     stepNumber: '06',
-    label: 'Market Assumptions',
-    subtitle: 'Returns & Inflation',
+    label: 'Assumptions',
+    subtitle: 'Returns & inflation',
     icon: Sliders,
   },
   {
     id: 'results',
     stepNumber: '07',
-    label: 'Projections & Lab',
-    subtitle: 'Solvency & Scenarios',
+    label: 'Outlook',
+    subtitle: 'Projections & lab',
     icon: BarChart2,
   },
 ];
@@ -83,7 +83,6 @@ export const MasterPlanSidebar = ({
   onSelectStep,
   inputs,
 }: MasterPlanSidebarProps) => {
-  // Determine completed steps based on plan inputs
   const isStepComplete = (stepId: string): boolean => {
     switch (stepId) {
       case 'profile':
@@ -105,97 +104,85 @@ export const MasterPlanSidebar = ({
     }
   };
 
-  const completedCount = PLAN_STEPS.filter((s) => isStepComplete(s.id)).length;
-  const progressPercent = Math.round((completedCount / PLAN_STEPS.length) * 100);
-
   return (
-    <div className="space-y-4">
-      {/* Progress Card */}
-      <div className="p-3.5 rounded-2xl bg-surface border border-border space-y-2.5">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-muted">
-            Plan Formulation
-          </span>
-          <span className="font-mono font-bold text-ink text-[11px]">
-            {completedCount}/{PLAN_STEPS.length} Completed
-          </span>
-        </div>
+    <nav aria-label="Master Plan Steps" className="relative">
+      {/* Vertical hairline threading the step markers */}
+      <div
+        className="absolute left-[11px] top-4 bottom-4 w-px bg-border"
+        aria-hidden="true"
+      />
 
-        <div className="w-full h-1.5 bg-sunken rounded-full overflow-hidden border border-border/60">
-          <div
-            className="h-full bg-accent rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Progressive Step Navigation Rail */}
-      <nav className="space-y-1" aria-label="Master Plan Steps">
+      <ol className="relative space-y-0.5">
         {PLAN_STEPS.map((step) => {
-          const Icon = step.icon;
           const isActive = activeStep === step.id;
           const complete = isStepComplete(step.id);
 
           return (
-            <button
-              key={step.id}
-              type="button"
-              onClick={() => onSelectStep(step.id)}
-              className={cn(
-                'w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all cursor-pointer group select-none',
-                isActive
-                  ? 'bg-accent text-white shadow-sm ring-1 ring-accent/40 font-semibold'
-                  : 'bg-surface/50 hover:bg-surface text-muted hover:text-ink border border-transparent hover:border-border',
-              )}
-            >
-              {/* Step indicator */}
-              <div
+            <li key={step.id}>
+              <button
+                type="button"
+                onClick={() => onSelectStep(step.id)}
+                aria-current={isActive ? 'step' : undefined}
                 className={cn(
-                  'w-7 h-7 rounded-lg flex items-center justify-center font-mono text-xs font-bold shrink-0 transition-colors',
-                  isActive
-                    ? 'bg-accent-strong text-white'
-                    : complete
-                      ? 'bg-positive-soft text-positive border border-positive/30'
-                      : 'bg-sunken text-faint border border-border group-hover:text-ink',
+                  'group w-full flex items-center gap-3.5 py-2.5 pr-2 rounded-md text-left transition-colors duration-150 cursor-pointer select-none',
+                  isActive ? 'text-ink' : 'text-muted hover:text-ink',
                 )}
               >
-                {complete && !isActive ? (
-                  <CheckCircle2 size={15} className="text-positive" />
-                ) : (
-                  step.stepNumber
-                )}
-              </div>
-
-              {/* Title & Subtitle */}
-              <div className="min-w-0 flex-1">
-                <div className="text-xs truncate flex items-center gap-1.5">
-                  <Icon size={13} className={isActive ? 'text-white' : 'text-accent'} />
-                  <span className={isActive ? 'text-white' : 'text-ink font-semibold'}>
-                    {step.label}
-                  </span>
-                </div>
-                <div
+                {/* Step marker */}
+                <span
                   className={cn(
-                    'text-[10px] truncate',
-                    isActive ? 'text-white/80' : 'text-faint',
+                    'relative z-10 w-[23px] h-[23px] rounded-full flex items-center justify-center shrink-0 border transition-colors duration-150',
+                    complete && !isActive
+                      ? 'bg-positive-soft border-positive/40 text-positive'
+                      : isActive
+                        ? 'bg-raised border-accent text-accent'
+                        : 'bg-raised border-border-strong text-faint group-hover:border-muted',
                   )}
                 >
-                  {step.subtitle}
-                </div>
-              </div>
+                  {complete && !isActive ? (
+                    <Check size={12} strokeWidth={2} aria-hidden="true" />
+                  ) : (
+                    <span className="font-mono text-[9px] tabular-nums leading-none">
+                      {step.stepNumber}
+                    </span>
+                  )}
+                </span>
 
-              {/* Chevron */}
-              <ChevronRight
-                size={14}
-                className={cn(
-                  'shrink-0 transition-transform',
-                  isActive ? 'text-white translate-x-0.5' : 'text-muted/40 group-hover:text-muted',
-                )}
-              />
-            </button>
+                {/* Label */}
+                <span className="min-w-0 flex-1">
+                  <span
+                    className={cn(
+                      'block text-[13px] leading-tight truncate',
+                      isActive ? 'font-semibold text-ink' : 'font-medium',
+                    )}
+                  >
+                    {step.label}
+                  </span>
+                  <span
+                    className={cn(
+                      'block text-[11px] leading-tight truncate mt-0.5',
+                      isActive ? 'text-muted' : 'text-faint',
+                    )}
+                  >
+                    {step.subtitle}
+                  </span>
+                </span>
+
+                {/* Current-step arrow */}
+                <ArrowRight
+                  size={14}
+                  strokeWidth={1.8}
+                  aria-hidden="true"
+                  className={cn(
+                    'shrink-0 transition-opacity duration-150 text-accent',
+                    isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-40',
+                  )}
+                />
+              </button>
+            </li>
           );
         })}
-      </nav>
-    </div>
+      </ol>
+    </nav>
   );
 };

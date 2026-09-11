@@ -170,26 +170,26 @@ export const AdvancedPortfolioLab = () => {
   return (
     <div className="space-y-6">
       {/* Header Card */}
-      <Card className="border border-zinc-200/90 shadow-sm space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-4">
+      <Card className="border border-border/90 shadow-sm space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-subtle pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="p-1.5 bg-zinc-900 text-white rounded-lg">
+              <span className="p-1.5 bg-deep text-deep rounded-lg">
                 <Layers size={18} />
               </span>
-              <h3 className="text-xl font-sans font-bold text-zinc-900 tracking-tight">
+              <h3 className="text-xl font-sans font-bold text-ink tracking-tight">
                 Advanced Portfolio Engineering Lab
               </h3>
               <Badge variant="navy" className="text-[10px] uppercase font-mono">
                 SAA + TAA Architecture
               </Badge>
             </div>
-            <p className="text-xs text-zinc-500 mt-1">
+            <p className="text-xs text-muted mt-1">
               Combines Strategic Asset Allocation (MVO, Risk Parity, Black-Litterman) with Tactical Overlays (Valuation, Momentum, Volatility Targeting).
             </p>
           </div>
 
-          <Button onClick={handleApplyFinalAllocation} className="bg-zinc-900 text-white hover:bg-zinc-800 text-xs">
+          <Button onClick={handleApplyFinalAllocation} className="bg-deep text-deep hover:bg-deep text-xs">
             Apply Final Weights <ArrowRight size={13} className="ml-1" />
           </Button>
         </div>
@@ -197,10 +197,10 @@ export const AdvancedPortfolioLab = () => {
         {/* Strategic Model Selection Tabs */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-700">
+            <span className="text-xs font-bold uppercase tracking-wider text-ink-soft">
               1. Strategic Asset Allocation (SAA) Foundation:
             </span>
-            <span className="text-xs text-zinc-500">Long-Term Equilibrium Policy</span>
+            <span className="text-xs text-muted">Long-Term Equilibrium Policy</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -230,8 +230,8 @@ export const AdvancedPortfolioLab = () => {
                 onClick={() => setActiveModel(m.id as any)}
                 className={`p-4 rounded-xl border text-left transition-all ${
                   activeModel === m.id
-                    ? 'bg-zinc-900 text-white border-zinc-900 shadow-sm'
-                    : 'bg-white border-zinc-200 text-zinc-600 hover:border-zinc-300'
+                    ? 'bg-deep text-deep border-ink shadow-sm'
+                    : 'bg-raised border-border text-ink-soft hover:border-border'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
@@ -239,10 +239,10 @@ export const AdvancedPortfolioLab = () => {
                     {m.tag}
                   </Badge>
                 </div>
-                <h4 className={`text-sm font-bold ${activeModel === m.id ? 'text-white' : 'text-zinc-900'}`}>
+                <h4 className={`text-sm font-bold ${activeModel === m.id ? 'text-deep' : 'text-ink'}`}>
                   {m.title}
                 </h4>
-                <p className={`text-xs mt-1 leading-relaxed ${activeModel === m.id ? 'text-zinc-300' : 'text-zinc-500'}`}>
+                <p className={`text-xs mt-1 leading-relaxed ${activeModel === m.id ? 'text-faint' : 'text-muted'}`}>
                   {m.desc}
                 </p>
               </button>
@@ -252,15 +252,15 @@ export const AdvancedPortfolioLab = () => {
 
         {/* Black-Litterman View Inputs if Active */}
         {activeModel === 'blackLitterman' && (
-          <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200 space-y-4">
+          <div className="p-4 bg-surface rounded-xl border border-border space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-zinc-600" />
-                <span className="text-xs font-bold text-zinc-900 uppercase tracking-wider">
+                <Sparkles size={16} className="text-ink-soft" />
+                <span className="text-xs font-bold text-ink uppercase tracking-wider">
                   Advisory Forward Views &amp; Confidence Matrix:
                 </span>
               </div>
-              <span className="text-xs text-zinc-500 font-mono">
+              <span className="text-xs text-muted font-mono">
                 Posterior Return Tilt: +{((blViewReturn * blConfidence) / 100).toFixed(2)}%
               </span>
             </div>
@@ -290,14 +290,14 @@ export const AdvancedPortfolioLab = () => {
       </Card>
 
       {/* Tactical Overlays Card */}
-      <Card className="border border-zinc-200/90 shadow-sm space-y-5">
-        <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+      <Card className="border border-border/90 shadow-sm space-y-5">
+        <div className="flex items-center justify-between border-b border-border-subtle pb-3">
           <div>
-            <h3 className="text-base font-sans font-bold text-zinc-900 flex items-center gap-2">
-              <Sliders size={18} className="text-zinc-800" />
+            <h3 className="text-base font-sans font-bold text-ink flex items-center gap-2">
+              <Sliders size={18} className="text-ink" />
               2. Tactical Asset Allocation (TAA) Overlays
             </h3>
-            <p className="text-xs text-zinc-500 mt-0.5">
+            <p className="text-xs text-muted mt-0.5">
               Disciplined short-to-medium term shifts around strategic benchmarks based on valuation, momentum, and regime signals.
             </p>
           </div>
@@ -306,7 +306,7 @@ export const AdvancedPortfolioLab = () => {
           </Badge>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 bg-zinc-50/70 rounded-xl border border-zinc-200">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 bg-surface/70 rounded-xl border border-border">
           <div>
             <Slider
               label="Valuation Tilt (Trailing PE & Yield Spread)"
@@ -317,7 +317,7 @@ export const AdvancedPortfolioLab = () => {
               step={0.5}
               suffix="%"
             />
-            <span className="text-[10px] text-zinc-500 mt-1 block">
+            <span className="text-[10px] text-muted mt-1 block">
               Negative tilt trims equity exposure when market valuations are stretched beyond historical averages.
             </span>
           </div>
@@ -332,7 +332,7 @@ export const AdvancedPortfolioLab = () => {
               step={0.5}
               suffix="%"
             />
-            <span className="text-[10px] text-zinc-500 mt-1 block">
+            <span className="text-[10px] text-muted mt-1 block">
               Positive momentum allocates incremental tactical weight into assets sustaining established upward trends.
             </span>
           </div>
@@ -342,7 +342,7 @@ export const AdvancedPortfolioLab = () => {
         <div className="overflow-x-auto pt-2">
           <table className="w-full text-xs text-left">
             <thead>
-              <tr className="border-b border-zinc-200 text-zinc-500 uppercase tracking-wider text-[10px]">
+              <tr className="border-b border-border text-muted uppercase tracking-wider text-[10px]">
                 <th className="pb-2">Asset Class</th>
                 <th className="pb-2 text-right">Strategic Policy (SAA)</th>
                 <th className="pb-2 text-right">Tactical Overlay (TAA)</th>
@@ -358,22 +358,22 @@ export const AdvancedPortfolioLab = () => {
                 const color = ASSET_COLORS[cat];
 
                 return (
-                  <tr key={cat} className="hover:bg-zinc-50/60">
-                    <td className="py-2.5 font-sans font-bold text-zinc-900 flex items-center gap-2">
+                  <tr key={cat} className="hover:bg-surface/60">
+                    <td className="py-2.5 font-sans font-bold text-ink flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
                       {ASSET_LABELS[cat]}
                     </td>
-                    <td className="py-2.5 text-right font-semibold text-zinc-700">{strat}%</td>
+                    <td className="py-2.5 text-right font-semibold text-ink-soft">{strat}%</td>
                     <td className="py-2.5 text-right">
                       {delta !== 0 ? (
-                        <span className={delta > 0 ? 'text-emerald-700 font-bold' : 'text-zinc-700 font-bold'}>
+                        <span className={delta > 0 ? 'text-accent-strong font-bold' : 'text-ink-soft font-bold'}>
                           {delta > 0 ? `+${delta}%` : `${delta}%`}
                         </span>
                       ) : (
-                        <span className="text-zinc-400">0%</span>
+                        <span className="text-faint">0%</span>
                       )}
                     </td>
-                    <td className="py-2.5 text-right font-bold text-zinc-900 text-sm">{final}%</td>
+                    <td className="py-2.5 text-right font-bold text-ink text-sm">{final}%</td>
                     <td className="py-2.5 text-right">
                       <Badge variant={delta === 0 ? 'outline' : delta > 0 ? 'success' : 'warning'} className="text-[9px]">
                         {delta > 0 ? `Overweight` : delta < 0 ? `Underweight` : `Neutral`}
@@ -387,13 +387,13 @@ export const AdvancedPortfolioLab = () => {
         </div>
       </Card>
       {/* Strategic Model Comparison */}
-      <Card className="border border-zinc-200/90 shadow-sm space-y-4">
-        <div className="border-b border-zinc-100 pb-3">
-          <h3 className="text-base font-sans font-bold text-zinc-900 flex items-center gap-2">
-            <GitCompare size={18} className="text-zinc-800" />
+      <Card className="border border-border/90 shadow-sm space-y-4">
+        <div className="border-b border-border-subtle pb-3">
+          <h3 className="text-base font-sans font-bold text-ink flex items-center gap-2">
+            <GitCompare size={18} className="text-ink" />
             Strategic Model Weight Comparison
           </h3>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             Black-Litterman blends equilibrium with advisory views ({Math.round(computeModelWeights('blackLitterman', blViewReturn, blConfidence).equity)}% equity); Risk Parity equalizes risk contribution; MVO maximizes the Sharpe ratio.
           </p>
         </div>
@@ -427,7 +427,7 @@ export const AdvancedPortfolioLab = () => {
         <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Strategic model weights table">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-zinc-200 text-left text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
+              <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-muted font-semibold">
                 <th className="py-2 pr-4">Asset Class</th>
                 <th className="py-2 pr-4 text-right">Black-Litterman</th>
                 <th className="py-2 pr-4 text-right">Max-Sharpe MVO</th>
@@ -436,14 +436,14 @@ export const AdvancedPortfolioLab = () => {
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {modelComparisonData.map((row) => (
-                <tr key={row.catKey} className="hover:bg-zinc-50/70">
-                  <td className="py-2 pr-4 flex items-center font-semibold text-zinc-900">
+                <tr key={row.catKey} className="hover:bg-surface/70">
+                  <td className="py-2 pr-4 flex items-center font-semibold text-ink">
                     <span className="w-2.5 h-2.5 rounded-full mr-2 shrink-0" style={{ backgroundColor: ASSET_COLORS[row.catKey as AssetCategory] }} />
                     {row.category}
                   </td>
-                  <td className="py-2 pr-4 text-right font-mono text-zinc-700">{String(row.blackLitterman)}%</td>
-                  <td className="py-2 pr-4 text-right font-mono text-zinc-700">{String(row.mvo)}%</td>
-                  <td className="py-2 pr-2 text-right font-mono text-zinc-700">{String(row.riskParity)}%</td>
+                  <td className="py-2 pr-4 text-right font-mono text-ink-soft">{String(row.blackLitterman)}%</td>
+                  <td className="py-2 pr-4 text-right font-mono text-ink-soft">{String(row.mvo)}%</td>
+                  <td className="py-2 pr-2 text-right font-mono text-ink-soft">{String(row.riskParity)}%</td>
                 </tr>
               ))}
             </tbody>
@@ -452,13 +452,13 @@ export const AdvancedPortfolioLab = () => {
       </Card>
 
       {/* Glide Path Comparison */}
-      <Card className="border border-zinc-200/90 shadow-sm space-y-4">
-        <div className="border-b border-zinc-100 pb-3">
-          <h3 className="text-base font-sans font-bold text-zinc-900 flex items-center gap-2">
-            <LineChartIcon size={18} className="text-zinc-800" />
+      <Card className="border border-border/90 shadow-sm space-y-4">
+        <div className="border-b border-border-subtle pb-3">
+          <h3 className="text-base font-sans font-bold text-ink flex items-center gap-2">
+            <LineChartIcon size={18} className="text-ink" />
             Glide Path Slope — Client vs Risk Presets
           </h3>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             Your {riskProfile.label} path de-risks from {formatPercent(riskProfile.targets.equity)} equity today to {formatPercent(riskProfile.equityAtRetirement)} at retirement (age {inputs.retirementAge}); preset paths follow standard age-based schedules.
           </p>
         </div>
@@ -512,19 +512,19 @@ export const AdvancedPortfolioLab = () => {
       </Card>
 
       {/* Empirical Efficient Frontier */}
-      <Card className="border border-zinc-200/90 shadow-sm space-y-4">
-        <div className="border-b border-zinc-100 pb-3">
-          <h3 className="text-base font-sans font-bold text-zinc-900 flex items-center gap-2">
-            <ScatterChartIcon size={18} className="text-zinc-800" />
+      <Card className="border border-border/90 shadow-sm space-y-4">
+        <div className="border-b border-border-subtle pb-3">
+          <h3 className="text-base font-sans font-bold text-ink flex items-center gap-2">
+            <ScatterChartIcon size={18} className="text-ink" />
             Empirical Efficient Frontier
           </h3>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             Long-only portfolios simulated from 4,209 sessions of calibrated daily returns. The highlighted tangency portfolio maximizes the Sharpe ratio at the current risk-free rate.
           </p>
         </div>
         {frontierResult && frontierResult.frontier.length > 2 ? (
           <>
-            <p className="text-xs text-zinc-600">
+            <p className="text-xs text-ink-soft">
               Tangency portfolio: {formatPercent(frontierResult.maxSharpe.expectedReturn * 100)} return at {formatPercent(frontierResult.maxSharpe.volatility * 100)} volatility (Sharpe {frontierResult.maxSharpe.sharpe.toFixed(2)}) — portfolios above the frontier line are unattainable with these assets.
             </p>
             <div className="h-72 w-full" role="img" aria-label={`Scatter chart of the efficient frontier. Maximum Sharpe portfolio earns ${formatPercent(frontierResult.maxSharpe.expectedReturn * 100)} at ${formatPercent(frontierResult.maxSharpe.volatility * 100)} volatility; minimum variance portfolio earns ${formatPercent(frontierResult.minVariance.expectedReturn * 100)} at ${formatPercent(frontierResult.minVariance.volatility * 100)} volatility.`}>
@@ -585,7 +585,7 @@ export const AdvancedPortfolioLab = () => {
                 </ScatterChart>
               </ResponsiveContainer>
             </div>
-            <div className="flex items-center justify-center gap-5 text-[11px] text-zinc-600">
+            <div className="flex items-center justify-center gap-5 text-[11px] text-ink-soft">
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--color-accent)' }} /> Max-Sharpe tangency</span>
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--color-warning)' }} /> Minimum variance</span>
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-info" /> Frontier portfolios</span>
@@ -612,7 +612,7 @@ export const AdvancedPortfolioLab = () => {
             </table>
           </>
         ) : (
-          <p className="text-xs text-zinc-600">
+          <p className="text-xs text-ink-soft">
             Frontier unavailable — the calibrated market data bundle has not loaded yet. Ensure the market database is reachable, then revisit this section.
           </p>
         )}

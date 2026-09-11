@@ -238,7 +238,7 @@ export const AngelData = () => {
       </div>
 
       {loading && (
-        <div className="flex items-center gap-2 text-sm text-slate-700">
+        <div className="flex items-center gap-2 text-sm text-ink-soft">
           <RefreshCw size={16} className="animate-spin" /> Loading Angel One data...
         </div>
       )}
@@ -252,12 +252,12 @@ export const AngelData = () => {
       {snapshotMissing && !loading && (
         <Card>
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-slate-100 rounded-lg shrink-0">
-              <Database size={18} className="text-slate-500" />
+            <div className="p-2 bg-sunken rounded-lg shrink-0">
+              <Database size={18} className="text-muted" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-slate-900">No Angel One snapshot available on this deployment</h3>
-              <p className="text-sm text-slate-600 mt-1">
+              <h3 className="text-sm font-semibold text-ink">No Angel One snapshot available on this deployment</h3>
+              <p className="text-sm text-ink-soft mt-1">
                 Snapshots are captured by the local data pipeline and are not published with the app.
                 Use <span className="font-medium">Refresh Live</span> to pull profile, funds, holdings, positions,
                 orders, and trades directly from Angel One SmartAPI after connecting on the Angel Connect page.
@@ -268,7 +268,7 @@ export const AngelData = () => {
       )}
 
       {snapshot && (
-        <div className="text-xs text-slate-700">
+        <div className="text-xs text-ink-soft">
           Snapshot: {new Date(snapshot.timestamp).toLocaleString()} · Client: {snapshot.client_code}
         </div>
       )}
@@ -276,52 +276,52 @@ export const AngelData = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <div className="flex items-center gap-2 mb-4">
-            <User size={18} className="text-amber-500" />
-            <h3 className="text-lg font-serif text-navy">Profile</h3>
+            <User size={18} className="text-warning" />
+            <h3 className="text-lg font-serif text-deep">Profile</h3>
           </div>
           {profile?.data ? (
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-slate-700">Name</span><span className="font-medium">{profile.data.name}</span></div>
-              <div className="flex justify-between"><span className="text-slate-700">Client Code</span><span className="font-medium">{profile.data.clientcode}</span></div>
-              <div className="flex justify-between"><span className="text-slate-700">Email</span><span className="font-medium">{profile.data.email}</span></div>
-              <div className="flex justify-between"><span className="text-slate-700">Exchanges</span><span className="font-medium">{profile.data.exchanges?.join(', ')}</span></div>
-              <div className="flex justify-between"><span className="text-slate-700">Products</span><span className="font-medium">{profile.data.products?.join(', ')}</span></div>
+              <div className="flex justify-between"><span className="text-ink-soft">Name</span><span className="font-medium">{profile.data.name}</span></div>
+              <div className="flex justify-between"><span className="text-ink-soft">Client Code</span><span className="font-medium">{profile.data.clientcode}</span></div>
+              <div className="flex justify-between"><span className="text-ink-soft">Email</span><span className="font-medium">{profile.data.email}</span></div>
+              <div className="flex justify-between"><span className="text-ink-soft">Exchanges</span><span className="font-medium">{profile.data.exchanges?.join(', ')}</span></div>
+              <div className="flex justify-between"><span className="text-ink-soft">Products</span><span className="font-medium">{profile.data.products?.join(', ')}</span></div>
             </div>
           ) : (
-            <p className="text-sm text-slate-700">No profile data available.</p>
+            <p className="text-sm text-ink-soft">No profile data available.</p>
           )}
         </Card>
 
         <Card>
           <div className="flex items-center gap-2 mb-4">
-            <Wallet size={18} className="text-amber-500" />
-            <h3 className="text-lg font-serif text-navy">RMS / Funds</h3>
+            <Wallet size={18} className="text-warning" />
+            <h3 className="text-lg font-serif text-deep">RMS / Funds</h3>
           </div>
           {rms?.data ? (
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-slate-700">Net</span><span className="font-medium">{formatCurrency(rms.data.net)}</span></div>
-              <div className="flex justify-between"><span className="text-slate-700">Available Cash</span><span className="font-medium">{formatCurrency(rms.data.availablecash)}</span></div>
-              <div className="flex justify-between"><span className="text-slate-700">Available Margin</span><span className="font-medium">{formatCurrency(rms.data.availablemargin)}</span></div>
-              <div className="flex justify-between"><span className="text-slate-700">Collateral</span><span className="font-medium">{formatCurrency(rms.data.collateral)}</span></div>
-              <div className="flex justify-between"><span className="text-slate-700">Utilised Debits</span><span className="font-medium">{formatCurrency(rms.data.utiliseddebits)}</span></div>
+              <div className="flex justify-between"><span className="text-ink-soft">Net</span><span className="font-medium">{formatCurrency(rms.data.net)}</span></div>
+              <div className="flex justify-between"><span className="text-ink-soft">Available Cash</span><span className="font-medium">{formatCurrency(rms.data.availablecash)}</span></div>
+              <div className="flex justify-between"><span className="text-ink-soft">Available Margin</span><span className="font-medium">{formatCurrency(rms.data.availablemargin)}</span></div>
+              <div className="flex justify-between"><span className="text-ink-soft">Collateral</span><span className="font-medium">{formatCurrency(rms.data.collateral)}</span></div>
+              <div className="flex justify-between"><span className="text-ink-soft">Utilised Debits</span><span className="font-medium">{formatCurrency(rms.data.utiliseddebits)}</span></div>
             </div>
           ) : (
-            <p className="text-sm text-slate-700">No RMS data available.</p>
+            <p className="text-sm text-ink-soft">No RMS data available.</p>
           )}
         </Card>
       </div>
 
       <Card>
         <div className="flex items-center gap-2 mb-4">
-          <Briefcase size={18} className="text-amber-500" />
-          <h3 className="text-lg font-serif text-navy">Holdings</h3>
+          <Briefcase size={18} className="text-warning" />
+          <h3 className="text-lg font-serif text-deep">Holdings</h3>
           <Badge variant="outline">{holdingList.length}</Badge>
         </div>
         {holdingList.length > 0 ? (
           <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="w-full min-w-[540px] text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-700">
+                <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-ink-soft">
                   <th className="py-2 pr-4">Symbol</th>
                   <th className="py-2 pr-4 text-right">Qty</th>
                   <th className="py-2 pr-4 text-right">Avg Price</th>
@@ -332,20 +332,20 @@ export const AngelData = () => {
               </thead>
               <tbody>
                 {holdingList.map((h: any, idx: number) => (
-                  <tr key={idx} className="border-b border-slate-100">
+                  <tr key={idx} className="border-b border-border-subtle">
                     <td className="py-2 pr-4 font-medium">{h.tradingsymbol}</td>
                     <td className="py-2 pr-4 text-right">{h.quantity}</td>
                     <td className="py-2 pr-4 text-right">{formatCurrency(h.averageprice)}</td>
                     <td className="py-2 pr-4 text-right">{formatCurrency(h.ltp)}</td>
                     <td className="py-2 pr-4 text-right">{formatCurrency(h.totalHoldingValue || h.quantity * h.ltp)}</td>
-                    <td className={`py-2 pr-4 text-right ${(h.pnl || 0) >= 0 ? 'text-green-700' : 'text-red-600'}`}>{formatCurrency(h.pnl)}</td>
+                    <td className={`py-2 pr-4 text-right ${(h.pnl || 0) >= 0 ? 'text-positive' : 'text-negative'}`}>{formatCurrency(h.pnl)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : (
-          <p className="text-sm text-slate-700">No holdings found.</p>
+          <p className="text-sm text-ink-soft">No holdings found.</p>
         )}
       </Card>
 
@@ -353,12 +353,12 @@ export const AngelData = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <div className="flex items-center gap-2 mb-1">
-              <PieChartIcon size={18} className="text-amber-500" />
-              <h3 className="text-lg font-serif text-navy">Holdings Allocation</h3>
+              <PieChartIcon size={18} className="text-warning" />
+              <h3 className="text-lg font-serif text-deep">Holdings Allocation</h3>
             </div>
-            <p className="text-xs text-slate-600 mb-2">
+            <p className="text-xs text-ink-soft mb-2">
               {holdingRows[0]?.symbol} is the largest position at{' '}
-              <span className="font-mono font-bold text-navy">{formatPercent((holdingRows[0].value / Math.max(1, holdingsTotal)) * 100)}</span> of the{' '}
+              <span className="font-mono font-bold text-deep">{formatPercent((holdingRows[0].value / Math.max(1, holdingsTotal)) * 100)}</span> of the{' '}
               {formatCurrencyCompact(holdingsTotal)} equity book{holdingRows.length > 6 ? `; the remaining ${holdingRows.length - 6} holdings are grouped as "Others".` : '.'}
             </p>
             <div
@@ -385,10 +385,10 @@ export const AngelData = () => {
 
           <Card>
             <div className="flex items-center gap-2 mb-1">
-              <Scale size={18} className="text-amber-500" />
-              <h3 className="text-lg font-serif text-navy">P&L per Holding</h3>
+              <Scale size={18} className="text-warning" />
+              <h3 className="text-lg font-serif text-deep">P&L per Holding</h3>
             </div>
-            <p className="text-xs text-slate-600 mb-2">
+            <p className="text-xs text-ink-soft mb-2">
               Unrealised P&L across the book nets to{' '}
               <span className={`font-mono font-bold ${holdingsPnlTotal >= 0 ? 'text-positive' : 'text-negative'}`}>
                 {holdingsPnlTotal >= 0 ? '+' : ''}{formatCurrency(holdingsPnlTotal)}
@@ -436,7 +436,7 @@ export const AngelData = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="flex items-center justify-center gap-4 mt-2 text-[11px] text-slate-600">
+            <div className="flex items-center justify-center gap-4 mt-2 text-[11px] text-ink-soft">
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-positive" /> Gain</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-negative" /> Loss</span>
             </div>
@@ -460,15 +460,15 @@ export const AngelData = () => {
 
       <Card>
         <div className="flex items-center gap-2 mb-4">
-          <TrendingUp size={18} className="text-amber-500" />
-          <h3 className="text-lg font-serif text-navy">Positions</h3>
+          <TrendingUp size={18} className="text-warning" />
+          <h3 className="text-lg font-serif text-deep">Positions</h3>
           <Badge variant="outline">{positionList.length}</Badge>
         </div>
         {positionList.length > 0 ? (
           <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="w-full min-w-[540px] text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-700">
+                <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-ink-soft">
                   <th className="py-2 pr-4">Symbol</th>
                   <th className="py-2 pr-4 text-right">Exchange</th>
                   <th className="py-2 pr-4 text-right">Buy Qty</th>
@@ -480,35 +480,35 @@ export const AngelData = () => {
               </thead>
               <tbody>
                 {positionList.map((p: any, idx: number) => (
-                  <tr key={idx} className="border-b border-slate-100">
+                  <tr key={idx} className="border-b border-border-subtle">
                     <td className="py-2 pr-4 font-medium">{p.tradingsymbol}</td>
                     <td className="py-2 pr-4 text-right">{p.exchange}</td>
                     <td className="py-2 pr-4 text-right">{p.buyqty}</td>
                     <td className="py-2 pr-4 text-right">{p.sellqty}</td>
                     <td className="py-2 pr-4 text-right">{p.netqty}</td>
                     <td className="py-2 pr-4 text-right">{formatCurrency(p.ltp)}</td>
-                    <td className={`py-2 pr-4 text-right ${(p.pnl || 0) >= 0 ? 'text-green-700' : 'text-red-600'}`}>{formatCurrency(p.pnl)}</td>
+                    <td className={`py-2 pr-4 text-right ${(p.pnl || 0) >= 0 ? 'text-positive' : 'text-negative'}`}>{formatCurrency(p.pnl)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : (
-          <p className="text-sm text-slate-700">No positions found.</p>
+          <p className="text-sm text-ink-soft">No positions found.</p>
         )}
       </Card>
 
       <Card>
         <div className="flex items-center gap-2 mb-4">
-          <ListOrdered size={18} className="text-amber-500" />
-          <h3 className="text-lg font-serif text-navy">Order Book</h3>
+          <ListOrdered size={18} className="text-warning" />
+          <h3 className="text-lg font-serif text-deep">Order Book</h3>
           <Badge variant="outline">{orderList.length}</Badge>
         </div>
         {orderList.length > 0 ? (
           <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="w-full min-w-[480px] text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-700">
+                <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-ink-soft">
                   <th className="py-2 pr-4">Order ID</th>
                   <th className="py-2 pr-4">Symbol</th>
                   <th className="py-2 pr-4 text-right">Side</th>
@@ -519,7 +519,7 @@ export const AngelData = () => {
               </thead>
               <tbody>
                 {orderList.map((o: any, idx: number) => (
-                  <tr key={idx} className="border-b border-slate-100">
+                  <tr key={idx} className="border-b border-border-subtle">
                     <td className="py-2 pr-4">{o.orderid}</td>
                     <td className="py-2 pr-4 font-medium">{o.tradingsymbol}</td>
                     <td className="py-2 pr-4 text-right uppercase">{o.transactiontype}</td>
@@ -532,21 +532,21 @@ export const AngelData = () => {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-slate-700">No orders found.</p>
+          <p className="text-sm text-ink-soft">No orders found.</p>
         )}
       </Card>
 
       <Card>
         <div className="flex items-center gap-2 mb-4">
-          <Receipt size={18} className="text-amber-500" />
-          <h3 className="text-lg font-serif text-navy">Trade Book</h3>
+          <Receipt size={18} className="text-warning" />
+          <h3 className="text-lg font-serif text-deep">Trade Book</h3>
           <Badge variant="outline">{tradeList.length}</Badge>
         </div>
         {tradeList.length > 0 ? (
           <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="w-full min-w-[420px] text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-700">
+                <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-ink-soft">
                   <th className="py-2 pr-4">Time</th>
                   <th className="py-2 pr-4">Symbol</th>
                   <th className="py-2 pr-4 text-right">Side</th>
@@ -556,7 +556,7 @@ export const AngelData = () => {
               </thead>
               <tbody>
                 {tradeList.map((t: any, idx: number) => (
-                  <tr key={idx} className="border-b border-slate-100">
+                  <tr key={idx} className="border-b border-border-subtle">
                     <td className="py-2 pr-4">{t.filltime || t.tradetime}</td>
                     <td className="py-2 pr-4 font-medium">{t.tradingsymbol}</td>
                     <td className="py-2 pr-4 text-right uppercase">{t.transactiontype}</td>
@@ -568,7 +568,7 @@ export const AngelData = () => {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-slate-700">No trades found.</p>
+          <p className="text-sm text-ink-soft">No trades found.</p>
         )}
       </Card>
 

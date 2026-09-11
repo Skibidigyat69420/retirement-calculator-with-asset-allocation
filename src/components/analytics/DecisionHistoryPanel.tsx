@@ -1,23 +1,61 @@
 import { useState } from 'react';
 import {
-  History,
-  RotateCcw,
-  Plus,
-  FileSpreadsheet,
-  Trash2,
-  Calendar,
   ArrowRight,
+  Download,
+  MoreHorizontal,
+  NotebookPen,
+  Plus,
+  RotateCcw,
+  Trash2,
 } from 'lucide-react';
-import { Card } from '../ui/Card';
-import { Badge } from '../ui/Badge';
+import { Badge, type BadgeTone } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { Drawer } from '../ui/Drawer';
+import { EmptyState } from '../ui/EmptyState';
+import { Input } from '../ui/Input';
+import { Select } from '../ui/Select';
 import { useCalculator } from '../../context/CalculatorContext';
 import type { DecisionLogEntry } from '../../types';
+
+const CATEGORY_TONE: Record<DecisionLogEntry['category'], BadgeTone> = {
+  retirement: 'brass',
+  allocation: 'accent',
+  sip: 'positive',
+  swp: 'info',
+  goal: 'info',
+  risk: 'warning',
+  scenario: 'neutral',
+  mvo: 'brass',
+};
+
+const CATEGORY_OPTIONS: { value: string; label: string }[] = [
+  { value: 'allocation', label: 'Asset Allocation' },
+  { value: 'retirement', label: 'Retirement' },
+  { value: 'sip', label: 'SIP / Cashflow' },
+  { value: 'swp', label: 'SWP / Drawdown' },
+  { value: 'goal', label: 'Goal Funding' },
+  { value: 'risk', label: 'Risk Profile' },
+  { value: 'mvo', label: 'MVO Optimizer' },
+];
+
+/** '15 SEP 2026' — the notebook's dated editorial record eyebrow. */
+const notebookDate = (timestamp: string): string => {
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    .format(date)
+    .toUpperCase();
+};
 
 export const DecisionHistoryPanel = () => {
   const { decisionHistory, revertDecision, clearDecisionHistory, logDecision, showToast } = useCalculator();
 
-  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [revertTarget, setRevertTarget] = useState<DecisionLogEntry | null>(null);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+
   const [newTitle, setNewTitle] = useState('');
   const [newSummary, setNewSummary] = useState('');
   const [newCategory, setNewCategory] = useState<DecisionLogEntry['category']>('allocation');
@@ -41,7 +79,7 @@ export const DecisionHistoryPanel = () => {
       author: 'Advisor',
     });
     showToast('Decision recorded in audit trail.', 'success');
-    setAddModalOpen(false);
+    setAddOpen(false);
     setNewTitle('');
     setNewSummary('');
     setNewRationale('');
@@ -68,241 +106,234 @@ export const DecisionHistoryPanel = () => {
     showToast('Decision history exported to CSV.', 'success');
   };
 
+  const handleRevert = () => {
+    if (!revertTarget) return;
+    revertDecision(revertTarget.id);
+    showToast(`Reverted decision: ${revertTarget.actionTitle}`, 'info');
+    setRevertTarget(null);
+  };
+
   return (
-    <div className="space-y-6">
-      <Card className="border border-zinc-200/90 shadow-sm space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 bg-zinc-900 text-white rounded-lg">
-                <History size={18} />
-              </span>
-              <h3 className="text-xl font-sans font-bold text-zinc-900 tracking-tight">
-                Plan Decision History &amp; Audit Trail
-              </h3>
-              <Badge variant="navy" className="text-[10px] uppercase font-mono">
-                Governance Trail
-              </Badge>
-            </div>
-            <p className="text-xs text-zinc-500 mt-1">
-              Immutable chronological record of strategic calibration decisions, rationale, asset rebalancing events, and client approvals.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 self-start sm:self-center">
-            <Button size="sm" variant="outline" onClick={handleExport} className="text-xs h-8 px-3">
-              <FileSpreadsheet size={13} className="mr-1" /> Export CSV
-            </Button>
-            <Button size="sm" onClick={() => setAddModalOpen(true)} className="bg-zinc-900 text-white hover:bg-zinc-800 text-xs h-8 px-3">
-              <Plus size={13} className="mr-1" /> Log Decision
-            </Button>
-          </div>
+    <div className="space-y-5">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-baseline gap-3">
+          <h3 className="text-[15px] font-semibold tracking-tight text-ink">Investment notebook</h3>
+          {decisionHistory.length > 0 && (
+            <span className="font-mono text-[11px] tabular-nums text-faint">
+              {decisionHistory.length} {decisionHistory.length === 1 ? 'entry' : 'entries'}
+            </span>
+          )}
         </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={decisionHistory.length === 0}>
+            <Download size={13} strokeWidth={1.6} /> Export CSV
+          </Button>
+          <Button size="sm" onClick={() => setAddOpen(true)}>
+            <Plus size={13} strokeWidth={1.6} /> Log decision
+          </Button>
+        </div>
+      </div>
 
-        {decisionHistory.length === 0 ? (
-          <div className="p-10 rounded-xl border border-dashed border-zinc-300 bg-zinc-50/50 text-center space-y-3">
-            <div className="w-11 h-11 mx-auto rounded-xl bg-white border border-zinc-200 shadow-2xs flex items-center justify-center text-zinc-400">
-              <History size={20} />
-            </div>
-            <p className="text-sm font-bold text-zinc-900">No decisions logged yet</p>
-            <p className="text-xs text-zinc-500 max-w-md mx-auto leading-relaxed">
-              Decisions you record — plan updates, allocation changes, and scenario approvals — will appear in this immutable audit trail.
-            </p>
-            <div className="pt-1">
-              <Button
-                size="sm"
-                onClick={() => setAddModalOpen(true)}
-                className="bg-zinc-900 text-white hover:bg-zinc-800 text-xs h-8 px-4"
-              >
-                <Plus size={13} className="mr-1" /> Log First Decision
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {decisionHistory.map((entry) => {
-              let badgeVariant: 'navy' | 'gold' | 'success' | 'warning' | 'default' = 'navy';
-              if (entry.category === 'retirement') badgeVariant = 'gold';
-              else if (entry.category === 'sip') badgeVariant = 'success';
-              else if (entry.category === 'mvo') badgeVariant = 'warning';
-
-              return (
-                <div
-                  key={entry.id}
-                  className={`p-4 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-start justify-between gap-4 ${
-                    entry.reverted
-                      ? 'bg-zinc-50/50 border-zinc-200 opacity-60'
-                      : 'bg-white border-zinc-200/90 shadow-2xs hover:border-zinc-300'
-                  }`}
-                >
-                  <div className="space-y-1.5 flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] font-mono text-zinc-500 flex items-center gap-1">
-                        <Calendar size={11} /> {entry.dateFormatted}
-                      </span>
-                      <Badge variant={badgeVariant} className="text-[9px] uppercase font-mono">
-                        {entry.category}
-                      </Badge>
-                      <span className="text-[10px] text-zinc-400">· by {entry.author}</span>
-                      {entry.reverted && (
-                        <Badge variant="outline" className="text-[9px] text-rose-600 border-rose-200">
-                          Reverted
-                        </Badge>
-                      )}
+      {decisionHistory.length === 0 ? (
+        <EmptyState
+          eyebrow="Audit Trail"
+          title="No decisions recorded yet."
+          description="Plan updates, allocation changes, and scenario approvals you log will appear here as a dated, reversible record of the advisory reasoning."
+          icon={NotebookPen}
+          action={
+            <Button size="sm" onClick={() => setAddOpen(true)}>
+              <Plus size={13} strokeWidth={1.6} /> Log first decision
+            </Button>
+          }
+        />
+      ) : (
+        <div className="rounded-lg border border-border bg-raised shadow-card">
+          <ol className="divide-y divide-border">
+            {decisionHistory.map((entry) => (
+              <li key={entry.id} className="relative px-5 md:px-6 py-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    {/* Date eyebrow + category */}
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <span className="eyebrow">{notebookDate(entry.timestamp) || entry.dateFormatted}</span>
+                      <Badge tone={CATEGORY_TONE[entry.category]}>{entry.category}</Badge>
+                      <span className="text-[11px] text-faint">by {entry.author}</span>
                     </div>
 
-                    <h4 className="text-sm font-bold text-zinc-900">
-                      {entry.actionTitle}
-                    </h4>
-
-                    <p className="text-xs text-zinc-700 leading-snug">
-                      {entry.summary}
-                    </p>
-
-                    {entry.rationale && (
-                      <div className="p-2.5 rounded-lg bg-zinc-50 border border-zinc-100 text-[11px] text-zinc-600">
-                        <strong className="text-zinc-800 font-semibold">Advisory Rationale:</strong> {entry.rationale}
-                      </div>
-                    )}
+                    {/* The change */}
+                    <h4 className="mt-2 text-sm font-semibold tracking-tight text-ink">{entry.actionTitle}</h4>
 
                     {(entry.previousValue || entry.newValue) && (
-                      <div className="flex items-center gap-2 text-xs font-mono pt-1">
+                      <p className="mt-1 font-mono text-[13px] tabular-nums flex items-center gap-2 flex-wrap">
                         {entry.previousValue && (
-                          <span className="text-zinc-400 line-through">{entry.previousValue}</span>
+                          <span className="text-faint line-through decoration-border-strong">{entry.previousValue}</span>
                         )}
-                        {entry.previousValue && <ArrowRight size={12} className="text-zinc-400" />}
-                        <span className="font-bold text-zinc-900">{entry.newValue}</span>
-                      </div>
+                        {entry.previousValue && <ArrowRight size={12} strokeWidth={1.6} className="text-faint" aria-hidden="true" />}
+                        {entry.newValue ? (
+                          <span className="text-ink font-medium">{entry.newValue}</span>
+                        ) : (
+                          entry.previousValue && <span className="text-faint">—</span>
+                        )}
+                      </p>
+                    )}
+
+                    {/* Impact line */}
+                    {entry.summary && entry.summary !== entry.actionTitle && (
+                      <p className="mt-2 text-xs text-accent-strong font-medium">{entry.summary}</p>
+                    )}
+
+                    {/* Reason */}
+                    {entry.rationale && (
+                      <p className="mt-2 text-xs text-muted leading-relaxed max-w-prose text-pretty">
+                        {entry.rationale}
+                      </p>
                     )}
                   </div>
 
-                  {entry.revertPatch && !entry.reverted && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        revertDecision(entry.id);
-                        showToast(`Reverted decision: ${entry.actionTitle}`, 'info');
-                      }}
-                      className="text-[11px] h-7 px-2.5 text-zinc-600 hover:text-rose-600 shrink-0 self-start"
+                  {/* Entry actions */}
+                  <div className="relative shrink-0">
+                    <button
+                      type="button"
+                      aria-label={`Options for decision: ${entry.actionTitle}`}
+                      aria-expanded={menuOpenId === entry.id}
+                      onClick={() => setMenuOpenId(menuOpenId === entry.id ? null : entry.id)}
+                      className="p-1.5 rounded-md text-faint hover:text-ink hover:bg-sunken transition-colors cursor-pointer"
                     >
-                      <RotateCcw size={12} className="mr-1" /> Revert
-                    </Button>
-                  )}
+                      <MoreHorizontal size={15} strokeWidth={1.6} />
+                    </button>
+                    {menuOpenId === entry.id && (
+                      <>
+                        <button
+                          type="button"
+                          aria-label="Close menu"
+                          className="fixed inset-0 z-10 cursor-default"
+                          onClick={() => setMenuOpenId(null)}
+                        />
+                        <div className="absolute right-0 z-20 mt-1 w-44 rounded-md border border-border bg-raised shadow-popover py-1">
+                          {entry.revertPatch && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMenuOpenId(null);
+                                setRevertTarget(entry);
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-ink-soft hover:bg-sunken hover:text-ink transition-colors cursor-pointer"
+                            >
+                              <RotateCcw size={12} strokeWidth={1.6} /> Revert this decision
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMenuOpenId(null);
+                              setClearConfirmOpen(true);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-negative hover:bg-negative-soft transition-colors cursor-pointer"
+                          >
+                            <Trash2 size={12} strokeWidth={1.6} /> Clear audit history
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-
-        {decisionHistory.length > 0 && (
-          <div className="flex justify-between items-center text-xs text-zinc-500 pt-3 border-t border-zinc-100">
-            <span>{decisionHistory.length} total recorded decision milestones</span>
-            <button
-              type="button"
-              onClick={() => {
-                if (confirm('Are you sure you want to clear the audit history?')) {
-                  clearDecisionHistory();
-                  showToast('Decision audit trail cleared.', 'info');
-                }
-              }}
-              className="text-[11px] text-zinc-400 hover:text-rose-600 transition-colors flex items-center gap-1"
-            >
-              <Trash2 size={11} /> Clear Audit History
-            </button>
-          </div>
-        )}
-      </Card>
-
-      {/* Manual Entry Modal */}
-      {addModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/50 backdrop-blur-xs">
-          <form
-            onSubmit={handleCreateDecision}
-            className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-zinc-200 space-y-4"
-          >
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
-              <h3 className="text-base font-sans font-bold text-zinc-900 flex items-center gap-2">
-                <History size={18} className="text-zinc-800" />
-                Record Advisory Decision
-              </h3>
-              <button type="button" onClick={() => setAddModalOpen(false)} className="text-zinc-400 hover:text-zinc-700 text-xs">
-                Cancel
-              </button>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 mb-1">
-                Decision Title
-              </label>
-              <input
-                type="text"
-                required
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="e.g. Equity allocation rebalanced 70% -> 65%"
-                className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs focus:outline-none focus:border-zinc-900"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 mb-1">
-                  Category
-                </label>
-                <select
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs focus:outline-none focus:border-zinc-900"
-                >
-                  <option value="allocation">Asset Allocation</option>
-                  <option value="retirement">Retirement</option>
-                  <option value="sip">SIP / Cashflow</option>
-                  <option value="swp">SWP / Drawdown</option>
-                  <option value="goal">Goal Funding</option>
-                  <option value="risk">Risk Profile</option>
-                  <option value="mvo">MVO Optimizer</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 mb-1">
-                  New Value / State
-                </label>
-                <input
-                  type="text"
-                  value={newNewVal}
-                  onChange={(e) => setNewNewVal(e.target.value)}
-                  placeholder="e.g. 65% Equity"
-                  className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs focus:outline-none focus:border-zinc-900"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 mb-1">
-                Advisory Rationale / Justification
-              </label>
-              <textarea
-                rows={3}
-                value={newRationale}
-                onChange={(e) => setNewRationale(e.target.value)}
-                placeholder="Explain why this change was recommended based on risk tolerance, stress tests, or goal priority..."
-                className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs focus:outline-none focus:border-zinc-900 resize-none font-sans"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-100">
-              <Button type="button" variant="outline" size="sm" onClick={() => setAddModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" size="sm" className="bg-zinc-900 text-white hover:bg-zinc-800">
-                Save to Audit Trail
-              </Button>
-            </div>
-          </form>
+              </li>
+            ))}
+          </ol>
         </div>
       )}
+
+      {/* Log decision drawer */}
+      <Drawer open={addOpen} onClose={() => setAddOpen(false)} title="Record advisory decision" width={460}>
+        <form onSubmit={handleCreateDecision} className="space-y-4">
+          <Input
+            label="Decision title"
+            required
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            placeholder="e.g. Retirement age revised after career review"
+          />
+          <Select
+            label="Category"
+            value={newCategory}
+            onChange={(v) => setNewCategory(v as DecisionLogEntry['category'])}
+            options={CATEGORY_OPTIONS}
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Previous value"
+              value={newOldVal}
+              onChange={(e) => setNewOldVal(e.target.value)}
+              placeholder="e.g. 55"
+            />
+            <Input
+              label="New value"
+              value={newNewVal}
+              onChange={(e) => setNewNewVal(e.target.value)}
+              placeholder="e.g. 57"
+            />
+          </div>
+          <Input
+            label="Impact line"
+            value={newSummary}
+            onChange={(e) => setNewSummary(e.target.value)}
+            placeholder="e.g. +₹62L projected resilience"
+            helper="A short measurable consequence shown on the notebook entry."
+          />
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted" htmlFor="decision-rationale">
+              Advisory rationale
+            </label>
+            <textarea
+              id="decision-rationale"
+              rows={4}
+              value={newRationale}
+              onChange={(e) => setNewRationale(e.target.value)}
+              placeholder="Why was this change recommended — risk tolerance, stress tests, goal priority…"
+              className="w-full px-3 py-2.5 bg-surface border border-border rounded-md text-sm text-ink placeholder:text-faint resize-none leading-relaxed focus:border-accent focus:ring-2 focus:ring-accent-soft focus:outline-none"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-border">
+            <Button type="button" variant="secondary" size="sm" onClick={() => setAddOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" size="sm">
+              Save to audit trail
+            </Button>
+          </div>
+        </form>
+      </Drawer>
+
+      {/* Revert confirmation */}
+      <ConfirmDialog
+        open={revertTarget !== null}
+        onConfirm={handleRevert}
+        onCancel={() => setRevertTarget(null)}
+        title="Revert this decision?"
+        description={
+          revertTarget
+            ? `“${revertTarget.actionTitle}” will be rolled back and removed from the notebook. This cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Revert decision"
+        danger
+      />
+
+      {/* Clear history confirmation */}
+      <ConfirmDialog
+        open={clearConfirmOpen}
+        onConfirm={() => {
+          clearDecisionHistory();
+          setClearConfirmOpen(false);
+          showToast('Decision audit trail cleared.', 'info');
+        }}
+        onCancel={() => setClearConfirmOpen(false)}
+        title="Clear the audit history?"
+        description="Every recorded decision will be permanently removed from the notebook. This cannot be undone."
+        confirmLabel="Clear history"
+        danger
+      />
     </div>
   );
 };

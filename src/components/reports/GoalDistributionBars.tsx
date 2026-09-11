@@ -33,7 +33,7 @@ export const GoalDistributionBars = ({ distribution, targetAmount, className }: 
   }, [distribution, targetAmount]);
 
   if (!distribution.length || maxProbability <= 0) {
-    return <span className="text-[11px] text-zinc-400">Distribution unavailable</span>;
+    return <span className="text-[11px] text-faint">Distribution unavailable</span>;
   }
 
   return (
@@ -49,17 +49,17 @@ export const GoalDistributionBars = ({ distribution, targetAmount, className }: 
           return (
             <div
               key={i}
-              className={cn('flex-1 rounded-t-[1px]', isShortfall ? 'bg-rose-400' : 'bg-emerald-500/80')}
+              className={cn('flex-1 rounded-t-[1px]', isShortfall ? 'bg-negative/60' : 'bg-positive/70')}
               style={{ height: `${heightPct}%` }}
               title={`${formatCurrencyCompact(bin.binStart)} – ${formatCurrencyCompact(bin.binEnd)}: ${(bin.probability * 100).toFixed(1)}%`}
             />
           );
         })}
       </div>
-      <div className="flex justify-between mt-1 text-[9px] text-zinc-500 font-mono">
+      <div className="flex justify-between mt-1 text-[9px] text-faint font-mono">
         <span>{formatCurrencyCompact(distribution[0].binStart)}</span>
         {targetAmount !== undefined && shortfallMass > 0 && (
-          <span className="text-rose-600 font-semibold">{(shortfallMass * 100).toFixed(0)}% below target</span>
+          <span className="text-negative font-semibold">{(shortfallMass * 100).toFixed(0)}% below target</span>
         )}
         <span>{formatCurrencyCompact(distribution[distribution.length - 1].binEnd)}</span>
       </div>

@@ -11,6 +11,14 @@ import {
 } from 'recharts';
 import { formatCurrencyCompact } from '../../lib/formatters';
 import type { WealthSnapshot } from '../../lib/wealthEngine';
+import {
+  getChartTheme,
+  useChartMotion,
+  TOOLTIP_STYLE,
+  TOOLTIP_ITEM_STYLE,
+  TOOLTIP_LABEL_STYLE,
+  LEGEND_WRAPPER_STYLE,
+} from './chartPrimitives';
 
 interface CashFlowTimelineChartProps {
   snapshots: WealthSnapshot[];
@@ -27,17 +35,6 @@ interface YearFlow {
 
 const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 };
 
-const TOOLTIP_STYLE = {
-  borderRadius: '14px',
-  border: '1px solid rgba(226, 232, 240, 0.9)',
-  backgroundColor: 'rgba(255, 255, 255, 0.96)',
-  backdropFilter: 'blur(10px)',
-  boxShadow: '0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04)',
-  padding: '10px 14px',
-};
-
-const LEGEND_WRAPPER_STYLE = { fontSize: '11px', paddingBottom: '8px' };
-
 /**
  * Aggregates per-year cash flow events from the wealth engine snapshots:
  * SIP/STP contributions (invested), goal funding, SWP withdrawals and taxes.
@@ -46,6 +43,9 @@ export const CashFlowTimelineChart = ({
   snapshots,
   ariaLabel = 'Annual cash flow events: invested contributions, goal funding, withdrawals and taxes by age',
 }: CashFlowTimelineChartProps) => {
+  const theme = getChartTheme();
+  const motion = useChartMotion();
+
   const { chartData, summary } = useMemo(() => {
     const rows: YearFlow[] = [];
     for (let i = 1; i < snapshots.length; i++) {
@@ -78,7 +78,7 @@ export const CashFlowTimelineChart = ({
     return (
       <div className="h-80 w-full flex items-center justify-center" role="img" aria-label={ariaLabel}>
         <span className="sr-only">No cash flow events in the projection.</span>
-        <p className="text-sm text-zinc-600">No cash flow events to display.</p>
+        <p className="text-sm text-muted">No cash flow events to display.</p>
       </div>
     );
   }
@@ -88,17 +88,17 @@ export const CashFlowTimelineChart = ({
       <span className="sr-only">{summary}</span>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} margin={CHART_MARGIN}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4e4e7" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.grid} />
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 11, fill: 'var(--color-faint)' }}
+            tick={{ fontSize: 11, fill: theme.axisLabel }}
             axisLine={false}
             tickLine={false}
             tickMargin={10}
           />
           <YAxis
             tickFormatter={formatCurrencyCompact}
-            tick={{ fontSize: 11, fill: 'var(--color-faint)' }}
+            tick={{ fontSize: 11, fill: theme.axisLabel, fontFamily: 'var(--font-mono)' }}
             axisLine={false}
             tickLine={false}
           />
@@ -108,6 +108,8 @@ export const CashFlowTimelineChart = ({
               String(name),
             ]}
             contentStyle={TOOLTIP_STYLE}
+            itemStyle={TOOLTIP_ITEM_STYLE}
+            labelStyle={TOOLTIP_LABEL_STYLE}
           />
           <Legend
             verticalAlign="top"
@@ -116,10 +118,10 @@ export const CashFlowTimelineChart = ({
             iconSize={8}
             wrapperStyle={LEGEND_WRAPPER_STYLE}
           />
-          <Bar dataKey="invested" name="Invested (SIP + STP)" stackId="in" fill="var(--color-accent)" radius={[0, 0, 0, 0]} />
-          <Bar dataKey="goals" name="Goal Funding" stackId="out" fill="var(--color-warning)" />
-          <Bar dataKey="withdrawn" name="SWP Withdrawals" stackId="out" fill="var(--color-negative)" />
-          <Bar dataKey="taxes" name="Taxes" stackId="out" fill="var(--color-info)" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="invested" name="Invested (SIP + STP)" stackId="in" fill={theme.primary} radius={[0, 0, 0, 0]} animationDuration={motion} />
+          <Bar dataKey="goals" name="Goal Funding" stackId="out" fill={theme.warning} animationDuration={motion} />
+          <Bar dataKey="withdrawn" name="SWP Withdrawals" stackId="out" fill={theme.positive} animationDuration={motion} />
+          <Bar dataKey="taxes" name="Taxes" stackId="out" fill={theme.muted} radius={[4, 4, 0, 0]} animationDuration={motion} />
         </BarChart>
       </ResponsiveContainer>
     </div>

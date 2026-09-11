@@ -53,7 +53,7 @@ export const NetWorthEvolutionChart = ({ data, ariaLabel, summary }: NetWorthEvo
   if (data.length === 0) {
     return (
       <div className="h-80 w-full flex items-center justify-center" role="img" aria-label={ariaLabel}>
-        <p className="text-sm text-zinc-600 text-center px-6">No projection data yet — add assets and cashflows in the Master Plan.</p>
+        <p className="text-sm text-ink-soft text-center px-6">No projection data yet — add assets and cashflows in the Master Plan.</p>
         <p className="sr-only">{summary}</p>
       </div>
     );
@@ -62,7 +62,7 @@ export const NetWorthEvolutionChart = ({ data, ariaLabel, summary }: NetWorthEvo
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-end">
-        <div className="flex items-center gap-0.5 rounded-lg bg-zinc-100 border border-zinc-200 p-0.5" role="group" aria-label="Toggle nominal versus real view">
+        <div className="flex items-center gap-0.5 rounded-lg bg-sunken border border-border p-0.5" role="group" aria-label="Toggle nominal versus real view">
           {MODES.map((m) => (
             <button
               key={m.id}
@@ -71,7 +71,7 @@ export const NetWorthEvolutionChart = ({ data, ariaLabel, summary }: NetWorthEvo
               onClick={() => setMode(m.id)}
               className={cn(
                 'px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors',
-                mode === m.id ? 'bg-white text-zinc-950 shadow-2xs' : 'text-zinc-500 hover:text-zinc-800',
+                mode === m.id ? 'bg-raised text-ink shadow-2xs' : 'text-muted hover:text-ink',
               )}
             >
               {m.label}

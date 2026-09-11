@@ -180,28 +180,28 @@ export const ReversePlanning = () => {
   return (
     <div className="space-y-6">
       {/* Target Milestone Configuration Card */}
-      <Card className="border border-zinc-200 bg-white shadow-2xs space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-4">
+      <Card className="border border-border bg-raised shadow-2xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-subtle pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="p-1.5 bg-zinc-950 text-white rounded-lg">
+              <span className="p-1.5 bg-deep text-deep rounded-lg">
                 <Compass size={18} />
               </span>
-              <h3 className="text-xl font-sans font-bold text-zinc-950 tracking-tight">
+              <h3 className="text-xl font-sans font-bold text-ink tracking-tight">
                 Reverse Planning & Target Milestone Solver
               </h3>
               <Badge variant="navy" className="text-[10px] uppercase font-mono">
                 Milestone Solver
               </Badge>
             </div>
-            <p className="text-xs text-zinc-500 mt-1">
+            <p className="text-xs text-muted mt-1">
               Set your target retirement corpus milestone to compute required monthly contributions, required capital, and feasible retirement timelines.
             </p>
           </div>
         </div>
 
         {/* Milestone Inputs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 bg-zinc-50 rounded-2xl border border-zinc-200">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 bg-surface rounded-2xl border border-border">
           <div className="space-y-2.5">
             <CurrencyInput
               label="Target Retirement Corpus Milestone"
@@ -210,7 +210,7 @@ export const ReversePlanning = () => {
               helper={`Current projected corpus: ${formatCurrencyCompact(wealthResult.terminalValue)}`}
             />
             <div className="flex flex-wrap items-center gap-2 pt-1">
-              <span className="text-[11px] font-semibold text-zinc-500">Presets:</span>
+              <span className="text-[11px] font-semibold text-muted">Presets:</span>
               {milestonePresets.map((amt) => (
                 <button
                   key={amt}
@@ -218,8 +218,8 @@ export const ReversePlanning = () => {
                   onClick={() => setTargetCorpus(amt)}
                   className={`px-2.5 py-1 text-[11px] rounded-lg font-semibold transition-colors cursor-pointer ${
                     targetCorpus === amt
-                      ? 'bg-zinc-950 text-white shadow-2xs'
-                      : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-100 hover:border-zinc-300'
+                      ? 'bg-deep text-deep shadow-2xs'
+                      : 'bg-raised border border-border text-ink-soft hover:bg-sunken hover:border-border'
                   }`}
                 >
                   {formatCurrencyCompact(amt)}
@@ -239,7 +239,7 @@ export const ReversePlanning = () => {
               suffix=" yrs old"
             />
             <div className="flex flex-wrap items-center gap-2 pt-1">
-              <span className="text-[11px] font-semibold text-zinc-500">Age Presets:</span>
+              <span className="text-[11px] font-semibold text-muted">Age Presets:</span>
               {agePresets.map((age) => (
                 <button
                   key={age}
@@ -247,17 +247,17 @@ export const ReversePlanning = () => {
                   onClick={() => handleTargetAgeChange(age)}
                   className={`px-2.5 py-1 text-[11px] rounded-lg font-semibold transition-colors cursor-pointer ${
                     targetAge === age
-                      ? 'bg-zinc-950 text-white shadow-2xs'
-                      : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-100 hover:border-zinc-300'
+                      ? 'bg-deep text-deep shadow-2xs'
+                      : 'bg-raised border border-border text-ink-soft hover:bg-sunken hover:border-border'
                   }`}
                 >
                   Age {age}
                 </button>
               ))}
             </div>
-            <div className="flex justify-between text-xs text-zinc-500 pt-0.5">
+            <div className="flex justify-between text-xs text-muted pt-0.5">
               <span>Current Age: {inputs.currentAge}</span>
-              <span className="font-semibold text-zinc-800">{result.yearsToTarget} Years Compounding</span>
+              <span className="font-semibold text-ink">{result.yearsToTarget} Years Compounding</span>
               <span>Life Expectancy: {inputs.lifeExpectancy}</span>
             </div>
           </div>
@@ -266,25 +266,25 @@ export const ReversePlanning = () => {
         {/* 1-Click Solver Action Cards */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-600 flex items-center gap-1.5">
-              <Layers size={14} className="text-zinc-700" />
+            <h4 className="text-xs font-bold uppercase tracking-wider text-ink-soft flex items-center gap-1.5">
+              <Layers size={14} className="text-ink-soft" />
               Target Solver Diagnostics & 1-Click Plan Actions
             </h4>
-            <span className="text-[11px] text-zinc-500 font-medium">Click any lever to immediately synchronize with Master Plan</span>
+            <span className="text-[11px] text-muted font-medium">Click any lever to immediately synchronize with Master Plan</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Lever 1: Required Monthly SIP */}
-            <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-3">
+            <div className="bg-raised p-4 rounded-2xl border border-border shadow-2xs flex flex-col justify-between space-y-3">
               <div>
-                <div className="flex items-center justify-between gap-1 text-[10px] uppercase font-bold tracking-wider text-zinc-500 mb-1">
+                <div className="flex items-center justify-between gap-1 text-[10px] uppercase font-bold tracking-wider text-muted mb-1">
                   <span>Required Monthly SIP</span>
-                  <TrendingUp size={14} className="text-zinc-700" />
+                  <TrendingUp size={14} className="text-ink-soft" />
                 </div>
-                <div className="text-xl font-bold font-mono text-zinc-950">
+                <div className="text-xl font-bold font-mono text-ink">
                   {formatCurrency(result.requiredMonthlySip)}
                 </div>
-                <p className="text-xs text-zinc-500 mt-1 leading-snug">
+                <p className="text-xs text-muted mt-1 leading-snug">
                   Current SIP: <strong>{formatCurrency(inputs.sip.amount)}/mo</strong> ({result.requiredMonthlySip > inputs.sip.amount ? `+${formatCurrency(result.requiredMonthlySip - inputs.sip.amount)}` : 'Sufficient'}).
                 </p>
               </div>
@@ -295,13 +295,13 @@ export const ReversePlanning = () => {
                 disabled={isSipAlreadyApplied || result.requiredMonthlySip <= 0}
                 className={`w-full text-xs font-semibold ${
                   isSipAlreadyApplied
-                    ? 'border-emerald-300 text-emerald-800 bg-emerald-50'
-                    : 'bg-zinc-950 text-white hover:bg-zinc-800'
+                    ? 'border-accent text-accent-strong bg-accent-softer'
+                    : 'bg-deep text-deep hover:bg-deep'
                 }`}
               >
                 {isSipAlreadyApplied ? (
                   <>
-                    <CheckCircle2 size={13} className="mr-1.5 text-emerald-600" /> Current SIP
+                    <CheckCircle2 size={13} className="mr-1.5 text-accent-strong" /> Current SIP
                   </>
                 ) : (
                   'Apply Required SIP'
@@ -310,16 +310,16 @@ export const ReversePlanning = () => {
             </div>
 
             {/* Lever 2: Feasible Retirement Age */}
-            <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-3">
+            <div className="bg-raised p-4 rounded-2xl border border-border shadow-2xs flex flex-col justify-between space-y-3">
               <div>
-                <div className="flex items-center justify-between gap-1 text-[10px] uppercase font-bold tracking-wider text-zinc-500 mb-1">
+                <div className="flex items-center justify-between gap-1 text-[10px] uppercase font-bold tracking-wider text-muted mb-1">
                   <span>Feasible Retirement Age</span>
-                  <Clock size={14} className="text-zinc-700" />
+                  <Clock size={14} className="text-ink-soft" />
                 </div>
-                <div className="text-xl font-bold font-mono text-zinc-950">
+                <div className="text-xl font-bold font-mono text-ink">
                   Age {result.feasibleRetirementAge}
                 </div>
-                <p className="text-xs text-zinc-500 mt-1 leading-snug">
+                <p className="text-xs text-muted mt-1 leading-snug">
                   At current SIP: {result.feasibleRetirementAge === inputs.retirementAge ? 'Matches planned age' : `${result.feasibleRetirementAge > inputs.retirementAge ? `+${result.feasibleRetirementAge - inputs.retirementAge}` : result.feasibleRetirementAge - inputs.retirementAge} yrs vs Age ${inputs.retirementAge}`}.
                 </p>
               </div>
@@ -330,13 +330,13 @@ export const ReversePlanning = () => {
                 disabled={isAgeAlreadyApplied}
                 className={`w-full text-xs font-semibold ${
                   isAgeAlreadyApplied
-                    ? 'border-emerald-300 text-emerald-800 bg-emerald-50'
-                    : 'bg-zinc-950 text-white hover:bg-zinc-800'
+                    ? 'border-accent text-accent-strong bg-accent-softer'
+                    : 'bg-deep text-deep hover:bg-deep'
                 }`}
               >
                 {isAgeAlreadyApplied ? (
                   <>
-                    <CheckCircle2 size={13} className="mr-1.5 text-emerald-600" /> Current Age
+                    <CheckCircle2 size={13} className="mr-1.5 text-accent-strong" /> Current Age
                   </>
                 ) : (
                   `Retire at Age ${result.feasibleRetirementAge}`
@@ -345,16 +345,16 @@ export const ReversePlanning = () => {
             </div>
 
             {/* Lever 3: Max Sustainable Spend */}
-            <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-3">
+            <div className="bg-raised p-4 rounded-2xl border border-border shadow-2xs flex flex-col justify-between space-y-3">
               <div>
-                <div className="flex items-center justify-between gap-1 text-[10px] uppercase font-bold tracking-wider text-zinc-500 mb-1">
+                <div className="flex items-center justify-between gap-1 text-[10px] uppercase font-bold tracking-wider text-muted mb-1">
                   <span>Max Sustainable Spend</span>
-                  <ShieldCheck size={14} className="text-emerald-700" />
+                  <ShieldCheck size={14} className="text-accent-strong" />
                 </div>
-                <div className="text-xl font-bold font-mono text-emerald-700">
+                <div className="text-xl font-bold font-mono text-accent-strong">
                   {formatCurrency(result.maxSustainableMonthlySpend)}/mo
                 </div>
-                <p className="text-xs text-zinc-500 mt-1 leading-snug">
+                <p className="text-xs text-muted mt-1 leading-snug">
                   Target spend today: <strong>{formatCurrency(inputs.swp.monthlyNeedToday)}/mo</strong>.
                 </p>
               </div>
@@ -365,13 +365,13 @@ export const ReversePlanning = () => {
                 disabled={isSpendAlreadyApplied || result.maxSustainableMonthlySpend <= 0}
                 className={`w-full text-xs font-semibold ${
                   isSpendAlreadyApplied
-                    ? 'border-emerald-300 text-emerald-800 bg-emerald-50'
-                    : 'bg-zinc-950 text-white hover:bg-zinc-800'
+                    ? 'border-accent text-accent-strong bg-accent-softer'
+                    : 'bg-deep text-deep hover:bg-deep'
                 }`}
               >
                 {isSpendAlreadyApplied ? (
                   <>
-                    <CheckCircle2 size={13} className="mr-1.5 text-emerald-600" /> Spend Applied
+                    <CheckCircle2 size={13} className="mr-1.5 text-accent-strong" /> Spend Applied
                   </>
                 ) : (
                   'Apply Sustainable Spend'
@@ -380,24 +380,24 @@ export const ReversePlanning = () => {
             </div>
 
             {/* Lever 4: Required Capital Today */}
-            <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-3">
+            <div className="bg-raised p-4 rounded-2xl border border-border shadow-2xs flex flex-col justify-between space-y-3">
               <div>
-                <div className="flex items-center justify-between gap-1 text-[10px] uppercase font-bold tracking-wider text-zinc-500 mb-1">
+                <div className="flex items-center justify-between gap-1 text-[10px] uppercase font-bold tracking-wider text-muted mb-1">
                   <span>Required Capital Today</span>
-                  <DollarSign size={14} className="text-zinc-700" />
+                  <DollarSign size={14} className="text-ink-soft" />
                 </div>
-                <div className="text-xl font-bold font-mono text-zinc-950">
+                <div className="text-xl font-bold font-mono text-ink">
                   {formatCurrencyCompact(result.requiredInitialCorpus)}
                 </div>
-                <p className="text-xs text-zinc-500 mt-1 leading-snug">
+                <p className="text-xs text-muted mt-1 leading-snug">
                   Net worth: {formatCurrencyCompact(currentWealth)} ({currentWealth >= result.requiredInitialCorpus ? (
-                    <span className="text-emerald-700 font-semibold">Surplus</span>
+                    <span className="text-accent-strong font-semibold">Surplus</span>
                   ) : (
-                    <span className="text-rose-700 font-semibold">Shortfall {formatCurrencyCompact(result.requiredInitialCorpus - currentWealth)}</span>
+                    <span className="text-negative font-semibold">Shortfall {formatCurrencyCompact(result.requiredInitialCorpus - currentWealth)}</span>
                   )}).
                 </p>
               </div>
-              <div className="text-[11px] text-zinc-500 py-1.5 px-2 bg-zinc-50 rounded-lg text-center font-medium border border-zinc-200">
+              <div className="text-[11px] text-muted py-1.5 px-2 bg-surface rounded-lg text-center font-medium border border-border">
                 Lump sum capital requirement
               </div>
             </div>
@@ -407,12 +407,12 @@ export const ReversePlanning = () => {
 
       {/* Pathway Comparison Visuals */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border border-zinc-200 bg-white shadow-2xs space-y-3">
-          <h4 className="text-sm font-sans font-bold text-zinc-950 flex items-center gap-2">
-            <GitCompare size={16} className="text-zinc-600" />
+        <Card className="border border-border bg-raised shadow-2xs space-y-3">
+          <h4 className="text-sm font-sans font-bold text-ink flex items-center gap-2">
+            <GitCompare size={16} className="text-ink-soft" />
             Required Monthly SIP per Pathway
           </h4>
-          <p className="text-xs text-zinc-600">
+          <p className="text-xs text-ink-soft">
             {cheapestPathway ? `"${cheapestPathway.name}" demands the lowest commitment at ${formatCurrency(cheapestPathway.requiredSipMonthly)}/mo; the spread across pathways shows how spend, age, and SIP levers trade off against each other.` : ''}
           </p>
           <div
@@ -475,12 +475,12 @@ export const ReversePlanning = () => {
           </table>
         </Card>
 
-        <Card className="border border-zinc-200 bg-white shadow-2xs space-y-3">
-          <h4 className="text-sm font-sans font-bold text-zinc-950 flex items-center gap-2">
-            <Clock size={16} className="text-zinc-600" />
+        <Card className="border border-border bg-raised shadow-2xs space-y-3">
+          <h4 className="text-sm font-sans font-bold text-ink flex items-center gap-2">
+            <Clock size={16} className="text-ink-soft" />
             Feasible Retirement Age Timeline
           </h4>
-          <p className="text-xs text-zinc-600">
+          <p className="text-xs text-ink-soft">
             {fastestPathway ? `"${fastestPathway.name}" reaches the milestone earliest at age ${fastestPathway.projectedRetirementAge}; bars right of the dashed line retire later than the current plan (age ${inputs.retirementAge}).` : ''}
           </p>
           <div
@@ -528,10 +528,10 @@ export const ReversePlanning = () => {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex items-center justify-center gap-4 text-[11px] text-zinc-600">
+          <div className="flex items-center justify-center gap-4 text-[11px] text-ink-soft">
             <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-accent" /> At/before plan age</span>
             <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-info" /> Later than plan</span>
-            <span className="text-zinc-500">Dashed line = current plan (age {inputs.retirementAge})</span>
+            <span className="text-muted">Dashed line = current plan (age {inputs.retirementAge})</span>
           </div>
           <table className="sr-only">
             <caption>Projected retirement age per pathway versus the current plan age</caption>
@@ -554,10 +554,10 @@ export const ReversePlanning = () => {
       {/* 4 Strategic Pathways */}
       <div className="space-y-4">
         <div>
-          <h4 className="text-base font-sans font-bold text-zinc-950 tracking-tight">
+          <h4 className="text-base font-sans font-bold text-ink tracking-tight">
             Strategic Implementation Pathways
           </h4>
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-muted">
             Four mathematical pathways to achieve {formatCurrencyCompact(targetCorpus)}:
           </p>
         </div>
@@ -570,17 +570,17 @@ export const ReversePlanning = () => {
                 key={p.id}
                 className={`p-5 flex flex-col justify-between border transition-all ${
                   isApplied
-                    ? 'border-emerald-500 bg-emerald-50/20 shadow-2xs'
-                    : 'border-zinc-200 bg-white hover:border-zinc-300 shadow-2xs'
+                    ? 'border-accent bg-accent-softer/20 shadow-2xs'
+                    : 'border-border bg-raised hover:border-border shadow-2xs'
                 }`}
               >
                 <div className="space-y-3.5">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-muted">
                         {p.tagline}
                       </span>
-                      <h4 className="text-base font-bold text-zinc-950 mt-0.5">{p.name}</h4>
+                      <h4 className="text-base font-bold text-ink mt-0.5">{p.name}</h4>
                     </div>
                     <Badge
                       variant={p.successProbability >= 94 ? 'success' : 'navy'}
@@ -590,45 +590,45 @@ export const ReversePlanning = () => {
                     </Badge>
                   </div>
 
-                  <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-200 text-xs text-zinc-700 font-medium leading-relaxed">
+                  <div className="p-3 bg-surface rounded-xl border border-border text-xs text-ink-soft font-medium leading-relaxed">
                     {p.summary}
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="p-2.5 bg-white rounded-xl border border-zinc-200">
-                      <span className="text-[10px] text-zinc-500 uppercase font-bold block">Monthly SIP</span>
-                      <span className="font-bold font-mono text-zinc-950">{formatCurrency(p.requiredSipMonthly)}</span>
+                    <div className="p-2.5 bg-raised rounded-xl border border-border">
+                      <span className="text-[10px] text-muted uppercase font-bold block">Monthly SIP</span>
+                      <span className="font-bold font-mono text-ink">{formatCurrency(p.requiredSipMonthly)}</span>
                     </div>
-                    <div className="p-2.5 bg-white rounded-xl border border-zinc-200">
-                      <span className="text-[10px] text-zinc-500 uppercase font-bold block">Retirement Age</span>
-                      <span className="font-bold font-mono text-zinc-950">Age {p.projectedRetirementAge}</span>
+                    <div className="p-2.5 bg-raised rounded-xl border border-border">
+                      <span className="text-[10px] text-muted uppercase font-bold block">Retirement Age</span>
+                      <span className="font-bold font-mono text-ink">Age {p.projectedRetirementAge}</span>
                     </div>
-                    <div className="p-2.5 bg-white rounded-xl border border-zinc-200">
-                      <span className="text-[10px] text-zinc-500 uppercase font-bold block">Post-Ret Spend</span>
-                      <span className="font-bold font-mono text-zinc-950">{formatCurrency(p.monthlyRetirementSpending)}/mo</span>
+                    <div className="p-2.5 bg-raised rounded-xl border border-border">
+                      <span className="text-[10px] text-muted uppercase font-bold block">Post-Ret Spend</span>
+                      <span className="font-bold font-mono text-ink">{formatCurrency(p.monthlyRetirementSpending)}/mo</span>
                     </div>
                   </div>
 
-                  <div className="text-[11px] text-zinc-600 leading-snug">
-                    <strong className="text-zinc-900">Trade-Off Analysis:</strong> {p.tradeOffDescription}
+                  <div className="text-[11px] text-ink-soft leading-snug">
+                    <strong className="text-ink">Trade-Off Analysis:</strong> {p.tradeOffDescription}
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-zinc-100 mt-4 flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-zinc-800">{p.primaryAction}</span>
+                <div className="pt-4 border-t border-border-subtle mt-4 flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-ink">{p.primaryAction}</span>
                   <Button
                     size="sm"
                     variant={isApplied ? 'outline' : 'primary'}
                     onClick={() => handleApplyPathway(p)}
                     className={
                       isApplied
-                        ? 'border-emerald-500 text-emerald-800 bg-emerald-50 text-xs font-semibold'
-                        : 'bg-zinc-950 text-white hover:bg-zinc-800 text-xs font-semibold'
+                        ? 'border-accent text-accent-strong bg-accent-softer text-xs font-semibold'
+                        : 'bg-deep text-deep hover:bg-deep text-xs font-semibold'
                     }
                   >
                     {isApplied ? (
                       <>
-                        <CheckCircle2 size={13} className="mr-1 text-emerald-600" />
+                        <CheckCircle2 size={13} className="mr-1 text-accent-strong" />
                         Applied to Plan
                       </>
                     ) : (

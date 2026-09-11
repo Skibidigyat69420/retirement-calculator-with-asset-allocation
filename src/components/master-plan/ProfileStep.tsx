@@ -1,8 +1,8 @@
-import { User, Calendar, ArrowRight, FileText } from 'lucide-react';
-import { Card } from '../ui/Card';
+import { ArrowRight } from 'lucide-react';
 import { Input } from '../ui/Input';
 import { NumberInput } from '../ui/NumberInput';
 import { Button } from '../ui/Button';
+import { formatOrDash, isProfileConfigured } from '../../lib/planState';
 import type { MasterPlanInputs } from '../../types';
 
 interface ProfileStepProps {
@@ -18,156 +18,159 @@ export const ProfileStep = ({
   updateClient,
   onNext,
 }: ProfileStepProps) => {
+  const configured = isProfileConfigured(inputs);
   const yearsToRetire = Math.max(0, inputs.retirementAge - inputs.currentAge);
   const retirementSpan = Math.max(1, inputs.lifeExpectancy - inputs.retirementAge);
+  const currentYear = new Date().getFullYear();
+
+  const timeline = [
+    { label: 'Accumulation phase', value: formatOrDash(configured ? yearsToRetire : null, (v) => `${v} yrs left`) },
+    { label: 'Distribution phase', value: formatOrDash(configured ? retirementSpan : null, (v) => `${v} yrs in SWP`) },
+    { label: 'Retirement year', value: formatOrDash(configured ? currentYear + yearsToRetire : null, (v) => String(v)) },
+    {
+      label: 'Final year',
+      value: formatOrDash(
+        configured && inputs.lifeExpectancy > 0 ? currentYear + (inputs.lifeExpectancy - inputs.currentAge) : null,
+        (v) => String(v),
+      ),
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      {/* Intro Header Card */}
-      <Card className="border border-border space-y-2">
-        <div className="flex items-center gap-2">
-          <User size={20} className="text-accent" />
-          <h3 className="text-lg font-bold text-ink">Client Profile & Planning Horizon</h3>
-        </div>
-        <p className="text-xs text-muted leading-relaxed">
-          Define the client's demographic baseline, career horizon, and retirement withdrawal window. These parameters form the core timeline for all compounding calculations.
+    <div className="space-y-8">
+      <header>
+        <div className="eyebrow">Step 01 · Profile</div>
+        <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">Client & planning horizon</h2>
+        <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
+          The demographic baseline and career timeline that anchor every compounding calculation in this plan.
         </p>
-      </Card>
+      </header>
 
-      {/* Profile Form */}
-      <Card className="border border-border space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Identity */}
+      <section className="border-t border-border pt-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
           <Input
-            label="Client Full Name"
+            label="Client name"
             value={inputs.client?.name || ''}
             onChange={(e) => updateClient({ name: e.target.value })}
             placeholder="e.g. Vikram & Priya Malhotra"
           />
-
           <Input
-            label="Lead Advisor / Practitioner"
+            label="Lead advisor"
             value={inputs.client?.advisor || ''}
             onChange={(e) => updateClient({ advisor: e.target.value })}
             placeholder="e.g. Sound Thesis Private Wealth"
           />
-
           <Input
-            label="Client Email / Contact"
+            label="Client email / contact"
             type="email"
             value={inputs.client?.email || ''}
             onChange={(e) => updateClient({ email: e.target.value })}
-            placeholder="e.g. client@domain.com"
+            placeholder="client@domain.com"
           />
-
           <Input
-            label="Annual Plan Review Date"
+            label="Annual plan review"
             type="date"
-            value={inputs.client?.reviewDate || new Date().toISOString().split('T')[0]}
+            value={inputs.client?.reviewDate || ''}
             onChange={(e) => updateClient({ reviewDate: e.target.value })}
           />
         </div>
+      </section>
 
-        {/* Age and Horizon Grid */}
-        <div className="pt-4 border-t border-border">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-4 flex items-center gap-2">
-            <Calendar size={14} className="text-accent" />
-            Demographic Timeline & Life Expectancy
-          </h4>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <NumberInput
-              label="Current Age"
-              value={inputs.currentAge}
-              onChange={(val) => updateInputs({ currentAge: val })}
-              min={18}
-              max={95}
-              suffix="yrs"
-              presets={[
-                { label: '30y', value: 30 },
-                { label: '35y', value: 35 },
-                { label: '40y', value: 40 },
-                { label: '45y', value: 45 },
-              ]}
-            />
-
-            <NumberInput
-              label="Target Retirement Age"
-              value={inputs.retirementAge}
-              onChange={(val) => updateInputs({ retirementAge: val })}
-              min={inputs.currentAge + 1}
-              max={95}
-              suffix="yrs"
-              presets={[
-                { label: '50y', value: 50 },
-                { label: '55y', value: 55 },
-                { label: '58y', value: 58 },
-                { label: '60y', value: 60 },
-              ]}
-            />
-
-            <NumberInput
-              label="Life Expectancy"
-              value={inputs.lifeExpectancy}
-              onChange={(val) => updateInputs({ lifeExpectancy: val })}
-              min={inputs.retirementAge + 1}
-              max={110}
-              suffix="yrs"
-              presets={[
-                { label: '85y', value: 85 },
-                { label: '90y', value: 90 },
-                { label: '95y', value: 95 },
-              ]}
-            />
-          </div>
-
-          {/* Timeline Summary Chips */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-3 border-t border-border text-xs">
-            <div className="p-3 rounded-xl bg-sunken border border-border">
-              <span className="text-muted block text-[10px] uppercase font-bold">Accumulation Phase</span>
-              <span className="text-sm font-bold font-mono text-ink">{yearsToRetire} Years Left</span>
-            </div>
-            <div className="p-3 rounded-xl bg-sunken border border-border">
-              <span className="text-muted block text-[10px] uppercase font-bold">Distribution Phase</span>
-              <span className="text-sm font-bold font-mono text-ink">{retirementSpan} Years in SWP</span>
-            </div>
-            <div className="p-3 rounded-xl bg-sunken border border-border">
-              <span className="text-muted block text-[10px] uppercase font-bold">Retirement Year</span>
-              <span className="text-sm font-bold font-mono text-ink">
-                Year {new Date().getFullYear() + yearsToRetire}
-              </span>
-            </div>
-            <div className="p-3 rounded-xl bg-sunken border border-border">
-              <span className="text-muted block text-[10px] uppercase font-bold">Final Year</span>
-              <span className="text-sm font-bold font-mono text-ink">
-                Year {new Date().getFullYear() + (inputs.lifeExpectancy - inputs.currentAge)}
-              </span>
-            </div>
+      {/* Timeline */}
+      <section className="border-t border-border pt-6">
+        <div className="flex items-baseline justify-between gap-4 mb-5">
+          <div>
+            <h3 className="text-[15px] font-semibold text-ink tracking-tight">Demographic timeline</h3>
+            <p className="mt-0.5 text-xs text-muted">Ages define the accumulation and distribution windows.</p>
           </div>
         </div>
 
-        {/* Practitioner Notes */}
-        <div className="pt-4 border-t border-border space-y-2">
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted flex items-center gap-1.5">
-            <FileText size={13} className="text-faint" />
-            Advisory Strategy & Client Discovery Notes
-          </label>
-          <textarea
-            rows={3}
-            value={inputs.client?.notes || ''}
-            onChange={(e) => updateClient({ notes: e.target.value })}
-            placeholder="Document key client priorities, family circumstances, risk reservations, or legacy intentions..."
-            className="w-full bg-surface border border-border rounded-xl px-3.5 py-2.5 text-sm font-medium text-ink placeholder:text-faint focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition-all shadow-2xs resize-none"
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-5">
+          <NumberInput
+            label="Current age"
+            value={inputs.currentAge}
+            onChange={(val) => updateInputs({ currentAge: val })}
+            min={18}
+            max={95}
+            suffix="yrs"
+            presets={[
+              { label: '30', value: 30 },
+              { label: '35', value: 35 },
+              { label: '40', value: 40 },
+              { label: '45', value: 45 },
+            ]}
+          />
+          <NumberInput
+            label="Retirement age"
+            value={inputs.retirementAge}
+            onChange={(val) => updateInputs({ retirementAge: val })}
+            min={inputs.currentAge + 1}
+            max={95}
+            suffix="yrs"
+            presets={[
+              { label: '50', value: 50 },
+              { label: '55', value: 55 },
+              { label: '58', value: 58 },
+              { label: '60', value: 60 },
+            ]}
+          />
+          <NumberInput
+            label="Life expectancy"
+            value={inputs.lifeExpectancy}
+            onChange={(val) => updateInputs({ lifeExpectancy: val })}
+            min={inputs.retirementAge + 1}
+            max={110}
+            suffix="yrs"
+            presets={[
+              { label: '85', value: 85 },
+              { label: '90', value: 90 },
+              { label: '95', value: 95 },
+            ]}
           />
         </div>
 
-        {/* Step Navigation Button */}
-        <div className="flex justify-end pt-4 border-t border-border">
-          <Button onClick={onNext} className="flex items-center gap-2">
-            <span>Next: Financials & Debt</span>
-            <ArrowRight size={15} />
-          </Button>
+        {/* Timeline preview */}
+        <div className="mt-6 divide-y divide-border border-t border-b border-border">
+          {timeline.map((t) => (
+            <div key={t.label} className="flex items-baseline justify-between gap-4 py-2.5">
+              <span className="text-xs text-muted">{t.label}</span>
+              <span className="font-mono text-sm tabular-nums text-ink">{t.value}</span>
+            </div>
+          ))}
         </div>
-      </Card>
+        {!configured && (
+          <p className="mt-3 text-xs text-faint leading-relaxed">
+            Set the current age and retirement age to preview the plan timeline.
+          </p>
+        )}
+      </section>
+
+      {/* Notes */}
+      <section className="border-t border-border pt-6">
+        <label
+          htmlFor="profile-notes"
+          className="block text-[11px] font-semibold uppercase tracking-wider text-muted"
+        >
+          Advisory strategy & discovery notes
+        </label>
+        <textarea
+          id="profile-notes"
+          rows={3}
+          value={inputs.client?.notes || ''}
+          onChange={(e) => updateClient({ notes: e.target.value })}
+          placeholder="Document key client priorities, family circumstances, risk reservations, or legacy intentions…"
+          className="mt-1.5 w-full bg-surface border border-border rounded-md px-3 py-2.5 text-sm text-ink placeholder:text-faint hover:border-border-strong focus:border-accent focus:ring-2 focus:ring-accent-soft focus:outline-none transition-colors resize-none"
+        />
+      </section>
+
+      {/* Step navigation */}
+      <div className="flex justify-end border-t border-border pt-6">
+        <Button onClick={onNext} className="flex items-center gap-2">
+          <span>Next · Financials</span>
+          <ArrowRight size={15} aria-hidden="true" />
+        </Button>
+      </div>
     </div>
   );
 };

@@ -1,19 +1,10 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import {
-  AlertTriangle,
-  CheckCircle2,
-  TrendingUp,
-  Save,
-  FileDown,
-  Target,
-  CreditCard,
-  Building,
-  Loader2,
-} from 'lucide-react';
-import { Card } from '../ui/Card';
+import { ArrowRight, Save, Loader2 } from 'lucide-react';
+import { FinancialMetric } from '../ui/FinancialMetric';
 import { Button } from '../ui/Button';
-import { formatCurrency, formatCurrencyCompact } from '../../lib/formatters';
+import { guardNumber } from '../../lib/planState';
+import { calculateRetirementCorpus } from '../../lib/calculators';
+import { formatCurrencyCompact, formatPercent } from '../../lib/formatters';
 import type { MasterPlanInputs } from '../../types';
 import type { WealthEngineResult } from '../../lib/wealthEngine';
 
@@ -23,18 +14,21 @@ interface MasterPlanSummaryProps {
   totalLiabilities: number;
   netBalanceSheet: number;
   debtToAssetRatio: number;
+  hasRiskAnswers?: boolean;
   onSavePlan: () => Promise<void>;
+  onViewDetails?: () => void;
 }
 
 export const MasterPlanSummary = ({
   inputs,
   wealthResult,
-  totalLiabilities,
-  netBalanceSheet,
-  debtToAssetRatio,
+  hasRiskAnswers,
   onSavePlan,
+  onViewDetails,
 }: MasterPlanSummaryProps) => {
   const [saving, setSaving] = useState(false);
+
+  const configured = wealthResult.isConfigured;
 
   const handleSave = async () => {
     try {
@@ -45,145 +39,114 @@ export const MasterPlanSummary = ({
     }
   };
 
-  const successRate = Math.round((wealthResult.monteCarlo?.successRate || (wealthResult.sustainable ? 0.9 : 0.45)) * 100);
-  const totalGoalCost = inputs.goals.reduce((acc, g) => acc + (g.targetAmount || 0), 0);
+  // Projected terminal wealth
+  const projected = configured ? guardNumber(wealthResult.terminalValue) : null;
+
+  // Required retirement corpus (math lives in src/lib/calculators)
+  const requiredCorpus = configured
+    ? calculateRetirementCorpus(
+        inputs.currentAge,
+        inputs.retirementAge,
+        inputs.lifeExpectancy,
+        inputs.swp.monthlyNeedToday,
+        inputs.inflation,
+        inputs.swp.postRetirementReturn,
+      ).requiredCorpus
+    : null;
+  const required =
+    configured && inputs.swp.monthlyNeedToday > 0 ? guardNumber(requiredCorpus) : null;
+
+  // Goal funding ratio
+  const funding =
+    configured && inputs.goals.length > 0
+      ? guardNumber(wealthResult.overallGoalSuccessRate * 100)
+      : null;
+
+  // Monte Carlo solvency probability — suppressed until the risk
+  // questionnaire is answered (the score-50 fallback is internal only).
+  const probability =
+    configured && hasRiskAnswers ? guardNumber(wealthResult.monteCarlo.successRate * 100) : null;
+
+  const metrics = [
+    {
+      label: 'Projected',
+      value: projected === null ? null : formatCurrencyCompact(projected),
+      hint: configured ? `Terminal wealth at age ${inputs.lifeExpectancy || '—'}` : undefined,
+    },
+    {
+      label: 'Required',
+      value: required === null ? null : formatCurrencyCompact(required),
+      hint: required !== null ? 'Retirement corpus needed' : undefined,
+    },
+    {
+      label: 'Funding',
+      value: funding === null ? null : formatPercent(funding, 0),
+      hint: funding !== null ? `${inputs.goals.length} goal${inputs.goals.length === 1 ? '' : 's'} funded` : undefined,
+    },
+    {
+      label: 'Probability',
+      value: probability === null ? null : formatPercent(probability, 0),
+      hint: probability !== null ? 'Monte Carlo solvency' : undefined,
+    },
+  ];
 
   return (
-    <div className="space-y-4">
-      {/* Plan Health & Solvency Banner */}
-      <div
-        className={`p-4 rounded-2xl border transition-all ${
-          wealthResult.sustainable
-            ? 'bg-positive-soft border-positive/30 text-positive'
-            : 'bg-negative-soft border-negative/30 text-negative'
-        }`}
-      >
-        <div className="flex items-start gap-2.5">
-          {wealthResult.sustainable ? (
-            <CheckCircle2 size={18} className="shrink-0 mt-0.5 text-positive" />
-          ) : (
-            <AlertTriangle size={18} className="shrink-0 mt-0.5 text-negative" />
-          )}
-          <div className="space-y-1 min-w-0">
-            <div className="text-xs font-bold uppercase tracking-wider">
-              {wealthResult.sustainable ? 'Plan Is Fully Sustainable' : 'Depletion Risk Detected'}
-            </div>
-            <p className="text-[11px] leading-snug font-medium opacity-90">
-              {wealthResult.sustainable
-                ? `Lifetime withdrawals solvent through age ${inputs.lifeExpectancy}.`
-                : `Corpus projected to deplete around age ${wealthResult.depletionAge || 72}.`}
-            </p>
-          </div>
-        </div>
+    <div className="space-y-0 border-l border-border pl-5">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="eyebrow">Plan Outlook</span>
+        <span className="font-mono text-[10px] text-faint tabular-nums">
+          {new Date().getFullYear()}
+        </span>
       </div>
 
-      {/* Core Wealth & Solvency Metrics */}
-      <Card className="border border-border space-y-4 p-4">
-        <div className="border-b border-border pb-2.5">
-          <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-muted block">
-            Client Balance Sheet
-          </span>
-          <div className="text-xl font-mono font-bold text-ink mt-0.5">
-            {formatCurrency(wealthResult.netWorth)}
+      <div className="mt-4 divide-y divide-border border-t border-border">
+        {metrics.map((m) => (
+          <div key={m.label} className="py-3.5">
+            <FinancialMetric label={m.label} value={m.value} size="sm" hint={m.hint} />
           </div>
-          <span className="text-[10px] text-faint">Gross Invested Assets</span>
-        </div>
+        ))}
+      </div>
 
-        {/* Liabilities & Net Worth */}
-        <div className="space-y-2 text-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-muted flex items-center gap-1">
-              <CreditCard size={12} className="text-faint" />
-              Total Liabilities:
-            </span>
-            <span className="font-mono font-semibold text-negative">
-              {formatCurrency(totalLiabilities)}
-            </span>
-          </div>
+      {!configured && (
+        <p className="py-3 text-xs text-faint leading-relaxed border-t border-border">
+          Complete the profile to see your outlook.
+        </p>
+      )}
 
-          <div className="flex items-center justify-between">
-            <span className="text-muted flex items-center gap-1">
-              <Building size={12} className="text-faint" />
-              Net Balance Sheet:
-            </span>
-            <span className="font-mono font-bold text-ink">
-              {formatCurrency(netBalanceSheet)}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-muted">Debt-to-Asset:</span>
-            <span
-              className={`font-mono font-bold ${
-                debtToAssetRatio > 40 ? 'text-negative' : 'text-positive'
-              }`}
-            >
-              {debtToAssetRatio.toFixed(1)}%
-            </span>
-          </div>
-        </div>
-
-        {/* Solvency Gauge */}
-        <div className="pt-2 border-t border-border space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted">Monte Carlo Solvency:</span>
-            <span className="font-mono font-bold text-ink">{successRate}%</span>
-          </div>
-          <div className="w-full h-2 bg-sunken rounded-full overflow-hidden border border-border/60">
-            <div
-              className={`h-full rounded-full transition-all duration-300 ${
-                successRate >= 80 ? 'bg-positive' : successRate >= 60 ? 'bg-warning' : 'bg-negative'
-              }`}
-              style={{ width: `${Math.min(100, Math.max(5, successRate))}%` }}
+      <div className="py-3 border-t border-border space-y-2">
+        {onViewDetails && (
+          <button
+            type="button"
+            onClick={onViewDetails}
+            className="group inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-strong transition-colors cursor-pointer"
+          >
+            View details
+            <ArrowRight
+              size={13}
+              strokeWidth={1.8}
+              aria-hidden="true"
+              className="transition-transform duration-150 group-hover:translate-x-0.5"
             />
-          </div>
-        </div>
+          </button>
+        )}
 
-        {/* Goals & Savings Rate */}
-        <div className="pt-2 border-t border-border space-y-2 text-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-muted flex items-center gap-1">
-              <Target size={12} className="text-accent" />
-              Lifestyle Goals ({inputs.goals.length}):
-            </span>
-            <span className="font-mono font-semibold text-ink truncate max-w-[110px]">
-              {formatCurrencyCompact(totalGoalCost)}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-muted flex items-center gap-1">
-              <TrendingUp size={12} className="text-positive" />
-              Savings Rate:
-            </span>
-            <span className="font-mono font-semibold text-positive">
-              {wealthResult.savingsRate.toFixed(1)}%
-            </span>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="pt-3 border-t border-border space-y-2">
+        <div>
           <Button
+            variant="outline"
             size="sm"
-            variant="primary"
             onClick={handleSave}
             disabled={saving}
-            className="w-full flex items-center justify-center gap-2 text-xs h-9"
+            className="w-full"
           >
-            {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-            <span>{saving ? 'Saving Plan...' : 'Save Plan to Cloud'}</span>
+            {saving ? (
+              <Loader2 size={13} className="animate-spin" aria-hidden="true" />
+            ) : (
+              <Save size={13} aria-hidden="true" />
+            )}
+            <span>{saving ? 'Saving…' : 'Save plan'}</span>
           </Button>
-
-          <Link
-            to="/dossier?autoPrint=true"
-            className="w-full flex items-center justify-center gap-2 text-xs h-9 px-3 rounded-xl border border-border bg-sunken hover:bg-surface text-ink font-semibold transition-all shadow-2xs"
-          >
-            <FileDown size={13} />
-            <span>Generate Full Dossier</span>
-          </Link>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

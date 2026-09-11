@@ -89,7 +89,7 @@ export const MonteCarloHistogram = ({ terminalValues, ariaLabel, summary }: Mont
   if (bins.length === 0) {
     return (
       <div className="h-80 w-full flex items-center justify-center" role="img" aria-label={ariaLabel}>
-        <p className="text-sm text-zinc-600 text-center px-6">No Monte Carlo outcomes available yet.</p>
+        <p className="text-sm text-ink-soft text-center px-6">No Monte Carlo outcomes available yet.</p>
         <p className="sr-only">{summary}</p>
       </div>
     );
@@ -124,8 +124,8 @@ export const MonteCarloHistogram = ({ terminalValues, ariaLabel, summary }: Mont
               const bin = payload[0].payload as HistogramBin;
               return (
                 <div style={TOOLTIP_STYLE}>
-                  <div className="text-[11px] font-bold text-zinc-800">{bin.label}</div>
-                  <div className="text-[11px] text-zinc-600 tabular-nums">
+                  <div className="text-[11px] font-bold text-ink">{bin.label}</div>
+                  <div className="text-[11px] text-ink-soft tabular-nums">
                     {bin.count.toLocaleString()} scenario{bin.count === 1 ? '' : 's'}
                   </div>
                 </div>

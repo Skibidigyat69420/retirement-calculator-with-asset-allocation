@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react';
 import { Wallet, ArrowRightLeft, PiggyBank, Calendar } from 'lucide-react';
-import { NumberInput } from '../ui/NumberInput';
+import { CurrencyInput } from '../ui/CurrencyInput';
+
+import { Slider } from '../ui/Slider';
 import { MetricCard } from '../ui/MetricCard';
-import { Card } from '../ui/Card';
 import { CalculatorShell } from './CalculatorShell';
 import { calculateSTP } from '../../lib/calculators';
 import { formatCurrency, formatCurrencyCompact } from '../../lib/formatters';
 import { useCalculator } from '../../context/CalculatorContext';
 import { Button } from '../ui/Button';
-import { COLORS } from '../../lib/constants';
+import { getChartTheme } from '../../lib/chartTheme';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -71,17 +72,43 @@ export const STPCalculator = () => {
     showToast(`Loaded STP settings (${formatCurrency(inputs.stp.monthlyTransfer || 50000)}/mo) from Master Plan.`, 'info');
   };
 
+  const theme = getChartTheme();
+
+  const summaryRows: { label: string; value: string }[] = [
+    { label: 'Lumpsum deployed', value: formatCurrency(lumpsum) },
+    { label: 'Monthly transfer', value: formatCurrency(monthlyTransfer) },
+    { label: 'Undeployed liquid left', value: formatCurrency(result.liquid) },
+    { label: 'Wealth gained vs idle cash', value: formatCurrency(result.total - lumpsum) },
+  ];
+
   return (
     <CalculatorShell
       title="STP Calculator"
       description="Model deploying a lumpsum from a liquid fund into a target portfolio gradually."
+      hasInput={lumpsum > 0 || monthlyTransfer > 0}
       inputs={
         <>
-          <NumberInput label="Lumpsum Capital" value={lumpsum} onChange={setLumpsum} />
-          <NumberInput label="Monthly Transfer" value={monthlyTransfer} onChange={setMonthlyTransfer} />
-          <NumberInput label="Liquid Fund Return" value={liquidReturn} onChange={setLiquidReturn} suffix="%" />
-          <NumberInput label="Target Portfolio Return" value={targetReturn} onChange={setTargetReturn} suffix="%" />
-          <div className="flex gap-2 mt-2">
+          <CurrencyInput label="Lumpsum Capital" value={lumpsum} onChange={setLumpsum} step={50000} />
+          <CurrencyInput label="Monthly Transfer" value={monthlyTransfer} onChange={setMonthlyTransfer} step={10000} />
+          <Slider
+            label="Liquid Fund Return"
+            value={liquidReturn}
+            onChange={setLiquidReturn}
+            min={0}
+            max={15}
+            step={0.25}
+            suffix="%"
+          />
+          <Slider
+            label="Target Portfolio Return"
+            value={targetReturn}
+            onChange={setTargetReturn}
+            min={0}
+            max={30}
+            step={0.5}
+            suffix="%"
+          />
+          <div className="flex gap-2 pt-2 border-t border-border-subtle">
             <Button onClick={handleSyncFromPlan} className="flex-1 text-xs" variant="ghost">
               Sync from Plan
             </Button>
@@ -92,98 +119,95 @@ export const STPCalculator = () => {
         </>
       }
       results={
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <MetricCard label="Initial Capital" value={formatCurrency(lumpsum)} icon={<Wallet size={18} />} variant="navy" />
-            <MetricCard label="STP Duration" value={`${result.months} months`} icon={<Calendar size={18} />} />
-            <MetricCard label="Final Target Value" value={formatCurrency(result.target)} icon={<ArrowRightLeft size={18} />} variant="gold" />
-            <MetricCard label="Total Final Value" value={formatCurrency(result.total)} icon={<PiggyBank size={18} />} variant="success" />
-          </div>
-
-          <Card>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Deployment Summary</h4>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-zinc-700">Lumpsum deployed</span>
-                <span className="font-medium">{formatCurrency(lumpsum)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-700">Monthly transfer</span>
-                <span className="font-medium">{formatCurrency(monthlyTransfer)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-700">Un deployed liquid left</span>
-                <span className="font-medium">{formatCurrency(result.liquid)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-700">Wealth gained vs idle cash</span>
-                <span className="font-medium">{formatCurrency(result.total - lumpsum)}</span>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 mb-4">Capital Deployment Schedule</h4>
-            <p className="text-xs text-zinc-600 mb-3">
-              The lumpsum stays in the liquid fund earning {liquidReturn}% while {formatCurrency(monthlyTransfer)}/mo is systematically routed into the target portfolio — full deployment takes {result.months} months.
-            </p>
-            <div className="h-64" role="img" aria-label={`Area chart of STP deployment over ${result.months} months: liquid fund balance falls from ${formatCurrencyCompact(lumpsum)} to ${formatCurrencyCompact(result.liquid)} while the target portfolio grows to ${formatCurrencyCompact(result.target)}.`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={scheduleData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="stpLiquid" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={COLORS.ink} stopOpacity={0.14} />
-                      <stop offset="95%" stopColor={COLORS.ink} stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="stpTarget" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={COLORS.gold} stopOpacity={0.2} />
-                      <stop offset="95%" stopColor={COLORS.gold} stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                  <YAxis
-                    tickFormatter={formatCurrencyCompact}
-                    tick={{ fontSize: 11, fill: '#64748b' }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip
-                    formatter={(value: any, name: any) => [
-                      formatCurrency(Number(value)),
-                      name === 'liquid' ? 'Liquid fund (undeployed)' : 'Target portfolio',
-                    ]}
-                    contentStyle={{
-                      borderRadius: '14px',
-                      border: '1px solid rgba(226, 232, 240, 0.9)',
-                      backgroundColor: 'rgba(255, 255, 255, 0.96)',
-                      padding: '10px 14px',
-                    }}
-                  />
-                  <Legend verticalAlign="top" height={32} iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
-                  <Area type="monotone" dataKey="liquid" name="Liquid fund (undeployed)" stroke={COLORS.ink} strokeWidth={2} fill="url(#stpLiquid)" />
-                  <Area type="monotone" dataKey="target" name="Target portfolio" stroke={COLORS.gold} strokeWidth={2} fill="url(#stpTarget)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-            <table className="sr-only">
-              <caption>STP deployment checkpoints: liquid balance and target portfolio value by month</caption>
-              <thead>
-                <tr><th>Month</th><th>Liquid balance</th><th>Target portfolio</th></tr>
-              </thead>
-              <tbody>
-                {scheduleData.map((d) => (
-                  <tr key={d.month}>
-                    <td>{d.month}</td>
-                    <td>{formatCurrency(d.liquid)}</td>
-                    <td>{formatCurrency(d.target)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
-        </>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard label="Initial Capital" value={formatCurrency(lumpsum)} icon={<Wallet size={18} strokeWidth={1.6} />} variant="default" />
+          <MetricCard label="STP Duration" value={`${result.months} months`} icon={<Calendar size={18} strokeWidth={1.6} />} />
+          <MetricCard label="Final Target Value" value={formatCurrency(result.target)} icon={<ArrowRightLeft size={18} strokeWidth={1.6} />} variant="gold" />
+          <MetricCard label="Total Final Value" value={formatCurrency(result.total)} icon={<PiggyBank size={18} strokeWidth={1.6} />} variant="success" />
+        </div>
       }
-    />
+    >
+      <div className="mt-5 rounded-lg border border-border bg-raised">
+        <div className="px-5 pt-4 pb-3 border-b border-border-subtle">
+          <div className="eyebrow">Deployment Summary</div>
+        </div>
+        <div className="p-5">
+          <dl className="divide-y divide-border-subtle text-sm">
+            {summaryRows.map((row) => (
+              <div key={row.label} className="flex justify-between py-2.5">
+                <dt className="text-muted">{row.label}</dt>
+                <dd className="font-mono tabular-nums font-medium text-ink">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-lg border border-border bg-raised">
+        <div className="px-5 pt-4 pb-3 border-b border-border-subtle">
+          <div className="eyebrow">Capital Deployment Schedule</div>
+        </div>
+        <div className="p-5">
+          <p className="text-[13px] text-muted leading-relaxed mb-4">
+            The lumpsum stays in the liquid fund earning {liquidReturn}% while {formatCurrency(monthlyTransfer)}/mo is systematically routed into the target portfolio — full deployment takes {result.months} months.
+          </p>
+          <div className="h-64" role="img" aria-label={`Area chart of STP deployment over ${result.months} months: liquid fund balance falls from ${formatCurrencyCompact(lumpsum)} to ${formatCurrencyCompact(result.liquid)} while the target portfolio grows to ${formatCurrencyCompact(result.target)}.`}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={scheduleData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="stpLiquid" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={theme.primary} stopOpacity={0.16} />
+                    <stop offset="95%" stopColor={theme.primary} stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="stpTarget" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={theme.secondary} stopOpacity={0.22} />
+                    <stop offset="95%" stopColor={theme.secondary} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.grid} />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: theme.axisLabel }} axisLine={false} tickLine={false} />
+                <YAxis
+                  tickFormatter={formatCurrencyCompact}
+                  tick={{ fontSize: 11, fill: theme.axisLabel }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip
+                  formatter={(value, name) => [
+                    formatCurrency(Number(value)),
+                    name === 'liquid' ? 'Liquid fund (undeployed)' : 'Target portfolio',
+                  ]}
+                  contentStyle={{
+                    borderRadius: '8px',
+                    border: `1px solid ${theme.tooltipBorder}`,
+                    backgroundColor: theme.tooltipBg,
+                    color: theme.tooltipText,
+                    padding: '10px 14px',
+                  }}
+                />
+                <Legend verticalAlign="top" height={32} iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
+                <Area type="monotone" dataKey="liquid" name="Liquid fund (undeployed)" stroke={theme.primary} strokeWidth={2} fill="url(#stpLiquid)" />
+                <Area type="monotone" dataKey="target" name="Target portfolio" stroke={theme.secondary} strokeWidth={2} fill="url(#stpTarget)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <table className="sr-only">
+            <caption>STP deployment checkpoints: liquid balance and target portfolio value by month</caption>
+            <thead>
+              <tr><th>Month</th><th>Liquid balance</th><th>Target portfolio</th></tr>
+            </thead>
+            <tbody>
+              {scheduleData.map((d) => (
+                <tr key={d.month}>
+                  <td>{d.month}</td>
+                  <td>{formatCurrency(d.liquid)}</td>
+                  <td>{formatCurrency(d.target)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </CalculatorShell>
   );
 };

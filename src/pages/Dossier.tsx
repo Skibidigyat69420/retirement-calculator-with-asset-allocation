@@ -22,6 +22,7 @@ import { DonutChart } from '../components/charts/DonutChart';
 import { MonteCarloFanChart } from '../components/charts/MonteCarloFanChart';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { EmptyState } from '../components/ui/EmptyState';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { ASSET_COLORS, ASSET_LABELS } from '../lib/constants';
 import { CRISIS_PRESETS, runStressTest } from '../lib/stressTest';
@@ -65,6 +66,25 @@ const AUTHOR_LABELS: Record<string, string> = {
   'Automated System': 'Automated System',
 };
 
+const SECTIONS = [
+  { id: 'dossier-s1', label: 'Section 1', title: 'Executive Dashboard' },
+  { id: 'dossier-s2', label: 'Section 2', title: 'Master Plan & Capital Assets' },
+  { id: 'dossier-s3', label: 'Section 3', title: 'Retirement & SWP Longevity Analysis' },
+  { id: 'dossier-s4', label: 'Section 4', title: 'Strategic Asset Allocation & Rebalancing' },
+  { id: 'dossier-s5', label: 'Section 5', title: 'Quant Lab & Tail-Risk Analysis' },
+  { id: 'dossier-s6', label: 'Section 6', title: 'Plan Health & Priority Actions' },
+  { id: 'dossier-s7', label: 'Section 7', title: 'Goal Probability Detail' },
+  { id: 'dossier-s8', label: 'Section 8', title: 'Risk Questionnaire & Behavioral Profiling' },
+  { id: 'dossier-s9', label: 'Section 9', title: 'Tax & Currency Position' },
+  { id: 'dossier-s10', label: 'dossier-s10', title: 'Appendices' },
+  { id: 'dossier-s11', label: 'Section 11', title: 'Investment Policy Statement' },
+];
+
+const sectionClass =
+  'bg-raised rounded-xl border border-border p-8 print:border-none print:p-6 shadow-card page-break scroll-mt-20';
+const sectionHeaderClass = 'border-b border-border pb-4 mb-6 flex items-center justify-between gap-4';
+const tableHeadClass = 'bg-sunken text-muted font-semibold border-b border-border uppercase tracking-wider';
+
 export const Dossier = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -79,6 +99,7 @@ export const Dossier = () => {
     meetingState,
     assumptions,
     activeAssumptionSourceLabel,
+    hasRiskAnswers,
   } = useCalculator();
 
   const autoPrint = searchParams.get('autoPrint') === 'true';
@@ -108,7 +129,6 @@ export const Dossier = () => {
   );
 
   // Section 8: risk analytics.
-  const hasRiskAnswers = Object.keys(riskAnswers).length > 0;
   const dimensionBreakdown = useMemo(
     () => (hasRiskAnswers ? getDimensionBreakdown(riskAnswers) : null),
     [riskAnswers, hasRiskAnswers],
@@ -228,17 +248,44 @@ export const Dossier = () => {
     month: 'long',
     year: 'numeric',
   });
+  const dossierYear = new Date().getFullYear();
 
-  const sectionHeaderClass = 'border-b border-zinc-200 pb-4 mb-6 flex items-center justify-between';
-  const tableHeadClass = 'bg-zinc-50 text-zinc-600 font-semibold border-b border-zinc-200 uppercase tracking-wider';
+  if (!wealthResult.isConfigured) {
+    return (
+      <EmptyState
+        icon={FileText}
+        display
+        title="The dossier is not available yet"
+        description="Configure the plan — profile, finances and goals — and the comprehensive portfolio dossier will compile here, ready for PDF export."
+        action={
+          <Button variant="outline" onClick={() => navigate('/plan-inputs')}>
+            Configure the plan
+          </Button>
+        }
+      />
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-zinc-100/70 print:bg-white text-zinc-900 pb-16 print:pb-0">
-      {/* Embedded print stylesheet for pristine PDF rendering */}
+    <div className="doc-paper pb-8 print:pb-0">
+      {/* Scoped light paper palette — the dossier is a document, even in dark mode. */}
       <style>{`
+        .doc-paper {
+          --color-canvas: #F4F2ED; --color-background: #F4F2ED; --color-surface: #FBFAF7;
+          --color-raised: #FFFFFF; --color-sunken: #ECEAE2; --color-inset: #EFEDE6;
+          --color-elevated: #FFFFFF; --color-deep: #20231F;
+          --color-border: #D9D8D1; --color-border-strong: #C2C1B7; --color-border-subtle: #E6E4DC;
+          --color-ink: #171815; --color-ink-soft: #4E524B; --color-muted: #6E7268; --color-faint: #7B7E76;
+          --color-accent: #667A63; --color-accent-strong: #4A5C47; --color-accent-soft: #E6ECE3; --color-accent-softer: #EFF3EC;
+          --color-brass: #B3945A; --color-brass-strong: #96793F; --color-brass-soft: #F1EADF;
+          --color-positive: #557A60; --color-positive-soft: #E8EFE9;
+          --color-negative: #A65954; --color-negative-soft: #F4E8E6;
+          --color-warning: #B07D3E; --color-warning-soft: #F4EBDD;
+          --color-info: #64758A; --color-info-soft: #E9EDF1;
+          --shadow-card: 0 1px 2px rgba(32, 35, 31, 0.05);
+        }
         @media print {
           aside, header, footer, nav, .print-hidden { display: none !important; }
-          body { background: white !important; color: #09090b !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
           .page-break { break-after: page !important; page-break-after: always !important; }
           .avoid-break { break-inside: avoid !important; page-break-inside: avoid !important; }
           tr { break-inside: avoid !important; page-break-inside: avoid !important; }
@@ -247,142 +294,178 @@ export const Dossier = () => {
       `}</style>
 
       {/* Floating Action Bar (Hidden in Print) */}
-      <div className="sticky top-0 z-40 bg-zinc-950 text-white px-4 py-3 shadow-md flex items-center justify-between print:hidden">
+      <div className="sticky top-0 z-40 glass-header px-4 py-3 flex items-center justify-between print:hidden -mx-1 px-5">
         <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(-1)}
-            className="text-white border-zinc-700 hover:bg-zinc-800"
-          >
-            <ArrowLeft size={14} className="mr-1.5" /> Back
+          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+            <ArrowLeft size={14} strokeWidth={1.6} /> Back
           </Button>
           <div className="hidden sm:block">
-            <h1 className="text-sm font-medium text-zinc-200">
-              Complete Portfolio Dossier — {inputs.client?.name || 'Client Report'}
+            <h1 className="text-sm font-semibold text-ink">
+              Portfolio Dossier — {inputs.client?.name || 'Client Report'}
             </h1>
-            <p className="text-[11px] text-zinc-400">
-              All 11 sections compiled for high-resolution PDF export or print
+            <p className="text-[11px] text-muted">
+              Eleven sections compiled for high-resolution PDF export or print
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => window.print()}
-            className="bg-white text-zinc-900 hover:bg-slate-100 shadow-sm"
-          >
-            <Printer size={14} className="mr-1.5" /> Save as PDF / Print
-          </Button>
-        </div>
+        <Button variant="primary" size="sm" onClick={() => window.print()}>
+          <Printer size={14} strokeWidth={1.6} /> Save as PDF / Print
+        </Button>
       </div>
 
       {/* Main Printable Container */}
       <div className="max-w-5xl mx-auto p-4 sm:p-8 print:p-0 space-y-8 print:space-y-6">
 
         {/* ========================================================= */}
-        {/* COVER PAGE / EXECUTIVE MANDATE                            */}
+        {/* COVER PAGE — WEALTH PLAN                                  */}
         {/* ========================================================= */}
-        <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 sm:p-12 print:border-none print:p-6 shadow-sm page-break">
-          <div className="border-b border-zinc-200 pb-8 flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-zinc-950 text-white flex items-center justify-center font-sans font-bold text-base shadow-sm">
-                  ST
+        <section className="relative overflow-hidden bg-surface rounded-xl border border-border shadow-card page-break scroll-mt-20">
+          <div className="absolute inset-0 grid-motif opacity-70 pointer-events-none" aria-hidden="true" />
+          <div className="relative p-8 sm:p-14 print:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-md bg-deep text-canvas flex items-center justify-center font-display text-base">
+                    ST
+                  </div>
+                  <span className="font-display text-2xl text-ink">Sound Thesis</span>
                 </div>
-                <span className="font-sans text-xl font-bold tracking-tight text-zinc-900">
-                  Sound Thesis
+                <p className="eyebrow mt-2">Private Wealth & Advisory Mandate</p>
+              </div>
+              <div className="text-right shrink-0">
+                <Badge tone="neutral" className="mb-1.5">Confidential</Badge>
+                <p className="text-xs text-muted">Review Date: <span className="font-mono text-ink-soft">{inputs.client?.reviewDate || printDate}</span></p>
+              </div>
+            </div>
+
+            <div className="my-12 sm:my-16 space-y-5 print:my-8">
+              <div className="eyebrow text-accent">Wealth Plan</div>
+              <div className="flex flex-wrap items-end justify-between gap-6">
+                <h1 className="font-display text-4xl sm:text-6xl text-ink leading-[1.05]">
+                  {inputs.client?.name || 'Private Client'}
+                </h1>
+                <div className="text-right">
+                  <div className="num-hero text-5xl sm:text-6xl text-brass-strong">{dossierYear}</div>
+                  <div className="eyebrow mt-1">Annual Review</div>
+                </div>
+              </div>
+              <p className="text-sm sm:text-base text-muted max-w-2xl leading-relaxed">
+                An institutional wealth plan connecting personal risk tolerance, capital assets, systematic accumulation,
+                goal funding, and post-retirement withdrawal longevity into one probabilistic Monte Carlo model.
+              </p>
+            </div>
+
+            {/* Client & Advisor Mandate Box */}
+            <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-6 p-6 rounded-lg bg-raised border border-border avoid-break">
+              <div className="space-y-2">
+                <span className="eyebrow">Client Profile</span>
+                <p className="text-lg font-semibold text-ink">{inputs.client?.name || 'Primary Client'}</p>
+                <div className="text-xs text-muted space-y-1">
+                  <p>Email: {inputs.client?.email || '—'}</p>
+                  <p>
+                    Age: <span className="font-mono text-ink-soft">{inputs.currentAge}</span> · Retirement Target:{' '}
+                    <span className="font-mono text-ink-soft">Age {inputs.retirementAge}</span>
+                  </p>
+                  <p>
+                    Planning Horizon: <span className="font-mono text-ink-soft">Age {inputs.lifeExpectancy}</span>{' '}
+                    <span className="font-mono text-ink-soft">({inputs.lifeExpectancy - inputs.currentAge} years)</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <span className="eyebrow">Advisory Mandate</span>
+                <p className="text-lg font-semibold text-ink">{inputs.client?.advisor || 'Sound Thesis Wealth'}</p>
+                <div className="text-xs text-muted space-y-1">
+                  <p>Review Date: <span className="font-mono text-ink-soft">{inputs.client?.reviewDate || printDate}</span></p>
+                  <p>Mandate: Discretionary Goal-Based Wealth Architecture</p>
+                  <p>
+                    Risk Profile: {riskProfile.label}{' '}
+                    {hasRiskAnswers && <span className="font-mono text-ink-soft">(Score: {riskScore}/100)</span>}
+                  </p>
+                  <p>Mandate Notes: {inputs.client?.notes || 'Comprehensive retirement security & generational capital preservation.'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Topline Key Metrics */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 print:grid-cols-4 gap-4 mt-8 avoid-break">
+              <div className="p-4 rounded-md border border-border bg-raised">
+                <span className="eyebrow">Total Net Worth</span>
+                <p className="num-hero text-2xl text-ink mt-1.5">{formatCurrencyCompact(wealthResult.netWorth)}</p>
+                <span className="text-[10px] text-muted font-mono">{inputs.assets.length} active assets</span>
+              </div>
+              <div className="p-4 rounded-md border border-border bg-raised">
+                <span className="eyebrow">Retirement Status</span>
+                <p className="num-hero text-2xl text-ink mt-1.5">
+                  {wealthResult.sustainable ? 'Sustainable' : `Age ${wealthResult.depletionAge}`}
+                </p>
+                <span className="text-[10px] text-muted font-mono">Through age {inputs.lifeExpectancy}</span>
+              </div>
+              <div className="p-4 rounded-md border border-border bg-raised">
+                <span className="eyebrow">Monthly Surplus</span>
+                <p className="num-hero text-2xl text-ink mt-1.5">{formatCurrencyCompact(monthlySurplus)}</p>
+                <span className="text-[10px] text-muted font-mono">
+                  After {formatCurrencyCompact(inputs.monthlyExpenditure)} exp.
                 </span>
               </div>
-              <p className="text-xs uppercase tracking-widest text-zinc-500 mt-1 font-medium">
-                Private Wealth & Advisory Mandate
-              </p>
-            </div>
-            <div className="text-right">
-              <Badge variant="outline" className="mb-1 font-semibold border-zinc-300">Confidential</Badge>
-              <p className="text-xs text-zinc-500">Review Date: {inputs.client?.reviewDate || printDate}</p>
-            </div>
-          </div>
-
-          <div className="my-10 space-y-4">
-            <h1 className="text-3xl sm:text-4xl font-sans font-bold text-zinc-900 tracking-tight">
-              Comprehensive Financial Plan & Portfolio Dossier
-            </h1>
-            <p className="text-sm sm:text-base text-zinc-600 max-w-2xl leading-relaxed">
-              An institutional wealth plan connecting personal risk tolerance, capital assets, systematic accumulation,
-              goal funding, and post-retirement withdrawal longevity into one probabilistic Monte Carlo model.
-            </p>
-          </div>
-
-          {/* Client & Advisor Mandate Box */}
-          <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-6 p-6 rounded-xl bg-zinc-50 border border-zinc-200/80 avoid-break">
-            <div className="space-y-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Client Profile</span>
-              <p className="text-lg font-sans font-semibold text-zinc-900">{inputs.client?.name || 'Primary Client'}</p>
-              <div className="text-xs text-zinc-600 space-y-1">
-                <p><span className="font-medium text-zinc-700">Email:</span> {inputs.client?.email || '—'}</p>
-                <p><span className="font-medium text-zinc-700">Age:</span> {inputs.currentAge} years | <span className="font-medium text-zinc-700">Retirement Target:</span> Age {inputs.retirementAge}</p>
-                <p><span className="font-medium text-zinc-700">Planning Horizon:</span> Age {inputs.lifeExpectancy} ({inputs.lifeExpectancy - inputs.currentAge} years)</p>
+              <div className="p-4 rounded-md border border-border bg-raised">
+                <span className="eyebrow">Strategic Equity</span>
+                <p className="num-hero text-2xl text-ink mt-1.5">{formatPercent(targets.equity)}</p>
+                <span className="text-[10px] text-muted">{riskProfile.label} target</span>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Advisory Mandate</span>
-              <p className="text-lg font-sans font-semibold text-zinc-900">{inputs.client?.advisor || 'Sound Thesis Wealth'}</p>
-              <div className="text-xs text-zinc-600 space-y-1">
-                <p><span className="font-medium text-zinc-700">Review Date:</span> {inputs.client?.reviewDate || printDate}</p>
-                <p><span className="font-medium text-zinc-700">Mandate:</span> Discretionary Goal-Based Wealth Architecture</p>
-                <p><span className="font-medium text-zinc-700">Risk Profile:</span> {riskProfile.label} (Score: {riskScore}/100)</p>
-                <p><span className="font-medium text-zinc-700">Mandate Notes:</span> {inputs.client?.notes || 'Comprehensive retirement security & generational capital preservation.'}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Topline Key Metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 print:grid-cols-4 gap-4 mt-8 avoid-break">
-            <div className="p-4 rounded-xl border border-zinc-200 bg-white">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Total Net Worth</span>
-              <p className="text-xl font-sans font-bold text-zinc-900 mt-1">{formatCurrencyCompact(wealthResult.netWorth)}</p>
-              <span className="text-[10px] text-zinc-500">{inputs.assets.length} active assets</span>
-            </div>
-            <div className="p-4 rounded-xl border border-zinc-200 bg-white">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Retirement Status</span>
-              <p className="text-xl font-sans font-bold text-zinc-900 mt-1">
-                {wealthResult.sustainable ? 'Sustainable' : `Age ${wealthResult.depletionAge}`}
-              </p>
-              <span className="text-[10px] text-zinc-500">Through age {inputs.lifeExpectancy}</span>
-            </div>
-            <div className="p-4 rounded-xl border border-zinc-200 bg-white">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Monthly Surplus</span>
-              <p className="text-xl font-sans font-bold text-zinc-900 mt-1">{formatCurrencyCompact(monthlySurplus)}</p>
-              <span className="text-[10px] text-zinc-500">After ₹{formatCurrencyCompact(inputs.monthlyExpenditure)} exp.</span>
-            </div>
-            <div className="p-4 rounded-xl border border-zinc-200 bg-white">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Strategic Equity</span>
-              <p className="text-xl font-sans font-bold text-zinc-900 mt-1">{formatPercent(targets.equity)}</p>
-              <span className="text-[10px] text-zinc-500">{riskProfile.label} target</span>
             </div>
           </div>
         </section>
 
         {/* ========================================================= */}
+        {/* TABLE OF CONTENTS                                         */}
+        {/* ========================================================= */}
+        <section className="bg-raised rounded-xl border border-border p-8 print:border-none print:p-6 shadow-card page-break scroll-mt-20">
+          <div className={sectionHeaderClass}>
+            <div>
+              <div className="eyebrow mb-1.5">Document Map</div>
+              <h2 className="font-display text-2xl text-ink">Contents</h2>
+            </div>
+            <span className="text-xs text-muted">Eleven sections · A4</span>
+          </div>
+          <ol className="divide-y divide-border-subtle">
+            {SECTIONS.map((s, i) => (
+              <li key={s.id}>
+                <a
+                  href={`#${s.id}`}
+                  className="group flex items-baseline justify-between gap-4 py-2.5 text-sm print:no-underline"
+                >
+                  <span className="flex items-baseline gap-3 min-w-0">
+                    <span className="font-mono text-[11px] text-faint w-8 shrink-0">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <span className="text-ink group-hover:text-accent-strong transition-colors truncate">{s.title}</span>
+                  </span>
+                  <span className="eyebrow shrink-0 hidden sm:block">{s.label}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        {/* ========================================================= */}
         {/* SECTION 1: EXECUTIVE DASHBOARD                            */}
         {/* ========================================================= */}
-        <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
+        <section id="dossier-s1" className={sectionClass}>
           <div className={sectionHeaderClass}>
             <div className="flex items-center gap-2.5">
-              <Activity size={20} className="text-zinc-700" />
-              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 1: Executive Dashboard</h2>
+              <Activity size={19} strokeWidth={1.6} className="text-muted" />
+              <h2 className="font-display text-2xl text-ink">Section 1: Executive Dashboard</h2>
             </div>
-            <span className="text-xs font-medium text-zinc-500">Portfolio Health & Trajectory</span>
+            <span className="text-xs text-muted shrink-0">Portfolio Health & Trajectory</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 print:grid-cols-2 gap-6 print:gap-4 mb-6 avoid-break">
             {/* Net Worth Chart */}
-            <div className="p-4 rounded-xl border border-zinc-200 bg-white">
-              <h3 className="text-sm font-semibold text-slate-800 mb-1">Projected Net Worth Fan (Monte Carlo)</h3>
-              <p className="text-xs text-zinc-500 mb-2">Simulated percentiles across accumulation and distribution</p>
+            <div className="p-4 rounded-md border border-border bg-raised">
+              <h3 className="text-sm font-semibold text-ink mb-1">Projected Net Worth Fan (Monte Carlo)</h3>
+              <p className="text-xs text-muted mb-2">Simulated percentiles across accumulation and distribution</p>
               <figure role="img" aria-label="Monte Carlo projected net worth fan chart showing simulated P5, P25, P50, P75 and P95 percentile paths across the planning horizon" className="m-0">
                 <div className="h-56 print:h-52 overflow-hidden" aria-hidden="true">
                   <MonteCarloFanChart data={wealthResult.monteCarlo.yearlyPercentiles} className="h-52 w-full" />
@@ -400,9 +483,9 @@ export const Dossier = () => {
             </div>
 
             {/* Asset Allocation Donut */}
-            <div className="p-4 rounded-xl border border-zinc-200 bg-white">
-              <h3 className="text-sm font-semibold text-slate-800 mb-1">Current Capital Distribution</h3>
-              <p className="text-xs text-zinc-500 mb-2">Total holdings: {formatCurrency(wealthResult.netWorth)}</p>
+            <div className="p-4 rounded-md border border-border bg-raised">
+              <h3 className="text-sm font-semibold text-ink mb-1">Current Capital Distribution</h3>
+              <p className="text-xs text-muted mb-2">Total holdings: {formatCurrency(wealthResult.netWorth)}</p>
               <figure role="img" aria-label="Donut chart of current capital distribution across asset categories" className="m-0">
                 <div className="h-56 print:h-52 flex items-center justify-center" aria-hidden="true">
                   <DonutChart data={currentAllocationData} />
@@ -422,7 +505,7 @@ export const Dossier = () => {
 
           {/* Key Advisory Metrics Table */}
           <div className="overflow-x-auto avoid-break">
-            <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
+            <table className="w-full text-xs text-left border border-border rounded-md overflow-hidden">
               <thead className={tableHeadClass}>
                 <tr>
                   <th className="p-3">Advisory Metric</th>
@@ -431,40 +514,42 @@ export const Dossier = () => {
                   <th className="p-3">Advisory Interpretation</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-border-subtle">
                 <tr>
-                  <td className="p-3 font-medium text-zinc-900">Liquid Emergency Buffer</td>
-                  <td className="p-3 font-semibold text-slate-800">{formatCurrency(liquidAssets)}</td>
-                  <td className="p-3 text-zinc-600">{formatCurrency(inputs.monthlyExpenditure * 6)} (6 Months)</td>
-                  <td className="p-3 text-zinc-600">
+                  <td className="p-3 font-medium text-ink">Liquid Emergency Buffer</td>
+                  <td className="p-3 font-mono tabular-nums font-semibold text-ink-soft">{formatCurrency(liquidAssets)}</td>
+                  <td className="p-3 text-muted font-mono tabular-nums">{formatCurrency(inputs.monthlyExpenditure * 6)} (6 Months)</td>
+                  <td className="p-3 text-muted">
                     {liquidAssets >= inputs.monthlyExpenditure * 6
                       ? '✓ Fully capitalized emergency fund.'
                       : '⚠ Below 6-month recommended buffer.'}
                   </td>
                 </tr>
                 <tr>
-                  <td className="p-3 font-medium text-zinc-900">Monthly SIP Commitment</td>
-                  <td className="p-3 font-semibold text-slate-800">{formatCurrency(inputs.sip.amount)}/mo</td>
-                  <td className="p-3 text-zinc-600">{formatCurrency(monthlySurplus * 0.7)} (70% surplus)</td>
-                  <td className="p-3 text-zinc-600">
-                    Step-up: {inputs.sip.stepUp}% p.a. | {inputs.sip.equitySplit}% Equity / {inputs.sip.debtSplit}% Debt
+                  <td className="p-3 font-medium text-ink">Monthly SIP Commitment</td>
+                  <td className="p-3 font-mono tabular-nums font-semibold text-ink-soft">{formatCurrency(inputs.sip.amount)}/mo</td>
+                  <td className="p-3 text-muted font-mono tabular-nums">{formatCurrency(monthlySurplus * 0.7)} (70% surplus)</td>
+                  <td className="p-3 text-muted">
+                    Step-up: <span className="font-mono">{inputs.sip.stepUp}%</span> p.a. ·{' '}
+                    <span className="font-mono">{inputs.sip.equitySplit}%</span> Equity /{' '}
+                    <span className="font-mono">{inputs.sip.debtSplit}%</span> Debt
                   </td>
                 </tr>
                 <tr>
-                  <td className="p-3 font-medium text-zinc-900">Projected Corpus at Retirement</td>
-                  <td className="p-3 font-semibold text-slate-800">{formatCurrency(corpusAtRetirement)}</td>
-                  <td className="p-3 text-zinc-600">At Age {inputs.retirementAge}</td>
-                  <td className="p-3 text-zinc-600">
-                    Terminal portfolio real value: {formatCurrency(wealthResult.terminalRealValue)}
+                  <td className="p-3 font-medium text-ink">Projected Corpus at Retirement</td>
+                  <td className="p-3 font-mono tabular-nums font-semibold text-ink-soft">{formatCurrency(corpusAtRetirement)}</td>
+                  <td className="p-3 text-muted font-mono tabular-nums">At Age {inputs.retirementAge}</td>
+                  <td className="p-3 text-muted">
+                    Terminal portfolio real value: <span className="font-mono">{formatCurrency(wealthResult.terminalRealValue)}</span>
                   </td>
                 </tr>
                 <tr>
-                  <td className="p-3 font-medium text-zinc-900">Retirement Withdrawal Longevity</td>
-                  <td className="p-3 font-semibold text-slate-800">
+                  <td className="p-3 font-medium text-ink">Retirement Withdrawal Longevity</td>
+                  <td className="p-3 font-semibold text-ink-soft">
                     {wealthResult.sustainable ? `Solvent to age ${inputs.lifeExpectancy}+` : `Depletion at age ${wealthResult.depletionAge}`}
                   </td>
-                  <td className="p-3 text-zinc-600">Age {inputs.lifeExpectancy} horizon</td>
-                  <td className="p-3 text-zinc-600">
+                  <td className="p-3 text-muted font-mono tabular-nums">Age {inputs.lifeExpectancy} horizon</td>
+                  <td className="p-3 text-muted">
                     {wealthResult.sustainable
                       ? `✓ ${formatPercent(mc.successRate * 100)} of simulated paths sustain withdrawals through age ${inputs.lifeExpectancy}.`
                       : '⚠ Depletion occurs prior to target life expectancy.'}
@@ -478,161 +563,166 @@ export const Dossier = () => {
         {/* ========================================================= */}
         {/* SECTION 2: MASTER PLAN                                    */}
         {/* ========================================================= */}
-        <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
+        <section id="dossier-s2" className={sectionClass}>
           <div className={sectionHeaderClass}>
             <div className="flex items-center gap-2.5">
-              <Building2 size={20} className="text-zinc-700" />
-              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 2: Master Plan & Capital Assets</h2>
+              <Building2 size={19} strokeWidth={1.6} className="text-muted" />
+              <h2 className="font-display text-2xl text-ink">Section 2: Master Plan & Capital Assets</h2>
             </div>
-            <span className="text-xs font-medium text-zinc-500">Inventory & Commitments</span>
+            <span className="text-xs text-muted shrink-0">Inventory & Commitments</span>
           </div>
 
           {/* Assets Inventory Table */}
           <div className="space-y-3 mb-8 avoid-break">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-zinc-900">1. Capital Asset Inventory</h3>
-              <span className="text-xs text-zinc-500">Total Value: {formatCurrency(wealthResult.netWorth)}</span>
+              <h3 className="text-sm font-semibold text-ink">1. Capital Asset Inventory</h3>
+              <span className="text-xs text-muted">Total Value: <span className="font-mono">{formatCurrency(wealthResult.netWorth)}</span></span>
             </div>
-            <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
-              <thead className={tableHeadClass}>
-                <tr>
-                  <th className="p-3">Asset Description</th>
-                  <th className="p-3">Category</th>
-                  <th className="p-3">Currency</th>
-                  <th className="p-3 text-right">Current Value</th>
-                  <th className="p-3 text-right">Exp. Return</th>
-                  <th className="p-3 text-center">SWP Liquidation</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {inputs.assets.map((asset) => (
-                  <tr key={asset.id}>
-                    <td className="p-3 font-medium text-zinc-900">{asset.name}</td>
-                    <td className="p-3">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-zinc-700">
-                        {ASSET_LABELS[asset.category] || asset.category}
-                      </span>
-                    </td>
-                    <td className="p-3 text-zinc-600">{asset.currency}</td>
-                    <td className="p-3 text-right font-semibold text-slate-800">{formatCurrency(asset.value)}</td>
-                    <td className="p-3 text-right text-zinc-600">{asset.returnRate}%</td>
-                    <td className="p-3 text-center text-zinc-600">
-                      {asset.liquidateAtRetirement ? 'Yes (Liquidates)' : 'No (Retained)'}
-                    </td>
+            {inputs.assets.length > 0 ? (
+              <table className="w-full text-xs text-left border border-border rounded-md overflow-hidden">
+                <thead className={tableHeadClass}>
+                  <tr>
+                    <th className="p-3">Asset Description</th>
+                    <th className="p-3">Category</th>
+                    <th className="p-3">Currency</th>
+                    <th className="p-3 text-right">Current Value</th>
+                    <th className="p-3 text-right">Exp. Return</th>
+                    <th className="p-3 text-center">SWP Liquidation</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border-subtle">
+                  {inputs.assets.map((asset) => (
+                    <tr key={asset.id}>
+                      <td className="p-3 font-medium text-ink">{asset.name}</td>
+                      <td className="p-3">
+                        <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-sunken text-ink-soft border border-border-subtle">
+                          {ASSET_LABELS[asset.category] || asset.category}
+                        </span>
+                      </td>
+                      <td className="p-3 text-muted font-mono">{asset.currency}</td>
+                      <td className="p-3 text-right font-mono tabular-nums font-semibold text-ink-soft">{formatCurrency(asset.value)}</td>
+                      <td className="p-3 text-right text-muted font-mono tabular-nums">{asset.returnRate}%</td>
+                      <td className="p-3 text-center text-muted">
+                        {asset.liquidateAtRetirement ? 'Yes (Liquidates)' : 'No (Retained)'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="text-xs text-muted italic">No capital assets recorded in the plan.</p>
+            )}
           </div>
 
           {/* Cashflow Commitments */}
           <div className="grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 gap-4 mb-8 avoid-break">
-            <div className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/70">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Monthly SIP Commitment</span>
-              <p className="text-base font-sans font-bold text-zinc-900 mt-1">{formatCurrency(inputs.sip.amount)}/mo</p>
-              <p className="text-xs text-zinc-600 mt-1">
-                {inputs.sip.stepUp}% annual step-up | {inputs.sip.equitySplit}% Equity / {inputs.sip.debtSplit}% Debt
+            <div className="p-4 rounded-md border border-border bg-sunken/60">
+              <span className="eyebrow">Monthly SIP Commitment</span>
+              <p className="num-hero text-xl text-ink mt-1.5">{formatCurrency(inputs.sip.amount)}/mo</p>
+              <p className="text-xs text-muted mt-1">
+                <span className="font-mono">{inputs.sip.stepUp}%</span> annual step-up ·{' '}
+                <span className="font-mono">{inputs.sip.equitySplit}%</span> Equity /{' '}
+                <span className="font-mono">{inputs.sip.debtSplit}%</span> Debt
               </p>
             </div>
-            <div className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/70">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">STP Deployment Plan</span>
-              <p className="text-base font-sans font-bold text-zinc-900 mt-1">
+            <div className="p-4 rounded-md border border-border bg-sunken/60">
+              <span className="eyebrow">STP Deployment Plan</span>
+              <p className="num-hero text-xl text-ink mt-1.5">
                 {inputs.stp.active ? `${formatCurrency(inputs.stp.monthlyTransfer)}/mo` : 'Inactive'}
               </p>
-              <p className="text-xs text-zinc-600 mt-1">
+              <p className="text-xs text-muted mt-1">
                 {inputs.stp.active
                   ? `Lumpsum: ${formatCurrency(inputs.stp.lumpsum)} deployed from ${inputs.stp.source}`
                   : 'No systematic transfer active.'}
               </p>
             </div>
-            <div className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/70">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Retirement SWP Target</span>
-              <p className="text-base font-sans font-bold text-zinc-900 mt-1">{formatCurrency(inputs.swp.monthlyNeedToday)}/mo</p>
-              <p className="text-xs text-zinc-600 mt-1">
-                Current monthly equivalent | Inflation-indexed to retirement
-              </p>
+            <div className="p-4 rounded-md border border-border bg-sunken/60">
+              <span className="eyebrow">Retirement SWP Target</span>
+              <p className="num-hero text-xl text-ink mt-1.5">{formatCurrency(inputs.swp.monthlyNeedToday)}/mo</p>
+              <p className="text-xs text-muted mt-1">Current monthly equivalent · Inflation-indexed to retirement</p>
             </div>
           </div>
 
           {/* Goals Schedule Table */}
           <div className="space-y-3 avoid-break">
-            <h3 className="text-sm font-semibold text-zinc-900">2. Life Goal Milestone Commitments</h3>
-            <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
-              <thead className={tableHeadClass}>
-                <tr>
-                  <th className="p-3">Goal Description</th>
-                  <th className="p-3">Priority</th>
-                  <th className="p-3 text-right">Horizon</th>
-                  <th className="p-3 text-right">Target Today</th>
-                  <th className="p-3 text-right">Future Value</th>
-                  <th className="p-3 text-center">Success Probability</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {wealthResult.goalResults.map((gr) => (
-                  <tr key={gr.goal.id}>
-                    <td className="p-3 font-medium text-zinc-900">{gr.goal.name}</td>
-                    <td className="p-3">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                        gr.goal.priority === 'essential' ? 'bg-emerald-50 text-emerald-800' :
-                        gr.goal.priority === 'important' ? 'bg-blue-50 text-blue-800' : 'bg-slate-100 text-zinc-700'
-                      }`}>
-                        {gr.goal.priority.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="p-3 text-right text-zinc-600">{gr.goal.yearsToGoal} Years</td>
-                    <td className="p-3 text-right text-zinc-600">{formatCurrency(gr.goal.targetAmount)}</td>
-                    <td className="p-3 text-right font-semibold text-slate-800">{formatCurrency(gr.futureValue)}</td>
-                    <td className="p-3 text-center">
-                      <span className={`font-medium ${gr.successRate >= 0.8 ? 'text-emerald-700' : 'text-amber-700'}`}>
-                        {formatPercent(gr.successRate * 100)} (Shortfall: {formatCurrency(gr.expectedShortfall)})
-                      </span>
-                    </td>
+            <h3 className="text-sm font-semibold text-ink">2. Life Goal Milestone Commitments</h3>
+            {wealthResult.goalResults.length > 0 ? (
+              <table className="w-full text-xs text-left border border-border rounded-md overflow-hidden">
+                <thead className={tableHeadClass}>
+                  <tr>
+                    <th className="p-3">Goal Description</th>
+                    <th className="p-3">Priority</th>
+                    <th className="p-3 text-right">Horizon</th>
+                    <th className="p-3 text-right">Target Today</th>
+                    <th className="p-3 text-right">Future Value</th>
+                    <th className="p-3 text-center">Success Probability</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border-subtle">
+                  {wealthResult.goalResults.map((gr) => (
+                    <tr key={gr.goal.id}>
+                      <td className="p-3 font-medium text-ink">{gr.goal.name}</td>
+                      <td className="p-3">
+                        <Badge tone={gr.goal.priority === 'essential' ? 'negative' : gr.goal.priority === 'important' ? 'neutral' : 'brass'}>
+                          {gr.goal.priority}
+                        </Badge>
+                      </td>
+                      <td className="p-3 text-right text-muted font-mono tabular-nums">{gr.goal.yearsToGoal} Years</td>
+                      <td className="p-3 text-right text-muted font-mono tabular-nums">{formatCurrency(gr.goal.targetAmount)}</td>
+                      <td className="p-3 text-right font-mono tabular-nums font-semibold text-ink-soft">{formatCurrency(gr.futureValue)}</td>
+                      <td className="p-3 text-center">
+                        <span className={`font-mono tabular-nums font-medium ${gr.successRate >= 0.8 ? 'text-positive' : 'text-warning'}`}>
+                          {formatPercent(gr.successRate * 100)} (Shortfall: {formatCurrency(gr.expectedShortfall)})
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="text-xs text-muted italic">No life goals recorded in the plan.</p>
+            )}
           </div>
         </section>
 
         {/* ========================================================= */}
         {/* SECTION 3: RETIREMENT & SWP LONGEVITY                      */}
         {/* ========================================================= */}
-        <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
+        <section id="dossier-s3" className={sectionClass}>
           <div className={sectionHeaderClass}>
             <div className="flex items-center gap-2.5">
-              <TrendingUp size={20} className="text-zinc-700" />
-              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 3: Retirement & SWP Longevity Analysis</h2>
+              <TrendingUp size={19} strokeWidth={1.6} className="text-muted" />
+              <h2 className="font-display text-2xl text-ink">Section 3: Retirement & SWP Longevity Analysis</h2>
             </div>
-            <span className="text-xs font-medium text-zinc-500">Distribution Sustainability</span>
+            <span className="text-xs text-muted shrink-0">Distribution Sustainability</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 gap-6 print:gap-4 mb-8 avoid-break">
-            <div className="p-5 rounded-xl border border-zinc-200 bg-zinc-50/50 space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Projected Retirement Corpus</span>
-              <p className="text-2xl font-sans font-bold text-zinc-900">{formatCurrencyCompact(corpusAtRetirement)}</p>
-              <p className="text-xs text-zinc-600">At target retirement age {inputs.retirementAge}.</p>
+            <div className="p-5 rounded-md border border-border bg-sunken/50 space-y-2">
+              <span className="eyebrow">Projected Retirement Corpus</span>
+              <p className="num-hero text-3xl text-ink">{formatCurrencyCompact(corpusAtRetirement)}</p>
+              <p className="text-xs text-muted">At target retirement age {inputs.retirementAge}.</p>
             </div>
 
-            <div className="p-5 rounded-xl border border-zinc-200 bg-zinc-50/50 space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Terminal Real Value</span>
-              <p className="text-2xl font-sans font-bold text-zinc-900">{formatCurrencyCompact(wealthResult.terminalRealValue)}</p>
-              <p className="text-xs text-zinc-600">Net worth at age {inputs.lifeExpectancy} in today's rupees.</p>
+            <div className="p-5 rounded-md border border-border bg-sunken/50 space-y-2">
+              <span className="eyebrow">Terminal Real Value</span>
+              <p className="num-hero text-3xl text-ink">{formatCurrencyCompact(wealthResult.terminalRealValue)}</p>
+              <p className="text-xs text-muted">Net worth at age {inputs.lifeExpectancy} in today's rupees.</p>
             </div>
 
-            <div className="p-5 rounded-xl border border-zinc-200 bg-zinc-50/50 space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Sustainability Verdict</span>
-              <p className={`text-2xl font-sans font-bold ${wealthResult.sustainable ? 'text-emerald-700' : 'text-amber-700'}`}>
+            <div className="p-5 rounded-md border border-border bg-sunken/50 space-y-2">
+              <span className="eyebrow">Sustainability Verdict</span>
+              <p className={`num-hero text-3xl ${wealthResult.sustainable ? 'text-positive' : 'text-warning'}`}>
                 {wealthResult.sustainable ? 'Fully Solvent' : `Depletion: Age ${wealthResult.depletionAge}`}
               </p>
-              <p className="text-xs text-zinc-600">Through life expectancy of {inputs.lifeExpectancy} years.</p>
+              <p className="text-xs text-muted">Through life expectancy of {inputs.lifeExpectancy} years.</p>
             </div>
           </div>
 
           {/* Net-worth growth trajectory with retirement marker */}
-          <div className="p-6 rounded-xl border border-zinc-200 bg-white avoid-break space-y-3 mb-6">
-            <h3 className="text-sm font-semibold text-zinc-900">Net-Worth Growth Trajectory & Retirement Milestone</h3>
-            <p className="text-xs text-zinc-600 leading-relaxed">
+          <div className="p-6 rounded-md border border-border bg-raised avoid-break space-y-3 mb-6">
+            <h3 className="text-sm font-semibold text-ink">Net-Worth Growth Trajectory & Retirement Milestone</h3>
+            <p className="text-xs text-muted leading-relaxed">
               Deterministic projection of the plan year by year; the dashed marker flags the transition from accumulation to
               distribution at age {inputs.retirementAge}. Milestone values are tabulated in Appendix A.
             </p>
@@ -644,66 +734,66 @@ export const Dossier = () => {
             />
             <p className="text-[11px] text-muted leading-snug">
               Insight: the corpus peaks around retirement at {formatCurrencyCompact(corpusAtRetirement)} —{' '}
-              {wealthResult.netWorth > 0 ? formatPercent((corpusAtRetirement / wealthResult.netWorth) * 100, 0) : '—'} of today's net worth — then{' '}
-              {wealthResult.sustainable ? `holds or grows through age ${inputs.lifeExpectancy}.` : `declines to depletion at age ${wealthResult.depletionAge}.`}
+              {wealthResult.netWorth > 0 ? formatPercent((corpusAtRetirement / wealthResult.netWorth) * 100, 0) : '—'} of today's net
+              worth — then {wealthResult.sustainable ? `holds or grows through age ${inputs.lifeExpectancy}.` : `declines to depletion at age ${wealthResult.depletionAge}.`}
             </p>
           </div>
 
           {/* Monte Carlo terminal outcome band */}
-          <div className="p-6 rounded-xl border border-zinc-200 bg-white avoid-break space-y-4 mb-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-zinc-900">Monte Carlo Terminal Outcome Distribution</h3>
-              <span className="text-xs font-mono font-bold text-zinc-900">
+          <div className="p-6 rounded-md border border-border bg-raised avoid-break space-y-4 mb-6">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold text-ink">Monte Carlo Terminal Outcome Distribution</h3>
+              <span className="text-xs font-mono tabular-nums font-semibold text-ink">
                 {formatPercent(mc.successRate * 100)} path success
               </span>
             </div>
-            <p className="text-xs text-zinc-600 leading-relaxed">
+            <p className="text-xs text-muted leading-relaxed">
               {formatPercent(mc.successRate * 100)} of simulated paths sustain withdrawals through age {inputs.lifeExpectancy}.
               {mc.medianDepletionAge !== null
                 ? ` The median simulated path first exhausts the corpus at age ${mc.medianDepletionAge}.`
                 : ' The median simulated path never exhausts the corpus within the planning horizon.'}
             </p>
             <div>
-              <div className="relative h-4 rounded-full bg-zinc-100 overflow-visible">
+              <div className="relative h-4 rounded-full bg-sunken overflow-visible">
                 <div
-                  className="absolute h-4 rounded-full bg-zinc-300"
+                  className="absolute h-4 rounded-full bg-border"
                   style={{ left: bandPos(mc.percentile25), width: `calc(${bandPos(mc.percentile75)} - ${bandPos(mc.percentile25)})` }}
                 />
                 <div
-                  className="absolute h-4 rounded-full bg-zinc-400/70"
+                  className="absolute h-4 rounded-full bg-border-strong/60"
                   style={{ left: bandPos(mc.percentile5), width: `calc(${bandPos(mc.percentile95)} - ${bandPos(mc.percentile5)})` }}
                 />
                 <div
-                  className="absolute -top-1 h-6 w-0.5 bg-zinc-950 rounded"
+                  className="absolute -top-1 h-6 w-0.5 bg-deep rounded"
                   style={{ left: bandPos(mc.medianTerminal) }}
                 />
               </div>
-              <div className="flex justify-between mt-2 text-[10px] text-zinc-500 font-mono">
+              <div className="flex justify-between mt-2 text-[10px] text-faint font-mono">
                 <span>P5 {formatCurrencyCompact(mc.percentile5)}</span>
-                <span className="font-semibold text-zinc-800">Median {formatCurrencyCompact(mc.medianTerminal)}</span>
+                <span className="font-semibold text-ink-soft">Median {formatCurrencyCompact(mc.medianTerminal)}</span>
                 <span>P95 {formatCurrencyCompact(mc.percentile95)}</span>
               </div>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 print:grid-cols-4 gap-3 text-xs">
-              <div className="p-3 bg-zinc-50 rounded-lg">
-                <span className="text-zinc-500 block">Mean Terminal</span>
-                <span className="font-mono font-semibold text-zinc-900">{formatCurrencyCompact(mc.meanTerminal)}</span>
+              <div className="p-3 bg-sunken rounded-md">
+                <span className="text-muted block">Mean Terminal</span>
+                <span className="font-mono tabular-nums font-semibold text-ink">{formatCurrencyCompact(mc.meanTerminal)}</span>
               </div>
-              <div className="p-3 bg-zinc-50 rounded-lg">
-                <span className="text-zinc-500 block">Interquartile (P25–P75)</span>
-                <span className="font-mono font-semibold text-zinc-900">
+              <div className="p-3 bg-sunken rounded-md">
+                <span className="text-muted block">Interquartile (P25–P75)</span>
+                <span className="font-mono tabular-nums font-semibold text-ink">
                   {formatCurrencyCompact(mc.percentile25)} – {formatCurrencyCompact(mc.percentile75)}
                 </span>
               </div>
-              <div className="p-3 bg-zinc-50 rounded-lg">
-                <span className="text-zinc-500 block">Median Depletion Age</span>
-                <span className="font-mono font-semibold text-zinc-900">
+              <div className="p-3 bg-sunken rounded-md">
+                <span className="text-muted block">Median Depletion Age</span>
+                <span className="font-mono tabular-nums font-semibold text-ink">
                   {mc.medianDepletionAge !== null ? `Age ${mc.medianDepletionAge}` : 'Not depleted'}
                 </span>
               </div>
-              <div className="p-3 bg-zinc-50 rounded-lg">
-                <span className="text-zinc-500 block">Deterministic Verdict</span>
-                <span className="font-semibold text-zinc-900">
+              <div className="p-3 bg-sunken rounded-md">
+                <span className="text-muted block">Deterministic Verdict</span>
+                <span className="font-semibold text-ink">
                   {wealthResult.sustainable ? `Solvent to ${inputs.lifeExpectancy}+` : `Depletes at ${wealthResult.depletionAge}`}
                 </span>
               </div>
@@ -711,9 +801,9 @@ export const Dossier = () => {
           </div>
 
           {/* SWP survival curves: corpus survival through the distribution phase */}
-          <div className="p-6 rounded-xl border border-zinc-200 bg-white avoid-break space-y-3 mb-6">
-            <h3 className="text-sm font-semibold text-zinc-900">Corpus Survival Through Retirement (Monte Carlo)</h3>
-            <p className="text-xs text-zinc-600 leading-relaxed">
+          <div className="p-6 rounded-md border border-border bg-raised avoid-break space-y-3 mb-6">
+            <h3 className="text-sm font-semibold text-ink">Corpus Survival Through Retirement (Monte Carlo)</h3>
+            <p className="text-xs text-muted leading-relaxed">
               Remaining corpus while withdrawals run, from age {inputs.retirementAge} onward. The band spans the 5th–95th percentile
               of simulated paths; the solid line is the median path. A path touching zero has exhausted its corpus.
             </p>
@@ -730,7 +820,7 @@ export const Dossier = () => {
             />
             {survivalCheckpoints.length > 0 && (
               <div className="overflow-x-auto">
-                <table className="w-full text-[11px] text-left border border-zinc-200 rounded-lg overflow-hidden">
+                <table className="w-full text-[11px] text-left border border-border rounded-md overflow-hidden">
                   <thead className={tableHeadClass}>
                     <tr>
                       <th className="p-2">Age Checkpoint</th>
@@ -739,13 +829,13 @@ export const Dossier = () => {
                       <th className="p-2 text-right">P95 Corpus</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-border-subtle">
                     {survivalCheckpoints.map((d) => (
                       <tr key={d.age}>
-                        <td className="p-2 font-medium text-zinc-900">{d.age}</td>
-                        <td className="p-2 text-right font-mono text-zinc-700">{formatCurrencyCompact(d.p5)}</td>
-                        <td className="p-2 text-right font-mono font-semibold text-zinc-900">{formatCurrencyCompact(d.p50)}</td>
-                        <td className="p-2 text-right font-mono text-zinc-700">{formatCurrencyCompact(d.p95)}</td>
+                        <td className="p-2 font-medium text-ink font-mono tabular-nums">{d.age}</td>
+                        <td className="p-2 text-right font-mono tabular-nums text-ink-soft">{formatCurrencyCompact(d.p5)}</td>
+                        <td className="p-2 text-right font-mono tabular-nums font-semibold text-ink">{formatCurrencyCompact(d.p50)}</td>
+                        <td className="p-2 text-right font-mono tabular-nums text-ink-soft">{formatCurrencyCompact(d.p95)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -765,30 +855,34 @@ export const Dossier = () => {
           </div>
 
           {/* SWP Stress Test Breakdown */}
-          <div className="p-6 rounded-xl border border-zinc-200 bg-white avoid-break space-y-4">
-            <h3 className="text-sm font-semibold text-zinc-900">Post-Retirement Withdrawal Framework</h3>
-            <p className="text-xs text-zinc-600 leading-relaxed">
-              The distribution engine assumes an initial monthly draw equivalent to {formatCurrency(inputs.swp.monthlyNeedToday)} in today's purchasing power,
-              inflating at {inputs.inflation}% p.a. through retirement. The expected return in distribution is {inputs.swp.postRetirementReturn}% p.a.
-              with an estimated tax drag of {inputs.swp.taxRate}%.
+          <div className="p-6 rounded-md border border-border bg-raised avoid-break space-y-4">
+            <h3 className="text-sm font-semibold text-ink">Post-Retirement Withdrawal Framework</h3>
+            <p className="text-xs text-muted leading-relaxed">
+              The distribution engine assumes an initial monthly draw equivalent to{' '}
+              <span className="font-mono text-ink-soft">{formatCurrency(inputs.swp.monthlyNeedToday)}</span> in today's purchasing
+              power, inflating at <span className="font-mono">{inputs.inflation}%</span> p.a. through retirement. The expected
+              return in distribution is <span className="font-mono">{inputs.swp.postRetirementReturn}%</span> p.a. with an
+              estimated tax drag of <span className="font-mono">{inputs.swp.taxRate}%</span>.
             </p>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 print:grid-cols-4 gap-4 pt-2 text-xs">
-              <div className="p-3 bg-zinc-50 rounded-lg">
-                <span className="text-zinc-500">Base Living Need:</span>
-                <p className="font-semibold text-slate-800 mt-0.5">{formatCurrency(inputs.swp.monthlyNeedToday * 12)} / year</p>
+              <div className="p-3 bg-sunken rounded-md">
+                <span className="text-muted">Base Living Need:</span>
+                <p className="font-mono tabular-nums font-semibold text-ink-soft mt-0.5">
+                  {formatCurrency(inputs.swp.monthlyNeedToday * 12)} / year
+                </p>
               </div>
-              <div className="p-3 bg-zinc-50 rounded-lg">
-                <span className="text-zinc-500">Inflation Rate:</span>
-                <p className="font-semibold text-slate-800 mt-0.5">{inputs.inflation}% p.a.</p>
+              <div className="p-3 bg-sunken rounded-md">
+                <span className="text-muted">Inflation Rate:</span>
+                <p className="font-mono tabular-nums font-semibold text-ink-soft mt-0.5">{inputs.inflation}% p.a.</p>
               </div>
-              <div className="p-3 bg-zinc-50 rounded-lg">
-                <span className="text-zinc-500">Post-Retirement Return:</span>
-                <p className="font-semibold text-slate-800 mt-0.5">{inputs.swp.postRetirementReturn}% p.a.</p>
+              <div className="p-3 bg-sunken rounded-md">
+                <span className="text-muted">Post-Retirement Return:</span>
+                <p className="font-mono tabular-nums font-semibold text-ink-soft mt-0.5">{inputs.swp.postRetirementReturn}% p.a.</p>
               </div>
-              <div className="p-3 bg-zinc-50 rounded-lg">
-                <span className="text-zinc-500">Longevity Cushion:</span>
-                <p className="font-semibold text-slate-800 mt-0.5">
+              <div className="p-3 bg-sunken rounded-md">
+                <span className="text-muted">Longevity Cushion:</span>
+                <p className="font-mono tabular-nums font-semibold text-ink-soft mt-0.5">
                   {wealthResult.sustainable ? `${inputs.lifeExpectancy - inputs.retirementAge}+ Years` : `${(wealthResult.depletionAge ?? inputs.retirementAge) - inputs.retirementAge} Years`}
                 </p>
               </div>
@@ -799,18 +893,18 @@ export const Dossier = () => {
         {/* ========================================================= */}
         {/* SECTION 4: STRATEGIC ASSET ALLOCATION & REBALANCING       */}
         {/* ========================================================= */}
-        <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
+        <section id="dossier-s4" className={sectionClass}>
           <div className={sectionHeaderClass}>
             <div className="flex items-center gap-2.5">
-              <PieChart size={20} className="text-zinc-700" />
-              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 4: Strategic Asset Allocation & Rebalancing</h2>
+              <PieChart size={19} strokeWidth={1.6} className="text-muted" />
+              <h2 className="font-display text-2xl text-ink">Section 4: Strategic Asset Allocation & Rebalancing</h2>
             </div>
-            <span className="text-xs font-medium text-zinc-500">Target vs Actual Drift</span>
+            <span className="text-xs text-muted shrink-0">Target vs Actual Drift</span>
           </div>
 
           {/* Paired 100% stacked bars: current vs strategic target */}
-          <div className="p-5 rounded-xl border border-zinc-200 bg-white avoid-break space-y-3 mb-8">
-            <h3 className="text-sm font-semibold text-zinc-900">Current vs Strategic Target Allocation</h3>
+          <div className="p-5 rounded-md border border-border bg-raised avoid-break space-y-3 mb-8">
+            <h3 className="text-sm font-semibold text-ink">Current vs Strategic Target Allocation</h3>
             <AllocationComparisonBars
               current={wealthResult.currentAllocation}
               target={targetFractions}
@@ -829,7 +923,7 @@ export const Dossier = () => {
           </div>
 
           <div className="overflow-x-auto mb-8 avoid-break">
-            <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
+            <table className="w-full text-xs text-left border border-border rounded-md overflow-hidden">
               <thead className={tableHeadClass}>
                 <tr>
                   <th className="p-3">Asset Class</th>
@@ -840,7 +934,7 @@ export const Dossier = () => {
                   <th className="p-3 text-center">Action Required</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-border-subtle">
                 {CATEGORIES.map((cat) => {
                   const currentVal = wealthResult.currentAllocation[cat] * wealthResult.netWorth;
                   const currentWt = wealthResult.currentAllocation[cat] * 100;
@@ -848,23 +942,25 @@ export const Dossier = () => {
                   const diff = currentWt - targetWt;
                   return (
                     <tr key={cat}>
-                      <td className="p-3 font-medium text-zinc-900 flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: ASSET_COLORS[cat] }} />
-                        {ASSET_LABELS[cat]}
+                      <td className="p-3 font-medium text-ink">
+                        <span className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: ASSET_COLORS[cat] }} />
+                          {ASSET_LABELS[cat]}
+                        </span>
                       </td>
-                      <td className="p-3 text-right text-zinc-700 font-mono">{formatCurrency(currentVal)}</td>
-                      <td className="p-3 text-right font-mono font-semibold text-slate-800">{formatPercent(currentWt)}</td>
-                      <td className="p-3 text-right font-mono text-zinc-600">{formatPercent(targetWt)}</td>
-                      <td className={`p-3 text-right font-mono font-semibold ${Math.abs(diff) <= 2 ? 'text-zinc-500' : diff > 0 ? 'text-blue-700' : 'text-amber-700'}`}>
+                      <td className="p-3 text-right text-ink-soft font-mono tabular-nums">{formatCurrency(currentVal)}</td>
+                      <td className="p-3 text-right font-mono tabular-nums font-semibold text-ink-soft">{formatPercent(currentWt)}</td>
+                      <td className="p-3 text-right font-mono tabular-nums text-muted">{formatPercent(targetWt)}</td>
+                      <td className={`p-3 text-right font-mono tabular-nums font-semibold ${Math.abs(diff) <= 2 ? 'text-muted' : diff > 0 ? 'text-info' : 'text-warning'}`}>
                         {diff > 0 ? `+${formatPercent(diff)}` : formatPercent(diff)}
                       </td>
                       <td className="p-3 text-center text-xs">
                         {Math.abs(diff) <= 2 ? (
-                          <span className="text-zinc-500 font-medium">In Band (Balanced)</span>
+                          <span className="text-muted font-medium">In Band (Balanced)</span>
                         ) : diff > 0 ? (
-                          <span className="text-blue-700 font-medium">Trim / Reallocate</span>
+                          <span className="text-info font-medium">Trim / Reallocate</span>
                         ) : (
-                          <span className="text-amber-700 font-medium">Add Capital</span>
+                          <span className="text-warning font-medium">Add Capital</span>
                         )}
                       </td>
                     </tr>
@@ -875,12 +971,12 @@ export const Dossier = () => {
           </div>
 
           {/* Rebalancing Strategy Advice */}
-          <div className="p-6 rounded-xl border border-zinc-200 bg-zinc-50 avoid-break space-y-2">
-            <h3 className="text-sm font-semibold text-zinc-900">Rebalancing Mandate</h3>
-            <p className="text-xs text-zinc-600 leading-relaxed">
-              Rebalancing should be conducted annually or when any asset class deviates by more than ±5% from its strategic target band.
-              To minimize capital gains tax drag, rebalancing should prioritize deploying new SIP/STP inflows into underweight asset classes
-              before executing outright liquidations of appreciated assets.
+          <div className="p-6 rounded-md border border-border bg-sunken/60 avoid-break space-y-2">
+            <h3 className="text-sm font-semibold text-ink">Rebalancing Mandate</h3>
+            <p className="text-xs text-muted leading-relaxed">
+              Rebalancing should be conducted annually or when any asset class deviates by more than ±5% from its strategic target
+              band. To minimize capital gains tax drag, rebalancing should prioritize deploying new SIP/STP inflows into underweight
+              asset classes before executing outright liquidations of appreciated assets.
             </p>
           </div>
         </section>
@@ -888,49 +984,54 @@ export const Dossier = () => {
         {/* ========================================================= */}
         {/* SECTION 5: QUANT LAB & TAIL-RISK ANALYSIS                  */}
         {/* ========================================================= */}
-        <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
+        <section id="dossier-s5" className={sectionClass}>
           <div className={sectionHeaderClass}>
             <div className="flex items-center gap-2.5">
-              <Award size={20} className="text-zinc-700" />
-              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 5: Quant Lab & Tail-Risk Analysis</h2>
+              <Award size={19} strokeWidth={1.6} className="text-muted" />
+              <h2 className="font-display text-2xl text-ink">Section 5: Quant Lab & Tail-Risk Analysis</h2>
             </div>
-            <span className="text-xs font-medium text-zinc-500">Historical Crisis Simulations</span>
+            <span className="text-xs text-muted shrink-0">Historical Crisis Simulations</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 gap-4 mb-8 avoid-break">
-            <div className="p-4 rounded-xl border border-zinc-200 bg-white">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Assumption Engine</span>
-              <p className="text-lg font-sans font-semibold text-zinc-900 mt-1">{activeAssumptionSourceLabel}</p>
-              <p className="text-xs text-zinc-600 mt-0.5">Calibrated {assumptions.fetchedAt ? new Date(assumptions.fetchedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'from default priors'}</p>
+            <div className="p-4 rounded-md border border-border bg-raised">
+              <span className="eyebrow">Assumption Engine</span>
+              <p className="text-base font-semibold text-ink mt-1.5">{activeAssumptionSourceLabel}</p>
+              <p className="text-xs text-muted mt-0.5">
+                Calibrated{' '}
+                {assumptions.fetchedAt
+                  ? new Date(assumptions.fetchedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                  : 'from default priors'}
+              </p>
             </div>
-            <div className="p-4 rounded-xl border border-zinc-200 bg-white">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Simulation Method</span>
-              <p className="text-lg font-sans font-semibold text-zinc-900 mt-1">Historical Replay</p>
-              <p className="text-xs text-zinc-600 mt-0.5">Crisis drawdowns applied to current holdings</p>
+            <div className="p-4 rounded-md border border-border bg-raised">
+              <span className="eyebrow">Simulation Method</span>
+              <p className="text-base font-semibold text-ink mt-1.5">Historical Replay</p>
+              <p className="text-xs text-muted mt-0.5">Crisis drawdowns applied to current holdings</p>
             </div>
-            <div className="p-4 rounded-xl border border-zinc-200 bg-white">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Scenarios Modeled</span>
-              <p className="text-lg font-sans font-semibold text-zinc-900 mt-1">{CRISIS_PRESETS.length} Crises</p>
-              <p className="text-xs text-zinc-600 mt-0.5">{CRISIS_PRESETS.map((p) => p.name).join(' · ')}</p>
+            <div className="p-4 rounded-md border border-border bg-raised">
+              <span className="eyebrow">Scenarios Modeled</span>
+              <p className="text-base font-semibold text-ink mt-1.5 font-mono">{CRISIS_PRESETS.length} Crises</p>
+              <p className="text-xs text-muted mt-0.5">{CRISIS_PRESETS.map((p) => p.name).join(' · ')}</p>
             </div>
           </div>
 
           {/* Tail-Risk Stress Matrix: all four crisis presets */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-zinc-900">Tail-Risk Stress Matrix — Historical Crisis Simulations</h3>
-              <span className="text-xs text-zinc-500">Shocks applied to current holdings; plans re-projected under stressed inflation</span>
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold text-ink">Tail-Risk Stress Matrix — Historical Crisis Simulations</h3>
+              <span className="text-xs text-muted shrink-0">Shocks applied to current holdings; plans re-projected under stressed inflation</span>
             </div>
-            <div className="p-5 rounded-xl border border-zinc-200 bg-white avoid-break space-y-3">
-              <h4 className="text-xs font-semibold text-zinc-900">Corpus Impact at Retirement by Scenario</h4>
+            <div className="p-5 rounded-md border border-border bg-raised avoid-break space-y-3">
+              <h4 className="text-xs font-semibold text-ink">Corpus Impact at Retirement by Scenario</h4>
               <StressImpactBars
                 results={stressResults}
                 ariaLabel="Horizontal bars showing corpus impact at retirement for each crisis scenario, scaled by magnitude with negative impacts in red extending left from zero"
               />
               <p className="text-[11px] text-muted leading-snug">
                 Insight: the worst modeled shock (
-                {[...stressResults].sort((a, b) => a.corpusDelta - b.corpusDelta)[0]?.scenario.name ?? '—'}) cuts the retirement corpus by{' '}
-                {formatCurrencyCompact(Math.abs(Math.min(...stressResults.map((r) => Math.min(0, r.corpusDelta)))))} —{' '}
+                {[...stressResults].sort((a, b) => a.corpusDelta - b.corpusDelta)[0]?.scenario.name ?? '—'}) cuts the retirement
+                corpus by {formatCurrencyCompact(Math.abs(Math.min(...stressResults.map((r) => Math.min(0, r.corpusDelta)))))} —{' '}
                 {[...stressResults].sort((a, b) => a.corpusDelta - b.corpusDelta)[0]?.shockedSustainable
                   ? 'the plan still survives it with buffer to spare.'
                   : 'the plan would need the mitigation actions listed below to restore solvency.'}
@@ -943,13 +1044,13 @@ export const Dossier = () => {
         {/* ========================================================= */}
         {/* SECTION 6: PLAN HEALTH & PRIORITY ACTIONS                 */}
         {/* ========================================================= */}
-        <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
+        <section id="dossier-s6" className={sectionClass}>
           <div className={sectionHeaderClass}>
             <div className="flex items-center gap-2.5">
-              <HeartPulse size={20} className="text-zinc-700" />
-              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 6: Plan Health & Priority Actions</h2>
+              <HeartPulse size={19} strokeWidth={1.6} className="text-muted" />
+              <h2 className="font-display text-2xl text-ink">Section 6: Plan Health & Priority Actions</h2>
             </div>
-            <span className="text-xs font-medium text-zinc-500">Weighted Diagnostic Score</span>
+            <span className="text-xs text-muted shrink-0">Weighted Diagnostic Score</span>
           </div>
 
           <PlanHealthRadial
@@ -965,17 +1066,17 @@ export const Dossier = () => {
         {/* SECTION 7: GOAL PROBABILITY DETAIL                        */}
         {/* ========================================================= */}
         {wealthResult.goalResults.length > 0 && (
-          <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
+          <section id="dossier-s7" className={sectionClass}>
             <div className={sectionHeaderClass}>
               <div className="flex items-center gap-2.5">
-                <Target size={20} className="text-zinc-700" />
-                <h2 className="text-xl font-sans font-bold text-zinc-900">Section 7: Goal Probability Detail</h2>
+                <Target size={19} strokeWidth={1.6} className="text-muted" />
+                <h2 className="font-display text-2xl text-ink">Section 7: Goal Probability Detail</h2>
               </div>
-              <span className="text-xs font-medium text-zinc-500">Simulated Funding Distributions</span>
+              <span className="text-xs text-muted shrink-0">Simulated Funding Distributions</span>
             </div>
 
             <div className="overflow-x-auto avoid-break">
-              <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
+              <table className="w-full text-xs text-left border border-border rounded-md overflow-hidden">
                 <thead className={tableHeadClass}>
                   <tr>
                     <th className="p-3">Goal</th>
@@ -988,24 +1089,21 @@ export const Dossier = () => {
                     <th className="p-3 w-44">Outcome Distribution</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-border-subtle">
                   {wealthResult.goalResults.map((gr) => (
                     <tr key={gr.goal.id}>
-                      <td className="p-3 font-medium text-zinc-900">
+                      <td className="p-3 font-medium text-ink">
                         {gr.goal.name}
-                        <span className={`ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-medium ${
-                          gr.goal.priority === 'essential' ? 'bg-emerald-50 text-emerald-800' :
-                          gr.goal.priority === 'important' ? 'bg-blue-50 text-blue-800' : 'bg-slate-100 text-zinc-700'
-                        }`}>
-                          {gr.goal.priority.toUpperCase()}
-                        </span>
+                        <Badge tone={gr.goal.priority === 'essential' ? 'negative' : gr.goal.priority === 'important' ? 'neutral' : 'brass'} className="ml-1.5">
+                          {gr.goal.priority}
+                        </Badge>
                       </td>
-                      <td className="p-3 text-right text-zinc-600">{gr.goal.yearsToGoal}y</td>
-                      <td className="p-3 text-right font-mono text-zinc-800">{formatCurrencyCompact(gr.futureValue)}</td>
-                      <td className="p-3 text-right font-mono text-zinc-600">{formatCurrencyCompact(gr.pvNeeded)}</td>
-                      <td className="p-3 text-center font-mono font-semibold text-zinc-900">{formatPercent(gr.successRate * 100)}</td>
-                      <td className="p-3 text-center font-mono text-rose-600">{formatPercent(gr.shortfallProbability * 100)}</td>
-                      <td className="p-3 text-right font-mono text-zinc-700">{formatCurrencyCompact(gr.expectedShortfall)}</td>
+                      <td className="p-3 text-right text-muted font-mono tabular-nums">{gr.goal.yearsToGoal}y</td>
+                      <td className="p-3 text-right font-mono tabular-nums text-ink-soft">{formatCurrencyCompact(gr.futureValue)}</td>
+                      <td className="p-3 text-right font-mono tabular-nums text-muted">{formatCurrencyCompact(gr.pvNeeded)}</td>
+                      <td className="p-3 text-center font-mono tabular-nums font-semibold text-ink">{formatPercent(gr.successRate * 100)}</td>
+                      <td className="p-3 text-center font-mono tabular-nums text-negative">{formatPercent(gr.shortfallProbability * 100)}</td>
+                      <td className="p-3 text-right font-mono tabular-nums text-ink-soft">{formatCurrencyCompact(gr.expectedShortfall)}</td>
                       <td className="p-3">
                         <GoalDistributionBars distribution={gr.probabilityDistribution} targetAmount={gr.futureValue} />
                       </td>
@@ -1014,9 +1112,9 @@ export const Dossier = () => {
                 </tbody>
               </table>
             </div>
-            <p className="text-[11px] text-zinc-500 mt-3 leading-relaxed">
-              Distributions show the simulated value of each goal's funding bucket at target date. Rose segments mark outcomes below the
-              required future value; the label below each histogram reports the probability mass in that shortfall zone.
+            <p className="text-[11px] text-muted mt-3 leading-relaxed">
+              Distributions show the simulated value of each goal's funding bucket at target date. Faded rose segments mark outcomes
+              below the required future value; the label below each histogram reports the probability mass in that shortfall zone.
             </p>
             <p className="text-[11px] text-muted leading-snug">
               Insight:{' '}
@@ -1037,33 +1135,38 @@ export const Dossier = () => {
         {/* ========================================================= */}
         {/* SECTION 8: RISK QUESTIONNAIRE & BEHAVIORAL PROFILE        */}
         {/* ========================================================= */}
-        <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
+        <section id="dossier-s8" className={sectionClass}>
           <div className={sectionHeaderClass}>
             <div className="flex items-center gap-2.5">
-              <Shield size={20} className="text-zinc-700" />
-              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 8: Risk Questionnaire & Behavioral Profiling</h2>
+              <Shield size={19} strokeWidth={1.6} className="text-muted" />
+              <h2 className="font-display text-2xl text-ink">Section 8: Risk Questionnaire & Behavioral Profiling</h2>
             </div>
-            <span className="text-xs font-medium text-zinc-500">Capacity & Tolerance</span>
+            <span className="text-xs text-muted shrink-0">Capacity & Tolerance</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-6 mb-8 avoid-break">
-            <div className="p-6 rounded-xl border border-zinc-200 bg-zinc-50/50 space-y-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Overall Behavioral Score</span>
+            <div className="p-6 rounded-md border border-border bg-sunken/50 space-y-3">
+              <span className="eyebrow">Overall Behavioral Score</span>
               <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-sans font-bold text-zinc-900">{riskScore}</span>
-                <span className="text-sm text-zinc-500">/ 100</span>
+                <span className="num-hero text-5xl text-ink">{hasRiskAnswers ? riskScore : '—'}</span>
+                <span className="text-sm text-faint font-mono">/ 100</span>
               </div>
-              <p className="text-sm font-semibold text-slate-800">Mandate Profile: {riskProfile.label}</p>
-              <p className="text-xs text-zinc-600 leading-relaxed">{riskProfile.description}</p>
+              <p className="text-sm font-semibold text-ink">Mandate Profile: {riskProfile.label}</p>
+              <p className="text-xs text-muted leading-relaxed">{riskProfile.description}</p>
+              {!hasRiskAnswers && (
+                <p className="text-[11px] text-faint italic">
+                  Questionnaire not yet completed — the profile shown is the platform default, not an assessed result.
+                </p>
+              )}
             </div>
 
-            <div className="p-6 rounded-xl border border-zinc-200 bg-zinc-50/50 space-y-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Recommended Allocation Targets</span>
+            <div className="p-6 rounded-md border border-border bg-sunken/50 space-y-3">
+              <span className="eyebrow">Recommended Allocation Targets</span>
               <div className="space-y-2 text-xs">
                 {CATEGORIES.map((cat) => (
                   <div key={cat} className="flex justify-between items-center">
-                    <span className="text-zinc-600">{ASSET_LABELS[cat]}</span>
-                    <span className="font-semibold text-zinc-900 font-mono">{formatPercent(targets[cat])}</span>
+                    <span className="text-muted">{ASSET_LABELS[cat]}</span>
+                    <span className="font-semibold text-ink font-mono tabular-nums">{formatPercent(targets[cat])}</span>
                   </div>
                 ))}
               </div>
@@ -1072,9 +1175,9 @@ export const Dossier = () => {
 
           {dimensionBreakdown && (
             <div className="space-y-3 mb-8 avoid-break">
-              <h3 className="text-sm font-semibold text-zinc-900">Dimension Breakdown</h3>
+              <h3 className="text-sm font-semibold text-ink">Dimension Breakdown</h3>
               <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
+                <table className="w-full text-xs text-left border border-border rounded-md overflow-hidden">
                   <thead className={tableHeadClass}>
                     <tr>
                       <th className="p-3">Dimension</th>
@@ -1084,17 +1187,17 @@ export const Dossier = () => {
                       <th className="p-3">Interpretation</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-border-subtle">
                     {(Object.keys(dimensionBreakdown) as RiskDimension[]).map((dim) => {
                       const d = dimensionBreakdown[dim];
                       const interpretation = d.percentage >= 70 ? 'High — strongly supports risk-taking' : d.percentage >= 45 ? 'Moderate — supports measured risk' : 'Low — constrains risk capacity';
                       return (
                         <tr key={dim}>
-                          <td className="p-3 font-medium text-zinc-900">{DIMENSION_LABELS[dim]}</td>
-                          <td className="p-3 text-center text-zinc-600 font-mono">{formatPercent(d.weight * 100, 0)}</td>
-                          <td className="p-3 text-center font-mono font-semibold text-zinc-900">{formatPercent(d.percentage)}</td>
-                          <td className="p-3 text-center font-mono text-zinc-700">{d.weightedContribution.toFixed(1)} pts</td>
-                          <td className="p-3 text-zinc-600">{interpretation}</td>
+                          <td className="p-3 font-medium text-ink">{DIMENSION_LABELS[dim]}</td>
+                          <td className="p-3 text-center text-muted font-mono tabular-nums">{formatPercent(d.weight * 100, 0)}</td>
+                          <td className="p-3 text-center font-mono tabular-nums font-semibold text-ink">{formatPercent(d.percentage)}</td>
+                          <td className="p-3 text-center font-mono tabular-nums text-ink-soft">{d.weightedContribution.toFixed(1)} pts</td>
+                          <td className="p-3 text-muted">{interpretation}</td>
                         </tr>
                       );
                     })}
@@ -1105,44 +1208,42 @@ export const Dossier = () => {
           )}
 
           {riskGap && (
-            <div className="p-6 rounded-xl border border-zinc-200 bg-zinc-50/50 avoid-break space-y-2 mb-8">
-              <h3 className="text-sm font-semibold text-zinc-900">Risk Tolerance vs Capacity Gap</h3>
+            <div className="p-6 rounded-md border border-border bg-sunken/50 avoid-break space-y-2 mb-8">
+              <h3 className="text-sm font-semibold text-ink">Risk Tolerance vs Capacity Gap</h3>
               <div className="grid grid-cols-3 gap-3 text-xs">
-                <div className="p-3 bg-white rounded-lg border border-zinc-200/70">
-                  <span className="text-zinc-500 block">Willingness (Tolerance)</span>
-                  <span className="font-mono font-bold text-zinc-900">{formatPercent(riskGap.tolerancePct)}</span>
+                <div className="p-3 bg-raised rounded-md border border-border-subtle">
+                  <span className="text-muted block">Willingness (Tolerance)</span>
+                  <span className="font-mono tabular-nums font-semibold text-ink">{formatPercent(riskGap.tolerancePct)}</span>
                 </div>
-                <div className="p-3 bg-white rounded-lg border border-zinc-200/70">
-                  <span className="text-zinc-500 block">Ability (Capacity)</span>
-                  <span className="font-mono font-bold text-zinc-900">{formatPercent(riskGap.capacityPct)}</span>
+                <div className="p-3 bg-raised rounded-md border border-border-subtle">
+                  <span className="text-muted block">Ability (Capacity)</span>
+                  <span className="font-mono tabular-nums font-semibold text-ink">{formatPercent(riskGap.capacityPct)}</span>
                 </div>
-                <div className="p-3 bg-white rounded-lg border border-zinc-200/70">
-                  <span className="text-zinc-500 block">Gap</span>
-                  <span className={`font-mono font-bold ${Math.abs(riskGap.gap) > 20 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                <div className="p-3 bg-raised rounded-md border border-border-subtle">
+                  <span className="text-muted block">Gap</span>
+                  <span className={`font-mono tabular-nums font-semibold ${Math.abs(riskGap.gap) > 20 ? 'text-warning' : 'text-positive'}`}>
                     {riskGap.gap > 0 ? '+' : ''}{formatPercent(riskGap.gap)}
                   </span>
                 </div>
               </div>
-              <p className="text-xs text-zinc-600 leading-relaxed">{riskGap.verdict}</p>
+              <p className="text-xs text-muted leading-relaxed">{riskGap.verdict}</p>
             </div>
           )}
 
           {biases.length > 0 && (
             <div className="space-y-3 avoid-break">
-              <h3 className="text-sm font-semibold text-zinc-900">Detected Behavioral Biases</h3>
+              <h3 className="text-sm font-semibold text-ink">Detected Behavioral Biases</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-4">
                 {biases.map((b) => (
-                  <div key={b.bias} className="p-4 rounded-xl border border-zinc-200 bg-white space-y-1.5">
+                  <div key={b.bias} className="p-4 rounded-md border border-border bg-raised space-y-1.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-zinc-900">{b.bias}</span>
-                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
-                        b.level === 'high' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'
-                      }`}>
-                        {b.level}
-                      </span>
+                      <span className="text-xs font-semibold text-ink">{b.bias}</span>
+                      <Badge tone={b.level === 'high' ? 'negative' : 'warning'}>{b.level}</Badge>
                     </div>
-                    <p className="text-[11px] text-zinc-600 leading-snug">{b.description}</p>
-                    <p className="text-[11px] text-zinc-500 leading-snug"><span className="font-medium text-zinc-700">Advisory counterweight:</span> {b.suggestion}</p>
+                    <p className="text-[11px] text-muted leading-snug">{b.description}</p>
+                    <p className="text-[11px] text-muted leading-snug">
+                      <span className="font-medium text-ink-soft">Advisory counterweight:</span> {b.suggestion}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -1153,38 +1254,38 @@ export const Dossier = () => {
         {/* ========================================================= */}
         {/* SECTION 9: TAX & CURRENCY POSITION                        */}
         {/* ========================================================= */}
-        <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
+        <section id="dossier-s9" className={sectionClass}>
           <div className={sectionHeaderClass}>
             <div className="flex items-center gap-2.5">
-              <Percent size={20} className="text-zinc-700" />
-              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 9: Tax & Currency Position</h2>
+              <Percent size={19} strokeWidth={1.6} className="text-muted" />
+              <h2 className="font-display text-2xl text-ink">Section 9: Tax & Currency Position</h2>
             </div>
-            <span className="text-xs font-medium text-zinc-500">Fiscal Drag & FX Exposure</span>
+            <span className="text-xs text-muted shrink-0">Fiscal Drag & FX Exposure</span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 print:grid-cols-4 gap-4 mb-8 avoid-break">
-            <div className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/70">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Annual Tax Estimate</span>
-              <p className="text-lg font-sans font-bold text-zinc-900 mt-1">{formatCurrencyCompact(wealthResult.taxSummary.annualTax)}</p>
+            <div className="p-4 rounded-md border border-border bg-sunken/60">
+              <span className="eyebrow">Annual Tax Estimate</span>
+              <p className="num-hero text-xl text-ink mt-1.5">{formatCurrencyCompact(wealthResult.taxSummary.annualTax)}</p>
             </div>
-            <div className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/70">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Effective Tax Rate</span>
-              <p className="text-lg font-sans font-bold text-zinc-900 mt-1">{formatPercent(wealthResult.taxSummary.effectiveRate * 100)}</p>
+            <div className="p-4 rounded-md border border-border bg-sunken/60">
+              <span className="eyebrow">Effective Tax Rate</span>
+              <p className="num-hero text-xl text-ink mt-1.5">{formatPercent(wealthResult.taxSummary.effectiveRate * 100)}</p>
             </div>
-            <div className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/70">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Post-Tax Income</span>
-              <p className="text-lg font-sans font-bold text-zinc-900 mt-1">{formatCurrencyCompact(wealthResult.taxSummary.postTaxIncome)}</p>
+            <div className="p-4 rounded-md border border-border bg-sunken/60">
+              <span className="eyebrow">Post-Tax Income</span>
+              <p className="num-hero text-xl text-ink mt-1.5">{formatCurrencyCompact(wealthResult.taxSummary.postTaxIncome)}</p>
             </div>
-            <div className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/70">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Recommended Tax Saving</span>
-              <p className="text-lg font-sans font-bold text-zinc-900 mt-1">{formatCurrencyCompact(wealthResult.taxSummary.recommendedTaxSaving)}</p>
+            <div className="p-4 rounded-md border border-border bg-sunken/60">
+              <span className="eyebrow">Recommended Tax Saving</span>
+              <p className="num-hero text-xl text-ink mt-1.5">{formatCurrencyCompact(wealthResult.taxSummary.recommendedTaxSaving)}</p>
             </div>
           </div>
 
           {wealthResult.currencyExposure.length > 0 && (
             <div className="space-y-3 avoid-break">
-              <h3 className="text-sm font-semibold text-zinc-900">Currency Exposure of Investable Assets</h3>
-              <div className="p-4 rounded-xl border border-zinc-200 bg-white space-y-3">
+              <h3 className="text-sm font-semibold text-ink">Currency Exposure of Investable Assets</h3>
+              <div className="p-4 rounded-md border border-border bg-raised space-y-3">
                 <CurrencyExposureBars
                   exposure={wealthResult.currencyExposure}
                   ariaLabel="Percentage bars showing the portfolio weight of each currency exposure"
@@ -1204,7 +1305,7 @@ export const Dossier = () => {
                 </p>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
+                <table className="w-full text-xs text-left border border-border rounded-md overflow-hidden">
                   <thead className={tableHeadClass}>
                     <tr>
                       <th className="p-3">Currency</th>
@@ -1213,13 +1314,13 @@ export const Dossier = () => {
                       <th className="p-3">Hedging Note</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-border-subtle">
                     {wealthResult.currencyExposure.map((c) => (
                       <tr key={c.currency}>
-                        <td className="p-3 font-medium text-zinc-900">{c.currency}</td>
-                        <td className="p-3 text-right font-mono text-zinc-800">{formatCurrency(c.amount)}</td>
-                        <td className="p-3 text-right font-mono font-semibold text-zinc-900">{formatPercent(c.percentage)}</td>
-                        <td className="p-3 text-zinc-600">
+                        <td className="p-3 font-medium text-ink font-mono">{c.currency}</td>
+                        <td className="p-3 text-right font-mono tabular-nums text-ink-soft">{formatCurrency(c.amount)}</td>
+                        <td className="p-3 text-right font-mono tabular-nums font-semibold text-ink">{formatPercent(c.percentage)}</td>
+                        <td className="p-3 text-muted">
                           {c.currency === 'INR'
                             ? 'Domestic — no FX drag on liabilities.'
                             : 'Unhedged global exposure — adds diversification but introduces currency volatility on rupee goals.'}
@@ -1236,21 +1337,21 @@ export const Dossier = () => {
         {/* ========================================================= */}
         {/* SECTION 10: APPENDICES                                    */}
         {/* ========================================================= */}
-        <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 print:border-none print:p-6 shadow-sm page-break">
+        <section id="dossier-s10" className={sectionClass}>
           <div className={sectionHeaderClass}>
             <div className="flex items-center gap-2.5">
-              <Landmark size={20} className="text-zinc-700" />
-              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 10: Appendices</h2>
+              <Landmark size={19} strokeWidth={1.6} className="text-muted" />
+              <h2 className="font-display text-2xl text-ink">Section 10: Appendices</h2>
             </div>
-            <span className="text-xs font-medium text-zinc-500">Milestones · Meeting Record · Decision Audit</span>
+            <span className="text-xs text-muted shrink-0">Milestones · Meeting Record · Decision Audit</span>
           </div>
 
           {/* Appendix A: Projection Milestones */}
           {milestones.length > 0 && (
             <div className="space-y-3 mb-8 avoid-break">
-              <h3 className="text-sm font-semibold text-zinc-900">Appendix A: Projection Milestones</h3>
+              <h3 className="text-sm font-semibold text-ink">Appendix A: Projection Milestones</h3>
               <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
+                <table className="w-full text-xs text-left border border-border rounded-md overflow-hidden">
                   <thead className={tableHeadClass}>
                     <tr>
                       <th className="p-3">Age</th>
@@ -1261,21 +1362,21 @@ export const Dossier = () => {
                       <th className="p-3 text-right">Cumulative Withdrawn</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-border-subtle">
                     {milestones.map(({ age, snap }) => (
                       <tr key={age}>
-                        <td className="p-3 font-semibold text-zinc-900">{age}</td>
+                        <td className="p-3 font-semibold text-ink font-mono tabular-nums">{age}</td>
                         <td className="p-3">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                            snap.phase === 'accumulation' ? 'bg-blue-50 text-blue-800' : 'bg-violet-50 text-violet-800'
-                          }`}>
+                          <Badge tone={snap.phase === 'accumulation' ? 'info' : 'accent'}>
                             {snap.phase === 'accumulation' ? 'Accumulation' : 'Distribution'}
-                          </span>
+                          </Badge>
                         </td>
-                        <td className="p-3 text-right font-mono font-semibold text-zinc-900">{formatCurrency(snap.total)}</td>
-                        <td className="p-3 text-right font-mono text-zinc-700">{formatCurrency(snap.realTotal)}</td>
-                        <td className="p-3 text-right font-mono text-zinc-700">{formatCurrency(snap.invested)}</td>
-                        <td className="p-3 text-right font-mono text-zinc-700">{snap.withdrawn > 0 ? formatCurrency(snap.withdrawn) : '—'}</td>
+                        <td className="p-3 text-right font-mono tabular-nums font-semibold text-ink">{formatCurrency(snap.total)}</td>
+                        <td className="p-3 text-right font-mono tabular-nums text-ink-soft">{formatCurrency(snap.realTotal)}</td>
+                        <td className="p-3 text-right font-mono tabular-nums text-ink-soft">{formatCurrency(snap.invested)}</td>
+                        <td className="p-3 text-right font-mono tabular-nums text-ink-soft">
+                          {snap.withdrawn > 0 ? formatCurrency(snap.withdrawn) : '—'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1287,17 +1388,17 @@ export const Dossier = () => {
           {/* Appendix B: Meeting Record (only when notes exist) */}
           {meetingNotes.length > 0 && (
             <div className="space-y-3 mb-8 avoid-break">
-              <h3 className="text-sm font-semibold text-zinc-900 flex items-center gap-2">
-                <StickyNote size={15} className="text-zinc-600" /> Appendix B: Meeting Record
+              <h3 className="text-sm font-semibold text-ink flex items-center gap-2">
+                <StickyNote size={15} strokeWidth={1.6} className="text-muted" /> Appendix B: Meeting Record
               </h3>
               <div className="space-y-3">
                 {meetingNotes.map((s) => (
-                  <div key={s.id} className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/50">
-                    <p className="text-xs font-semibold text-zinc-900">{s.name}: {s.title}</p>
-                    <p className="text-xs text-zinc-600 leading-relaxed mt-1 whitespace-pre-wrap">{s.note}</p>
+                  <div key={s.id} className="p-4 rounded-md border border-border bg-sunken/50">
+                    <p className="text-xs font-semibold text-ink">{s.name}: {s.title}</p>
+                    <p className="text-xs text-muted leading-relaxed mt-1 whitespace-pre-wrap">{s.note}</p>
                   </div>
                 ))}
-                <p className="text-[10px] text-zinc-500">Last updated: {meetingState.lastUpdated || '—'}</p>
+                <p className="text-[10px] text-faint">Last updated: <span className="font-mono">{meetingState.lastUpdated || '—'}</span></p>
               </div>
             </div>
           )}
@@ -1305,11 +1406,11 @@ export const Dossier = () => {
           {/* Appendix C: Decision Audit Trail (only when entries exist) */}
           {decisionHistory.length > 0 && (
             <div className="space-y-3 avoid-break">
-              <h3 className="text-sm font-semibold text-zinc-900 flex items-center gap-2">
-                <History size={15} className="text-zinc-600" /> Appendix C: Decision Audit Trail
+              <h3 className="text-sm font-semibold text-ink flex items-center gap-2">
+                <History size={15} strokeWidth={1.6} className="text-muted" /> Appendix C: Decision Audit Trail
               </h3>
               <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left border border-zinc-200 rounded-lg overflow-hidden">
+                <table className="w-full text-xs text-left border border-border rounded-md overflow-hidden">
                   <thead className={tableHeadClass}>
                     <tr>
                       <th className="p-3">Date</th>
@@ -1319,24 +1420,26 @@ export const Dossier = () => {
                       <th className="p-3">Author</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-border-subtle">
                     {decisionHistory.slice(0, 12).map((dec) => (
                       <tr key={dec.id}>
-                        <td className="p-3 text-zinc-600 whitespace-nowrap">{dec.dateFormatted}</td>
-                        <td className="p-3 font-medium text-zinc-900">
+                        <td className="p-3 text-muted whitespace-nowrap font-mono">{dec.dateFormatted}</td>
+                        <td className="p-3 font-medium text-ink">
                           {dec.actionTitle}
-                          {dec.reverted && <span className="ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-zinc-200 text-zinc-600">REVERTED</span>}
+                          {dec.reverted && <span className="ml-1.5 px-1.5 py-0.5 rounded-sm text-[9px] font-mono bg-sunken text-faint">REVERTED</span>}
                         </td>
-                        <td className="p-3 text-zinc-600 font-mono text-[11px]">{dec.newValue}</td>
-                        <td className="p-3 text-zinc-600 leading-snug">{dec.rationale || '—'}</td>
-                        <td className="p-3 text-zinc-700 whitespace-nowrap">{AUTHOR_LABELS[dec.author] || dec.author}</td>
+                        <td className="p-3 text-muted font-mono text-[11px]">{dec.newValue}</td>
+                        <td className="p-3 text-muted leading-snug">{dec.rationale || '—'}</td>
+                        <td className="p-3 text-ink-soft whitespace-nowrap">{AUTHOR_LABELS[dec.author] || dec.author}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
               {decisionHistory.length > 12 && (
-                <p className="text-[10px] text-zinc-500">Showing 12 of {decisionHistory.length} recorded decisions. The full trail is available on the Decision History page.</p>
+                <p className="text-[10px] text-faint">
+                  Showing 12 of {decisionHistory.length} recorded decisions. The full trail is available on the Decision History page.
+                </p>
               )}
             </div>
           )}
@@ -1345,54 +1448,82 @@ export const Dossier = () => {
         {/* ========================================================= */}
         {/* SECTION 11: INVESTMENT POLICY STATEMENT (IPS)              */}
         {/* ========================================================= */}
-        <section className="bg-white rounded-2xl border border-zinc-200/90 p-8 sm:p-12 print:border-none print:p-6 shadow-sm">
-          <div className="border-b border-zinc-200 pb-4 mb-8 flex items-center justify-between">
+        <section id="dossier-s11" className="bg-raised rounded-xl border border-border p-8 sm:p-12 print:border-none print:p-6 shadow-card scroll-mt-20">
+          <div className="border-b border-border pb-4 mb-8 flex items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
-              <FileText size={20} className="text-zinc-700" />
-              <h2 className="text-xl font-sans font-bold text-zinc-900">Section 11: Investment Policy Statement (IPS)</h2>
+              <FileText size={19} strokeWidth={1.6} className="text-muted" />
+              <h2 className="font-display text-2xl text-ink">Section 11: Investment Policy Statement (IPS)</h2>
             </div>
-            <span className="text-xs font-medium text-zinc-500">Governance & Execution Mandate</span>
+            <span className="text-xs text-muted shrink-0">Governance & Execution Mandate</span>
           </div>
 
-          <div className="space-y-6 text-xs text-zinc-700 leading-relaxed avoid-break">
+          <div className="space-y-6 text-xs text-muted leading-relaxed avoid-break">
             <div>
-              <h3 className="text-sm font-sans font-bold text-zinc-900 mb-1">1. Scope and Purpose</h3>
+              <h3 className="text-sm font-display text-xl text-ink mb-1">1. Scope and Purpose</h3>
               <p>
-                This Investment Policy Statement (IPS) serves as the strategic blueprint for the wealth management of {inputs.client?.name || 'the Client'}.
-                Its primary objective is to formalize the client’s risk tolerance, return objectives, liquidity constraints, and asset allocation
-                framework to ensure disciplined, long-term capital compounding through retirement.
+                This Investment Policy Statement (IPS) serves as the strategic blueprint for the wealth management of{' '}
+                {inputs.client?.name || 'the Client'}. Its primary objective is to formalize the client's risk tolerance, return
+                objectives, liquidity constraints, and asset allocation framework to ensure disciplined, long-term capital
+                compounding through retirement.
               </p>
             </div>
 
             <div>
-              <h3 className="text-sm font-sans font-bold text-zinc-900 mb-1">2. Duties and Responsibilities</h3>
+              <h3 className="text-sm font-display text-xl text-ink mb-1">2. Duties and Responsibilities</h3>
               <p>
-                The Advisor ({inputs.client?.advisor || 'Sound Thesis Wealth Advisory'}) is responsible for constructing, monitoring, and rebalancing
-                the portfolio in accordance with this policy. The Client agrees to notify the Advisor of any material changes in income, health,
-                commitments, or financial circumstances that would warrant a review of this statement.
+                The Advisor ({inputs.client?.advisor || 'Sound Thesis Wealth Advisory'}) is responsible for constructing, monitoring,
+                and rebalancing the portfolio in accordance with this policy. The Client agrees to notify the Advisor of any
+                material changes in income, health, commitments, or financial circumstances that would warrant a review of this
+                statement.
               </p>
             </div>
 
             <div>
-              <h3 className="text-sm font-sans font-bold text-zinc-900 mb-1">3. Strategic Objectives & Constraints</h3>
-              <ul className="list-disc pl-5 space-y-1 mt-1 text-zinc-600">
-                <li><span className="font-medium text-slate-800">Return Objective:</span> Target real portfolio growth of {formatPercent(wealthResult.cagrReal)} p.a. (projected plan CAGR) to meet essential goals and secure retirement at age {inputs.retirementAge}.</li>
-                <li><span className="font-medium text-slate-800">Risk Tolerance:</span> Assessed at {riskScore}/100 ({riskProfile.label}), permitting controlled drawdowns in equity allocations in exchange for long-term purchasing power expansion.</li>
-                <li><span className="font-medium text-slate-800">Liquidity Constraints:</span> An emergency liquid reserve of at least 6 months of expenditures ({formatCurrency(inputs.monthlyExpenditure * 6)}) must be maintained in high-quality liquid instruments at all times.</li>
-                <li><span className="font-medium text-slate-800">Time Horizon:</span> Multi-stage horizon consisting of an accumulation phase through age {inputs.retirementAge}, followed by an inflation-adjusted distribution phase through age {inputs.lifeExpectancy}.</li>
-                <li><span className="font-medium text-slate-800">Success Threshold:</span> The plan must maintain at least {formatPercent(riskProfile.goalSuccessThreshold)} probability of success on essential goals and full SWP sustainability, per the Monte Carlo analysis in Section 3.</li>
+              <h3 className="text-sm font-display text-xl text-ink mb-1">3. Strategic Objectives & Constraints</h3>
+              <ul className="list-disc pl-5 space-y-1 mt-1 text-muted">
+                <li>
+                  <span className="font-medium text-ink-soft">Return Objective:</span> Target real portfolio growth of{' '}
+                  <span className="font-mono">{formatPercent(wealthResult.cagrReal)}</span> p.a. (projected plan CAGR) to meet
+                  essential goals and secure retirement at age {inputs.retirementAge}.
+                </li>
+                <li>
+                  <span className="font-medium text-ink-soft">Risk Tolerance:</span>{' '}
+                  {hasRiskAnswers ? (
+                    <>
+                      Assessed at <span className="font-mono">{riskScore}/100</span> ({riskProfile.label}), permitting controlled
+                      drawdowns in equity allocations in exchange for long-term purchasing power expansion.
+                    </>
+                  ) : (
+                    <>Profiled as {riskProfile.label}; the risk questionnaire has not yet been completed.</>
+                  )}
+                </li>
+                <li>
+                  <span className="font-medium text-ink-soft">Liquidity Constraints:</span> An emergency liquid reserve of at least
+                  6 months of expenditures (<span className="font-mono">{formatCurrency(inputs.monthlyExpenditure * 6)}</span>)
+                  must be maintained in high-quality liquid instruments at all times.
+                </li>
+                <li>
+                  <span className="font-medium text-ink-soft">Time Horizon:</span> Multi-stage horizon consisting of an accumulation
+                  phase through age {inputs.retirementAge}, followed by an inflation-adjusted distribution phase through age{' '}
+                  {inputs.lifeExpectancy}.
+                </li>
+                <li>
+                  <span className="font-medium text-ink-soft">Success Threshold:</span> The plan must maintain at least{' '}
+                  <span className="font-mono">{formatPercent(riskProfile.goalSuccessThreshold)}</span> probability of success on
+                  essential goals and full SWP sustainability, per the Monte Carlo analysis in Section 3.
+                </li>
               </ul>
             </div>
 
             {/* Signature & Endorsement Block */}
-            <div className="pt-8 border-t border-zinc-200 grid grid-cols-2 gap-12 avoid-break">
+            <div className="pt-8 border-t border-border grid grid-cols-2 gap-12 avoid-break">
               <div className="space-y-8">
                 <div>
-                  <p className="text-xs font-semibold text-slate-800">For the Client:</p>
-                  <p className="text-xs text-zinc-500 mt-0.5">{inputs.client?.name || 'Primary Client'}</p>
+                  <p className="text-xs font-semibold text-ink-soft">For the Client:</p>
+                  <p className="text-xs text-muted mt-0.5">{inputs.client?.name || 'Primary Client'}</p>
                 </div>
-                <div className="border-b border-zinc-300 w-full" />
-                <div className="flex justify-between text-[11px] text-zinc-500">
+                <div className="border-b border-border-strong w-full" />
+                <div className="flex justify-between text-[11px] text-faint">
                   <span>Signature</span>
                   <span>Date: {printDate}</span>
                 </div>
@@ -1400,11 +1531,11 @@ export const Dossier = () => {
 
               <div className="space-y-8">
                 <div>
-                  <p className="text-xs font-semibold text-slate-800">For the Advisory Firm:</p>
-                  <p className="text-xs text-zinc-500 mt-0.5">{inputs.client?.advisor || 'Sound Thesis Wealth Advisory'}</p>
+                  <p className="text-xs font-semibold text-ink-soft">For the Advisory Firm:</p>
+                  <p className="text-xs text-muted mt-0.5">{inputs.client?.advisor || 'Sound Thesis Wealth Advisory'}</p>
                 </div>
-                <div className="border-b border-zinc-300 w-full" />
-                <div className="flex justify-between text-[11px] text-zinc-500">
+                <div className="border-b border-border-strong w-full" />
+                <div className="flex justify-between text-[11px] text-faint">
                   <span>Authorized Signature</span>
                   <span>Date: {printDate}</span>
                 </div>

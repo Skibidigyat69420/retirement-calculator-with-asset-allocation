@@ -1,21 +1,41 @@
-import { useState } from 'react';
-import {
-  Activity,
-  History,
-  ArrowRight,
-  RotateCcw,
-  Clock,
-  ChevronRight,
-  GitCommit,
-} from 'lucide-react';
+import { ArrowRight, GitCommit, History, RotateCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
+import type { BadgeTone } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { SectionHeader } from '../ui/SectionHeader';
 import { useCalculator } from '../../context/CalculatorContext';
-import { formatCurrencyCompact, formatPercent } from '../../lib/formatters';
 import { getCategoryBreakdown } from '../../lib/calculations';
+import { formatCurrencyCompact, formatPercent } from '../../lib/formatters';
 
+interface DriftMetricProps {
+  label: string;
+  value: string | null;
+  sub?: string;
+  badge?: { tone: BadgeTone; label: string };
+}
+
+const DriftMetric = ({ label, value, sub, badge }: DriftMetricProps) => (
+  <div>
+    <div className="eyebrow">{label}</div>
+    <div className="mt-1.5 flex items-baseline gap-2 flex-wrap min-h-6">
+      <span className="font-mono tabular-nums text-base font-medium text-ink">
+        {value ?? '—'}
+      </span>
+      {sub && <span className="font-mono text-[11px] text-faint tabular-nums">{sub}</span>}
+    </div>
+    {badge && (
+      <div className="mt-1.5">
+        <Badge tone={badge.tone}>{badge.label}</Badge>
+      </div>
+    )}
+  </div>
+);
+
+/**
+ * RECENT ACTIVITY — parameter drift summary plus the immutable decision
+ * audit trail. Hairline rows, tabular numbers, revert actions preserved.
+ */
 export const WhatChangedPanel = () => {
   const {
     inputs,
@@ -28,36 +48,32 @@ export const WhatChangedPanel = () => {
     showToast,
   } = useCalculator();
 
-  const [expanded, setExpanded] = useState<boolean>(false);
+  const configured = wealthResult.isConfigured;
 
-  // Success and status metrics
-  const successProb = Math.round(
-    (wealthResult.monteCarlo?.successRate ?? (wealthResult.sustainable ? 0.88 : 0.45)) * 100,
-  );
-  const isHealthy = wealthResult.sustainable && successProb >= 75;
-
-  // Parameter Drift 1: Strategic Equity Drift
+  // Parameter drift — strategic equity vs target
   const breakdown = getCategoryBreakdown(inputs.assets);
   const actualEquityPct = breakdown.percentages.equity || 0;
   const targetEquityPct =
     manualTargets?.equity ??
     (riskProfile?.targets?.equity ?? Math.round(Math.max(20, Math.min(85, 20 + riskScore * 0.65))));
   const equityDrift = actualEquityPct - targetEquityPct;
+  const driftBadge =
+    Math.abs(equityDrift) <= 5 ? 'positive' : Math.abs(equityDrift) <= 12 ? 'warning' : 'negative';
+  const driftLabel =
+    Math.abs(equityDrift) <= 2 ? 'Balanced' : `${equityDrift > 0 ? '+' : ''}${equityDrift.toFixed(1)} pts`;
 
-  // Parameter Drift 2: Liquidity Buffer
+  // Liquidity buffer in months of expenses
   const liquidAssets = inputs.assets
     .filter((a) => a.category === 'liquid')
     .reduce((s, a) => s + (a.value || 0), 0);
   const monthlyExpense =
-    inputs.swp?.monthlyNeedToday ||
-    (inputs.annualIncome > 0 ? (inputs.annualIncome / 12) * 0.5 : 100000);
-  const emergencyMonths =
-    monthlyExpense > 0 ? Math.round((liquidAssets / monthlyExpense) * 10) / 10 : 6;
+    inputs.swp?.monthlyNeedToday || (inputs.annualIncome > 0 ? (inputs.annualIncome / 12) * 0.5 : 0);
+  const emergencyMonths = monthlyExpense > 0 ? Math.round((liquidAssets / monthlyExpense) * 10) / 10 : null;
+  const bufferBadge = emergencyMonths === null ? 'neutral' : emergencyMonths >= 6 ? 'positive' : emergencyMonths >= 3 ? 'warning' : 'negative';
+  const bufferLabel = emergencyMonths === null ? '—' : emergencyMonths >= 6 ? 'Adequate' : 'Gap';
 
-  // Recent decisions
   const recentDecisions = decisionHistory.slice(0, 3);
-  const hasDecisions = decisionHistory.length > 0;
-  const latestTimestamp = hasDecisions ? decisionHistory[0].dateFormatted : null;
+  const latestTimestamp = decisionHistory.length > 0 ? decisionHistory[0].dateFormatted : null;
 
   const handleRevert = (id: string, title: string) => {
     revertDecision(id);
@@ -65,251 +81,137 @@ export const WhatChangedPanel = () => {
   };
 
   return (
-    <Card className="p-5 sm:p-6 border border-zinc-200/90 bg-white shadow-2xs hover:shadow-card transition-all space-y-5">
-      {/* Top Header Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-3.5">
-        <div className="flex items-center gap-3">
-          <div
-            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-2xs ${
-              isHealthy ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
-            }`}
-          >
-            <Activity size={18} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-950 font-sans">
-                Live Audit & Parameter Drift Monitor
-              </span>
-              <Badge variant={isHealthy ? 'success' : 'danger'} className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">
-                {wealthResult.sustainable ? 'Mandate on Track' : 'Shortfall Drift Detected'}
-              </Badge>
-            </div>
-            <p className="text-xs text-zinc-500 mt-0.5">
-              Continuous parameter tracking, strategic asset drift, and immutable audit trail
-            </p>
-          </div>
-        </div>
-
-        {/* Timestamp Details & Quick Audit Link */}
-        <div className="flex items-center gap-3 text-xs self-start sm:self-center">
-          <div className="flex items-center gap-1.5 text-zinc-500 bg-zinc-50 px-2.5 py-1 rounded-lg border border-zinc-200">
-            <Clock size={12} className="text-zinc-400" />
-            <span>
-              Last Audit:{' '}
-              <strong className="text-zinc-800 font-semibold">{latestTimestamp ?? 'Not logged yet'}</strong>
+    <div>
+      <SectionHeader
+        title="Recent activity"
+        description="Live parameter drift and the immutable decision audit trail."
+        hairline
+        action={
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-[11px] text-faint tabular-nums hidden sm:block">
+              Last audit {latestTimestamp ?? '—'}
             </span>
+            <Link
+              to="/decision-history"
+              className="inline-flex items-center gap-1 text-xs font-medium text-ink-soft hover:text-ink transition-colors"
+            >
+              <History size={13} strokeWidth={1.6} aria-hidden="true" />
+              Audit log ({decisionHistory.length})
+            </Link>
           </div>
+        }
+      />
 
-          <Link
-            to="/decision-history"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-zinc-700 hover:text-zinc-950 underline underline-offset-2"
-          >
-            <History size={13} />
-            <span>Audit Log ({decisionHistory.length})</span>
-          </Link>
-        </div>
+      {/* Drift metrics */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-6 py-5 border-b border-border-subtle">
+        <DriftMetric
+          label="Equity drift"
+          value={configured ? `${actualEquityPct.toFixed(1)}%` : null}
+          sub={`target ${targetEquityPct.toFixed(0)}%`}
+          badge={{ tone: driftBadge, label: driftLabel }}
+        />
+        <DriftMetric
+          label="Liquidity buffer"
+          value={emergencyMonths === null ? null : `${emergencyMonths.toFixed(1)} mo`}
+          badge={{ tone: bufferBadge, label: bufferLabel }}
+        />
+        <DriftMetric
+          label="Longevity horizon"
+          value={
+            !configured
+              ? null
+              : wealthResult.sustainable
+                ? 'Age 90+'
+                : wealthResult.depletionAge
+                  ? `Age ${wealthResult.depletionAge}`
+                  : null
+          }
+          sub={configured ? `target age ${inputs.lifeExpectancy || '—'}` : undefined}
+          badge={
+            configured
+              ? { tone: wealthResult.sustainable ? 'positive' : 'negative', label: wealthResult.sustainable ? 'Sustainable' : 'Shortfall' }
+              : undefined
+          }
+        />
+        <DriftMetric
+          label="SIP commitment"
+          value={`${formatCurrencyCompact(inputs.sip.amount)}/mo`}
+          sub={`${formatPercent(wealthResult.savingsRate)} savings · ${inputs.sip.stepUp}% step-up`}
+        />
       </div>
 
-      {/* Parameter Drift Indicators Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Metric 1: Strategic Equity Drift */}
-        <div className="p-3 rounded-xl bg-zinc-50/70 border border-zinc-200/80 space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-zinc-500 font-medium">Strategic Equity Drift</span>
-            <span
-              className={`text-[10px] font-bold uppercase px-1.5 py-0.2 rounded border ${
-                Math.abs(equityDrift) <= 5
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : Math.abs(equityDrift) <= 12
-                  ? 'bg-amber-50 text-amber-700 border-amber-200'
-                  : 'bg-rose-50 text-rose-700 border-rose-200'
-              }`}
-            >
-              {Math.abs(equityDrift) <= 2
-                ? 'Balanced'
-                : `${equityDrift > 0 ? '+' : ''}${equityDrift.toFixed(1)}% Drift`}
-            </span>
-          </div>
-          <div className="flex items-baseline justify-between pt-0.5">
-            <span className="text-sm font-sans font-bold text-zinc-950">
-              {actualEquityPct.toFixed(1)}% <span className="text-xs text-zinc-400 font-normal">actual</span>
-            </span>
-            <span className="text-xs text-zinc-500 font-mono">
-              Target: {targetEquityPct.toFixed(0)}%
-            </span>
-          </div>
-        </div>
-
-        {/* Metric 2: Liquidity Buffer Drift */}
-        <div className="p-3 rounded-xl bg-zinc-50/70 border border-zinc-200/80 space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-zinc-500 font-medium">Liquid Buffer Drift</span>
-            <span
-              className={`text-[10px] font-bold uppercase px-1.5 py-0.2 rounded border ${
-                emergencyMonths >= 6
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : emergencyMonths >= 3
-                  ? 'bg-amber-50 text-amber-700 border-amber-200'
-                  : 'bg-rose-50 text-rose-700 border-rose-200'
-              }`}
-            >
-              {emergencyMonths >= 6 ? 'Adequate' : 'Buffer Gap'}
-            </span>
-          </div>
-          <div className="flex items-baseline justify-between pt-0.5">
-            <span className="text-sm font-sans font-bold text-zinc-950">
-              {emergencyMonths} mo <span className="text-xs text-zinc-400 font-normal">runway</span>
-            </span>
-            <span className="text-xs text-zinc-500 font-mono">
-              Target: 6.0 mo
-            </span>
-          </div>
-        </div>
-
-        {/* Metric 3: Longevity Runway */}
-        <div className="p-3 rounded-xl bg-zinc-50/70 border border-zinc-200/80 space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-zinc-500 font-medium">Longevity Horizon</span>
-            <span
-              className={`text-[10px] font-bold uppercase px-1.5 py-0.2 rounded border ${
-                wealthResult.sustainable
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : 'bg-rose-50 text-rose-700 border-rose-200'
-              }`}
-            >
-              {wealthResult.sustainable ? 'Sustainable' : `Depletes ${wealthResult.depletionAge}`}
-            </span>
-          </div>
-          <div className="flex items-baseline justify-between pt-0.5">
-            <span className="text-sm font-sans font-bold text-zinc-950">
-              {wealthResult.sustainable ? 'Age 90+' : `Age ${wealthResult.depletionAge}`}
-            </span>
-            <span className="text-xs text-zinc-500 font-mono">
-              Target: Age {inputs.lifeExpectancy}
-            </span>
-          </div>
-        </div>
-
-        {/* Metric 4: Monthly Commitment */}
-        <div className="p-3 rounded-xl bg-zinc-50/70 border border-zinc-200/80 space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-zinc-500 font-medium">SIP Commitment</span>
-            <span className="text-[10px] font-bold uppercase px-1.5 py-0.2 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">
-              {formatPercent(wealthResult.savingsRate)} Savings
-            </span>
-          </div>
-          <div className="flex items-baseline justify-between pt-0.5">
-            <span className="text-sm font-sans font-bold text-zinc-950">
-              {formatCurrencyCompact(inputs.sip.amount)}/mo
-            </span>
-            <span className="text-xs text-zinc-500 font-mono">
-              {inputs.sip.stepUp}% Step-up
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Key Plan Adjustments / Audit Diff Card */}
-      <div className="rounded-xl border border-zinc-200/90 bg-zinc-50/40 p-4 space-y-3">
-        <div className="flex items-center justify-between">
+      {/* Decision audit diffs */}
+      <div className="pt-5">
+        <div className="flex items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
-            <GitCommit size={15} className="text-zinc-600" />
-            <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-900">
-              Key Plan Adjustments & Audit Diffs
-            </h4>
-            <span className="text-[10px] text-zinc-400 font-mono">
-              ({decisionHistory.length} recorded change{decisionHistory.length === 1 ? '' : 's'})
+            <GitCommit size={14} strokeWidth={1.6} className="text-muted" aria-hidden="true" />
+            <span className="eyebrow">Decision diffs</span>
+            <span className="font-mono text-[10px] text-faint tabular-nums">
+              {decisionHistory.length} recorded
             </span>
           </div>
-
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="text-xs text-zinc-600 hover:text-zinc-950 font-semibold flex items-center gap-1"
-          >
-            <span>{expanded ? 'Show Less' : 'View Audit Diffs'}</span>
-            <ChevronRight size={13} className={`transform transition-transform ${expanded ? 'rotate-90' : ''}`} />
-          </button>
         </div>
 
         {recentDecisions.length === 0 ? (
-          <div className="p-4 rounded-lg bg-white border border-dashed border-zinc-300 text-xs text-zinc-600 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <GitCommit size={14} className="text-zinc-400 shrink-0" />
-              <span>No decisions logged yet — decisions you log will appear here.</span>
-            </div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-md border border-dashed border-border-strong px-4 py-3.5">
+            <p className="text-xs text-muted">No decisions logged yet — decisions you log will appear here.</p>
             <Link
               to="/decision-history"
-              className="font-semibold text-zinc-800 hover:text-zinc-950 underline underline-offset-2 inline-flex items-center gap-1 shrink-0"
+              className="inline-flex items-center gap-1 text-xs font-medium text-ink hover:underline underline-offset-2 shrink-0"
             >
-              Log a decision <ArrowRight size={12} />
+              Log a decision <ArrowRight size={12} strokeWidth={1.6} aria-hidden="true" />
             </Link>
           </div>
         ) : (
-          <div className="space-y-2.5">
+          <ul className="divide-y divide-border-subtle">
             {recentDecisions.map((dec) => (
-              <div
-                key={dec.id}
-                className="p-3 rounded-xl bg-white border border-zinc-200 hover:border-zinc-300 transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs"
-              >
-                <div className="space-y-1">
+              <li key={dec.id} className="py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="min-w-0 space-y-1.5">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">
-                      {dec.category}
-                    </span>
-                    <span className="text-xs font-bold text-zinc-950">{dec.actionTitle}</span>
-                    <span className="text-[10px] text-zinc-400 font-mono">
-                      · {dec.dateFormatted} by {dec.author}
+                    <Badge tone="neutral" dot={false}>{dec.category}</Badge>
+                    <span className="text-xs font-medium text-ink">{dec.actionTitle}</span>
+                    <span className="font-mono text-[10px] text-faint tabular-nums">
+                      {dec.dateFormatted} · {dec.author}
                     </span>
                   </div>
-
-                  {/* Diff visualization */}
-                  <div className="flex items-center gap-2 text-xs flex-wrap pt-0.5">
-                    <span className="text-zinc-400 text-[11px]">Adjustment:</span>
-                    <span className="line-through text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded text-[11px] font-mono border border-rose-200/60">
+                  <div className="flex items-center gap-2 flex-wrap text-[11px]">
+                    <span className="font-mono tabular-nums line-through text-negative bg-negative-soft border border-negative/20 rounded-sm px-1.5 py-0.5">
                       {dec.previousValue}
                     </span>
-                    <ArrowRight size={12} className="text-zinc-400 shrink-0" />
-                    <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[11px] font-mono font-bold border border-emerald-200/60">
+                    <ArrowRight size={11} strokeWidth={1.6} className="text-faint shrink-0" aria-hidden="true" />
+                    <span className="font-mono tabular-nums text-positive bg-positive-soft border border-positive/20 rounded-sm px-1.5 py-0.5">
                       {dec.newValue}
                     </span>
-                    <span className="text-zinc-500 text-[11px] hidden lg:inline truncate max-w-sm">
-                      ({dec.rationale})
-                    </span>
+                    <span className="text-muted hidden lg:inline truncate max-w-sm">({dec.rationale})</span>
                   </div>
                 </div>
-
-                {/* Revert Action */}
                 {dec.revertPatch && (
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleRevert(dec.id, dec.actionTitle)}
-                    className="text-[11px] h-7 px-2.5 text-zinc-700 border-zinc-200 hover:bg-zinc-100 gap-1 rounded-lg shrink-0 self-start md:self-center"
-                    title="Revert this specific adjustment"
+                    className="self-start md:self-center shrink-0"
                   >
-                    <RotateCcw size={11} />
-                    Revert Diff
+                    <RotateCcw size={12} strokeWidth={1.6} aria-hidden="true" />
+                    Revert
                   </Button>
                 )}
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
 
-        {/* Detailed Expanded History Link */}
-        {expanded && decisionHistory.length > 3 && (
-          <div className="pt-2 text-center">
+        {decisionHistory.length > 3 && (
+          <div className="pt-3">
             <Link
               to="/decision-history"
-              className="inline-flex items-center gap-1 text-xs font-bold text-zinc-950 hover:underline"
+              className="inline-flex items-center gap-1 text-xs font-medium text-ink-soft hover:text-ink transition-colors"
             >
-              <span>View all {decisionHistory.length} audit entries in Decision History</span>
-              <ArrowRight size={13} />
+              View all {decisionHistory.length} audit entries <ArrowRight size={12} strokeWidth={1.6} aria-hidden="true" />
             </Link>
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 };

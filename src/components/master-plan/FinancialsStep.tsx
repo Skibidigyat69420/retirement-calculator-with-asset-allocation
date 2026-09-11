@@ -1,21 +1,19 @@
 import { useState, useMemo } from 'react';
 import {
-  Building2,
   Plus,
   Trash2,
-  CreditCard,
-  Coins,
   ArrowRight,
   ArrowLeft,
+  Coins,
+  CreditCard,
 } from 'lucide-react';
-import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { CurrencyInput } from '../ui/CurrencyInput';
 import { NumberInput } from '../ui/NumberInput';
 import { Select } from '../ui/Select';
-import { Badge } from '../ui/Badge';
 import { calculateEMI } from '../../lib/calculators';
+import { guardNumber, formatOrDash } from '../../lib/planState';
 import { formatCurrency, formatCurrencyCompact } from '../../lib/formatters';
 import { ASSET_LABELS, ASSET_COLORS } from '../../lib/constants';
 import type { MasterPlanInputs, Asset, AssetCategory } from '../../types';
@@ -52,17 +50,21 @@ export const FinancialsStep = ({
   onNext,
   onBack,
 }: FinancialsStepProps) => {
-  // New Asset Form State
+  // New Asset Form State — zero defaults, never pre-seeded demo amounts
   const [newAssetName, setNewAssetName] = useState('');
   const [newAssetCategory, setNewAssetCategory] = useState<AssetCategory>('equity');
-  const [newAssetValue, setNewAssetValue] = useState(1000000);
-  const [newAssetReturn, setNewAssetReturn] = useState(12);
+  const [newAssetValue, setNewAssetValue] = useState(0);
+  const [newAssetReturn, setNewAssetReturn] = useState(0);
 
   // New Loan Form State
   const [newLoanName, setNewLoanName] = useState('');
-  const [newLoanPrincipal, setNewLoanPrincipal] = useState(3000000);
-  const [newLoanRate, setNewLoanRate] = useState(8.5);
-  const [newLoanTenure, setNewLoanTenure] = useState(15);
+  const [newLoanPrincipal, setNewLoanPrincipal] = useState(0);
+  const [newLoanRate, setNewLoanRate] = useState(0);
+  const [newLoanTenure, setNewLoanTenure] = useState(0);
+
+  const focusAssetForm = () => {
+    document.getElementById('mp-asset-name')?.focus();
+  };
 
   const totalAssets = useMemo(() => {
     return inputs.assets.reduce((sum, a) => sum + (Number(a.value) || 0), 0);
@@ -107,7 +109,8 @@ export const FinancialsStep = ({
       liquidateAtRetirement: true,
     });
     setNewAssetName('');
-    setNewAssetValue(500000);
+    setNewAssetValue(0);
+    setNewAssetReturn(0);
   };
 
   const handleAddLoan = () => {
@@ -117,138 +120,146 @@ export const FinancialsStep = ({
       name: newLoanName.trim(),
       principal: newLoanPrincipal,
       rate: newLoanRate,
-      tenureYears: newLoanTenure,
+      tenureYears: Math.max(1, newLoanTenure || 1),
       includeInExpenses: true,
     };
     onUpdateLoans([...loans, newLoan]);
     setNewLoanName('');
+    setNewLoanPrincipal(0);
+    setNewLoanRate(0);
+    setNewLoanTenure(0);
   };
 
   const handleRemoveLoan = (id: string) => {
     onUpdateLoans(loans.filter((l) => l.id !== id));
   };
 
+  const summaryRows = [
+    {
+      label: 'Gross assets',
+      value: formatOrDash(totalAssets > 0 ? totalAssets : null, formatCurrency),
+      note: `${inputs.assets.length} item${inputs.assets.length === 1 ? '' : 's'} recorded`,
+    },
+    {
+      label: 'Total liabilities',
+      value: formatOrDash(totalLiabilities > 0 ? totalLiabilities : null, formatCurrency),
+      note: `${loans.length} active loan${loans.length === 1 ? '' : 's'}`,
+    },
+    {
+      label: 'Net balance sheet',
+      value: formatOrDash(
+        totalAssets > 0 || totalLiabilities > 0 ? guardNumber(netBalanceSheet) : null,
+        formatCurrency,
+      ),
+      note: 'Net household equity',
+    },
+    {
+      label: 'Monthly EMI',
+      value: formatOrDash(totalMonthlyEMI > 0 ? totalMonthlyEMI : null, (v) => `${formatCurrency(v)}/mo`),
+      note: totalAssets > 0 ? `Debt-to-asset ${debtToAsset.toFixed(1)}%` : undefined,
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Intro Header */}
-      <Card className="border border-border space-y-2">
-        <div className="flex items-center gap-2">
-          <Building2 size={20} className="text-accent" />
-          <h3 className="text-lg font-bold text-ink">Financial Balance Sheet & Liabilities</h3>
-        </div>
-        <p className="text-xs text-muted leading-relaxed">
-          Record all investable portfolio assets, properties, and outstanding loan obligations. The engine dynamically calculates amortized EMIs and computes the household net balance sheet.
+    <div className="space-y-8">
+      <header>
+        <div className="eyebrow">Step 02 · Financials</div>
+        <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">Balance sheet & liabilities</h2>
+        <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
+          Investable assets, properties, and outstanding loans. EMIs amortize automatically and feed the household net balance sheet.
         </p>
-      </Card>
+      </header>
 
-      {/* Balance Sheet Summary Metrics */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-        <div className="p-4 rounded-2xl bg-surface border border-border space-y-1">
-          <span className="text-[10px] uppercase font-bold text-muted">Gross Assets</span>
-          <div className="text-lg font-mono font-bold text-ink truncate">
-            {formatCurrency(totalAssets)}
+      {/* Balance sheet summary — hairline rows */}
+      <section className="border-t border-b border-border divide-y divide-border">
+        {summaryRows.map((row) => (
+          <div key={row.label} className="flex items-baseline justify-between gap-4 py-3">
+            <div className="min-w-0">
+              <span className="text-xs text-muted">{row.label}</span>
+              {row.note && <span className="block text-[11px] text-faint mt-0.5">{row.note}</span>}
+            </div>
+            <span className="font-mono text-sm tabular-nums text-ink text-right">{row.value}</span>
           </div>
-          <span className="text-[10px] text-faint">{inputs.assets.length} items recorded</span>
-        </div>
+        ))}
+      </section>
 
-        <div className="p-4 rounded-2xl bg-surface border border-border space-y-1">
-          <span className="text-[10px] uppercase font-bold text-muted">Total Liabilities</span>
-          <div className="text-lg font-mono font-bold text-negative truncate">
-            {formatCurrency(totalLiabilities)}
-          </div>
-          <span className="text-[10px] text-faint">{loans.length} active loans</span>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-surface border border-border space-y-1">
-          <span className="text-[10px] uppercase font-bold text-muted">Net Balance Sheet</span>
-          <div className="text-lg font-mono font-bold text-ink truncate">
-            {formatCurrency(netBalanceSheet)}
-          </div>
-          <span className="text-[10px] text-positive font-semibold">Net Household Equity</span>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-surface border border-border space-y-1">
-          <span className="text-[10px] uppercase font-bold text-muted">Total Monthly EMI</span>
-          <div className="text-lg font-mono font-bold text-warning truncate">
-            {formatCurrency(totalMonthlyEMI)}/mo
-          </div>
-          <span className="text-[10px] text-faint font-mono">D/A: {debtToAsset.toFixed(1)}%</span>
-        </div>
-      </div>
-
-      {/* SECTION 1: Investable Assets */}
-      <Card className="border border-border space-y-5">
-        <div className="flex items-center justify-between border-b border-border pb-3">
+      {/* Assets */}
+      <section className="border-t border-border pt-6">
+        <div className="flex items-baseline justify-between gap-4 mb-4">
           <div>
-            <h4 className="text-sm font-bold text-ink flex items-center gap-2">
-              <Coins size={16} className="text-accent" />
-              Portfolio Assets & Capital Holdings
-            </h4>
-            <span className="text-xs text-muted">Active investments contributing to net worth compounding.</span>
+            <h3 className="text-[15px] font-semibold text-ink tracking-tight flex items-center gap-2">
+              <Coins size={15} strokeWidth={1.7} className="text-accent" aria-hidden="true" />
+              Portfolio assets
+            </h3>
+            <p className="mt-0.5 text-xs text-muted">Holdings that compound toward net worth.</p>
           </div>
-          <Badge variant="outline" className="text-xs font-mono">
-            {inputs.assets.length} Assets
-          </Badge>
+          <span className="font-mono text-[11px] text-faint tabular-nums">
+            {inputs.assets.length} recorded
+          </span>
         </div>
 
-        {/* Existing Assets List */}
-        <div className="space-y-3">
-          {inputs.assets.map((asset) => (
-            <div
-              key={asset.id}
-              className="p-3.5 rounded-xl bg-sunken border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+        {inputs.assets.length === 0 ? (
+          <div className="flex items-center justify-between gap-4 py-4 border-t border-b border-border">
+            <p className="text-sm text-faint">No assets yet — add the first asset.</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={focusAssetForm}
+              className="shrink-0"
             >
-              <div className="space-y-1 min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-sm text-ink truncate">{asset.name}</span>
-                  <span
-                    className="text-[10px] uppercase font-bold px-2 py-0.5 rounded"
-                    style={{
-                      backgroundColor: `${ASSET_COLORS[asset.category]}20`,
-                      color: ASSET_COLORS[asset.category],
-                    }}
-                  >
-                    {ASSET_LABELS[asset.category]}
+              <Plus size={14} aria-hidden="true" />
+              <span>Add asset</span>
+            </Button>
+          </div>
+        ) : (
+          <div className="divide-y divide-border border-t border-b border-border">
+            {inputs.assets.map((asset) => (
+              <div key={asset.id} className="flex items-center gap-4 py-3">
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: ASSET_COLORS[asset.category] }}
+                  aria-hidden="true"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-medium text-ink truncate">{asset.name}</span>
+                    <span className="text-[10px] uppercase tracking-[0.08em] font-mono text-muted">
+                      {ASSET_LABELS[asset.category]}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-faint">
+                    Return {formatOrDash(asset.returnRate, (v) => `${v}%`)} ·{' '}
+                    {asset.liquidateAtRetirement ? 'Liquidated at retirement' : 'Retained in corpus'}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-muted">
-                  <span>Expected Return: <strong className="text-ink font-mono">{asset.returnRate}%</strong></span>
-                  <span>•</span>
-                  <span>{asset.liquidateAtRetirement ? 'Liquidated at Retirement' : 'Retained in Corpus'}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 shrink-0">
-                <div className="text-right">
-                  <div className="font-mono font-bold text-base text-ink">
+                <div className="text-right shrink-0">
+                  <div className="font-mono text-sm tabular-nums text-ink">
                     {formatCurrency(asset.value)}
                   </div>
-                  <span className="text-[10px] text-faint">
-                    {totalAssets > 0 ? ((asset.value / totalAssets) * 100).toFixed(1) : 0}% of portfolio
+                  <span className="text-[11px] text-faint">
+                    {totalAssets > 0 ? `${((asset.value / totalAssets) * 100).toFixed(1)}% of portfolio` : '—'}
                   </span>
                 </div>
-
                 <button
                   type="button"
                   onClick={() => onRemoveAsset(asset.id)}
-                  className="p-2 rounded-lg text-muted hover:text-negative hover:bg-negative-soft transition-colors"
-                  title="Remove Asset"
+                  className="p-1.5 rounded-md text-faint hover:text-negative hover:bg-negative-soft transition-colors cursor-pointer shrink-0"
+                  title={`Remove ${asset.name}`}
                 >
-                  <Trash2 size={15} />
+                  <Trash2 size={14} strokeWidth={1.7} aria-hidden="true" />
                 </button>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
-        {/* Add Asset Mini Form */}
-        <div className="pt-3 border-t border-border space-y-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted block">
-            Add New Asset Holding
-          </span>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+        {/* Add asset form */}
+        <div className="pt-6">
+          <span className="eyebrow">Add asset</span>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-x-4 gap-y-4 mt-4">
             <Input
-              label="Asset Name"
+              id="mp-asset-name"
+              label="Asset name"
               value={newAssetName}
               onChange={(e) => setNewAssetName(e.target.value)}
               placeholder="e.g. Parag Parikh Flexi Cap"
@@ -260,145 +271,134 @@ export const FinancialsStep = ({
               options={CATEGORY_OPTIONS}
             />
             <CurrencyInput
-              label="Current Value (₹)"
+              label="Current value"
               value={newAssetValue}
               onChange={(val) => setNewAssetValue(val)}
             />
             <NumberInput
-              label="Expected Return (%)"
+              label="Expected return"
               value={newAssetReturn}
               onChange={(val) => setNewAssetReturn(val)}
               suffix="%"
               step={0.5}
             />
           </div>
-          <div className="flex justify-end">
-            <Button size="sm" onClick={handleAddAsset} className="flex items-center gap-1.5 text-xs">
-              <Plus size={14} />
-              <span>Add Asset to Portfolio</span>
+          <div className="flex justify-end mt-4">
+            <Button size="sm" onClick={handleAddAsset} disabled={!newAssetName.trim()}>
+              <Plus size={14} aria-hidden="true" />
+              <span>Add asset</span>
             </Button>
           </div>
         </div>
-      </Card>
+      </section>
 
-      {/* SECTION 2: Liabilities & Loans */}
-      <Card className="border border-border space-y-5">
-        <div className="flex items-center justify-between border-b border-border pb-3">
+      {/* Loans */}
+      <section className="border-t border-border pt-6">
+        <div className="flex items-baseline justify-between gap-4 mb-4">
           <div>
-            <h4 className="text-sm font-bold text-ink flex items-center gap-2">
-              <CreditCard size={16} className="text-negative" />
-              Outstanding Loans & Financial Liabilities
-            </h4>
-            <span className="text-xs text-muted">Amortized liabilities that generate recurring monthly EMI obligations.</span>
+            <h3 className="text-[15px] font-semibold text-ink tracking-tight flex items-center gap-2">
+              <CreditCard size={15} strokeWidth={1.7} className="text-muted" aria-hidden="true" />
+              Loans & liabilities
+            </h3>
+            <p className="mt-0.5 text-xs text-muted">Amortized obligations with recurring EMI.</p>
           </div>
-          <Badge variant="outline" className="text-xs font-mono text-negative">
-            {loans.length} Loans
-          </Badge>
+          <span className="font-mono text-[11px] text-faint tabular-nums">
+            {loans.length} recorded
+          </span>
         </div>
 
-        {/* Existing Loans List */}
         {loans.length === 0 ? (
-          <div className="p-4 rounded-xl bg-sunken border border-border text-center text-xs text-muted">
-            No debt or loan liabilities recorded. The household is completely debt-free.
-          </div>
+          <p className="text-sm text-faint py-3 border-t border-b border-border">
+            No debt recorded — add a loan below if the household carries EMIs.
+          </p>
         ) : (
-          <div className="space-y-3">
+          <div className="divide-y divide-border border-t border-b border-border">
             {activeLoansWithEMI.map((loan) => (
-              <div
-                key={loan.id}
-                className="p-3.5 rounded-xl bg-sunken border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-              >
-                <div className="space-y-1 min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-ink truncate">{loan.name}</span>
-                    <Badge variant="danger" className="text-[10px]">
-                      {loan.rate}% Rate
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-muted">
-                    <span>Tenure: <strong className="text-ink font-mono">{loan.tenureYears} Yrs</strong></span>
-                    <span>•</span>
-                    <span>Monthly EMI: <strong className="text-warning font-mono">{formatCurrency(loan.emi)}</strong></span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 shrink-0">
-                  <div className="text-right">
-                    <div className="font-mono font-bold text-base text-negative">
-                      {formatCurrency(loan.principal)}
-                    </div>
-                    <span className="text-[10px] text-faint">
-                      Total Interest: {formatCurrencyCompact(loan.totalInterest)}
+              <div key={loan.id} className="flex items-center gap-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-medium text-ink truncate">{loan.name}</span>
+                    <span className="font-mono text-[11px] text-muted tabular-nums">
+                      {formatOrDash(loan.rate, (v) => `${v}%`)} rate
                     </span>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveLoan(loan.id)}
-                    className="p-2 rounded-lg text-muted hover:text-negative hover:bg-negative-soft transition-colors"
-                    title="Remove Loan"
-                  >
-                    <Trash2 size={15} />
-                  </button>
+                  <span className="text-[11px] text-faint">
+                    Tenure {formatOrDash(loan.tenureYears, (v) => `${v} yrs`)} · EMI{' '}
+                    {formatOrDash(loan.emi > 0 ? loan.emi : null, formatCurrency)}
+                  </span>
                 </div>
+                <div className="text-right shrink-0">
+                  <div className="font-mono text-sm tabular-nums text-ink">
+                    {formatCurrency(loan.principal)}
+                  </div>
+                  <span className="text-[11px] text-faint">
+                    Interest {formatCurrencyCompact(loan.totalInterest)}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveLoan(loan.id)}
+                  className="p-1.5 rounded-md text-faint hover:text-negative hover:bg-negative-soft transition-colors cursor-pointer shrink-0"
+                  title={`Remove ${loan.name}`}
+                >
+                  <Trash2 size={14} strokeWidth={1.7} aria-hidden="true" />
+                </button>
               </div>
             ))}
           </div>
         )}
 
-        {/* Add Loan Mini Form */}
-        <div className="pt-3 border-t border-border space-y-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted block">
-            Add New Liability / Loan
-          </span>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+        {/* Add loan form */}
+        <div className="pt-6">
+          <span className="eyebrow">Add loan</span>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-x-4 gap-y-4 mt-4">
             <Input
-              label="Loan Name"
+              label="Loan name"
               value={newLoanName}
               onChange={(e) => setNewLoanName(e.target.value)}
               placeholder="e.g. HDFC Home Loan"
             />
             <CurrencyInput
-              label="Principal Outstanding (₹)"
+              label="Principal outstanding"
               value={newLoanPrincipal}
               onChange={(val) => setNewLoanPrincipal(val)}
             />
             <NumberInput
-              label="Interest Rate (%)"
+              label="Interest rate"
               value={newLoanRate}
               onChange={(val) => setNewLoanRate(val)}
               suffix="%"
               step={0.25}
             />
             <NumberInput
-              label="Remaining Tenure"
+              label="Remaining tenure"
               value={newLoanTenure}
               onChange={(val) => setNewLoanTenure(val)}
               suffix="yrs"
               step={1}
-              min={1}
+              min={0}
             />
           </div>
-          <div className="flex justify-end">
-            <Button size="sm" variant="outline" onClick={handleAddLoan} className="flex items-center gap-1.5 text-xs">
-              <Plus size={14} />
-              <span>Add Loan to Liabilities</span>
+          <div className="flex justify-end mt-4">
+            <Button size="sm" variant="outline" onClick={handleAddLoan} disabled={!newLoanName.trim()}>
+              <Plus size={14} aria-hidden="true" />
+              <span>Add loan</span>
             </Button>
           </div>
         </div>
+      </section>
 
-        {/* Step Navigation Buttons */}
-        <div className="flex justify-between pt-4 border-t border-border">
-          <Button variant="outline" onClick={onBack} className="flex items-center gap-2">
-            <ArrowLeft size={15} />
-            <span>Back: Profile</span>
-          </Button>
-          <Button onClick={onNext} className="flex items-center gap-2">
-            <span>Next: Cashflows & Savings</span>
-            <ArrowRight size={15} />
-          </Button>
-        </div>
-      </Card>
+      {/* Step navigation */}
+      <div className="flex justify-between border-t border-border pt-6">
+        <Button variant="ghost" onClick={onBack} className="flex items-center gap-2">
+          <ArrowLeft size={15} aria-hidden="true" />
+          <span>Back · Profile</span>
+        </Button>
+        <Button onClick={onNext} className="flex items-center gap-2">
+          <span>Next · Cashflow</span>
+          <ArrowRight size={15} aria-hidden="true" />
+        </Button>
+      </div>
     </div>
   );
 };
