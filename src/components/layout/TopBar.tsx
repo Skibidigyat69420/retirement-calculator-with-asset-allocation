@@ -4,9 +4,9 @@ import { Menu, Search, Wallet, ShieldCheck, User, FlaskConical, RotateCcw, Chevr
 import { navItems } from './navItems';
 import { LogoMark } from './BrandMark';
 import { CommandPalette } from './CommandPalette';
-import { ThemeToggle } from '../ui/ThemeToggle';
 import { Avatar } from '../ui/Avatar';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { ThemeToggle } from '../ui/ThemeToggle';
 import { useCalculator } from '../../context/CalculatorContext';
 import { formatCurrencyCompact } from '../../lib/formatters';
 

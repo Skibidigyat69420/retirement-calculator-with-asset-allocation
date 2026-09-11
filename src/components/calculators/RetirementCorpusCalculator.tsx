@@ -24,12 +24,12 @@ import { Button } from '../ui/Button';
 
 export const RetirementCorpusCalculator = () => {
   const { inputs, updateInputs, showToast } = useCalculator();
-  const [currentAge, setCurrentAge] = useState(inputs.currentAge || 34);
-  const [retirementAge, setRetirementAge] = useState(inputs.retirementAge || 60);
-  const [lifeExpectancy, setLifeExpectancy] = useState(inputs.lifeExpectancy || 85);
-  const [monthlyNeedToday, setMonthlyNeedToday] = useState(inputs.swp.monthlyNeedToday || 1_00_000);
-  const [inflation, setInflation] = useState(inputs.inflation || 5);
-  const [postRetirementReturn, setPostRetirementReturn] = useState(inputs.swp.postRetirementReturn || 9);
+  const [currentAge, setCurrentAge] = useState(inputs.currentAge);
+  const [retirementAge, setRetirementAge] = useState(inputs.retirementAge);
+  const [lifeExpectancy, setLifeExpectancy] = useState(inputs.lifeExpectancy);
+  const [monthlyNeedToday, setMonthlyNeedToday] = useState(inputs.swp.monthlyNeedToday);
+  const [inflation, setInflation] = useState(inputs.inflation);
+  const [postRetirementReturn, setPostRetirementReturn] = useState(inputs.swp.postRetirementReturn);
 
   const result = useMemo(
     () =>
@@ -60,12 +60,12 @@ export const RetirementCorpusCalculator = () => {
   };
 
   const handleSyncFromPlan = () => {
-    setCurrentAge(inputs.currentAge || 34);
-    setRetirementAge(inputs.retirementAge || 60);
-    setLifeExpectancy(inputs.lifeExpectancy || 85);
-    setMonthlyNeedToday(inputs.swp.monthlyNeedToday || 100000);
-    setInflation(inputs.inflation || 5);
-    setPostRetirementReturn(inputs.swp.postRetirementReturn || 9);
+    setCurrentAge(inputs.currentAge);
+    setRetirementAge(inputs.retirementAge);
+    setLifeExpectancy(inputs.lifeExpectancy);
+    setMonthlyNeedToday(inputs.swp.monthlyNeedToday);
+    setInflation(inputs.inflation);
+    setPostRetirementReturn(inputs.swp.postRetirementReturn);
     showToast('Loaded retirement timeline & assumptions from Master Plan.', 'info');
   };
 

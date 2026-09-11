@@ -339,7 +339,7 @@ export const AdvancedPortfolioLab = () => {
         </div>
 
         {/* Synthesis Table: Strategic + Tactical = Final */}
-        <div className="overflow-x-auto pt-2">
+        <div className="overflow-x-auto pt-2" tabIndex={0} role="region" aria-label="Strategic and tactical execution weights table">
           <table className="w-full text-xs text-left">
             <thead>
               <tr className="border-b border-border text-muted uppercase tracking-wider text-[10px]">

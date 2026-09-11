@@ -23,9 +23,9 @@ import {
 
 export const STPCalculator = () => {
   const { inputs, updateSTP, showToast } = useCalculator();
-  const [lumpsum, setLumpsum] = useState(inputs.stp.lumpsum || 50_00_000);
-  const [monthlyTransfer, setMonthlyTransfer] = useState(inputs.stp.monthlyTransfer || 1_00_000);
-  const [liquidReturn, setLiquidReturn] = useState(inputs.stp.liquidReturn || 7);
+  const [lumpsum, setLumpsum] = useState(inputs.stp.lumpsum);
+  const [monthlyTransfer, setMonthlyTransfer] = useState(inputs.stp.monthlyTransfer);
+  const [liquidReturn, setLiquidReturn] = useState(inputs.stp.liquidReturn);
   const [targetReturn, setTargetReturn] = useState(12);
 
   const result = useMemo(
@@ -65,11 +65,11 @@ export const STPCalculator = () => {
   };
 
   const handleSyncFromPlan = () => {
-    setLumpsum(inputs.stp.lumpsum || 1000000);
-    setMonthlyTransfer(inputs.stp.monthlyTransfer || 50000);
-    setLiquidReturn(inputs.stp.liquidReturn || 6);
-    setTargetReturn(inputs.sip.equityReturn || 12);
-    showToast(`Loaded STP settings (${formatCurrency(inputs.stp.monthlyTransfer || 50000)}/mo) from Master Plan.`, 'info');
+    setLumpsum(inputs.stp.lumpsum);
+    setMonthlyTransfer(inputs.stp.monthlyTransfer);
+    setLiquidReturn(inputs.stp.liquidReturn);
+    setTargetReturn(inputs.sip.equityReturn);
+    showToast(`Loaded STP settings (${formatCurrency(inputs.stp.monthlyTransfer)}/mo) from Master Plan.`, 'info');
   };
 
   const theme = getChartTheme();

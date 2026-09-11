@@ -160,7 +160,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
     <>
       {/* Desktop sidebar */}
       <aside
-        className="hidden lg:flex flex-col h-screen sticky top-0 shrink-0 border-r border-border bg-surface px-3 py-4 text-ink transition-[width] duration-200 ease-standard"
+        className="brand-rail hidden lg:flex flex-col h-screen sticky top-0 shrink-0 border-r px-3 py-4 text-ink transition-[width] duration-200 ease-standard"
         style={{ width: collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH }}
         aria-label="Sidebar navigation"
       >
@@ -211,7 +211,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
             role="dialog"
             aria-modal="true"
             aria-label="Navigation menu"
-            className="fixed inset-y-0 left-0 w-[280px] bg-surface flex flex-col px-4 py-4 shadow-popover animate-drawer-in z-10 border-r border-border text-ink"
+            className="brand-rail fixed inset-y-0 left-0 w-[280px] flex flex-col px-4 py-4 shadow-popover animate-drawer-in z-10 border-r text-ink"
           >
             <div className="flex items-center justify-between pb-3 mb-2 border-b border-border-subtle">
               <Link to="/" onClick={onClose} aria-label="Sound Thesis home">

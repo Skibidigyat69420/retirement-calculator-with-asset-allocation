@@ -139,7 +139,7 @@
   --color-ink: #F1F1EA;
   --color-ink-soft: #C9CCC2;
   --color-muted: #9BA095;
-  --color-faint: #7E837A;
+  --color-faint: #9BA095;
 
   --color-accent: #8EA889;
   --color-accent-strong: #A9C0A3;
@@ -344,6 +344,114 @@
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.015em;
     line-height: 1.05;
+  }
+}
+
+/* ── Light-first product chrome ────────────────────────────────────────── */
+@layer components {
+  .app-canvas {
+    overflow-x: hidden;
+    background:
+      radial-gradient(circle at 86% 4%, rgba(102, 122, 99, 0.07), transparent 22rem),
+      var(--color-canvas);
+  }
+
+  .brand-rail {
+    background: #15181E;
+    color: #F7F5F0;
+    border-color: #272C35;
+  }
+
+  .brand-rail .text-ink { color: #F7F5F0; }
+  .brand-rail .text-muted { color: #AEB7C4; }
+  .brand-rail .text-faint { color: #7E8998; }
+  .brand-rail .border-border,
+  .brand-rail .border-border-subtle { border-color: #2A303A; }
+  .brand-rail .hover\:bg-sunken:hover { background: rgba(255,255,255,.06); }
+
+  .brand-rail .eyebrow { color: #89919A; }
+
+  .brand-rail [aria-current="page"] {
+    background: rgba(255, 255, 255, 0.09);
+    color: #FFFFFF;
+  }
+
+  .brand-rail [aria-current="page"]::before { background: #77A2FF; }
+
+  .topbar-light {
+    background: rgba(247, 245, 240, 0.88);
+    border-color: var(--color-border);
+    backdrop-filter: blur(18px);
+  }
+
+  .hero-orbit {
+    background:
+      radial-gradient(circle at 74% 26%, rgba(102, 122, 99, 0.22), transparent 10rem),
+      radial-gradient(circle at 92% 88%, rgba(179, 148, 90, 0.14), transparent 16rem),
+      #20231F;
+    color: #F1F1EA;
+  }
+
+  .hero-orbit::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.16;
+    background-image: linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px);
+    background-size: 34px 34px;
+    mask-image: linear-gradient(90deg, black, transparent 78%);
+    pointer-events: none;
+  }
+
+  .hero-orbit .hero-kicker { color: #A9B9A3; }
+  .hero-orbit .hero-title { color: #F1F1EA; }
+  .hero-orbit .hero-copy { color: #C9CCC2; }
+
+  .review-mode {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-raised);
+    padding: .45rem .75rem;
+    color: var(--color-muted);
+    font: 600 .68rem/1 var(--font-mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .metric-strip {
+    border: 1px solid var(--color-border);
+    background: rgba(255,255,255,.62);
+    box-shadow: var(--shadow-card);
+  }
+
+  .dark .metric-strip {
+    background: color-mix(in srgb, var(--color-raised) 72%, transparent);
+  }
+
+  .onboarding-step {
+    transition: background-color 160ms ease, transform 160ms ease, border-color 160ms ease;
+  }
+  .onboarding-step:hover {
+    background: var(--color-raised);
+    border-color: var(--color-border-strong);
+    transform: translateY(-1px);
+  }
+
+  /* Moss remains an action color in dark mode; use ink on its lighter fill. */
+  .dark .bg-accent,
+  .dark .hover\:bg-accent-strong:hover {
+    color: #0E100E !important;
+  }
+
+  .dark .eyebrow {
+    color: #A5AAA0 !important;
+  }
+
+  .dark .bg-deep .eyebrow,
+  .dark .bg-deep .text-faint {
+    color: #4E524B !important;
   }
 }
 

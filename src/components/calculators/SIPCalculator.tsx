@@ -22,7 +22,7 @@ import { Button } from '../ui/Button';
 
 export const SIPCalculator = () => {
   const { inputs, updateInputs, showToast } = useCalculator();
-  const [amount, setAmount] = useState(inputs.sip.amount || 25000);
+  const [amount, setAmount] = useState(inputs.sip.amount);
   const [returnRate, setReturnRate] = useState(12);
   const [years, setYears] = useState(15);
   const [stepUp, setStepUp] = useState(inputs.sip.stepUp || 0);

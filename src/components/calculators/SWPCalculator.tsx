@@ -37,10 +37,10 @@ export const SWPCalculator = () => {
   const { inputs, wealthResult, updateSWP, updateInputs, showToast } = useCalculator();
 
   const [corpus, setCorpus] = useState(1_00_00_000);
-  const [monthlyWithdrawal, setMonthlyWithdrawal] = useState(inputs.swp.monthlyNeedToday || 50_000);
-  const [returnRate, setReturnRate] = useState(inputs.swp.postRetirementReturn || 9);
-  const [inflation, setInflation] = useState(inputs.inflation || 5);
-  const [taxRate, setTaxRate] = useState(inputs.swp.taxRate || 10);
+  const [monthlyWithdrawal, setMonthlyWithdrawal] = useState(inputs.swp.monthlyNeedToday);
+  const [returnRate, setReturnRate] = useState(inputs.swp.postRetirementReturn);
+  const [inflation, setInflation] = useState(inputs.inflation);
+  const [taxRate, setTaxRate] = useState(inputs.swp.taxRate);
   const [horizonYears, setHorizonYears] = useState(30);
   const [viewMode, setViewMode] = useState<'both' | 'chart' | 'table'>('both');
   const [showAllYears, setShowAllYears] = useState(false);
@@ -90,10 +90,10 @@ export const SWPCalculator = () => {
       wealthResult.snapshots.filter((s) => s.phase === 'accumulation').slice(-1)[0];
     const projectedCorpus = Math.round(retirementSnapshot?.total || wealthResult.netWorth);
     if (projectedCorpus > 0) setCorpus(projectedCorpus);
-    setMonthlyWithdrawal(inputs.swp.monthlyNeedToday || 50_000);
-    setReturnRate(inputs.swp.postRetirementReturn || 9);
-    setInflation(inputs.inflation || 5);
-    setTaxRate(inputs.swp.taxRate || 10);
+    setMonthlyWithdrawal(inputs.swp.monthlyNeedToday);
+    setReturnRate(inputs.swp.postRetirementReturn);
+    setInflation(inputs.inflation);
+    setTaxRate(inputs.swp.taxRate);
     const horizon = Math.max(10, inputs.lifeExpectancy - inputs.retirementAge);
     if (horizon > 0) setHorizonYears(horizon);
     showToast(

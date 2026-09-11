@@ -26,6 +26,7 @@ import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Slider } from '../ui/Slider';
 import { CurrencyInput } from '../ui/CurrencyInput';
+import { EmptyState } from '../ui/EmptyState';
 import { runReversePlanning } from '../../lib/reversePlanning';
 import { useCalculator } from '../../context/CalculatorContext';
 import { formatCurrency, formatCurrencyCompact } from '../../lib/formatters';
@@ -42,11 +43,10 @@ export const ReversePlanning = () => {
     logDecision,
   } = useCalculator();
 
-  const currentWealth = wealthResult.netWorth > 0 ? wealthResult.netWorth : 15000000;
-  const initialTargetCorpus = Math.max(
-    50000000,
-    Math.round(((wealthResult.terminalValue || currentWealth * 2.5) * 1.15) / 1000000) * 1000000,
-  );
+  const currentWealth = wealthResult.netWorth;
+  const initialTargetCorpus = wealthResult.terminalValue > 0
+    ? Math.round((wealthResult.terminalValue * 1.15) / 1000000) * 1000000
+    : 0;
 
   const [targetCorpus, setTargetCorpus] = useState<number>(initialTargetCorpus);
   const [targetAge, setTargetAge] = useState<number>(Math.max(inputs.currentAge + 1, inputs.retirementAge));
@@ -176,6 +176,17 @@ export const ReversePlanning = () => {
     () => pathwayChartData.reduce((a, b) => (b.projectedRetirementAge < a.projectedRetirementAge ? b : a), pathwayChartData[0]),
     [pathwayChartData],
   );
+
+  if (!wealthResult.isConfigured) {
+    return (
+      <EmptyState
+        eyebrow="Reverse planning"
+        title="Configure a plan before solving backwards"
+        description="Add the client's profile, current position and planning horizon first. Reverse planning will then solve the exact savings or timing needed to reach a target."
+        action={<a href="/master-plan" className="text-sm font-semibold text-accent-strong underline underline-offset-4">Open Master Plan</a>}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
