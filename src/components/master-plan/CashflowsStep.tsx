@@ -1,20 +1,25 @@
 import {
   ArrowRight,
   ArrowLeft,
+  Plus,
   Repeat,
   Download,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 import { CurrencyInput } from '../ui/CurrencyInput';
 import { NumberInput } from '../ui/NumberInput';
+import { Select } from '../ui/Select';
 import { Slider } from '../ui/Slider';
 import { FinancialMetric } from '../ui/FinancialMetric';
 import { formatCurrency } from '../../lib/formatters';
-import type { MasterPlanInputs } from '../../types';
+import type { IncomeSource, MasterPlanInputs } from '../../types';
 
 interface CashflowsStepProps {
   inputs: MasterPlanInputs;
   updateInputs: (updates: Partial<MasterPlanInputs>) => void;
+  updateClient: (updates: Partial<MasterPlanInputs['client']>) => void;
   updateSIP: (updates: Partial<MasterPlanInputs['sip']>) => void;
   updateSTP?: (updates: Partial<MasterPlanInputs['stp']>) => void;
   updateSWP: (updates: Partial<MasterPlanInputs['swp']>) => void;
@@ -25,14 +30,37 @@ interface CashflowsStepProps {
 export const CashflowsStep = ({
   inputs,
   updateInputs,
+  updateClient,
   updateSIP,
   updateSWP,
   onNext,
   onBack,
 }: CashflowsStepProps) => {
+  const incomeSources = inputs.client.incomeSources || [];
   const monthlyIncome = Math.round(inputs.annualIncome / 12);
   const monthlySavingsSurplus = monthlyIncome - inputs.monthlyExpenditure;
   const savingsRate = monthlyIncome > 0 ? (monthlySavingsSurplus / monthlyIncome) * 100 : 0;
+
+  const annualIncomeFromSources = (sources: IncomeSource[]) => sources.reduce((total, source) => {
+    const baseAmount = source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0);
+    return total + Math.max(0, baseAmount) * (source.frequency === 'monthly' ? 12 : 1);
+  }, 0);
+
+  const replaceIncomeSources = (sources: IncomeSource[]) => {
+    updateClient({ incomeSources: sources });
+    updateInputs({ annualIncome: annualIncomeFromSources(sources) });
+  };
+
+  const updateIncomeSource = (id: string, patch: Partial<IncomeSource>) => {
+    const sources = incomeSources.map((source) => {
+      if (source.id !== id) return source;
+      const next = { ...source, ...patch };
+      return patch.currency === 'INR' || (next.currency === 'INR' && patch.amount !== undefined)
+        ? { ...next, amountInBaseCurrency: next.amount }
+        : next;
+    });
+    replaceIncomeSources(sources);
+  };
 
   const summary = [
     {
@@ -99,6 +127,22 @@ export const CashflowsStep = ({
             {inputs.client.incomeSources.length} income source{inputs.client.incomeSources.length === 1 ? '' : 's'} linked from Client profile. Edit the source breakdown there; this annual total is used by every projection.
           </p>
         )}
+
+        <div className="cashflow-income-editor">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div><h4 className="text-sm font-semibold text-ink">Income sources</h4><p className="mt-0.5 text-xs text-muted">Add salary, freelance, rental, pension, business, or any other inflow. INR equivalents feed the annual total above.</p></div>
+            <button type="button" className="profile-add-button" onClick={() => replaceIncomeSources([...incomeSources, { id: `income-${Date.now()}`, name: '', amount: 0, amountInBaseCurrency: 0, currency: 'INR', frequency: 'monthly', notes: '' }])}><Plus size={14} /> Add income</button>
+          </div>
+          {incomeSources.map((source) => <div className="cashflow-income-row" key={source.id}>
+            <Input label="Source" value={source.name} onChange={(event) => updateIncomeSource(source.id, { name: event.target.value })} placeholder="Salary, rental…" />
+            <CurrencyInput label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} />
+            <Select label="Currency" value={source.currency} onChange={(value) => updateIncomeSource(source.id, { currency: value })} options={['INR', 'KWD', 'USD', 'AED', 'GBP', 'EUR'].map((value) => ({ value, label: value }))} />
+            <CurrencyInput label="INR equivalent" value={source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0)} onChange={(value) => updateIncomeSource(source.id, { amountInBaseCurrency: value })} />
+            <Select label="Frequency" value={source.frequency} onChange={(value) => updateIncomeSource(source.id, { frequency: value as IncomeSource['frequency'] })} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'annual', label: 'Annual' }]} />
+            <button type="button" className="profile-remove-button" onClick={() => replaceIncomeSources(incomeSources.filter((item) => item.id !== source.id))} aria-label={`Remove ${source.name || 'income source'}`}><Trash2 size={15} /></button>
+          </div>)}
+          {incomeSources.length === 0 && <p className="mt-3 text-xs text-faint">No income sources added. Add the first inflow to connect the cashflow.</p>}
+        </div>
       </section>
 
       {/* SIP */}

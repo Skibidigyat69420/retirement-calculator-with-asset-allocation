@@ -193,6 +193,7 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
             <CashflowsStep
               inputs={inputs}
               updateInputs={updateInputs}
+              updateClient={updateClient}
               updateSIP={updateSIP}
               updateSTP={updateSTP}
               updateSWP={updateSWP}

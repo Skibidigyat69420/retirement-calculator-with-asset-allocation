@@ -892,6 +892,8 @@ button:hover:not(:disabled), a:hover { }
 .profile-completion-track { height: 3px; margin-top: .55rem; overflow: hidden; border-radius: 999px; background: var(--color-border); }
 .profile-completion-track span { display: block; height: 100%; border-radius: inherit; background: var(--color-accent); transition: width .2s ease; }
 .client-profile-form textarea { line-height: 1.5; }
+.cashflow-income-editor { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--color-border); }
+.cashflow-income-row { display: grid; grid-template-columns: 1.2fr 1fr .7fr 1fr .8fr auto; align-items: end; gap: .75rem; padding: .9rem 0; border-top: 1px solid var(--color-border); }
 .client-profile-form .profile-repeatable-list { margin-top: 1.5rem; border-top: 1px solid var(--color-border); }
 .client-profile-form .profile-subheading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1rem 0 .75rem; }
 .client-profile-form .profile-subheading h4 { color: var(--color-ink); font-size: .82rem; font-weight: 650; }
@@ -908,6 +910,6 @@ button:hover:not(:disabled), a:hover { }
   .client-profile-form .profile-section-heading { flex-direction: column; }
   .profile-completion { width: 100%; }
   .client-profile-form .profile-subheading { flex-direction: column; }
-  .profile-repeatable-row, .profile-income-row { grid-template-columns: 1fr; align-items: stretch; }
+  .profile-repeatable-row, .profile-income-row, .cashflow-income-row { grid-template-columns: 1fr; align-items: stretch; }
   .profile-remove-button { justify-self: end; margin-top: -.35rem; }
 }
