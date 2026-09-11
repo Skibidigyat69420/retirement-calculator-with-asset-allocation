@@ -120,6 +120,13 @@ export interface ClientProfile {
   business?: string;
   spouse?: string;
   healthStatus?: string;
+  maritalStatus?: string;
+  familyComposition?: string;
+  planningPurpose?: string;
+  goalsSummary?: string;
+  insuranceSummary?: string;
+  investmentPhilosophy?: string;
+  adviceRequested?: string;
 }
 
 export interface MasterPlanInputs {

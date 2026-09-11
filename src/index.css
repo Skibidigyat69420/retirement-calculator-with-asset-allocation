@@ -802,3 +802,98 @@ button:hover:not(:disabled), a:hover { }
 .directory-page .directory-kicker .live-dot, .directory-page .client-status i { background: #7a8b66; }.directory-page .eyebrow { color: #7a806c; }
 .directory-page .directory-hero h1 em { color: #8f7544; }
 .field-label::after { content: ''; display: inline-block; width: 4px; height: 4px; margin-left: 5px; vertical-align: 2px; border-radius: 50%; background: var(--color-brass); opacity: .75; }
+
+/* Practitioner desk — the client relationship is the primary object. */
+.desk-focus {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, .9fr);
+  gap: 2px;
+  margin-top: 2rem;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-border);
+  box-shadow: var(--shadow-card);
+}
+.desk-focus-copy { padding: 2rem; background: var(--color-deep); color: var(--color-deep); }
+.desk-focus-copy .eyebrow { color: var(--color-brass); }
+.desk-focus-copy h2 { margin-top: .55rem; color: var(--color-raised); font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3rem); font-weight: 400; line-height: .95; }
+.desk-focus-copy p { max-width: 34rem; margin-top: 1rem; color: color-mix(in srgb, var(--color-raised) 70%, transparent); font-size: .85rem; line-height: 1.6; }
+.desk-focus-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.5rem; }
+.desk-primary-action, .desk-secondary-action { display: inline-flex; align-items: center; gap: .45rem; min-height: 2.4rem; padding: 0 .8rem; border-radius: var(--radius-sm); font-size: .72rem; font-weight: 650; }
+.desk-primary-action { background: var(--color-raised); color: var(--color-ink); }
+.desk-secondary-action { border: 1px solid color-mix(in srgb, var(--color-raised) 25%, transparent); color: var(--color-raised); }
+.desk-focus-map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--color-border); }
+.desk-focus-map > div { display: flex; min-height: 180px; flex-direction: column; padding: 1.25rem; background: var(--color-surface); color: var(--color-accent-strong); }
+.desk-focus-map span { margin-top: auto; color: var(--color-muted); font: 600 .62rem var(--font-mono); text-transform: uppercase; letter-spacing: .08em; }
+.desk-focus-map strong { margin-top: .35rem; color: var(--color-ink); font: 600 1rem var(--font-mono); letter-spacing: -.04em; }
+.desk-focus-map small { margin-top: .25rem; color: var(--color-faint); font-size: .65rem; }
+.client-avatar { background: var(--color-accent-soft); color: var(--color-accent-strong); }
+.client-avatar.small { background: var(--color-accent-soft); color: var(--color-accent-strong); }
+.client-card:hover, .client-card.selected { border-color: var(--color-accent); box-shadow: var(--shadow-card-hover); }
+.client-card-value strong, .directory-metric strong { color: var(--color-ink); }
+.directory-new-button { border-color: var(--color-accent); background: var(--color-accent); box-shadow: none; }
+.directory-new-button:hover { background: var(--color-accent-strong); }
+.client-insight { border-color: var(--color-border); background: var(--color-surface); box-shadow: var(--shadow-card); }
+.directory-page .directory-hero h1 { color: var(--color-ink); }
+.directory-page .directory-hero h1 em { color: var(--color-brass-strong); }
+
+@media (max-width: 800px) {
+  .desk-focus { grid-template-columns: 1fr; }
+  .desk-focus-map > div { min-height: 130px; }
+}
+@media (max-width: 520px) {
+  .desk-focus-map { grid-template-columns: 1fr; }
+  .desk-focus-map > div { min-height: auto; gap: .35rem; }
+  .desk-focus-map span { margin-top: .75rem; }
+}
+
+/* Client profile intake — structured like a conversation, with enough room for context. */
+.client-profile-form .profile-section {
+  padding: 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+.client-profile-form .profile-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.client-profile-form .profile-section-heading h3 {
+  margin-top: .35rem;
+  color: var(--color-ink);
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -.015em;
+}
+.client-profile-form .profile-section-hint {
+  padding: .28rem .5rem;
+  border-radius: 999px;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+  font: 600 .62rem var(--font-mono);
+  white-space: nowrap;
+}
+.profile-completion {
+  min-width: 8.5rem;
+  padding: .7rem .8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font: 600 .65rem var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.profile-completion svg { color: var(--color-accent); }
+.profile-completion-track { height: 3px; margin-top: .55rem; overflow: hidden; border-radius: 999px; background: var(--color-border); }
+.profile-completion-track span { display: block; height: 100%; border-radius: inherit; background: var(--color-accent); transition: width .2s ease; }
+.client-profile-form textarea { line-height: 1.5; }
+@media (max-width: 520px) {
+  .client-profile-form .profile-section { padding: 1rem; }
+  .client-profile-form .profile-section-heading { flex-direction: column; }
+  .profile-completion { width: 100%; }
+}
