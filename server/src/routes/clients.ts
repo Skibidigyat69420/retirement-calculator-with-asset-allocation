@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
-import { clients, households } from '../db/schema.js';
+import { clientAssignments, clients, households } from '../db/schema.js';
 import { inTenant, guards, loadClientAccess, auditFields } from '../services/context.js';
 import {
   deleteAssignment,
@@ -74,6 +74,14 @@ export default async function clientRoutes(app: FastifyInstance): Promise<void> 
 
     return inTenant(request, async (tx, ctx) => {
       const conditions: SQL[] = [eq(clients.organizationId, ctx.organizationId)];
+      // Advisor desk is intentionally scoped to the signed-in practitioner's
+      // book. Practice owners/admins retain the full organization directory.
+      if (ctx.role === 'wealth_practitioner') {
+        conditions.push(
+          sql`${clients.id} in (select ${clientAssignments.clientId} from ${clientAssignments}
+               where ${clientAssignments.userId} = ${ctx.userId})`,
+        );
+      }
       if (query.status) conditions.push(eq(clients.status, query.status));
       if (query.search) {
         const term = `%${query.search}%`;

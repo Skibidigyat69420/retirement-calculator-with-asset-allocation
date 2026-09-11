@@ -79,7 +79,7 @@ export const EnhancedNumberInput = ({
   return (
     <div className={cn('space-y-1.5', className)}>
       {label && (
-        <label htmlFor={inputId} className="block text-[11px] font-semibold uppercase tracking-wider text-muted">
+        <label htmlFor={inputId} className="field-label block text-xs font-medium tracking-normal text-ink-soft">
           {label}
         </label>
       )}

@@ -92,6 +92,8 @@ export default async function planRoutes(app: FastifyInstance): Promise<void> {
               versionNumber: currentVersion.versionNumber,
               engineVersion: currentVersion.engineVersion,
               changeSummary: currentVersion.changeSummary,
+              inputSnapshot: currentVersion.inputSnapshot,
+              assumptionsSnapshot: currentVersion.assumptionsSnapshot,
               hasResult: Object.keys(currentVersion.resultSnapshot as object).length > 0,
               createdAt: currentVersion.createdAt,
             }

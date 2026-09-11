@@ -38,7 +38,7 @@ function readJson<T>(key: string): T | null {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
-  const [user, setUser] = useState<SessionUser | null>(() => readJson<SessionUser>(USER_KEY));
+  const [user, setUser] = useState<SessionUser | null>(() => localStorage.getItem(TOKEN_KEY) ? readJson<SessionUser>(USER_KEY) : null);
   const [memberships, setMemberships] = useState<Membership[]>(
     () => readJson<Membership[]>(MEMBERSHIPS_KEY) ?? [],
   );
@@ -49,9 +49,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
     const orgId = localStorage.getItem(ORG_KEY);
+    if (!token || !user) {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(MEMBERSHIPS_KEY);
+      localStorage.removeItem(ORG_KEY);
+      setUser(null);
+      setMemberships([]);
+      setOrganizationId(null);
+      setAuthContext(null, null);
+      setReady(true);
+      return;
+    }
     setAuthContext(token, orgId);
     setReady(true);
-  }, []);
+  }, [user]);
 
   const applyOrganization = useCallback((orgId: string | null) => {
     setOrganizationId(orgId);
@@ -67,13 +79,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(MEMBERSHIPS_KEY, JSON.stringify(session.memberships));
       setUser(session.user);
       setMemberships(session.memberships);
-      setAuthContext(session.token, organizationId);
-      // Default to the first membership until the user picks another org.
-      if (!organizationId && session.memberships.length > 0) {
-        applyOrganization(session.memberships[0].organizationId);
-      } else {
-        setAuthContext(session.token, localStorage.getItem(ORG_KEY));
-      }
+      // Always reset the org context on login. A previous advisor's org
+      // selection must never leak into the next advisor session.
+      const nextOrgId = session.memberships[0]?.organizationId ?? null;
+      setOrganizationId(nextOrgId);
+      localStorage.setItem(ORG_KEY, nextOrgId ?? '');
+      setAuthContext(session.token, nextOrgId);
     },
     [organizationId, applyOrganization],
   );

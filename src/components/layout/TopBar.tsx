@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
-import { Menu, Search, Wallet, ShieldCheck, User, FlaskConical, RotateCcw, ChevronDown } from 'lucide-react';
+import { Menu, Search, Wallet, ShieldCheck, User, FlaskConical, RotateCcw, ChevronDown, LogOut } from 'lucide-react';
 import { navItems } from './navItems';
 import { LogoMark } from './BrandMark';
 import { CommandPalette } from './CommandPalette';
@@ -9,6 +9,7 @@ import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { useCalculator } from '../../context/CalculatorContext';
 import { formatCurrencyCompact } from '../../lib/formatters';
+import { useAuth } from '../../context/AuthContext';
 
 interface TopBarProps {
   onMenuClick: () => void;
@@ -27,6 +28,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
   const navigate = useNavigate();
   const { inputs, riskProfile, riskScore, hasRiskAnswers, wealthResult, loadDemoWorkspace, resetToDefaults } =
     useCalculator();
+  const { user, organizationName, logout } = useAuth();
 
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -78,6 +80,12 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
       label: 'Reset workspace…',
       icon: RotateCcw,
       run: () => setShowResetConfirm(true),
+      danger: true,
+    },
+    {
+      label: 'Sign out',
+      icon: LogOut,
+      run: () => logout(),
       danger: true,
     },
   ];
@@ -184,7 +192,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
                 aria-label="Workspace menu"
                 className="flex items-center rounded-md transition-colors hover:bg-sunken"
               >
-                <Avatar name={inputs.client.advisor || 'Sound Thesis'} id={inputs.client.email} size="sm" />
+                <Avatar name={user?.fullName || inputs.client.advisor || 'Sound Thesis'} id={user?.email || inputs.client.email} size="sm" />
                 <ChevronDown
                   size={13}
                   strokeWidth={1.7}
@@ -202,7 +210,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
                 >
                   {menuItems.map((item, i) => (
                     <div key={item.label}>
-                      {i === menuItems.length - 1 && (
+                      {i === menuItems.length - 2 && (
                         <div className="my-1 border-t border-border-subtle" role="separator" />
                       )}
                       <button
@@ -223,6 +231,10 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
                       </button>
                     </div>
                   ))}
+                  <div className="border-t border-border-subtle px-3 py-2">
+                    <p className="truncate text-[11px] text-muted">{user?.email ?? 'Local workspace'}</p>
+                    <p className="mt-0.5 truncate text-[11px] text-faint">{organizationName ?? 'Personal practice'}</p>
+                  </div>
                 </div>
               )}
             </div>

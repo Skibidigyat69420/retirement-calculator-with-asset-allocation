@@ -19,8 +19,10 @@ export const createEmptyPlan = (): MasterPlanInputs => ({
   lifeExpectancy: 0,
   inflation: 0,
   annualIncome: 0,
+  monthlyLivingExpenses: 0,
   monthlyExpenditure: 0,
   assets: [],
+  liabilities: [],
   sip: {
     amount: 0,
     equitySplit: 0,
@@ -64,6 +66,7 @@ export const demoClientInputs = (): MasterPlanInputs => ({
   lifeExpectancy: 80,
   inflation: DEFAULT_RATES.inflation,
   annualIncome: 2500000,
+  monthlyLivingExpenses: 100000,
   monthlyExpenditure: 100000,
   assets: [
     {
@@ -130,6 +133,7 @@ export const demoClientInputs = (): MasterPlanInputs => ({
       liquidateAtRetirement: true,
     },
   ],
+  liabilities: [],
   sip: {
     amount: 90000,
     equitySplit: DEFAULT_ALLOCATION.equitySplit,

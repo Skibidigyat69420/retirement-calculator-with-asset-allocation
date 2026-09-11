@@ -15,6 +15,8 @@ import {
   History,
   Zap,
   Database,
+  Users,
+  UserRound,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -31,7 +33,14 @@ export const SECTION_ORDER = ['Workspace', 'Plan', 'Portfolio', 'Deliver', 'Prac
 export const navItems: NavItem[] = [
   {
     path: '/',
-    label: 'Dashboard',
+    label: 'Client desk',
+    icon: Users,
+    section: 'Workspace',
+    description: 'Assigned client database and advisor workspace',
+  },
+  {
+    path: '/overview',
+    label: 'Practice overview',
     icon: Activity,
     section: 'Workspace',
     description: 'Executive overview & plan health check',
@@ -39,11 +48,18 @@ export const navItems: NavItem[] = [
 
   // Plan
   {
-    path: '/master-plan',
-    label: 'Client & Balance Sheet',
+    path: '/client-profile',
+    label: 'Client profile',
+    icon: UserRound,
+    section: 'Plan',
+    description: 'Identity, horizon and planning context',
+  },
+  {
+    path: '/balance-sheet',
+    label: 'Balance sheet',
     icon: PieChart,
     section: 'Plan',
-    description: 'Profile, assets, cashflows & liabilities',
+    description: 'Assets, liabilities and net worth',
   },
   {
     path: '/goal',

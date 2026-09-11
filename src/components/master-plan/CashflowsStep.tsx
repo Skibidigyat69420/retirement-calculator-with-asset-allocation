@@ -89,9 +89,9 @@ export const CashflowsStep = ({
           />
           <CurrencyInput
             label="Monthly baseline living spend"
-            value={inputs.monthlyExpenditure}
-            onChange={(val) => updateInputs({ monthlyExpenditure: val })}
-            helper="Excluding one-off milestone goals"
+            value={inputs.monthlyLivingExpenses}
+            onChange={(val) => updateInputs({ monthlyLivingExpenses: val })}
+            helper={`Linked total with EMIs: ${formatCurrency(inputs.monthlyExpenditure)}/mo`}
           />
         </div>
       </section>

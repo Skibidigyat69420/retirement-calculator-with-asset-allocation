@@ -11,6 +11,17 @@ export interface Asset {
   source?: string; // e.g. 'mvo' for optimizer-imported proxy assets
 }
 
+export interface Liability {
+  id: string;
+  name: string;
+  principal: number;
+  rate: number;
+  tenureYears: number;
+  includeInExpenses: boolean;
+  lender?: string;
+  monthlyPayment?: number;
+}
+
 export interface SIPConfig {
   amount: number;
   equitySplit: number;
@@ -103,6 +114,12 @@ export interface ClientProfile {
   advisor: string;
   reviewDate: string;
   notes?: string;
+  address?: string;
+  phone?: string;
+  occupation?: string;
+  business?: string;
+  spouse?: string;
+  healthStatus?: string;
 }
 
 export interface MasterPlanInputs {
@@ -112,8 +129,12 @@ export interface MasterPlanInputs {
   lifeExpectancy: number;
   inflation: number;
   annualIncome: number;
+  /** Household living costs before debt repayments. */
+  monthlyLivingExpenses: number;
+  /** Derived linked total: living costs + included liability EMIs. */
   monthlyExpenditure: number;
   assets: Asset[];
+  liabilities: Liability[];
   sip: SIPConfig;
   stp: STPConfig;
   swp: SWPConfig;

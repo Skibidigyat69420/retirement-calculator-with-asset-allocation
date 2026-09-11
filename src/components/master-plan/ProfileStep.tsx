@@ -40,7 +40,7 @@ export const ProfileStep = ({
     <div className="space-y-8">
       <header>
         <div className="eyebrow">Step 01 · Profile</div>
-        <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">Client & planning horizon</h2>
+        <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">Client profile</h2>
         <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
           The demographic baseline and career timeline that anchor every compounding calculation in this plan.
         </p>
@@ -74,7 +74,17 @@ export const ProfileStep = ({
             value={inputs.client?.reviewDate || ''}
             onChange={(e) => updateClient({ reviewDate: e.target.value })}
           />
+          <Input label="Phone / WhatsApp" value={inputs.client?.phone || ''} onChange={(e) => updateClient({ phone: e.target.value })} placeholder="Primary contact number" />
+          <Input label="Residence / address" value={inputs.client?.address || ''} onChange={(e) => updateClient({ address: e.target.value })} placeholder="City, country or full address" />
+          <Input label="Occupation" value={inputs.client?.occupation || ''} onChange={(e) => updateClient({ occupation: e.target.value })} placeholder="Role, profession or business owner" />
+          <Input label="Business / employer" value={inputs.client?.business || ''} onChange={(e) => updateClient({ business: e.target.value })} placeholder="Company or practice name" />
+          <Input label="Spouse / partner" value={inputs.client?.spouse || ''} onChange={(e) => updateClient({ spouse: e.target.value })} placeholder="Name and occupation (optional)" />
         </div>
+      </section>
+
+      <section className="border-t border-border pt-6">
+        <div className="mb-4"><h3 className="text-[15px] font-semibold text-ink tracking-tight">Household context</h3><p className="mt-0.5 text-xs text-muted">Keep the human context beside the financial facts.</p></div>
+        <Input label="Health / family notes" value={inputs.client?.notes || ''} onChange={(e) => updateClient({ notes: e.target.value })} placeholder="Dependents, health context, family priorities, or anything to carry into the review" />
       </section>
 
       {/* Timeline */}
@@ -167,7 +177,7 @@ export const ProfileStep = ({
       {/* Step navigation */}
       <div className="flex justify-end border-t border-border pt-6">
         <Button onClick={onNext} className="flex items-center gap-2">
-          <span>Next · Financials</span>
+          <span>Next · Balance sheet</span>
           <ArrowRight size={15} aria-hidden="true" />
         </Button>
       </div>

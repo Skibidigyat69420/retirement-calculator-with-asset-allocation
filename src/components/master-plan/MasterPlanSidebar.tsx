@@ -24,14 +24,14 @@ export const PLAN_STEPS: PlanStepItem[] = [
   {
     id: 'profile',
     stepNumber: '01',
-    label: 'Profile',
-    subtitle: 'Client & horizon',
+    label: 'Client profile',
+    subtitle: 'Identity & horizon',
     icon: User,
   },
   {
     id: 'financials',
     stepNumber: '02',
-    label: 'Financials',
+    label: 'Balance sheet',
     subtitle: 'Assets & liabilities',
     icon: Building2,
   },

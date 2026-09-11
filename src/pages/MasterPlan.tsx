@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { SlidersHorizontal, Save, FileDown } from 'lucide-react';
 import { useCalculator } from '../context/CalculatorContext';
@@ -11,25 +11,26 @@ import { PlanningAssumptionsModal } from '../components/analytics/PlanningAssump
 import { MasterPlanSidebar } from '../components/master-plan/MasterPlanSidebar';
 import { MasterPlanSummary } from '../components/master-plan/MasterPlanSummary';
 import { ProfileStep } from '../components/master-plan/ProfileStep';
-import { FinancialsStep, type LoanLiability } from '../components/master-plan/FinancialsStep';
+import { FinancialsStep } from '../components/master-plan/FinancialsStep';
 import { CashflowsStep } from '../components/master-plan/CashflowsStep';
 import { GoalsStep } from '../components/master-plan/GoalsStep';
 import { RiskStep } from '../components/master-plan/RiskStep';
 import { AssumptionsStep } from '../components/master-plan/AssumptionsStep';
 import { ResultsStep } from '../components/master-plan/ResultsStep';
-import { calculateEMI } from '../lib/calculators';
-
-const LOANS_STORAGE_KEY = 'soundthesis_master_plan_loans';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
-export const MasterPlan = () => {
+export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }) => {
   const {
     inputs,
     updateInputs,
     updateClient,
     addAsset,
     removeAsset,
+    updateAsset,
+    updateLiability,
+    addLiability,
+    removeLiability,
     updateSIP,
     updateSTP,
     updateSWP,
@@ -50,7 +51,7 @@ export const MasterPlan = () => {
   } = useCalculator();
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const rawParam = searchParams.get('step') || searchParams.get('tab') || 'profile';
+  const rawParam = searchParams.get('step') || searchParams.get('tab') || defaultStep;
   const initialStep = rawParam === 'assets' || rawParam === 'loans' ? 'financials' : rawParam;
   const [activeStep, setActiveStep] = useState(initialStep);
 
@@ -71,6 +72,10 @@ export const MasterPlan = () => {
   const [isAssumptionsModalOpen, setIsAssumptionsModalOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
 
+  const totalLiabilities = useMemo(() => (inputs.liabilities || []).reduce((sum, liability) => sum + (Number(liability.principal) || 0), 0), [inputs.liabilities]);
+  const netBalanceSheet = wealthResult.netWorth - totalLiabilities;
+  const debtToAssetRatio = wealthResult.netWorth > 0 ? (totalLiabilities / wealthResult.netWorth) * 100 : 0;
+
   const handleSave = async () => {
     setSaveStatus('saving');
     try {
@@ -79,74 +84,6 @@ export const MasterPlan = () => {
     } catch {
       setSaveStatus('error');
     }
-  };
-
-  // Dedicated Loan Liabilities state, synced reactively with monthly expenditure and localStorage
-  const [loans, setLoans] = useState<LoanLiability[]>(() => {
-    try {
-      const saved = localStorage.getItem(LOANS_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch {
-      // ignore
-    }
-    return [];
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(LOANS_STORAGE_KEY, JSON.stringify(loans));
-    } catch {
-      // ignore
-    }
-  }, [loans]);
-
-  // Compute amortized values for each loan
-  const activeLoansWithEMI = useMemo(() => {
-    return loans.map((loan) => {
-      const p = Math.max(0, Number(loan.principal) || 0);
-      const r = Math.max(0, Number(loan.rate) || 0);
-      const t = Math.max(1, Number(loan.tenureYears) || 1);
-      const res = p > 0 ? calculateEMI(p, r, t) : { emi: 0, totalPayment: 0, totalInterest: 0, principal: 0, yearlyData: [] };
-      return {
-        ...loan,
-        emi: res.emi,
-        totalPayment: res.totalPayment,
-        totalInterest: res.totalInterest,
-      };
-    });
-  }, [loans]);
-
-  const totalLiabilities = useMemo(() => {
-    return loans.reduce((sum, loan) => sum + (Number(loan.principal) || 0), 0);
-  }, [loans]);
-
-  const netBalanceSheet = useMemo(() => {
-    return wealthResult.netWorth - totalLiabilities;
-  }, [wealthResult.netWorth, totalLiabilities]);
-
-  const debtToAssetRatio = useMemo(() => {
-    if (wealthResult.netWorth <= 0) return totalLiabilities > 0 ? 100 : 0;
-    return (totalLiabilities / wealthResult.netWorth) * 100;
-  }, [totalLiabilities, wealthResult.netWorth]);
-
-  const handleUpdateLoans = (newLoans: LoanLiability[]) => {
-    const oldActiveEMI = activeLoansWithEMI.filter((l) => l.includeInExpenses).reduce((s, l) => s + l.emi, 0);
-    setLoans(newLoans);
-
-    const newActiveEMI = newLoans
-      .filter((l) => l.includeInExpenses)
-      .reduce((sum, l) => {
-        const p = Math.max(0, Number(l.principal) || 0);
-        const r = Math.max(0, Number(l.rate) || 0);
-        const t = Math.max(1, Number(l.tenureYears) || 1);
-        return sum + (p > 0 ? calculateEMI(p, r, t).emi : 0);
-      }, 0);
-
-    const currentBase = Math.max(0, inputs.monthlyExpenditure - Math.round(oldActiveEMI));
-    updateInputs({ monthlyExpenditure: currentBase + Math.round(newActiveEMI) });
   };
 
   const handleDeleteAsset = (id: string) => {
@@ -168,7 +105,7 @@ export const MasterPlan = () => {
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3 flex-wrap">
-              <span className="eyebrow">Master Plan · Planning Studio</span>
+              <span className="eyebrow">Planning studio · {activeStep === 'profile' ? 'Client profile' : activeStep === 'financials' ? 'Balance sheet' : 'Master plan'}</span>
               <StatusBadge status={planStatus(inputs)} />
             </div>
             <input
@@ -180,7 +117,7 @@ export const MasterPlan = () => {
               className="mt-2 w-full max-w-xl bg-transparent border-b border-transparent hover:border-border focus:border-accent focus:outline-none font-display text-3xl sm:text-4xl text-ink placeholder:text-faint transition-colors rounded-none pb-1"
             />
             <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
-              Demographics, balance sheet, cashflows, and stochastic projections — composed as one editorial plan.
+              {activeStep === 'profile' ? 'Capture the person, household context, and planning horizon.' : activeStep === 'financials' ? 'Record assets, property, liabilities, and the household net position.' : 'Build the decision record from cashflow through outlook.'}
             </p>
           </div>
 
@@ -240,8 +177,11 @@ export const MasterPlan = () => {
           {activeStep === 'financials' && (
             <FinancialsStep
               inputs={inputs}
-              loans={loans}
-              onUpdateLoans={handleUpdateLoans}
+              liabilities={inputs.liabilities}
+              updateAsset={updateAsset}
+              updateLiability={updateLiability}
+              onAddLiability={addLiability}
+              onRemoveLiability={removeLiability}
               onAddAsset={addAsset}
               onRemoveAsset={handleDeleteAsset}
               onNext={() => handleStepChange('cashflows')}

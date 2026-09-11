@@ -159,8 +159,10 @@ export function runStressTest(
     retirementAge: inputs?.retirementAge ?? 60,
     lifeExpectancy: inputs?.lifeExpectancy ?? 85,
     annualIncome: inputs?.annualIncome ?? 0,
+    monthlyLivingExpenses: inputs?.monthlyLivingExpenses ?? inputs?.monthlyExpenditure ?? 0,
     monthlyExpenditure: inputs?.monthlyExpenditure ?? 0,
     assets: safeAssets,
+    liabilities: inputs?.liabilities || [],
     inflation: inputs?.inflation ?? 6,
     stp: inputs?.stp || {
       active: false,

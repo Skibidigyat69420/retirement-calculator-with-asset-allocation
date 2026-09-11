@@ -16,21 +16,15 @@ import { calculateEMI } from '../../lib/calculators';
 import { guardNumber, formatOrDash } from '../../lib/planState';
 import { formatCurrency, formatCurrencyCompact } from '../../lib/formatters';
 import { ASSET_LABELS, ASSET_COLORS } from '../../lib/constants';
-import type { MasterPlanInputs, Asset, AssetCategory } from '../../types';
-
-export interface LoanLiability {
-  id: string;
-  name: string;
-  principal: number;
-  rate: number;
-  tenureYears: number;
-  includeInExpenses: boolean;
-}
+import type { MasterPlanInputs, Asset, AssetCategory, Liability } from '../../types';
 
 interface FinancialsStepProps {
   inputs: MasterPlanInputs;
-  loans: LoanLiability[];
-  onUpdateLoans: (loans: LoanLiability[]) => void;
+  liabilities: Liability[];
+  updateAsset: (id: string, patch: Partial<Asset>) => void;
+  updateLiability: (id: string, patch: Partial<Liability>) => void;
+  onAddLiability: (liability?: Partial<Liability>) => void;
+  onRemoveLiability: (id: string) => void;
   onAddAsset: (asset: Omit<Asset, 'id'>) => void;
   onRemoveAsset: (id: string) => void;
   onNext: () => void;
@@ -43,8 +37,11 @@ const CATEGORY_OPTIONS: { value: AssetCategory; label: string }[] = (
 
 export const FinancialsStep = ({
   inputs,
-  loans,
-  onUpdateLoans,
+  liabilities,
+  updateAsset,
+  updateLiability,
+  onAddLiability,
+  onRemoveLiability,
   onAddAsset,
   onRemoveAsset,
   onNext,
@@ -71,7 +68,7 @@ export const FinancialsStep = ({
   }, [inputs.assets]);
 
   const activeLoansWithEMI = useMemo(() => {
-    return loans.map((loan) => {
+    return liabilities.map((loan) => {
       const p = Math.max(0, Number(loan.principal) || 0);
       const r = Math.max(0, Number(loan.rate) || 0);
       const t = Math.max(1, Number(loan.tenureYears) || 1);
@@ -83,11 +80,11 @@ export const FinancialsStep = ({
         totalInterest: res.totalInterest,
       };
     });
-  }, [loans]);
+  }, [liabilities]);
 
   const totalLiabilities = useMemo(() => {
-    return loans.reduce((sum, l) => sum + (Number(l.principal) || 0), 0);
-  }, [loans]);
+    return liabilities.reduce((sum, l) => sum + (Number(l.principal) || 0), 0);
+  }, [liabilities]);
 
   const totalMonthlyEMI = useMemo(() => {
     return activeLoansWithEMI
@@ -115,7 +112,7 @@ export const FinancialsStep = ({
 
   const handleAddLoan = () => {
     if (!newLoanName.trim()) return;
-    const newLoan: LoanLiability = {
+    const newLoan: Liability = {
       id: `loan-${Date.now()}`,
       name: newLoanName.trim(),
       principal: newLoanPrincipal,
@@ -123,7 +120,7 @@ export const FinancialsStep = ({
       tenureYears: Math.max(1, newLoanTenure || 1),
       includeInExpenses: true,
     };
-    onUpdateLoans([...loans, newLoan]);
+    onAddLiability(newLoan);
     setNewLoanName('');
     setNewLoanPrincipal(0);
     setNewLoanRate(0);
@@ -131,7 +128,7 @@ export const FinancialsStep = ({
   };
 
   const handleRemoveLoan = (id: string) => {
-    onUpdateLoans(loans.filter((l) => l.id !== id));
+    onRemoveLiability(id);
   };
 
   const summaryRows = [
@@ -143,7 +140,7 @@ export const FinancialsStep = ({
     {
       label: 'Total liabilities',
       value: formatOrDash(totalLiabilities > 0 ? totalLiabilities : null, formatCurrency),
-      note: `${loans.length} active loan${loans.length === 1 ? '' : 's'}`,
+      note: `${liabilities.length} active loan${liabilities.length === 1 ? '' : 's'}`,
     },
     {
       label: 'Net balance sheet',
@@ -163,8 +160,8 @@ export const FinancialsStep = ({
   return (
     <div className="space-y-8">
       <header>
-        <div className="eyebrow">Step 02 · Financials</div>
-        <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">Balance sheet & liabilities</h2>
+        <div className="eyebrow">Step 02 · Balance sheet</div>
+        <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">Household balance sheet</h2>
         <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
           Investable assets, properties, and outstanding loans. EMIs amortize automatically and feed the household net balance sheet.
         </p>
@@ -222,22 +219,22 @@ export const FinancialsStep = ({
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium text-ink truncate">{asset.name}</span>
-                    <span className="text-[10px] uppercase tracking-[0.08em] font-mono text-muted">
-                      {ASSET_LABELS[asset.category]}
-                    </span>
+                    <Input aria-label="Asset name" value={asset.name} onChange={(e) => updateAsset(asset.id, { name: e.target.value })} className="!py-1 !px-2 !text-sm max-w-[180px]" />
+                    <Select label="" value={asset.category} onChange={(value) => updateAsset(asset.id, { category: value as AssetCategory })} options={CATEGORY_OPTIONS} className="min-w-[120px]" />
                   </div>
                   <span className="text-[11px] text-faint">
-                    Return {formatOrDash(asset.returnRate, (v) => `${v}%`)} ·{' '}
-                    {asset.liquidateAtRetirement ? 'Liquidated at retirement' : 'Retained in corpus'}
+                    <label className="inline-flex items-center gap-1.5 cursor-pointer">
+                      <input type="checkbox" checked={asset.liquidateAtRetirement} onChange={(e) => updateAsset(asset.id, { liquidateAtRetirement: e.target.checked })} />
+                      Liquidate at retirement
+                    </label>
                   </span>
                 </div>
                 <div className="text-right shrink-0">
                   <div className="font-mono text-sm tabular-nums text-ink">
-                    {formatCurrency(asset.value)}
+                    <CurrencyInput label="" value={asset.value} onChange={(value) => updateAsset(asset.id, { value })} />
                   </div>
                   <span className="text-[11px] text-faint">
-                    {totalAssets > 0 ? `${((asset.value / totalAssets) * 100).toFixed(1)}% of portfolio` : '—'}
+                    <NumberInput label="" value={asset.returnRate} onChange={(value) => updateAsset(asset.id, { returnRate: value })} suffix="%" step={0.5} />
                   </span>
                 </div>
                 <button
@@ -303,11 +300,11 @@ export const FinancialsStep = ({
             <p className="mt-0.5 text-xs text-muted">Amortized obligations with recurring EMI.</p>
           </div>
           <span className="font-mono text-[11px] text-faint tabular-nums">
-            {loans.length} recorded
+            {liabilities.length} recorded
           </span>
         </div>
 
-        {loans.length === 0 ? (
+        {liabilities.length === 0 ? (
           <p className="text-sm text-faint py-3 border-t border-b border-border">
             No debt recorded — add a loan below if the household carries EMIs.
           </p>
@@ -317,10 +314,9 @@ export const FinancialsStep = ({
               <div key={loan.id} className="flex items-center gap-4 py-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium text-ink truncate">{loan.name}</span>
-                    <span className="font-mono text-[11px] text-muted tabular-nums">
-                      {formatOrDash(loan.rate, (v) => `${v}%`)} rate
-                    </span>
+                    <Input aria-label="Liability name" value={loan.name} onChange={(e) => updateLiability(loan.id, { name: e.target.value })} className="!py-1 !px-2 !text-sm max-w-[180px]" />
+                    <NumberInput label="" value={loan.rate} onChange={(value) => updateLiability(loan.id, { rate: value })} suffix="%" step={0.25} className="max-w-[110px]" />
+                    <NumberInput label="" value={loan.tenureYears} onChange={(value) => updateLiability(loan.id, { tenureYears: value })} suffix="yrs" step={1} min={1} className="max-w-[110px]" />
                   </div>
                   <span className="text-[11px] text-faint">
                     Tenure {formatOrDash(loan.tenureYears, (v) => `${v} yrs`)} · EMI{' '}
@@ -329,7 +325,7 @@ export const FinancialsStep = ({
                 </div>
                 <div className="text-right shrink-0">
                   <div className="font-mono text-sm tabular-nums text-ink">
-                    {formatCurrency(loan.principal)}
+                    <CurrencyInput label="" value={loan.principal} onChange={(value) => updateLiability(loan.id, { principal: value })} />
                   </div>
                   <span className="text-[11px] text-faint">
                     Interest {formatCurrencyCompact(loan.totalInterest)}
@@ -392,7 +388,7 @@ export const FinancialsStep = ({
       <div className="flex justify-between border-t border-border pt-6">
         <Button variant="ghost" onClick={onBack} className="flex items-center gap-2">
           <ArrowLeft size={15} aria-hidden="true" />
-          <span>Back · Profile</span>
+          <span>Back · Client profile</span>
         </Button>
         <Button onClick={onNext} className="flex items-center gap-2">
           <span>Next · Cashflow</span>

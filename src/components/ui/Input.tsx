@@ -19,7 +19,7 @@ export const Input = ({ label, suffix, helper, error, className, id, ...props }:
       {label && (
         <label
           htmlFor={inputId}
-          className="block text-[11px] font-semibold uppercase tracking-wider text-muted"
+          className="field-label block text-xs font-medium tracking-normal text-ink-soft"
         >
           {label}
         </label>

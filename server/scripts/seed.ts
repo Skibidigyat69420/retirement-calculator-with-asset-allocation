@@ -15,7 +15,7 @@
  *     -H 'content-type: application/json' \
  *     -d '{"email":"you@soundthesis.local"}'
  */
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { withSystem, pool } from '../src/db/client.js';
 import * as schema from '../src/db/schema.js';
 import { calculateRiskScore, getRiskProfile } from '../../src/lib/riskQuestionnaire.js';
@@ -46,6 +46,7 @@ if (dbHost.endsWith('supabase.co') && process.env['ALLOW_PROD_SEED'] !== 'true')
 // Deterministic auth_user_id UUIDs (dev only).
 const OWNER_AUTH_ID = '11111111-1111-4111-8111-111111111111';
 const ADVISER_AUTH_ID = '22222222-2222-4222-8222-222222222222';
+const ADVISER_THREE_AUTH_ID = '33333333-3333-4333-8333-333333333333';
 
 // Brand colors (spec §107).
 const BRAND_PRIMARY = '#0B1220';
@@ -551,6 +552,77 @@ async function seed() {
         metadata: { seeded: true },
       });
     }
+
+    // ------------------------------------------------------ practice directory
+    // Demo practice layout: advisor 1 owns 1 client, advisor 2 owns 2,
+    // advisor 3 owns 3. This powers the advisor-facing client database.
+    await tx.update(schema.users).set({ fullName: 'Aarav Mehta' }).where(eq(schema.users.id, owner.id));
+    await tx.update(schema.users).set({ fullName: 'Maya Kapoor' }).where(eq(schema.users.id, adviser.id));
+    const { user: advisorThree } = await upsertUser(tx, {
+      email: 'advisor3@soundthesis.local',
+      fullName: 'Rohan Shah',
+      authUserId: ADVISER_THREE_AUTH_ID,
+    });
+    // The local demo is intentionally advisor-first: each of the three
+    // sign-in identities has a distinct client book.
+    await tx.update(schema.organizationMemberships)
+      .set({ role: 'wealth_practitioner' })
+      .where(and(eq(schema.organizationMemberships.organizationId, org.id), eq(schema.organizationMemberships.userId, owner.id)));
+    await upsertMembership(tx, {
+      organizationId: org.id,
+      userId: advisorThree.id,
+      role: 'wealth_practitioner',
+      status: 'active',
+      invitedBy: owner.id,
+    });
+
+    const directoryClients = [
+      { firstName: 'Raj', lastName: 'Sharma', email: 'raj.sharma@example.com', advisor: owner.id, value: '64500000', tag: 'Retirement planning' },
+      { firstName: 'Priya', lastName: 'Nair', email: 'priya.nair@example.com', advisor: adviser.id, value: '38200000', tag: 'Goal planning' },
+      { firstName: 'Kabir', lastName: 'Malhotra', email: 'kabir.malhotra@example.com', advisor: adviser.id, value: '21800000', tag: 'Portfolio review' },
+      { firstName: 'Ananya', lastName: 'Iyer', email: 'ananya.iyer@example.com', advisor: advisorThree.id, value: '12700000', tag: 'First investment plan' },
+      { firstName: 'Vikram', lastName: 'Rao', email: 'vikram.rao@example.com', advisor: advisorThree.id, value: '51600000', tag: 'Retirement planning' },
+      { firstName: 'Neha', lastName: 'Kapoor', email: 'neha.kapoor@example.com', advisor: advisorThree.id, value: '29400000', tag: 'Family wealth plan' },
+    ];
+
+    for (const [index, item] of directoryClients.entries()) {
+      const existing = await tx.select().from(schema.clients)
+        .where(eq(schema.clients.email, item.email)).then((rows) => rows[0]);
+      const client = existing ?? await tx.insert(schema.clients).values({
+        organizationId: org.id,
+        firstName: item.firstName,
+        lastName: item.lastName,
+        preferredName: item.firstName,
+        email: item.email,
+        status: 'active',
+        notes: item.tag,
+      }).returning().then((rows) => rows[0]);
+      if (!client) throw new Error(`client insert failed for ${item.email}`);
+
+      await tx.delete(schema.clientAssignments).where(eq(schema.clientAssignments.clientId, client.id));
+      await tx.insert(schema.clientAssignments).values({
+        clientId: client.id,
+        userId: item.advisor,
+        assignmentRole: 'primary',
+      });
+
+      const existingAssets = await tx.select().from(schema.assets)
+        .where(eq(schema.assets.clientId, client.id));
+      if (existingAssets.length === 0) {
+        await tx.insert(schema.assets).values({
+          organizationId: org.id,
+          clientId: client.id,
+          name: index % 2 === 0 ? 'Diversified investment portfolio' : 'Core wealth portfolio',
+          assetType: 'mutual_fund',
+          assetCategory: 'mutual_fund',
+          currency: 'INR',
+          currentValue: item.value,
+          liquidity: 'high',
+          liquidateAtRetirement: true,
+        });
+      }
+    }
+    summary.seeded.push('practice directory: 3 advisors / 6 assigned clients (1 / 2 / 3)');
   });
 
   return summary;
