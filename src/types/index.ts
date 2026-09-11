@@ -145,6 +145,7 @@ export interface IncomeSource {
   id: string;
   name: string;
   amount: number;
+  amountInBaseCurrency?: number;
   currency: string;
   frequency: 'monthly' | 'annual';
   notes?: string;

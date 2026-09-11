@@ -94,6 +94,11 @@ export const CashflowsStep = ({
             helper={`Linked total with EMIs: ${formatCurrency(inputs.monthlyExpenditure)}/mo`}
           />
         </div>
+        {inputs.client.incomeSources && inputs.client.incomeSources.length > 0 && (
+          <p className="mt-3 rounded-md border border-accent/20 bg-accent-soft px-3 py-2 text-xs text-accent-strong">
+            {inputs.client.incomeSources.length} income source{inputs.client.incomeSources.length === 1 ? '' : 's'} linked from Client profile. Edit the source breakdown there; this annual total is used by every projection.
+          </p>
+        )}
       </section>
 
       {/* SIP */}

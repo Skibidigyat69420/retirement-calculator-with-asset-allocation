@@ -82,8 +82,8 @@ export const demoClientInputs = (): MasterPlanInputs => ({
       { id: 'demo-daughter', name: 'Child 2', relationship: 'Daughter', dateOfBirth: '', status: 'Education', goal: 'Master’s education abroad' },
     ],
     incomeSources: [
-      { id: 'demo-income-1', name: 'Primary income', amount: 0, currency: 'INR', frequency: 'monthly', notes: '' },
-      { id: 'demo-income-2', name: 'Rental income', amount: 0, currency: 'INR', frequency: 'monthly', notes: '' },
+      { id: 'demo-income-1', name: 'Primary income', amount: 0, amountInBaseCurrency: 0, currency: 'INR', frequency: 'monthly', notes: '' },
+      { id: 'demo-income-2', name: 'Rental income', amount: 0, amountInBaseCurrency: 0, currency: 'INR', frequency: 'monthly', notes: '' },
     ],
     insurancePolicies: [
       { id: 'demo-life-cover', type: 'Life', provider: '', coverage: '', premium: 0, premiumFrequency: 'annual', notes: '' },

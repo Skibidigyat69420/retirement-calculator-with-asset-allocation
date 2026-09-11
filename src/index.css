@@ -899,7 +899,7 @@ button:hover:not(:disabled), a:hover { }
 .profile-add-button { display: inline-flex; align-items: center; gap: .35rem; padding: .4rem .6rem; border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); color: var(--color-accent-strong); font-size: .7rem; font-weight: 650; white-space: nowrap; cursor: pointer; }
 .profile-add-button:hover { border-color: var(--color-accent); background: var(--color-accent-soft); }
 .profile-repeatable-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) auto; align-items: end; gap: .75rem; padding: .9rem 0; border-top: 1px solid var(--color-border); }
-.profile-income-row { grid-template-columns: 1.2fr 1fr .65fr .8fr 1.2fr auto; }
+.profile-income-row { grid-template-columns: 1.2fr 1fr .65fr 1fr .8fr 1.2fr auto; }
 .profile-remove-button { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; margin-bottom: .15rem; border-radius: var(--radius-sm); color: var(--color-faint); cursor: pointer; }
 .profile-remove-button:hover { color: var(--color-negative); background: var(--color-negative-soft); }
 .profile-empty-row { padding: .8rem 0 1rem; color: var(--color-faint); font-size: .75rem; }

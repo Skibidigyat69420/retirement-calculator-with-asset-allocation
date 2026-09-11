@@ -41,11 +41,28 @@ export const ProfileStep = ({
   const completedCollections = collectionFields.filter((value) => (value?.length || 0) > 0).length;
   const completion = Math.round(((completedFields + completedCollections) / (profileFields.length + collectionFields.length)) * 100);
 
+  const annualIncomeFromSources = (sources: IncomeSource[]) => sources.reduce((total, source) => {
+    const baseAmount = source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0);
+    return total + Math.max(0, baseAmount) * (source.frequency === 'monthly' ? 12 : 1);
+  }, 0);
+
   const updateFamilyMember = (id: string, patch: Partial<FamilyMember>) => {
     updateClient({ familyMembers: (inputs.client.familyMembers || []).map((member) => member.id === id ? { ...member, ...patch } : member) });
   };
   const updateIncomeSource = (id: string, patch: Partial<IncomeSource>) => {
-    updateClient({ incomeSources: (inputs.client.incomeSources || []).map((source) => source.id === id ? { ...source, ...patch } : source) });
+    const sources = (inputs.client.incomeSources || []).map((source) => {
+      if (source.id !== id) return source;
+      const next = { ...source, ...patch };
+      return patch.currency === 'INR' || (next.currency === 'INR' && patch.amount !== undefined)
+        ? { ...next, amountInBaseCurrency: next.amount }
+        : next;
+    });
+    updateClient({ incomeSources: sources });
+    updateInputs({ annualIncome: annualIncomeFromSources(sources) });
+  };
+  const replaceIncomeSources = (sources: IncomeSource[]) => {
+    updateClient({ incomeSources: sources });
+    updateInputs({ annualIncome: annualIncomeFromSources(sources) });
   };
   const updateInsurancePolicy = (id: string, patch: Partial<InsurancePolicy>) => {
     updateClient({ insurancePolicies: (inputs.client.insurancePolicies || []).map((policy) => policy.id === id ? { ...policy, ...patch } : policy) });
@@ -143,14 +160,15 @@ export const ProfileStep = ({
       <section className="profile-section">
         <div className="profile-section-heading"><div><span className="eyebrow">03 · Income sources</span><h3>Where does household cashflow come from?</h3></div></div>
         <div className="profile-repeatable-list">
-          <div className="profile-subheading"><div><h4>Income sources</h4><p>Record freelance, salary, rental, pension, business, or other income separately.</p></div><button type="button" className="profile-add-button" onClick={() => updateClient({ incomeSources: [...(inputs.client.incomeSources || []), { id: `income-${Date.now()}`, name: '', amount: 0, currency: 'INR', frequency: 'monthly', notes: '' }] })}><Plus size={14} /> Add income source</button></div>
+          <div className="profile-subheading"><div><h4>Income sources</h4><p>Record each source separately. These values feed annual household income in Cashflow.</p></div><button type="button" className="profile-add-button" onClick={() => replaceIncomeSources([...(inputs.client.incomeSources || []), { id: `income-${Date.now()}`, name: '', amount: 0, amountInBaseCurrency: 0, currency: 'INR', frequency: 'monthly', notes: '' }])}><Plus size={14} /> Add income source</button></div>
           {(inputs.client.incomeSources || []).map((source) => <div className="profile-repeatable-row profile-income-row" key={source.id}>
             <Input label="Source" value={source.name} onChange={(event) => updateIncomeSource(source.id, { name: event.target.value })} placeholder="Salary, rental, freelance…" />
             <CurrencyInput label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} />
             <Select label="Currency" value={source.currency} onChange={(value) => updateIncomeSource(source.id, { currency: value })} options={['INR', 'KWD', 'USD', 'AED', 'GBP', 'EUR'].map((value) => ({ value, label: value }))} />
+            <CurrencyInput label="INR equivalent" value={source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0)} onChange={(value) => updateIncomeSource(source.id, { amountInBaseCurrency: value })} helper={source.currency === 'INR' ? 'Same as amount' : 'Used in projections'} />
             <Select label="Frequency" value={source.frequency} onChange={(value) => updateIncomeSource(source.id, { frequency: value as IncomeSource['frequency'] })} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'annual', label: 'Annual' }]} />
             <Input label="Notes" value={source.notes || ''} onChange={(event) => updateIncomeSource(source.id, { notes: event.target.value })} placeholder="Clients, rental property…" />
-            <button type="button" className="profile-remove-button" onClick={() => updateClient({ incomeSources: (inputs.client.incomeSources || []).filter((item) => item.id !== source.id) })} aria-label={`Remove ${source.name || 'income source'}`}><Trash2 size={15} /></button>
+            <button type="button" className="profile-remove-button" onClick={() => replaceIncomeSources((inputs.client.incomeSources || []).filter((item) => item.id !== source.id))} aria-label={`Remove ${source.name || 'income source'}`}><Trash2 size={15} /></button>
           </div>)}
           {(inputs.client.incomeSources || []).length === 0 && <p className="profile-empty-row">No income sources added yet.</p>}
         </div>
