@@ -547,13 +547,20 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     }));
     if (activeClientId) {
       const nameParts = String(patch.name || '').trim().split(/\s+/).filter(Boolean);
-      const body: Record<string, unknown> = { ...patch };
+      // Keep the client row API payload separate from the richer profile
+      // snapshot. Household arrays and advisory fields live in the versioned
+      // plan snapshot, while these scalar fields belong to the client table.
+      const body: Record<string, unknown> = {};
+      for (const key of ['email', 'phone', 'maritalStatus', 'notes'] as const) {
+        if (patch[key] !== undefined) body[key] = patch[key];
+      }
       if (patch.name !== undefined) {
         body.firstName = nameParts.shift() || '';
         body.lastName = nameParts.join(' ') || 'Client';
-        delete body.name;
       }
-      void patchClient(activeClientId, body).catch((error) => console.warn('Client profile save failed:', error));
+      if (Object.keys(body).length > 0) {
+        void patchClient(activeClientId, body).catch((error) => console.warn('Client profile save failed:', error));
+      }
     }
   }, [activeClientId]);
 

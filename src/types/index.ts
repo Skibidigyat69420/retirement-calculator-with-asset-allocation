@@ -127,6 +127,37 @@ export interface ClientProfile {
   insuranceSummary?: string;
   investmentPhilosophy?: string;
   adviceRequested?: string;
+  familyMembers?: FamilyMember[];
+  incomeSources?: IncomeSource[];
+  insurancePolicies?: InsurancePolicy[];
+}
+
+export interface FamilyMember {
+  id: string;
+  name: string;
+  relationship: string;
+  dateOfBirth?: string;
+  status?: string;
+  goal?: string;
+}
+
+export interface IncomeSource {
+  id: string;
+  name: string;
+  amount: number;
+  currency: string;
+  frequency: 'monthly' | 'annual';
+  notes?: string;
+}
+
+export interface InsurancePolicy {
+  id: string;
+  type: string;
+  provider?: string;
+  coverage?: string;
+  premium?: number;
+  premiumFrequency?: 'monthly' | 'annual';
+  notes?: string;
 }
 
 export interface MasterPlanInputs {

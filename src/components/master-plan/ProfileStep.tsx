@@ -1,10 +1,11 @@
-import { ArrowRight, UserRound } from 'lucide-react';
+import { ArrowRight, Plus, Trash2, UserRound } from 'lucide-react';
 import { Input } from '../ui/Input';
 import { NumberInput } from '../ui/NumberInput';
 import { Select } from '../ui/Select';
+import { CurrencyInput } from '../ui/CurrencyInput';
 import { Button } from '../ui/Button';
 import { formatOrDash, isProfileConfigured } from '../../lib/planState';
-import type { MasterPlanInputs } from '../../types';
+import type { FamilyMember, IncomeSource, InsurancePolicy, MasterPlanInputs } from '../../types';
 
 interface ProfileStepProps {
   inputs: MasterPlanInputs;
@@ -36,7 +37,19 @@ export const ProfileStep = ({
     inputs.client?.investmentPhilosophy,
   ];
   const completedFields = profileFields.filter((value) => value?.trim()).length;
-  const completion = Math.round((completedFields / profileFields.length) * 100);
+  const collectionFields = [inputs.client?.familyMembers, inputs.client?.incomeSources, inputs.client?.insurancePolicies];
+  const completedCollections = collectionFields.filter((value) => (value?.length || 0) > 0).length;
+  const completion = Math.round(((completedFields + completedCollections) / (profileFields.length + collectionFields.length)) * 100);
+
+  const updateFamilyMember = (id: string, patch: Partial<FamilyMember>) => {
+    updateClient({ familyMembers: (inputs.client.familyMembers || []).map((member) => member.id === id ? { ...member, ...patch } : member) });
+  };
+  const updateIncomeSource = (id: string, patch: Partial<IncomeSource>) => {
+    updateClient({ incomeSources: (inputs.client.incomeSources || []).map((source) => source.id === id ? { ...source, ...patch } : source) });
+  };
+  const updateInsurancePolicy = (id: string, patch: Partial<InsurancePolicy>) => {
+    updateClient({ insurancePolicies: (inputs.client.insurancePolicies || []).map((policy) => policy.id === id ? { ...policy, ...patch } : policy) });
+  };
 
   const timeline = [
     { label: 'Accumulation phase', value: formatOrDash(configured ? yearsToRetire : null, (v) => `${v} yrs left`) },
@@ -110,8 +123,36 @@ export const ProfileStep = ({
       <section className="profile-section">
         <div className="profile-section-heading"><div><span className="eyebrow">02 · Household</span><h3>The people and responsibilities around the plan</h3></div></div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
-          <TextAreaField label="Family composition" value={inputs.client?.familyComposition || ''} onChange={(value) => updateClient({ familyComposition: value })} placeholder="Children, ages, location, education or support responsibilities" helper="Add one line per person when helpful." />
+          <TextAreaField label="Household overview" value={inputs.client?.familyComposition || ''} onChange={(value) => updateClient({ familyComposition: value })} placeholder="Anything important about dependants, family structure, or support responsibilities" helper="Use the editable family rows below for individual members." />
           <TextAreaField label="Health context" value={inputs.client?.healthStatus || ''} onChange={(value) => updateClient({ healthStatus: value })} placeholder="Current health concerns, coverage gaps, or simply ‘no current concerns’" />
+        </div>
+        <div className="profile-repeatable-list">
+          <div className="profile-subheading"><div><h4>Family members</h4><p>Add each person whose life or goals affect the plan.</p></div><button type="button" className="profile-add-button" onClick={() => updateClient({ familyMembers: [...(inputs.client.familyMembers || []), { id: `family-${Date.now()}`, name: '', relationship: '', dateOfBirth: '', status: '', goal: '' }] })}><Plus size={14} /> Add person</button></div>
+          {(inputs.client.familyMembers || []).map((member) => <div className="profile-repeatable-row" key={member.id}>
+            <Input label="Name" value={member.name} onChange={(event) => updateFamilyMember(member.id, { name: event.target.value })} placeholder="Full name" />
+            <Input label="Relationship" value={member.relationship} onChange={(event) => updateFamilyMember(member.id, { relationship: event.target.value })} placeholder="Child, spouse…" />
+            <Input label="Date of birth" type="date" value={member.dateOfBirth || ''} onChange={(event) => updateFamilyMember(member.id, { dateOfBirth: event.target.value })} />
+            <Input label="Current status" value={member.status || ''} onChange={(event) => updateFamilyMember(member.id, { status: event.target.value })} placeholder="Student, working…" />
+            <Input label="Goal / responsibility" value={member.goal || ''} onChange={(event) => updateFamilyMember(member.id, { goal: event.target.value })} placeholder="Education, support, legacy…" />
+            <button type="button" className="profile-remove-button" onClick={() => updateClient({ familyMembers: (inputs.client.familyMembers || []).filter((item) => item.id !== member.id) })} aria-label={`Remove ${member.name || 'family member'}`}><Trash2 size={15} /></button>
+          </div>)}
+          {(inputs.client.familyMembers || []).length === 0 && <p className="profile-empty-row">No family members added yet.</p>}
+        </div>
+      </section>
+
+      <section className="profile-section">
+        <div className="profile-section-heading"><div><span className="eyebrow">03 · Income sources</span><h3>Where does household cashflow come from?</h3></div></div>
+        <div className="profile-repeatable-list">
+          <div className="profile-subheading"><div><h4>Income sources</h4><p>Record freelance, salary, rental, pension, business, or other income separately.</p></div><button type="button" className="profile-add-button" onClick={() => updateClient({ incomeSources: [...(inputs.client.incomeSources || []), { id: `income-${Date.now()}`, name: '', amount: 0, currency: 'INR', frequency: 'monthly', notes: '' }] })}><Plus size={14} /> Add income source</button></div>
+          {(inputs.client.incomeSources || []).map((source) => <div className="profile-repeatable-row profile-income-row" key={source.id}>
+            <Input label="Source" value={source.name} onChange={(event) => updateIncomeSource(source.id, { name: event.target.value })} placeholder="Salary, rental, freelance…" />
+            <CurrencyInput label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} />
+            <Select label="Currency" value={source.currency} onChange={(value) => updateIncomeSource(source.id, { currency: value })} options={['INR', 'KWD', 'USD', 'AED', 'GBP', 'EUR'].map((value) => ({ value, label: value }))} />
+            <Select label="Frequency" value={source.frequency} onChange={(value) => updateIncomeSource(source.id, { frequency: value as IncomeSource['frequency'] })} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'annual', label: 'Annual' }]} />
+            <Input label="Notes" value={source.notes || ''} onChange={(event) => updateIncomeSource(source.id, { notes: event.target.value })} placeholder="Clients, rental property…" />
+            <button type="button" className="profile-remove-button" onClick={() => updateClient({ incomeSources: (inputs.client.incomeSources || []).filter((item) => item.id !== source.id) })} aria-label={`Remove ${source.name || 'income source'}`}><Trash2 size={15} /></button>
+          </div>)}
+          {(inputs.client.incomeSources || []).length === 0 && <p className="profile-empty-row">No income sources added yet.</p>}
         </div>
       </section>
 
@@ -185,7 +226,7 @@ export const ProfileStep = ({
       </section>
 
       <section className="profile-section">
-        <div className="profile-section-heading"><div><span className="eyebrow">04 · Advisory brief</span><h3>What should the plan help decide?</h3></div></div>
+        <div className="profile-section-heading"><div><span className="eyebrow">05 · Advisory brief</span><h3>What should the plan help decide?</h3></div></div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
           <TextAreaField label="Planning purpose" value={inputs.client?.planningPurpose || ''} onChange={(value) => updateClient({ planningPurpose: value })} placeholder="e.g. Retirement security and a disciplined investment structure" />
           <TextAreaField label="Goals and milestones" value={inputs.client?.goalsSummary || ''} onChange={(value) => updateClient({ goalsSummary: value })} placeholder="Education, business, property, legacy, or other family goals" />
@@ -193,6 +234,19 @@ export const ProfileStep = ({
           <TextAreaField label="Specific advice requested" value={inputs.client?.adviceRequested || ''} onChange={(value) => updateClient({ adviceRequested: value })} placeholder="Questions the client expects this plan to answer" />
           <TextAreaField label="Insurance and protection" value={inputs.client?.insuranceSummary || ''} onChange={(value) => updateClient({ insuranceSummary: value })} placeholder="Life, health, critical illness, endowment, or coverage gaps" />
           <TextAreaField label="Advisor discovery notes" value={inputs.client?.notes || ''} onChange={(value) => updateClient({ notes: value })} placeholder="Risk reservations, family circumstances, liquidity needs, or legacy intentions" />
+        </div>
+        <div className="profile-repeatable-list">
+          <div className="profile-subheading"><div><h4>Insurance and protection</h4><p>Record every policy, cover amount, premium, and renewal detail.</p></div><button type="button" className="profile-add-button" onClick={() => updateClient({ insurancePolicies: [...(inputs.client.insurancePolicies || []), { id: `insurance-${Date.now()}`, type: '', provider: '', coverage: '', premium: 0, premiumFrequency: 'annual', notes: '' }] })}><Plus size={14} /> Add policy</button></div>
+          {(inputs.client.insurancePolicies || []).map((policy) => <div className="profile-repeatable-row" key={policy.id}>
+            <Input label="Policy type" value={policy.type} onChange={(event) => updateInsurancePolicy(policy.id, { type: event.target.value })} placeholder="Life, health…" />
+            <Input label="Provider" value={policy.provider || ''} onChange={(event) => updateInsurancePolicy(policy.id, { provider: event.target.value })} placeholder="Insurer" />
+            <Input label="Coverage" value={policy.coverage || ''} onChange={(event) => updateInsurancePolicy(policy.id, { coverage: event.target.value })} placeholder="₹1 Cr / USD 100k" />
+            <CurrencyInput label="Premium" value={policy.premium || 0} onChange={(value) => updateInsurancePolicy(policy.id, { premium: value })} />
+            <Select label="Frequency" value={policy.premiumFrequency || 'annual'} onChange={(value) => updateInsurancePolicy(policy.id, { premiumFrequency: value as InsurancePolicy['premiumFrequency'] })} options={[{ value: 'annual', label: 'Annual' }, { value: 'monthly', label: 'Monthly' }]} />
+            <Input label="Notes" value={policy.notes || ''} onChange={(event) => updateInsurancePolicy(policy.id, { notes: event.target.value })} placeholder="Term, renewal, exclusions…" />
+            <button type="button" className="profile-remove-button" onClick={() => updateClient({ insurancePolicies: (inputs.client.insurancePolicies || []).filter((item) => item.id !== policy.id) })} aria-label={`Remove ${policy.type || 'insurance policy'}`}><Trash2 size={15} /></button>
+          </div>)}
+          {(inputs.client.insurancePolicies || []).length === 0 && <p className="profile-empty-row">No insurance policies added yet.</p>}
         </div>
       </section>
 

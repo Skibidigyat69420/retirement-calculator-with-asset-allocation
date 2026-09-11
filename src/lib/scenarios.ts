@@ -20,6 +20,9 @@ export const createEmptyPlan = (): MasterPlanInputs => ({
     insuranceSummary: '',
     investmentPhilosophy: '',
     adviceRequested: '',
+    familyMembers: [],
+    incomeSources: [],
+    insurancePolicies: [],
   },
   currentAge: 0,
   retirementAge: 0,
@@ -74,6 +77,18 @@ export const demoClientInputs = (): MasterPlanInputs => ({
     insuranceSummary: 'Review life and health cover alongside the investment plan.',
     investmentPhilosophy: 'Diversified, long-term, and disciplined.',
     adviceRequested: 'Confirm the allocation and sequence the next actions.',
+    familyMembers: [
+      { id: 'demo-son', name: 'Child 1', relationship: 'Son', dateOfBirth: '', status: 'Education', goal: 'Higher education and early career capital' },
+      { id: 'demo-daughter', name: 'Child 2', relationship: 'Daughter', dateOfBirth: '', status: 'Education', goal: 'Master’s education abroad' },
+    ],
+    incomeSources: [
+      { id: 'demo-income-1', name: 'Primary income', amount: 0, currency: 'INR', frequency: 'monthly', notes: '' },
+      { id: 'demo-income-2', name: 'Rental income', amount: 0, currency: 'INR', frequency: 'monthly', notes: '' },
+    ],
+    insurancePolicies: [
+      { id: 'demo-life-cover', type: 'Life', provider: '', coverage: '', premium: 0, premiumFrequency: 'annual', notes: '' },
+      { id: 'demo-health-cover', type: 'Health', provider: '', coverage: '', premium: 0, premiumFrequency: 'annual', notes: '' },
+    ],
   },
   currentAge: 34,
   retirementAge: 45,
