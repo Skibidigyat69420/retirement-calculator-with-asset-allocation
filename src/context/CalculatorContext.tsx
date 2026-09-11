@@ -316,6 +316,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
   const [customCategoryReturns, setCustomCategoryReturns] = useState<Partial<Record<AssetCategory, number>>>(() => loadCustomCategoryReturns());
   const [activeClientId, setActiveClientId] = useState<string | null>(() => localStorage.getItem('stw.activeClientId'));
   const backendPlanIdRef = useRef<string | null>(null);
+  const backendCashflowIdsRef = useRef<Partial<Record<'income' | 'expense' | 'sip' | 'swp', string>>>({});
   const backendLoadedRef = useRef(false);
   const backendHydratingRef = useRef(false);
 
@@ -324,6 +325,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     let cancelled = false;
     backendHydratingRef.current = true;
     backendLoadedRef.current = false;
+    backendCashflowIdsRef.current = {};
     (async () => {
       try {
         const [client, profile, plans] = await Promise.all([
@@ -338,6 +340,10 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         const incomeRule = profile.cashflows.find((row) => row.type === 'income');
         const expenseRule = profile.cashflows.find((row) => row.type === 'expense');
         const sipRule = profile.cashflows.find((row) => row.type === 'sip');
+        for (const type of ['income', 'expense', 'sip', 'swp'] as const) {
+          const rule = profile.cashflows.find((row) => row.type === type);
+          if (rule?.id) backendCashflowIdsRef.current[type] = String(rule.id);
+        }
         setInputs(normalizePlan({
           ...snapshot,
           client: {
@@ -656,6 +662,29 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     return () => clearTimeout(timer);
   }, [refreshSavedPlans]);
 
+  const syncCashflowRule = useCallback(async (
+    type: 'income' | 'expense' | 'sip' | 'swp',
+    values: { annualAmount?: number; monthlyAmount?: number },
+  ) => {
+    if (!activeClientId || !backendLoadedRef.current || backendHydratingRef.current) return;
+    const id = backendCashflowIdsRef.current[type];
+    try {
+      if (id) {
+        await patchFinancialResource(activeClientId, 'cashflows', id, values);
+        return;
+      }
+      const row = await createFinancialResource(activeClientId, 'cashflows', {
+        type,
+        name: type === 'income' ? 'Household income' : type === 'expense' ? 'Household living expenses' : type.toUpperCase(),
+        ...values,
+        metadata: { source: 'planning-studio' },
+      });
+      if (row.id) backendCashflowIdsRef.current[type] = String(row.id);
+    } catch (error) {
+      console.warn(`Could not sync ${type} cashflow to the backend:`, error);
+    }
+  }, [activeClientId]);
+
   const updateInputs = useCallback((patch: Partial<MasterPlanInputs>) => {
     setInputs((prev) => ({
       ...prev,
@@ -670,7 +699,20 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       swp: patch.swp ? { ...prev.swp, ...patch.swp } : prev.swp,
       client: patch.client ? { ...prev.client, ...patch.client } : prev.client,
     }));
-  }, []);
+    if (patch.annualIncome !== undefined) {
+      void syncCashflowRule('income', { annualAmount: patch.annualIncome, monthlyAmount: patch.annualIncome / 12 });
+    }
+    if (patch.monthlyLivingExpenses !== undefined || patch.monthlyExpenditure !== undefined) {
+      const monthly = patch.monthlyLivingExpenses ?? Math.max(0, patch.monthlyExpenditure || 0);
+      void syncCashflowRule('expense', { monthlyAmount: monthly });
+    }
+    if (patch.sip?.amount !== undefined) {
+      void syncCashflowRule('sip', { monthlyAmount: patch.sip.amount });
+    }
+    if (patch.swp?.monthlyNeedToday !== undefined) {
+      void syncCashflowRule('swp', { monthlyAmount: patch.swp.monthlyNeedToday });
+    }
+  }, [syncCashflowRule]);
 
   const updateLiability = useCallback((id: string, patch: Partial<Liability>) => {
     setInputs((prev) => ({
@@ -748,7 +790,8 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       ...prev,
       sip: { ...prev.sip, ...patch },
     }));
-  }, []);
+    if (patch.amount !== undefined) void syncCashflowRule('sip', { monthlyAmount: patch.amount });
+  }, [syncCashflowRule]);
 
   const updateSTP = useCallback((patch: Partial<MasterPlanInputs['stp']>) => {
     setInputs((prev) => ({
@@ -762,7 +805,8 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       ...prev,
       swp: { ...prev.swp, ...patch },
     }));
-  }, []);
+    if (patch.monthlyNeedToday !== undefined) void syncCashflowRule('swp', { monthlyAmount: patch.monthlyNeedToday });
+  }, [syncCashflowRule]);
 
   const addGoal = useCallback((goal?: Partial<Goal>) => {
     const id = goal?.id || generateId('goal');

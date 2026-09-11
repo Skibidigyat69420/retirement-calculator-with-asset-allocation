@@ -164,38 +164,33 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
         style={{ width: collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH }}
         aria-label="Sidebar navigation"
       >
-        <Link
-          to="/"
-          className={cn('mb-4 block', collapsed ? 'px-0 flex justify-center' : 'px-2')}
-          aria-label="Sound Thesis home"
-        >
-          {collapsed ? <LogoMark size={28} /> : <Lockup />}
-        </Link>
+        <div className={cn('mb-4 flex items-center', collapsed ? 'justify-center' : 'justify-between gap-2 px-1')}>
+          <Link
+            to="/"
+            className={cn('block', collapsed ? 'px-0' : 'px-1')}
+            aria-label="Sound Thesis home"
+          >
+            {collapsed ? <LogoMark size={28} /> : <Lockup />}
+          </Link>
+          {!collapsed && (
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              aria-label="Collapse sidebar"
+              aria-expanded="true"
+              title="Collapse sidebar"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-ink transition-colors"
+            >
+              <PanelLeftClose size={17} strokeWidth={1.7} />
+            </button>
+          )}
+        </div>
 
         <NavSections collapsed={collapsed} />
 
         <div className="mt-2 space-y-1">
           {clientContext}
-          <button
-            type="button"
-            onClick={toggleCollapsed}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            aria-expanded={!collapsed}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className={cn(
-              'flex items-center gap-2.5 min-h-9 w-full rounded-md text-muted hover:text-ink hover:bg-sunken transition-colors text-[13px] font-medium',
-              collapsed ? 'justify-center px-0 py-2' : 'px-3 py-1.5',
-            )}
-          >
-            {collapsed ? (
-              <PanelLeftOpen size={17} strokeWidth={1.7} />
-            ) : (
-              <>
-                <PanelLeftClose size={17} strokeWidth={1.7} />
-                <span>Collapse</span>
-              </>
-            )}
-          </button>
+          {collapsed && <button type="button" onClick={toggleCollapsed} aria-label="Expand sidebar" aria-expanded="false" title="Expand sidebar" className="flex min-h-9 w-full items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-ink transition-colors"><PanelLeftOpen size={17} strokeWidth={1.7} /></button>}
         </div>
       </aside>
 
