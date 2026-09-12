@@ -42,7 +42,6 @@ const IPSTemplate = lazy(async () => {
   return { default: mod.IPSTemplate };
 });
 const RiskQuestionnaire = lazyNamed(() => import('./pages/RiskQuestionnaire'), 'RiskQuestionnaire');
-const Reports = lazyNamed(() => import('./pages/Reports'), 'Reports');
 const Dossier = lazyNamed(() => import('./pages/Dossier'), 'Dossier');
 const AngelData = lazyNamed(() => import('./pages/AngelData'), 'AngelData');
 const Calculators = lazyNamed(() => import('./pages/Calculators'), 'Calculators');
