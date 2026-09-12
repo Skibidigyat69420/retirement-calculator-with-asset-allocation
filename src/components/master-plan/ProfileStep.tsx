@@ -163,8 +163,7 @@ export const ProfileStep = ({
           <div className="profile-subheading"><div><h4>Income sources</h4><p>Record each source separately. These values feed annual household income in Cashflow.</p></div><button type="button" className="profile-add-button" onClick={() => replaceIncomeSources([...(inputs.client.incomeSources || []), { id: `income-${Date.now()}`, name: '', amount: 0, amountInBaseCurrency: 0, currency: 'INR', frequency: 'monthly', notes: '' }])}><Plus size={14} /> Add income source</button></div>
           {(inputs.client.incomeSources || []).map((source) => <div className="profile-repeatable-row profile-income-row" key={source.id}>
             <Input label="Source" value={source.name} onChange={(event) => updateIncomeSource(source.id, { name: event.target.value })} placeholder="Salary, rental, freelance…" />
-            <CurrencyInput label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} />
-            <Select label="Currency" value={source.currency} onChange={(value) => updateIncomeSource(source.id, { currency: value })} options={['INR', 'KWD', 'USD', 'AED', 'GBP', 'EUR'].map((value) => ({ value, label: value }))} />
+            <CurrencyInput label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} currency={source.currency} onCurrencyChange={(value) => updateIncomeSource(source.id, { currency: value })} />
             <CurrencyInput label="INR equivalent" value={source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0)} onChange={(value) => updateIncomeSource(source.id, { amountInBaseCurrency: value })} helper={source.currency === 'INR' ? 'Same as amount' : 'Used in projections'} />
             <Select label="Frequency" value={source.frequency} onChange={(value) => updateIncomeSource(source.id, { frequency: value as IncomeSource['frequency'] })} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'annual', label: 'Annual' }]} />
             <Input label="Notes" value={source.notes || ''} onChange={(event) => updateIncomeSource(source.id, { notes: event.target.value })} placeholder="Clients, rental property…" />
@@ -197,6 +196,7 @@ export const ProfileStep = ({
               { label: '40', value: 40 },
               { label: '45', value: 45 },
             ]}
+            slider
           />
           <NumberInput
             label="Retirement age"
@@ -211,6 +211,7 @@ export const ProfileStep = ({
               { label: '58', value: 58 },
               { label: '60', value: 60 },
             ]}
+            slider
           />
           <NumberInput
             label="Life expectancy"
@@ -224,6 +225,7 @@ export const ProfileStep = ({
               { label: '90', value: 90 },
               { label: '95', value: 95 },
             ]}
+            slider
           />
         </div>
 

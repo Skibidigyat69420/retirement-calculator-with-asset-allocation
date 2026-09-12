@@ -722,8 +722,31 @@ export function runWealthEngine(
   const seededRandom = createSeededRandom(seed);
   const randomSource = seededRandom ? seededRandom.random : Math.random;
 
-  const { lifeExpectancy, assets, sip, stp, goals, annualIncome, monthlyExpenditure } = inputs;
-  const { currentAge, retirementAge } = inputs;
+  // Pre-process inputs: Normalize amounts to base currency using spot rates.
+  const convertedInputs = {
+    ...inputs,
+    annualIncome: (inputs.client.incomeSources || []).reduce((total, source) => {
+      const spotRate = assumptions?.fx?.[source.currency || 'INR']?.spotRate || 1.0;
+      const baseAmount = source.amount * spotRate;
+      return total + Math.max(0, baseAmount) * (source.frequency === 'monthly' ? 12 : 1);
+    }, inputs.annualIncome), // Fallback if no incomeSources
+    assets: inputs.assets.map(a => ({
+      ...a,
+      value: a.value * (assumptions?.fx?.[a.currency || 'INR']?.spotRate || 1.0)
+    })),
+    liabilities: inputs.liabilities.map(l => ({
+      ...l,
+      principal: l.principal * (assumptions?.fx?.[l.currency || 'INR']?.spotRate || 1.0),
+      monthlyPayment: (l.monthlyPayment || 0) * (assumptions?.fx?.[l.currency || 'INR']?.spotRate || 1.0)
+    })),
+    goals: inputs.goals.map(g => ({
+      ...g,
+      targetAmount: g.targetAmount * (assumptions?.fx?.[g.currency || 'INR']?.spotRate || 1.0)
+    }))
+  };
+
+  const { lifeExpectancy, assets, sip, stp, goals, annualIncome, monthlyExpenditure } = convertedInputs;
+  const { currentAge, retirementAge } = convertedInputs;
 
   // Input guards: an empty plan or an impossible timeline returns a neutral
   // zero result instead of running math that would invent or corrupt numbers.
@@ -771,7 +794,7 @@ export function runWealthEngine(
     trade: totalValue * targetAllocation[c] - currentAllocation[c],
   }));
 
-  const { snapshots, depletionAge } = buildSnapshots(inputs, assumptions);
+  const { snapshots, depletionAge } = buildSnapshots(convertedInputs, assumptions);
   const terminalSnapshot = snapshots[snapshots.length - 1];
   const terminalValue = terminalSnapshot?.total || 0;
   const terminalRealValue = terminalSnapshot?.realTotal || 0;
@@ -783,7 +806,7 @@ export function runWealthEngine(
   const sustainable = depletionAge === null || (depletionAge !== null && depletionAge > lifeExpectancy);
 
   const simCount = riskProfile?.profile?.monteCarloSimulations || 2000;
-  const goalResults = goals.map((g) => buildGoalDistribution(g, inputs, assumptions, Math.max(500, Math.floor(simCount / 4)), randomSource));
+  const goalResults = goals.map((g) => buildGoalDistribution(g, convertedInputs, assumptions, Math.max(500, Math.floor(simCount / 4)), randomSource));
 
   const essentialGoals = goalResults.filter((g) => g.goal.priority === 'essential');
   const essentialSuccessRate = essentialGoals.length > 0
@@ -794,7 +817,7 @@ export function runWealthEngine(
     : 1;
   const goalsAtRisk = goalResults.filter((g) => g.successRate < (riskProfile?.profile?.goalSuccessThreshold || 70) / 100);
 
-  const monteCarlo = buildMonteCarlo(inputs, assumptions, simCount, randomSource);
+  const monteCarlo = buildMonteCarlo(convertedInputs, assumptions, simCount, randomSource);
 
   let maxDrawdownCount = 0;
   monteCarlo.outcomes.forEach((o) => {

@@ -1,6 +1,7 @@
 import { useState, useCallback, useId } from 'react';
 import { Plus, Minus, AlertCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { getCurrencySymbol } from '../../lib/formatters';
 
 export interface CurrencyInputProps {
   label?: string;
@@ -15,11 +16,15 @@ export interface CurrencyInputProps {
   disabled?: boolean;
   className?: string;
   id?: string;
+  currency?: string;
+  onCurrencyChange?: (currency: string) => void;
 }
 
 /** en-IN grouping on blur; zero renders as a real "0", never a fake placeholder. */
-const formatDisplay = (val: number): string =>
-  new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(val);
+const formatDisplay = (val: number, currency: string = 'INR'): string => {
+  const locale = currency === 'INR' ? 'en-IN' : 'en-US';
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(val);
+};
 
 const parseDisplay = (raw: string): number => {
   const cleaned = raw.replace(/[^0-9.-]/g, '');
@@ -40,13 +45,15 @@ export const CurrencyInput = ({
   disabled,
   className,
   id: idProp,
+  currency = 'INR',
+  onCurrencyChange,
 }: CurrencyInputProps) => {
-  const [localValue, setLocalValue] = useState(formatDisplay(value));
+  const [localValue, setLocalValue] = useState(formatDisplay(value, currency));
   const [isEditing, setIsEditing] = useState(false);
   const generatedId = useId();
   const inputId = idProp ?? generatedId;
 
-  const displayValue = isEditing ? localValue : formatDisplay(value);
+  const displayValue = isEditing ? localValue : formatDisplay(value, currency);
 
   const clamp = useCallback(
     (val: number) => {
@@ -68,7 +75,7 @@ export const CurrencyInput = ({
   const adjust = (delta: number) => {
     const newVal = clamp(value + delta);
     onChange(newVal);
-    setLocalValue(formatDisplay(newVal));
+    setLocalValue(formatDisplay(newVal, currency));
   };
 
   const outOfRange = (min !== undefined && value < min) || (max !== undefined && value > max);
@@ -86,9 +93,25 @@ export const CurrencyInput = ({
       )}
 
       <div className="relative group">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-faint select-none pointer-events-none tabular-nums">
-          ₹
-        </span>
+        {onCurrencyChange ? (
+          <select
+            value={currency}
+            onChange={(e) => onCurrencyChange(e.target.value)}
+            disabled={disabled}
+            className="absolute left-1 top-1/2 -translate-y-1/2 h-7 rounded-sm border-none bg-transparent py-0 pl-2 pr-6 text-xs text-faint hover:text-ink focus:ring-0 focus:outline-none cursor-pointer appearance-none z-10"
+          >
+            <option value="INR">INR</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="SGD">SGD</option>
+            <option value="AED">AED</option>
+          </select>
+        ) : (
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-faint select-none pointer-events-none tabular-nums">
+            {getCurrencySymbol(currency)}
+          </span>
+        )}
 
         <input
           id={inputId}
@@ -99,7 +122,7 @@ export const CurrencyInput = ({
           aria-invalid={hasError || undefined}
           onFocus={() => {
             setIsEditing(true);
-            setLocalValue(formatDisplay(value));
+            setLocalValue(formatDisplay(value, currency));
           }}
           onBlur={(e) => commit(e.currentTarget.value)}
           onChange={(e) => setLocalValue(e.currentTarget.value)}
@@ -109,7 +132,7 @@ export const CurrencyInput = ({
             if (e.key === 'ArrowDown') { e.preventDefault(); adjust(-step); }
           }}
           className={cn(
-            'w-full bg-surface border rounded-md pl-8 pr-10 py-2.5 text-sm text-ink tabular-nums placeholder:text-faint transition-colors',
+            'w-full bg-surface border rounded-md pl-12 pr-10 py-2.5 text-sm text-ink tabular-nums placeholder:text-faint transition-colors',
             'focus:border-accent focus:ring-2 focus:ring-accent-soft focus:outline-none',
             'hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed',
             hasError
@@ -170,7 +193,7 @@ export const CurrencyInput = ({
           <p className={cn('text-xs leading-relaxed', hasError ? 'text-negative' : 'text-faint')}>
             {error ||
               (outOfRange
-                ? `Value must be between ₹${formatDisplay(min ?? 0)}${max !== undefined ? ` and ₹${formatDisplay(max)}` : ' or more'}`
+                ? `Value must be between ${currency} ${formatDisplay(min ?? 0, currency)}${max !== undefined ? ` and ${currency} ${formatDisplay(max, currency)}` : ' or more'}`
                 : helper)}
           </p>
         </div>

@@ -18,6 +18,7 @@ export interface Liability {
   rate: number;
   tenureYears: number;
   includeInExpenses: boolean;
+  currency?: string;
   lender?: string;
   monthlyPayment?: number;
 }
@@ -99,6 +100,7 @@ export interface Goal {
   priority: GoalPriority;
   inflation: number;
   recurring: boolean;
+  currency?: string;
   priorityRank?: number;
   // Computed fields
   futureValue?: number;
@@ -529,6 +531,7 @@ export interface CategoryAssumptions {
 export interface FXAssumption {
   mean: number; // annualized decimal return vs base currency (INR)
   std: number;  // annualized decimal volatility
+  spotRate: number; // e.g. 83.5 for USD/INR. Base currency is 1.0.
 }
 
 export interface AssumptionSet {

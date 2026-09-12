@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
-import { Menu, Search, Wallet, ShieldCheck, User, FlaskConical, RotateCcw, ChevronDown, LogOut } from 'lucide-react';
+import { Menu, Search, Wallet, ShieldCheck, User, FlaskConical, RotateCcw, ChevronDown, LogOut, Save } from 'lucide-react';
 import { navItems } from './navItems';
 import { LogoMark } from './BrandMark';
 import { CommandPalette } from './CommandPalette';
@@ -26,7 +26,7 @@ const isEditableTarget = (el: EventTarget | null): boolean => {
 export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { inputs, riskProfile, riskScore, hasRiskAnswers, wealthResult, loadDemoWorkspace, resetToDefaults } =
+  const { inputs, riskProfile, riskScore, hasRiskAnswers, wealthResult, loadDemoWorkspace, resetToDefaults, saveCurrentPlan } =
     useCalculator();
   const { user, organizationName, logout } = useAuth();
 
@@ -70,6 +70,11 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
       label: 'Client profile',
       icon: User,
       run: () => navigate('/master-plan'),
+    },
+    {
+      label: 'Save plan',
+      icon: Save,
+      run: () => saveCurrentPlan(),
     },
     {
       label: 'Load demo workspace',

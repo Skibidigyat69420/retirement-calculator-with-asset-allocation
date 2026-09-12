@@ -60,6 +60,14 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   }
 
   if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem('stw.token');
+      localStorage.removeItem('stw.user');
+      localStorage.removeItem('stw.memberships');
+      localStorage.removeItem('stw.orgId');
+      window.location.href = '/';
+    }
+    
     let code = 'UNKNOWN';
     let message = `Request failed with status ${res.status}.`;
     try {
@@ -186,6 +194,15 @@ export function patchClient(clientId: string, body: Record<string, unknown>): Pr
 export function getPlan(planId: string): Promise<PlanRecord> {
   return request<PlanRecord>(`/plans/${planId}`);
 }
+
+export function patchPlan(planId: string, body: Record<string, unknown>): Promise<PlanRecord> {
+  return request<PlanRecord>(`/plans/${planId}`, { method: 'PATCH', body });
+}
+
+export function createPlan(clientId: string, body: Record<string, unknown>): Promise<PlanRecord> {
+  return request<PlanRecord>(`/clients/${clientId}/plans`, { method: 'POST', body });
+}
+
 
 export function createPlanVersion(planId: string, inputSnapshot: Record<string, unknown>, assumptionsSnapshot: Record<string, unknown> = {}): Promise<unknown> {
   return request(`/plans/${planId}/versions`, { method: 'POST', body: { inputSnapshot, assumptionsSnapshot, changeSummary: 'Workspace inputs updated' } });

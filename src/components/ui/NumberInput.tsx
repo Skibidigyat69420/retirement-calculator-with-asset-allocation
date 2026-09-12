@@ -12,6 +12,7 @@ export interface NumberInputProps {
   max?: number;
   step?: number;
   presets?: { label: string; value: number }[];
+  slider?: boolean;
   disabled?: boolean;
   className?: string;
   id?: string;
@@ -29,6 +30,7 @@ export const NumberInput = ({
   max,
   step = 1,
   presets,
+  slider,
   disabled,
   className,
   id,
@@ -46,6 +48,7 @@ export const NumberInput = ({
       max={max}
       step={step}
       presets={presets}
+      slider={slider}
       disabled={disabled}
       className={className}
       id={id}

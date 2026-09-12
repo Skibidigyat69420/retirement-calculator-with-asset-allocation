@@ -14,6 +14,7 @@ export interface EnhancedNumberInputProps {
   helper?: string;
   error?: string;
   presets?: { label: string; value: number }[];
+  slider?: boolean;
   disabled?: boolean;
   className?: string;
   id?: string;
@@ -34,6 +35,7 @@ export const EnhancedNumberInput = ({
   helper,
   error,
   presets,
+  slider,
   disabled,
   className,
   id: idProp,
@@ -150,6 +152,25 @@ export const EnhancedNumberInput = ({
           </button>
         </div>
       </div>
+
+      {slider && max !== undefined && (
+        <div className="pt-2 pb-1">
+          <input
+            type="range"
+            min={min ?? 0}
+            max={max}
+            step={step}
+            value={value}
+            onChange={(e) => {
+              const val = Number(e.target.value);
+              onChange(val);
+              setLocalValue(String(val));
+            }}
+            disabled={disabled}
+            className="w-full h-1.5 bg-border rounded-lg appearance-none cursor-pointer accent-accent"
+          />
+        </div>
+      )}
 
       {presets && presets.length > 0 && (
         <div className="flex flex-wrap gap-1.5 pt-0.5">

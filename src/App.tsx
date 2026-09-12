@@ -75,7 +75,7 @@ function WorkspaceRoutes() {
           <Route path="/advanced-portfolio" element={<AdvancedPortfolio />} />
           <Route path="/meeting-workflow" element={<ClientMeeting />} />
           <Route path="/decision-history" element={<DecisionHistory />} />
-          <Route path="/reports" element={<Reports />} />
+          <Route path="/reports" element={<Navigate to="/dossier" replace />} />
           <Route path="/dossier" element={<Dossier />} />
           <Route path="/calculators" element={<Calculators />} />
           <Route path="/ips" element={<IPSTemplate />} />

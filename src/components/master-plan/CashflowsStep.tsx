@@ -27,6 +27,8 @@ interface CashflowsStepProps {
   onBack: () => void;
 }
 
+import { useCalculator } from '../../context/CalculatorContext';
+
 export const CashflowsStep = ({
   inputs,
   updateInputs,
@@ -36,13 +38,16 @@ export const CashflowsStep = ({
   onNext,
   onBack,
 }: CashflowsStepProps) => {
+  const { assumptions } = useCalculator();
+
   const incomeSources = inputs.client.incomeSources || [];
   const monthlyIncome = Math.round(inputs.annualIncome / 12);
   const monthlySavingsSurplus = monthlyIncome - inputs.monthlyExpenditure;
   const savingsRate = monthlyIncome > 0 ? (monthlySavingsSurplus / monthlyIncome) * 100 : 0;
 
   const annualIncomeFromSources = (sources: IncomeSource[]) => sources.reduce((total, source) => {
-    const baseAmount = source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0);
+    const spotRate = assumptions?.fx[source.currency || 'INR']?.spotRate || 1.0;
+    const baseAmount = source.amount * spotRate;
     return total + Math.max(0, baseAmount) * (source.frequency === 'monthly' ? 12 : 1);
   }, 0);
 
@@ -55,9 +60,8 @@ export const CashflowsStep = ({
     const sources = incomeSources.map((source) => {
       if (source.id !== id) return source;
       const next = { ...source, ...patch };
-      return patch.currency === 'INR' || (next.currency === 'INR' && patch.amount !== undefined)
-        ? { ...next, amountInBaseCurrency: next.amount }
-        : next;
+      // Always store native amount; base currency is calculated on the fly
+      return next;
     });
     replaceIncomeSources(sources);
   };
@@ -135,9 +139,8 @@ export const CashflowsStep = ({
           </div>
           {incomeSources.map((source) => <div className="cashflow-income-row" key={source.id}>
             <Input label="Source" value={source.name} onChange={(event) => updateIncomeSource(source.id, { name: event.target.value })} placeholder="Salary, rental…" />
-            <CurrencyInput label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} />
-            <Select label="Currency" value={source.currency} onChange={(value) => updateIncomeSource(source.id, { currency: value })} options={['INR', 'KWD', 'USD', 'AED', 'GBP', 'EUR'].map((value) => ({ value, label: value }))} />
-            <CurrencyInput label="INR equivalent" value={source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0)} onChange={(value) => updateIncomeSource(source.id, { amountInBaseCurrency: value })} />
+            <CurrencyInput label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} currency={source.currency} onCurrencyChange={(value) => updateIncomeSource(source.id, { currency: value })} />
+            <CurrencyInput label="INR equivalent" value={source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0)} onChange={(value) => updateIncomeSource(source.id, { amountInBaseCurrency: value })} helper={source.currency === 'INR' ? 'Same as amount' : 'Used in projections'} />
             <Select label="Frequency" value={source.frequency} onChange={(value) => updateIncomeSource(source.id, { frequency: value as IncomeSource['frequency'] })} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'annual', label: 'Annual' }]} />
             <button type="button" className="profile-remove-button" onClick={() => replaceIncomeSources(incomeSources.filter((item) => item.id !== source.id))} aria-label={`Remove ${source.name || 'income source'}`}><Trash2 size={15} /></button>
           </div>)}
@@ -179,6 +182,7 @@ export const CashflowsStep = ({
               { label: '5%', value: 5 },
               { label: '10%', value: 10 },
             ]}
+            slider
           />
         </div>
 
@@ -232,6 +236,7 @@ export const CashflowsStep = ({
             step={0.5}
             min={0}
             max={14}
+            slider
           />
           <NumberInput
             label="Withdrawal tax rate"
@@ -247,6 +252,7 @@ export const CashflowsStep = ({
               { label: '15%', value: 15 },
               { label: '20%', value: 20 },
             ]}
+            slider
           />
         </div>
       </section>

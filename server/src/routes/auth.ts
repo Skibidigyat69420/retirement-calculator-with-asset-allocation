@@ -47,7 +47,6 @@ export default async function authRoutes(app: FastifyInstance): Promise<void> {
       .setSubject(sub)
       .setAudience('dev')
       .setIssuedAt()
-      .setExpirationTime('12h')
       .sign(secret);
 
     await db
@@ -73,7 +72,7 @@ export default async function authRoutes(app: FastifyInstance): Promise<void> {
     return reply.send({
       token,
       tokenType: 'Bearer',
-      expiresIn: 12 * 3600,
+      expiresIn: 315360000,
       user: { id: user.id, email: user.email, fullName: user.fullName },
       memberships,
     });

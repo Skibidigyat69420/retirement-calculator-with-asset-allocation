@@ -285,7 +285,11 @@ export function mergeAssumptionOverride(
       if (!stats || typeof stats !== 'object') continue;
       const s = stats as Record<string, unknown>;
       if (typeof s['mean'] === 'number' && typeof s['std'] === 'number') {
-        merged.fx[currency] = { mean: s['mean'] as number, std: s['std'] as number };
+        merged.fx[currency] = { 
+          mean: s['mean'] as number, 
+          std: s['std'] as number,
+          spotRate: typeof s['spotRate'] === 'number' ? s['spotRate'] as number : 1.0
+        };
       }
     }
   }

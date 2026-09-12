@@ -66,9 +66,13 @@ export const CATEGORY_SIGMAS: Record<AssetCategory, number> = {
 
 // FX assumptions: annualized mean return (vs INR) and volatility.
 // USD/INR mean ≈ long-term depreciation of INR (~4% p.a.), std ≈ 8%.
-export const FX_ASSUMPTIONS: Record<string, { mean: number; std: number }> = {
-  INR: { mean: 0, std: 0 },
-  USD: { mean: 0.04, std: 0.08 },
+export const FX_ASSUMPTIONS: Record<string, { mean: number; std: number; spotRate: number }> = {
+  INR: { mean: 0, std: 0, spotRate: 1.0 },
+  USD: { mean: 0.04, std: 0.08, spotRate: 83.5 },
+  EUR: { mean: 0.03, std: 0.07, spotRate: 91.2 },
+  GBP: { mean: 0.03, std: 0.09, spotRate: 106.4 },
+  SGD: { mean: 0.02, std: 0.05, spotRate: 61.8 },
+  AUD: { mean: 0.02, std: 0.09, spotRate: 54.6 },
 };
 
 export const GLIDE_PATH_PRESETS = {

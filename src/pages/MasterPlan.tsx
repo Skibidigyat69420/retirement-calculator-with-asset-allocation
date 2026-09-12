@@ -271,9 +271,47 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
 
       {/* Modern Workflow Footer */}
       <WorkflowFooter
-        prev={{ path: '/', label: 'Dashboard' }}
-        next={{ path: '/risk', label: 'Step 2: Risk Profile' }}
-        flowHint="Master plan assets, balance sheet liabilities, and cashflows feed the simulation and allocation engine."
+        prev={activeStep === 'profile'
+          ? { path: '/', label: 'Dashboard' }
+          : activeStep === 'financials'
+            ? { path: '/master-plan?step=profile', label: 'Profile' }
+            : activeStep === 'cashflows'
+              ? { path: '/master-plan?step=financials', label: 'Balance Sheet' }
+              : activeStep === 'goals'
+                ? { path: '/master-plan?step=cashflows', label: 'Cashflows' }
+                : activeStep === 'risk'
+                  ? { path: '/master-plan?step=goals', label: 'Goals' }
+                  : activeStep === 'assumptions'
+                    ? { path: '/master-plan?step=risk', label: 'Risk Profile' }
+                    : activeStep === 'results'
+                      ? { path: '/master-plan?step=assumptions', label: 'Assumptions' }
+                      : { path: '/', label: 'Dashboard' }
+        }
+        next={activeStep === 'profile'
+          ? { path: '/master-plan?step=financials', label: 'Balance Sheet' }
+          : activeStep === 'financials'
+            ? { path: '/master-plan?step=cashflows', label: 'Cashflows' }
+            : activeStep === 'cashflows'
+              ? { path: '/master-plan?step=goals', label: 'Goals' }
+              : activeStep === 'goals'
+                ? { path: '/master-plan?step=risk', label: 'Risk Profile' }
+                : activeStep === 'risk'
+                  ? { path: '/master-plan?step=assumptions', label: 'Assumptions' }
+                  : activeStep === 'assumptions'
+                    ? { path: '/master-plan?step=results', label: 'Results & Outlook' }
+                    : activeStep === 'results'
+                      ? { path: '/dossier', label: 'View Dossier' }
+                      : { path: '/dossier', label: 'View Dossier' }
+        }
+        flowHint={
+          activeStep === 'profile' ? 'Client identity, household context, and income sources feed the planning model.' :
+          activeStep === 'financials' ? 'Assets and liabilities determine the starting balance sheet and net worth position.' :
+          activeStep === 'cashflows' ? 'SIP, STP, and SWP cashflow strategies drive the accumulation and distribution phases.' :
+          activeStep === 'goals' ? 'Goals define target amounts, timelines, and priorities for the simulation engine.' :
+          activeStep === 'risk' ? 'Risk profiling determines asset allocation targets and stress-test tolerance bounds.' :
+          activeStep === 'assumptions' ? 'Market return, volatility, and correlation assumptions calibrate the wealth engine.' :
+          'Monte Carlo simulation results, goal feasibility, and plan health indicators.'
+        }
       />
     </div>
   );

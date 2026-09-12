@@ -99,6 +99,7 @@ export const AssumptionsStep = ({
               { label: '7.0% prudent', value: 7.0 },
               { label: '8.0% high', value: 8.0 },
             ]}
+            slider
           />
 
           <div className="border border-border rounded-md bg-sunken px-4 py-3.5">

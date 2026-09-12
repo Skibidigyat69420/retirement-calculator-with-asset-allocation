@@ -108,13 +108,6 @@ export const navItems: NavItem[] = [
 
   // Deliver
   {
-    path: '/reports',
-    label: 'Executive Reports',
-    icon: BarChart3,
-    section: 'Deliver',
-    description: 'Comprehensive client executive plan report',
-  },
-  {
     path: '/ips',
     label: 'Policy Statement (IPS)',
     icon: FileText,
@@ -137,10 +130,10 @@ export const navItems: NavItem[] = [
   },
   {
     path: '/dossier',
-    label: 'Full Dossier (PDF)',
+    label: 'Plan Dossier & Reports',
     icon: Printer,
     section: 'Deliver',
-    description: 'Printable institutional PDF portfolio dossier',
+    description: 'Unified comprehensive plan report and PDF dossier',
   },
 
   // Practice

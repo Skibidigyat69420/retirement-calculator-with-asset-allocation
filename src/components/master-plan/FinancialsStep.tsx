@@ -17,6 +17,7 @@ import { guardNumber, formatOrDash } from '../../lib/planState';
 import { formatCurrency, formatCurrencyCompact } from '../../lib/formatters';
 import { ASSET_LABELS, ASSET_COLORS } from '../../lib/constants';
 import type { MasterPlanInputs, Asset, AssetCategory, Liability } from '../../types';
+import { useCalculator } from '../../context/CalculatorContext';
 
 interface FinancialsStepProps {
   inputs: MasterPlanInputs;
@@ -47,32 +48,41 @@ export const FinancialsStep = ({
   onNext,
   onBack,
 }: FinancialsStepProps) => {
+  const { assumptions } = useCalculator();
+
   // New Asset Form State — zero defaults, never pre-seeded demo amounts
   const [newAssetName, setNewAssetName] = useState('');
   const [newAssetCategory, setNewAssetCategory] = useState<AssetCategory>('equity');
   const [newAssetValue, setNewAssetValue] = useState(0);
   const [newAssetReturn, setNewAssetReturn] = useState(0);
+  const [newAssetCurrency, setNewAssetCurrency] = useState('INR');
 
   // New Loan Form State
   const [newLoanName, setNewLoanName] = useState('');
   const [newLoanPrincipal, setNewLoanPrincipal] = useState(0);
   const [newLoanRate, setNewLoanRate] = useState(0);
   const [newLoanTenure, setNewLoanTenure] = useState(0);
+  const [newLoanCurrency, setNewLoanCurrency] = useState('INR');
 
   const focusAssetForm = () => {
     document.getElementById('mp-asset-name')?.focus();
   };
 
   const totalAssets = useMemo(() => {
-    return inputs.assets.reduce((sum, a) => sum + (Number(a.value) || 0), 0);
-  }, [inputs.assets]);
+    return inputs.assets.reduce((sum, a) => {
+      const spotRate = assumptions?.fx[a.currency || 'INR']?.spotRate || 1.0;
+      return sum + (Number(a.value) * spotRate || 0);
+    }, 0);
+  }, [inputs.assets, assumptions?.fx]);
 
   const activeLoansWithEMI = useMemo(() => {
     return liabilities.map((loan) => {
       const p = Math.max(0, Number(loan.principal) || 0);
       const r = Math.max(0, Number(loan.rate) || 0);
       const t = Math.max(1, Number(loan.tenureYears) || 1);
-      const res = p > 0 ? calculateEMI(p, r, t) : { emi: 0, totalPayment: 0, totalInterest: 0, principal: 0, yearlyData: [] };
+      const spotRate = assumptions?.fx[loan.currency || 'INR']?.spotRate || 1.0;
+      
+      const res = p > 0 ? calculateEMI(p * spotRate, r, t) : { emi: 0, totalPayment: 0, totalInterest: 0, principal: 0, yearlyData: [] };
       return {
         ...loan,
         emi: res.emi,
@@ -80,11 +90,14 @@ export const FinancialsStep = ({
         totalInterest: res.totalInterest,
       };
     });
-  }, [liabilities]);
+  }, [liabilities, assumptions?.fx]);
 
   const totalLiabilities = useMemo(() => {
-    return liabilities.reduce((sum, l) => sum + (Number(l.principal) || 0), 0);
-  }, [liabilities]);
+    return liabilities.reduce((sum, l) => {
+      const spotRate = assumptions?.fx[l.currency || 'INR']?.spotRate || 1.0;
+      return sum + (Number(l.principal) * spotRate || 0);
+    }, 0);
+  }, [liabilities, assumptions?.fx]);
 
   const totalMonthlyEMI = useMemo(() => {
     return activeLoansWithEMI
@@ -102,12 +115,13 @@ export const FinancialsStep = ({
       category: newAssetCategory,
       value: newAssetValue,
       returnRate: newAssetReturn,
-      currency: 'INR',
+      currency: newAssetCurrency,
       liquidateAtRetirement: true,
     });
     setNewAssetName('');
     setNewAssetValue(0);
     setNewAssetReturn(0);
+    setNewAssetCurrency('INR');
   };
 
   const handleAddLoan = () => {
@@ -119,12 +133,14 @@ export const FinancialsStep = ({
       rate: newLoanRate,
       tenureYears: Math.max(1, newLoanTenure || 1),
       includeInExpenses: true,
+      currency: newLoanCurrency,
     };
     onAddLiability(newLoan);
     setNewLoanName('');
     setNewLoanPrincipal(0);
     setNewLoanRate(0);
     setNewLoanTenure(0);
+    setNewLoanCurrency('INR');
   };
 
   const handleRemoveLoan = (id: string) => {
@@ -231,7 +247,7 @@ export const FinancialsStep = ({
                 </div>
                 <div className="text-right shrink-0">
                   <div className="font-mono text-sm tabular-nums text-ink">
-                    <CurrencyInput label="" value={asset.value} onChange={(value) => updateAsset(asset.id, { value })} />
+                    <CurrencyInput label="" value={asset.value} onChange={(value) => updateAsset(asset.id, { value })} currency={asset.currency} onCurrencyChange={(currency) => updateAsset(asset.id, { currency })} />
                   </div>
                   <span className="text-[11px] text-faint">
                     <NumberInput label="" value={asset.returnRate} onChange={(value) => updateAsset(asset.id, { returnRate: value })} suffix="%" step={0.5} />
@@ -271,6 +287,13 @@ export const FinancialsStep = ({
               label="Current value"
               value={newAssetValue}
               onChange={(val) => setNewAssetValue(val)}
+              currency={newAssetCurrency}
+              onCurrencyChange={setNewAssetCurrency}
+              presets={[
+                { label: '₹1L', value: 100000 },
+                { label: '₹10L', value: 1000000 },
+                { label: '₹50L', value: 5000000 },
+              ]}
             />
             <NumberInput
               label="Expected return"
@@ -278,6 +301,9 @@ export const FinancialsStep = ({
               onChange={(val) => setNewAssetReturn(val)}
               suffix="%"
               step={0.5}
+              min={0}
+              max={30}
+              slider
             />
           </div>
           <div className="flex justify-end mt-4">
@@ -325,7 +351,7 @@ export const FinancialsStep = ({
                 </div>
                 <div className="text-right shrink-0">
                   <div className="font-mono text-sm tabular-nums text-ink">
-                    <CurrencyInput label="" value={loan.principal} onChange={(value) => updateLiability(loan.id, { principal: value })} />
+                    <CurrencyInput label="" value={loan.principal} onChange={(value) => updateLiability(loan.id, { principal: value })} currency={loan.currency || 'INR'} onCurrencyChange={(currency) => updateLiability(loan.id, { currency })} />
                   </div>
                   <span className="text-[11px] text-faint">
                     Interest {formatCurrencyCompact(loan.totalInterest)}
@@ -358,6 +384,13 @@ export const FinancialsStep = ({
               label="Principal outstanding"
               value={newLoanPrincipal}
               onChange={(val) => setNewLoanPrincipal(val)}
+              currency={newLoanCurrency}
+              onCurrencyChange={setNewLoanCurrency}
+              presets={[
+                { label: '₹10L', value: 1000000 },
+                { label: '₹50L', value: 5000000 },
+                { label: '₹1Cr', value: 10000000 },
+              ]}
             />
             <NumberInput
               label="Interest rate"
@@ -365,6 +398,9 @@ export const FinancialsStep = ({
               onChange={(val) => setNewLoanRate(val)}
               suffix="%"
               step={0.25}
+              min={0}
+              max={30}
+              slider
             />
             <NumberInput
               label="Remaining tenure"
@@ -373,6 +409,8 @@ export const FinancialsStep = ({
               suffix="yrs"
               step={1}
               min={0}
+              max={40}
+              slider
             />
           </div>
           <div className="flex justify-end mt-4">

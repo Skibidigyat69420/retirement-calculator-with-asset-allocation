@@ -37,6 +37,8 @@ const PRIORITY_TONE: Record<GoalPriority, string> = {
   aspirational: 'text-muted',
 };
 
+import { useCalculator } from '../../context/CalculatorContext';
+
 export const GoalsStep = ({
   inputs,
   onAddGoal,
@@ -44,10 +46,12 @@ export const GoalsStep = ({
   onNext,
   onBack,
 }: GoalsStepProps) => {
+  const { assumptions } = useCalculator();
   const [name, setName] = useState('');
   const [targetAmount, setTargetAmount] = useState(0);
   const [yearsToGoal, setYearsToGoal] = useState(0);
   const [priority, setPriority] = useState<GoalPriority>('important');
+  const [currency, setCurrency] = useState('INR');
   const inflation = inputs.inflation || 0;
 
   const focusGoalForm = () => {
@@ -63,13 +67,18 @@ export const GoalsStep = ({
       priority,
       inflation: inflation || 7,
       recurring: false,
+      currency,
     });
     setName('');
     setTargetAmount(0);
     setYearsToGoal(0);
+    setCurrency('INR');
   };
 
-  const totalGoalsCost = inputs.goals.reduce((sum, g) => sum + (g.targetAmount || 0), 0);
+  const totalGoalsCost = inputs.goals.reduce((sum, g) => {
+    const spotRate = assumptions?.fx[g.currency || 'INR']?.spotRate || 1.0;
+    return sum + (g.targetAmount * spotRate || 0);
+  }, 0);
 
   return (
     <div className="space-y-8">
@@ -139,10 +148,20 @@ export const GoalsStep = ({
                   </div>
                   <div className="text-right shrink-0">
                     <div className="font-mono text-sm tabular-nums text-ink">
-                      {formatCurrency(g.targetAmount)}
+                      {onUpdateGoal ? (
+                        <CurrencyInput
+                          label=""
+                          value={g.targetAmount}
+                          onChange={(val) => onUpdateGoal(g.id, { targetAmount: val })}
+                          currency={g.currency || 'INR'}
+                          onCurrencyChange={(curr) => onUpdateGoal(g.id, { currency: curr })}
+                        />
+                      ) : (
+                        formatCurrency(g.targetAmount, 0, g.currency || 'INR')
+                      )}
                     </div>
                     <span className="text-[11px] text-faint">
-                      Future {formatCurrencyCompact(futureVal)}
+                      Future {formatCurrencyCompact(futureVal, g.currency || 'INR')}
                     </span>
                   </div>
                   <button
@@ -173,9 +192,16 @@ export const GoalsStep = ({
               />
             </div>
             <CurrencyInput
-              label="Target amount (today's ₹)"
+              label="Target amount (today's value)"
               value={targetAmount}
               onChange={(val) => setTargetAmount(val)}
+              currency={currency}
+              onCurrencyChange={setCurrency}
+              presets={[
+                { label: '₹10L', value: 1000000 },
+                { label: '₹50L', value: 5000000 },
+                { label: '₹1Cr', value: 10000000 },
+              ]}
             />
             <NumberInput
               label="Years to goal"
@@ -184,6 +210,7 @@ export const GoalsStep = ({
               suffix="yrs"
               min={0}
               max={40}
+              slider
             />
             <Select
               label="Priority tier"

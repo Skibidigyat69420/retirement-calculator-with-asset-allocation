@@ -222,7 +222,7 @@ export class CalculationService {
         for (const asset of input.assets) {
           const ccy = asset.currency || 'INR';
           if (ccy !== 'INR' && !assumptions.fx[ccy]) {
-            assumptions.fx[ccy] = { mean: 0, std: 0 };
+            assumptions.fx[ccy] = { mean: 0, std: 0, spotRate: 1.0 };
           }
         }
 
