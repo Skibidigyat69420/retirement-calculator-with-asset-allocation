@@ -665,27 +665,7 @@ body { background: var(--color-canvas); letter-spacing: -.01em; }
 }
 .brand-rail [aria-current="page"]::before { display: none; }
 
-/* Glass header bar */
-.glass-header {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border-color: var(--glass-border);
-}
-
-/* Glass cards and metric strip */
-.glass-card {
-  background: color-mix(in srgb, var(--color-raised) 88%, transparent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-card);
-}
-.metric-strip {
-  border: 1px solid var(--color-border);
-  background: rgba(255, 254, 250, 0.72);
-  box-shadow: var(--shadow-card);
-}
+/* These were overriding the utilities with undefined variables, they have been removed. */
 
 /* Hero orbit — dark feature panel */
 .hero-orbit {
