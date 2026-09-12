@@ -158,6 +158,28 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
               </kbd>
             </button>
 
+            {/* Developer / Demo Quick Actions */}
+            <div className="flex items-center gap-1.5 border-r border-border pr-2 sm:pr-3 mr-1">
+              <button
+                type="button"
+                onClick={() => loadDemoWorkspace()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-accent text-white hover:bg-accent-strong shadow-sm transition-all hover:-translate-y-px active:translate-y-0"
+                title="Load John Doe sample data"
+              >
+                <FlaskConical size={14} strokeWidth={2} />
+                <span className="text-[13px] font-semibold hidden sm:inline-block">Load Sample</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-negative bg-negative-soft hover:bg-negative hover:text-white transition-colors"
+                title="Reset workspace"
+              >
+                <RotateCcw size={14} strokeWidth={2} />
+                <span className="text-[13px] font-semibold hidden sm:inline-block">Reset</span>
+              </button>
+            </div>
+
             {/* Net worth — only when a plan is configured */}
             {wealthResult.isConfigured && (
               <div
