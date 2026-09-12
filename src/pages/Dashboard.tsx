@@ -98,7 +98,7 @@ export const Dashboard = () => {
   // ── Onboarding: a completely empty workspace is an invitation, not a report ──
   if (isPlanEmpty(inputs)) {
     return (
-      <div className="space-y-8 pb-10">
+      <div className="space-y-8 pb-10 aura-bg relative z-0">
         <motion.section {...fadeProps} className="flex flex-col gap-5 border-b border-border pb-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <div className="eyebrow mb-3">Sound Thesis / Practice desk</div>
@@ -185,7 +185,7 @@ export const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-10 pb-8">
+    <div className="space-y-10 pb-8 aura-bg relative z-0">
       {header}
 
       {!configured && (
@@ -198,48 +198,48 @@ export const Dashboard = () => {
         </Alert>
       )}
 
-      <motion.section {...fadeProps} aria-label="Practice pulse">
+      <motion.section {...fadeProps} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Practice pulse">
         <PracticePulse />
       </motion.section>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
-        <motion.section {...fadeProps} className="lg:col-span-3" aria-label="Priority queue">
+        <motion.section {...fadeProps} className="lg:col-span-3 glass-bento rounded-2xl p-6 lg:p-8" aria-label="Priority queue">
           <PriorityQueue />
         </motion.section>
         {planHealth && (
-          <motion.section {...fadeProps} className="lg:col-span-2" aria-label="Planning health">
+          <motion.section {...fadeProps} className="lg:col-span-2 glass-bento rounded-2xl p-6 lg:p-8" aria-label="Planning health">
             <PlanHealthScoreCard health={planHealth} />
           </motion.section>
         )}
       </div>
 
-      <motion.section {...fadeProps} aria-label="Recent activity">
+      <motion.section {...fadeProps} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Recent activity">
         <WhatChangedPanel />
       </motion.section>
 
       {recommendations.length > 0 && (
-        <motion.section {...fadeProps} aria-label="Recommendations">
+        <motion.section {...fadeProps} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Recommendations">
           <RecommendationsList recommendations={recommendations} />
         </motion.section>
       )}
 
       {configured && (
-        <motion.section {...fadeProps} aria-label="Wealth trajectory and allocation">
+        <motion.section {...fadeProps} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Wealth trajectory and allocation">
           <TrajectoryCharts />
         </motion.section>
       )}
 
       {configured && (
-        <motion.section {...fadeProps} aria-label="Goals and simulation">
+        <motion.section {...fadeProps} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Goals and simulation">
           <GoalsAndSimulation />
         </motion.section>
       )}
 
-      <motion.section {...fadeProps} aria-label="Advisory suite">
+      <motion.section {...fadeProps} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Advisory suite">
         <WorkflowSuite />
       </motion.section>
 
-      <motion.section {...fadeProps} aria-label="Saved plans">
+      <motion.section {...fadeProps} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Saved plans">
         <div className="max-w-xl">
           <PlanManager />
         </div>

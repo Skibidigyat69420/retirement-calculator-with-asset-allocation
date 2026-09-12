@@ -31,12 +31,14 @@ interface NetWorthEvolutionChartProps {
 const CHART_MARGIN = { top: 10, right: 10, left: 0, bottom: 0 };
 
 const TOOLTIP_STYLE = {
-  borderRadius: '14px',
-  border: '1px solid rgba(226, 232, 240, 0.9)',
-  backgroundColor: 'rgba(255, 255, 255, 0.96)',
-  backdropFilter: 'blur(10px)',
-  boxShadow: '0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04)',
-  padding: '10px 14px',
+  borderRadius: '16px',
+  border: '1px solid rgba(255, 255, 255, 0.1)',
+  backgroundColor: 'rgba(24, 24, 27, 0.8)',
+  backdropFilter: 'blur(20px)',
+  WebkitBackdropFilter: 'blur(20px)',
+  boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3)',
+  padding: '12px 16px',
+  color: '#FAFAFA',
 };
 
 const ACTIVE_DOT = { r: 5 };
@@ -85,9 +87,16 @@ export const NetWorthEvolutionChart = ({ data, ariaLabel, summary }: NetWorthEvo
           <AreaChart data={data} margin={CHART_MARGIN}>
             <defs>
               <linearGradient id="dashNominalFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={COLORS.navy} stopOpacity={0.12} />
-                <stop offset="95%" stopColor={COLORS.navy} stopOpacity={0} />
+                <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4} />
+                <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
               </linearGradient>
+              <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="6" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
             <XAxis
@@ -115,9 +124,10 @@ export const NetWorthEvolutionChart = ({ data, ariaLabel, summary }: NetWorthEvo
                 type="monotone"
                 dataKey="nominal"
                 name="Nominal Corpus"
-                stroke={COLORS.navy}
-                strokeWidth={2.5}
+                stroke="#6366F1"
+                strokeWidth={3}
                 fill="url(#dashNominalFill)"
+                filter="url(#glow)"
               />
             )}
             {mode !== 'nominal' && (
@@ -125,11 +135,12 @@ export const NetWorthEvolutionChart = ({ data, ariaLabel, summary }: NetWorthEvo
                 type="monotone"
                 dataKey="real"
                 name="Real Corpus (Purchasing Power)"
-                stroke={COLORS.gold}
+                stroke="#06B6D4"
                 strokeWidth={2}
                 strokeDasharray="6 4"
                 dot={false}
                 activeDot={ACTIVE_DOT}
+                filter="url(#glow)"
               />
             )}
           </AreaChart>

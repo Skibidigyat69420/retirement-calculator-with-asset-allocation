@@ -10,59 +10,54 @@
      indigo accents, crisp borders, and clean shadows.
      ───────────────────────────────────────────────────────────── */
 
-  /* Surfaces (layered: canvas → sunken → surface → raised → elevated) */
-  --color-canvas: #FAFAFA;
-  --color-background: #FAFAFA;
+  /* ── Light Mode: Frosty & High-Contrast ── */
+  --color-canvas: #F8FAFC;
+  --color-background: #F8FAFC;
   --color-surface: #FFFFFF;
   --color-raised: #FFFFFF;
-  --color-sunken: #F3F4F6;
-  --color-inset: #F9FAFB;
+  --color-sunken: #F1F5F9;
+  --color-inset: #F8FAFC;
   --color-elevated: #FFFFFF;
-  --color-deep: #111827;
-  --color-overlay: rgba(17, 24, 39, 0.45);
+  --color-deep: #020617;
+  --color-overlay: rgba(15, 23, 42, 0.45);
 
-  /* Hairlines & borders — cool gray */
-  --color-border: #E5E7EB;
-  --color-border-strong: #D1D5DB;
-  --color-border-subtle: #F3F4F6;
+  --color-border: #E2E8F0;
+  --color-border-strong: #CBD5E1;
+  --color-border-subtle: #F1F5F9;
 
-  /* Ink (text) */
-  --color-ink: #111827;
-  --color-ink-soft: #374151;
-  --color-muted: #6B7280;
-  --color-faint: #9CA3AF;
+  --color-ink: #0F172A;
+  --color-ink-soft: #334155;
+  --color-muted: #64748B;
+  --color-faint: #94A3B8;
 
-  /* Accent — indigo */
-  --color-accent: #4F46E5;
-  --color-accent-strong: #4338CA;
+  /* Accent — Neon Indigo */
+  --color-accent: #6366F1;
+  --color-accent-strong: #4F46E5;
   --color-accent-soft: #E0E7FF;
   --color-accent-softer: #EEF2FF;
 
-  /* Warm accent — replaced with a cool teal/blue for reference lines */
   --color-brass: #0EA5E9;
   --color-brass-strong: #0284C7;
   --color-brass-soft: #E0F2FE;
 
-  /* Semantic status colors */
   --color-positive: #10B981;
   --color-positive-soft: #D1FAE5;
-  --color-negative: #EF4444;
-  --color-negative-soft: #FEE2E2;
+  --color-negative: #F43F5E;
+  --color-negative-soft: #FFE4E6;
   --color-warning: #F59E0B;
   --color-warning-soft: #FEF3C7;
   --color-info: #3B82F6;
   --color-info-soft: #DBEAFE;
 
-  /* Focus ring */
-  --color-focus-ring: #6366F1;
+  --color-focus-ring: #818CF8;
 
-  /* Legacy token aliases — mapped to the new vocabulary */
+  /* Legacy token aliases */
   --color-cream: var(--color-background);
   --color-paper: var(--color-surface);
   --color-warm: var(--color-sunken);
   --color-warm-dark: var(--color-muted);
   --color-navy: var(--color-deep);
-  --color-navy-dark: #030712;
+  --color-navy-dark: #000000;
   --color-gold: var(--color-brass);
   --color-red: var(--color-negative);
   --color-emerald: var(--color-positive);
@@ -75,12 +70,13 @@
   --font-serif: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Radius — quiet, not bubbly */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  /* Radius — Smooth and bubbly for Bento */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
 
   /* Spacing scale reference (Tailwind defaults match) */
   --space-1: 0.25rem;
@@ -97,79 +93,70 @@
   --space-24: 6rem;
 
   /* Quiet depth — crisp modern shadows */
-  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-  --shadow-card-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-  --shadow-raised: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --shadow-elevated: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  --shadow-card-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  --shadow-raised: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-elevated: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   --shadow-popover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  --shadow-glow: 0 0 12px 0 rgba(79, 70, 229, 0.2);
+  --shadow-glow: 0 0 15px 0 rgba(99, 102, 241, 0.4);
 
   /* Motion */
   --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-emphasis: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-fast: 140ms;
-  --duration-normal: 220ms;
-
-  /* Warm-neutral palette overrides (legacy component usage) */
-  --color-zinc-400: #8E9188;
-  --color-zinc-500: #6E7268;
-  --color-emerald-500: #667A63;
-  --color-emerald-600: #4A5C47;
-  --color-emerald-50: #EFF3EC;
-  --color-rose-500: #A65954;
-  --color-rose-600: #96514C;
-  --color-amber-500: #B3945A;
-  --color-amber-600: #96793F;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
 }
 
-/* ── Dark Mode: the private study / premium terminal ── */
+/* ── Dark Mode: Aura & Insane Neon ── */
 .dark {
-  --color-canvas: #0E100E;
-  --color-background: #0E100E;
-  --color-surface: #151815;
-  --color-raised: #1B1F1B;
-  --color-sunken: #0A0C0A;
-  --color-inset: #101310;
-  --color-elevated: #222722;
-  --color-deep: #F1F1EA;
-  --color-overlay: rgba(5, 6, 5, 0.65);
+  --color-canvas: #09090B;
+  --color-background: #09090B;
+  --color-surface: rgba(24, 24, 27, 0.6);
+  --color-raised: rgba(39, 39, 42, 0.6);
+  --color-sunken: rgba(9, 9, 11, 0.8);
+  --color-inset: rgba(0, 0, 0, 0.5);
+  --color-elevated: rgba(39, 39, 42, 0.8);
+  --color-deep: #FAFAFA;
+  --color-overlay: rgba(0, 0, 0, 0.7);
 
-  --color-border: #2A302A;
-  --color-border-strong: #3B423B;
-  --color-border-subtle: #202520;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.15);
+  --color-border-subtle: rgba(255, 255, 255, 0.04);
 
-  --color-ink: #F1F1EA;
-  --color-ink-soft: #C9CCC2;
-  --color-muted: #9BA095;
-  --color-faint: #9BA095;
+  --color-ink: #FFFFFF;
+  --color-ink-soft: #A1A1AA;
+  --color-muted: #71717A;
+  --color-faint: #52525B;
 
-  --color-accent: #8EA889;
-  --color-accent-strong: #A9C0A3;
-  --color-accent-soft: rgba(142, 168, 137, 0.14);
-  --color-accent-softer: rgba(142, 168, 137, 0.08);
+  --color-accent: #6366F1;
+  --color-accent-strong: #818CF8;
+  --color-accent-soft: rgba(99, 102, 241, 0.15);
+  --color-accent-softer: rgba(99, 102, 241, 0.08);
 
-  --color-brass: #C5A66D;
-  --color-brass-strong: #D8BC85;
-  --color-brass-soft: rgba(197, 166, 109, 0.12);
+  --color-brass: #06B6D4;
+  --color-brass-strong: #22D3EE;
+  --color-brass-soft: rgba(6, 182, 212, 0.15);
 
-  --color-positive: #96B99E;
-  --color-positive-soft: rgba(150, 185, 158, 0.12);
-  --color-negative: #C88A84;
-  --color-negative-soft: rgba(200, 138, 132, 0.12);
-  --color-warning: #CEA267;
-  --color-warning-soft: rgba(206, 162, 103, 0.12);
-  --color-info: #93A3B5;
-  --color-info-soft: rgba(147, 163, 181, 0.12);
+  --color-positive: #10B981;
+  --color-positive-soft: rgba(16, 185, 129, 0.15);
+  --color-negative: #F43F5E;
+  --color-negative-soft: rgba(244, 63, 94, 0.15);
+  --color-warning: #F59E0B;
+  --color-warning-soft: rgba(245, 158, 11, 0.15);
+  --color-info: #3B82F6;
+  --color-info-soft: rgba(59, 130, 246, 0.15);
 
-  --color-focus-ring: #8EA889;
+  --color-focus-ring: #818CF8;
 
-  --color-navy: #F1F1EA;
+  --color-navy: #FAFAFA;
   --color-navy-dark: #FFFFFF;
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow-card-hover: 0 4px 14px -4px rgba(0, 0, 0, 0.5);
-  --shadow-elevated: 0 12px 32px -10px rgba(0, 0, 0, 0.55);
-  --shadow-popover: 0 24px 56px -12px rgba(0, 0, 0, 0.65);
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.7), 0 0 15px rgba(99, 102, 241, 0.2);
+  --shadow-elevated: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+  --shadow-popover: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+  --shadow-glow: 0 0 20px 0 rgba(99, 102, 241, 0.6);
 }
 
 @layer base {
@@ -287,51 +274,73 @@
     font-family: var(--font-mono);
   }
 
-  /* Micro-grid / graph paper motif — brand signature, extremely quiet */
+  /* Micro-grid / graph paper motif — brand signature */
   .grid-motif {
     background-image:
       linear-gradient(to right, var(--color-border-subtle) 1px, transparent 1px),
       linear-gradient(to bottom, var(--color-border-subtle) 1px, transparent 1px);
-    background-size: 32px 32px;
+    background-size: 40px 40px;
+    mask-image: radial-gradient(circle at center, black, transparent 80%);
   }
   .dark .grid-motif {
     background-image:
-      linear-gradient(to right, rgba(142, 168, 137, 0.06) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(142, 168, 137, 0.06) 1px, transparent 1px);
+      linear-gradient(to right, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
   }
 
-  /* Selective identity gradients — dashboard hero, empty states, covers */
-  .hero-gradient {
-    background:
-      radial-gradient(ellipse 90% 70% at 15% 0%, var(--color-accent-soft) 0%, transparent 55%),
-      radial-gradient(ellipse 70% 60% at 90% 100%, var(--color-brass-soft) 0%, transparent 60%),
-      var(--color-surface);
+  /* ── INSANE AURA ANIMATIONS ── */
+  @keyframes auraPulse {
+    0% { transform: scale(1) translate(0, 0); opacity: 0.3; }
+    50% { transform: scale(1.1) translate(2%, 2%); opacity: 0.5; }
+    100% { transform: scale(1) translate(0, 0); opacity: 0.3; }
   }
-  .dark .hero-gradient {
-    background:
-      radial-gradient(ellipse 90% 70% at 15% 0%, rgba(142, 168, 137, 0.08) 0%, transparent 55%),
-      radial-gradient(ellipse 70% 60% at 90% 100%, rgba(197, 166, 109, 0.06) 0%, transparent 60%),
-      var(--color-surface);
+  
+  .aura-bg {
+    position: relative;
+    overflow: hidden;
+  }
+  .aura-bg::before, .aura-bg::after {
+    content: "";
+    position: absolute;
+    width: 60vw;
+    height: 60vw;
+    border-radius: 50%;
+    filter: blur(100px);
+    z-index: -1;
+    animation: auraPulse 15s ease-in-out infinite;
+    opacity: 0;
+    transition: opacity 2s ease;
+  }
+  .dark .aura-bg::before {
+    opacity: 0.4;
+    background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 60%);
+    top: -20%; left: -10%;
+  }
+  .dark .aura-bg::after {
+    opacity: 0.3;
+    background: radial-gradient(circle, rgba(6,182,212,0.2) 0%, transparent 60%);
+    bottom: -20%; right: -10%;
+    animation-delay: -7.5s;
   }
 
-  .hero-gradient-dark-panel {
-    background:
-      radial-gradient(ellipse 80% 60% at 20% 0%, rgba(142, 168, 137, 0.14) 0%, transparent 55%),
-      linear-gradient(160deg, #1A211A 0%, #12160F 100%);
-  }
-
-  /* Frosted floating panels */
-  .glass-card {
-    background: color-mix(in srgb, var(--color-raised) 88%, transparent);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+  /* Frosted floating panels (Bento Glass) */
+  .glass-bento {
+    background: var(--color-surface);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border: 1px solid var(--color-border);
     box-shadow: var(--shadow-card);
+    transition: transform var(--duration-normal) var(--ease-standard), box-shadow var(--duration-normal) var(--ease-standard);
   }
+  .glass-bento:hover {
+    box-shadow: var(--shadow-card-hover);
+    border-color: var(--color-border-strong);
+  }
+
   .glass-header {
-    background: color-mix(in srgb, var(--color-canvas) 82%, transparent);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: color-mix(in srgb, var(--color-canvas) 60%, transparent);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border-bottom: 1px solid var(--color-border);
   }
 
@@ -344,7 +353,7 @@
   .num-hero {
     font-family: var(--font-display);
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.03em;
     line-height: 1.05;
   }
 }
@@ -637,10 +646,7 @@ body { background: var(--color-canvas); letter-spacing: -.01em; }
 
 /* Subtle radial glow on the canvas */
 .app-canvas {
-  background:
-    radial-gradient(ellipse 60% 50% at 85% -5%, rgba(79, 70, 229, 0.05), transparent),
-    radial-gradient(ellipse 40% 40% at 10% 90%, rgba(79, 70, 229, 0.03), transparent),
-    var(--color-canvas);
+  background: var(--color-canvas);
 }
 
 /* Sidebar rail — deep charcoal with warm undertone */

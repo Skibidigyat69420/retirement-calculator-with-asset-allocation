@@ -4,7 +4,7 @@ import { cn } from '../../lib/utils';
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
-  variant?: 'default' | 'navy' | 'gold' | 'subtle' | 'elevated';
+  variant?: 'default' | 'navy' | 'gold' | 'subtle' | 'elevated' | 'bento';
 }
 
 export const Card = ({
@@ -14,17 +14,18 @@ export const Card = ({
   ...props
 }: CardProps) => {
   const variants = {
-    default: 'bg-raised border border-border shadow-card text-ink',
-    elevated: 'bg-raised border border-border shadow-elevated text-ink',
-    navy: 'bg-sunken border border-border-strong text-ink',
-    gold: 'bg-brass-soft border border-brass/30 text-ink',
-    subtle: 'bg-surface border border-border-subtle text-ink-soft',
+    default: 'glass-bento text-ink',
+    elevated: 'glass-bento shadow-elevated text-ink',
+    navy: 'bg-sunken border border-border-strong text-ink rounded-2xl',
+    gold: 'bg-brass-soft border border-brass/30 text-ink rounded-2xl',
+    subtle: 'bg-surface border border-border-subtle text-ink-soft rounded-2xl',
+    bento: 'glass-bento text-ink',
   };
 
   return (
     <div
       {...props}
-      className={cn('rounded-lg p-5 md:p-6 print:break-inside-avoid', variants[variant], className)}
+      className={cn('rounded-2xl p-5 md:p-6 print:break-inside-avoid', variants[variant], className)}
     >
       {children}
     </div>

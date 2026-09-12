@@ -35,7 +35,7 @@ export const PlanManager = () => {
   };
 
   return (
-    <div className="p-4 rounded-lg bg-raised border border-border shadow-card space-y-4">
+    <div className="space-y-4">
       <div className="flex items-center gap-2 text-sm font-semibold tracking-tight text-ink">
         <FolderOpen size={15} strokeWidth={1.6} className="text-muted" aria-hidden="true" />
         <span>Saved plans ({savedPlans.length})</span>
