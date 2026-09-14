@@ -4,7 +4,7 @@ import { CalculatorProvider } from './context/CalculatorContext';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './lib/theme';
 import { Layout } from './components/layout/Layout';
-import { Skeleton } from './components/Skeleton';
+
 import { AuthPage } from './pages/AuthPage';
 import { useAuth } from './context/AuthContext';
 

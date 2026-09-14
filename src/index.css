@@ -657,6 +657,18 @@ body { letter-spacing: -.01em; }
   color: var(--color-ink);
 }
 
+/* Non-inverting charcoal panel — descendants re-tinted automatically.
+   Use for dark feature cards that must stay charcoal in both themes. */
+.ink-panel {
+  background: #20231F;
+  color: #F4F2ED;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.ink-panel :where(.text-ink, .text-ink-soft, .text-raised) { color: #F4F2ED; }
+.ink-panel :where(.text-muted, .text-faint) { color: #9BA095; }
+.ink-panel :where(.border-border, .border-border-subtle) { border-color: rgba(255, 255, 255, 0.1); }
+.ink-panel :where(.bg-raised\/10) { background-color: rgba(244, 242, 237, 0.08); }
+
 /* Global interactive transitions */
 button, a {
   transition:

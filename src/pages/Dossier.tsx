@@ -76,7 +76,7 @@ export const Dossier = () => {
             <div className="flex items-start justify-between gap-4 mb-16">
               <div>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-brass text-deep flex items-center justify-center font-display text-lg shadow-sm">
+                  <div className="w-10 h-10 rounded-lg bg-brass text-on-inkfill flex items-center justify-center font-display text-lg shadow-sm">
                     ST
                   </div>
                   <span className="font-display text-3xl hero-title print:text-ink">Sound Thesis</span>

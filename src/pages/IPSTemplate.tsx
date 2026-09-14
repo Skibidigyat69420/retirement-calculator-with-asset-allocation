@@ -605,7 +605,7 @@ export const IPSTemplate = () => {
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200',
               isLinkedToPlan
-                ? 'bg-deep text-raised shadow-xs'
+                ? 'bg-inkfill text-on-inkfill shadow-xs'
                 : 'text-ink-soft hover:text-ink',
             )}
           >
@@ -618,7 +618,7 @@ export const IPSTemplate = () => {
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200',
               !isLinkedToPlan
-                ? 'bg-deep text-raised shadow-xs'
+                ? 'bg-inkfill text-on-inkfill shadow-xs'
                 : 'text-ink-soft hover:text-ink',
             )}
           >
@@ -1160,7 +1160,7 @@ export const IPSTemplate = () => {
               <Button variant="outline" className="flex-1 bg-raised" onClick={handlePrint}>
                 <Printer size={15} className="mr-1.5" /> Print Policy
               </Button>
-              <Button className="flex-1 bg-deep hover:bg-deep text-raised" onClick={handleDownload}>
+              <Button className="flex-1 bg-inkfill hover:bg-inkfill text-on-inkfill" onClick={handleDownload}>
                 <Download size={15} className="mr-1.5" /> Export .md
               </Button>
             </div>
@@ -1296,12 +1296,12 @@ export const IPSTemplate = () => {
             {/* Section 1: Client Profile & Governance Scope */}
             <div className="space-y-3">
               <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
-                <span className="w-5 h-5 rounded-full bg-deep text-raised text-[10px] flex items-center justify-center font-sans font-bold">1</span>
+                <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">1</span>
                 Client Profile & Governance Scope
               </h2>
               <div className="overflow-x-auto rounded-xl border border-border" tabIndex={0} role="region" aria-label="Client Profile table">
                 <table className="w-full text-left text-xs sm:text-sm">
-                  <tbody className="divide-y divide-zinc-100">
+                  <tbody className="divide-y divide-border-subtle">
                     <tr className="hover:bg-surface/50">
                       <td className="py-2 px-3 font-semibold text-ink-soft w-1/3">Client Name(s)</td>
                       <td className="py-2 px-3 font-medium text-ink">{effectiveClient.name || '[To be completed]'}</td>
@@ -1334,7 +1334,7 @@ export const IPSTemplate = () => {
             {/* Section 2: Investment Objectives & Hurdle Rates */}
             <div className="space-y-3">
               <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
-                <span className="w-5 h-5 rounded-full bg-deep text-raised text-[10px] flex items-center justify-center font-sans font-bold">2</span>
+                <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">2</span>
                 Investment Objectives & Return Hurdle
               </h2>
               <div className="bg-surface/70 border border-border rounded-xl p-4 space-y-2 text-sm text-ink leading-relaxed">
@@ -1374,7 +1374,7 @@ export const IPSTemplate = () => {
             {/* Section 3: Portfolio Constraints & Liquidity Architecture */}
             <div className="space-y-3">
               <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
-                <span className="w-5 h-5 rounded-full bg-deep text-raised text-[10px] flex items-center justify-center font-sans font-bold">3</span>
+                <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">3</span>
                 Portfolio Constraints & Liquidity Horizons
               </h2>
               <div className="space-y-2 text-sm text-ink-soft leading-relaxed">
@@ -1406,7 +1406,7 @@ export const IPSTemplate = () => {
             {/* Section 4: Priority-Tiered Goals & Liabilities */}
             <div className="space-y-3">
               <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
-                <span className="w-5 h-5 rounded-full bg-deep text-raised text-[10px] flex items-center justify-center font-sans font-bold">4</span>
+                <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">4</span>
                 Priority-Tiered Goals & Liabilities
               </h2>
               <div className="overflow-x-auto rounded-xl border border-border" tabIndex={0} role="region" aria-label="Goals and Liabilities table">
@@ -1419,7 +1419,7 @@ export const IPSTemplate = () => {
                       <th className="py-2.5 px-3 text-right">Target Liability (Today)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100">
+                  <tbody className="divide-y divide-border-subtle">
                     {effectiveGoals.length === 0 && (
                       <tr>
                         <td colSpan={4} className="py-4 text-center text-muted italic text-xs">
@@ -1435,7 +1435,7 @@ export const IPSTemplate = () => {
                             className={cn(
                               'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider',
                               g.priority === 'essential'
-                                ? 'bg-deep text-raised'
+                                ? 'bg-inkfill text-on-inkfill'
                                 : g.priority === 'important'
                                 ? 'bg-sunken text-ink border border-border'
                                 : 'bg-surface text-ink-soft border border-border',
@@ -1459,7 +1459,7 @@ export const IPSTemplate = () => {
             <div className="space-y-3">
               <div className="flex items-center justify-between border-b border-border pb-1.5">
                 <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-deep text-raised text-[10px] flex items-center justify-center font-sans font-bold">5</span>
+                  <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">5</span>
                   Strategic Asset Allocation (SAA) & Rebalancing Corridors
                 </h2>
                 <div className="flex items-center gap-2 text-xs">
@@ -1487,7 +1487,7 @@ export const IPSTemplate = () => {
                       <th className="py-2.5 px-3 text-center">Policy Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100">
+                  <tbody className="divide-y divide-border-subtle">
                     {(Object.keys(categoryLabels) as AssetCategory[]).map((cat) => {
                       const target = effectiveAllocation[cat] || 0;
                       const current = effectiveCurrentAllocation[cat] || 0;
@@ -1574,7 +1574,7 @@ export const IPSTemplate = () => {
             {/* Section 6: Balance Sheet Inventory & Holdings Schedule */}
             <div className="space-y-3">
               <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
-                <span className="w-5 h-5 rounded-full bg-deep text-raised text-[10px] flex items-center justify-center font-sans font-bold">6</span>
+                <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">6</span>
                 Balance Sheet Inventory & Asset Schedule
               </h2>
               <div className="overflow-x-auto rounded-xl border border-border" tabIndex={0} role="region" aria-label="Current Holdings table">
@@ -1587,7 +1587,7 @@ export const IPSTemplate = () => {
                       <th className="py-2.5 px-3 text-right">Portfolio Share</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100">
+                  <tbody className="divide-y divide-border-subtle">
                     {effectiveAssets.length === 0 && (
                       <tr>
                         <td colSpan={4} className="py-4 text-center text-muted italic text-xs">
@@ -1627,7 +1627,7 @@ export const IPSTemplate = () => {
             {/* Section 7: Currency Policy & Hedging Architecture */}
             <div className="space-y-3">
               <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
-                <span className="w-5 h-5 rounded-full bg-deep text-raised text-[10px] flex items-center justify-center font-sans font-bold">7</span>
+                <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">7</span>
                 Currency Architecture & Hedging Mandate
               </h2>
               <div className="bg-surface/70 border border-border rounded-xl p-4 space-y-2 text-sm text-ink leading-relaxed">
@@ -1650,7 +1650,7 @@ export const IPSTemplate = () => {
             {/* Section 8: Rebalancing Protocols & Governance Rules */}
             <div className="space-y-3">
               <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
-                <span className="w-5 h-5 rounded-full bg-deep text-raised text-[10px] flex items-center justify-center font-sans font-bold">8</span>
+                <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">8</span>
                 Execution Protocols & Rebalancing Rules
               </h2>
               <div className="space-y-2.5 text-sm text-ink-soft leading-relaxed">
@@ -1681,7 +1681,7 @@ export const IPSTemplate = () => {
             {effectiveState.notes && (
               <div className="space-y-3">
                 <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
-                  <span className="w-5 h-5 rounded-full bg-deep text-raised text-[10px] flex items-center justify-center font-sans font-bold">9</span>
+                  <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">9</span>
                   Special Covenants & Mandate Exclusions
                 </h2>
                 <div className="bg-surface/70 border border-border rounded-xl p-4 text-sm text-ink leading-relaxed">
@@ -1694,7 +1694,7 @@ export const IPSTemplate = () => {
             <div className="pt-6 border-t-2 border-ink space-y-6">
               <div>
                 <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-deep text-raised text-[10px] flex items-center justify-center font-sans font-bold">10</span>
+                  <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">10</span>
                   Fiduciary Execution & Ratification
                 </h2>
                 <p className="text-xs text-muted mt-1 italic">

@@ -347,7 +347,7 @@ export const GoalCalculator = () => {
                       <button
                         type="button"
                         onClick={handleDeleteGoal}
-                        className="px-2 py-0.5 bg-negative hover:opacity-90 text-deep rounded-sm text-[11px] font-semibold transition-colors cursor-pointer"
+                        className="px-2 py-0.5 bg-negative hover:opacity-90 text-on-inkfill rounded-sm text-[11px] font-semibold transition-colors cursor-pointer"
                       >
                         Confirm
                       </button>

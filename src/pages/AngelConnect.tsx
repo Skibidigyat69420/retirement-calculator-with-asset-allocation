@@ -385,7 +385,7 @@ export const AngelConnect = () => {
               {creds.totpSecret && (
                 <div className="p-3 bg-surface rounded-xl border border-border flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-deep/10 flex items-center justify-center text-ink font-bold">
+                    <div className="w-8 h-8 rounded-lg bg-inkfill/10 flex items-center justify-center text-ink font-bold">
                       <Clock size={16} />
                     </div>
                     <div>
@@ -502,7 +502,7 @@ export const AngelConnect = () => {
 
           {/* Right Col: Active Profile & Info Card */}
           <div className="space-y-6">
-            <Card className="bg-deep text-raised relative overflow-hidden">
+            <Card className="ink-panel relative overflow-hidden">
               <div className="absolute top-0 right-0 p-6 opacity-10">
                 <ShieldCheck size={120} />
               </div>
@@ -812,7 +812,7 @@ export const AngelConnect = () => {
             <p className="text-xs text-ink-soft">
               Run this script directly in your terminal to test authentication and stream market quotes without the browser:
             </p>
-            <div className="bg-deep text-faint p-4 rounded-xl font-mono text-xs overflow-x-auto">
+            <div className="bg-inkfill text-faint p-4 rounded-xl font-mono text-xs overflow-x-auto">
               <code>
                 # Run with pre-configured settings
                 <br />
@@ -840,7 +840,7 @@ export const AngelConnect = () => {
             <p className="text-xs text-ink-soft">
               Use the Python client for algorithmic trading or automated data pipelines:
             </p>
-            <div className="bg-deep text-faint p-4 rounded-xl font-mono text-xs overflow-x-auto">
+            <div className="bg-inkfill text-faint p-4 rounded-xl font-mono text-xs overflow-x-auto">
               <code>
                 # Python execution
                 <br />
