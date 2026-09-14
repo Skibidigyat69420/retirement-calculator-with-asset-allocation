@@ -18,7 +18,7 @@ const dest = resolve(here, '..', '_staged');
 
 const copies = [
   ['public/data/market-data.json', 'public/data/market-data.json'],
-  ['ips', 'ips'],
+  ['docs/ips', 'ips'],
   ['data/angel_one', 'data/angel_one'],
 ];
 

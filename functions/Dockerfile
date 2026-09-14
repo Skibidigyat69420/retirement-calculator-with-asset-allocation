@@ -12,7 +12,7 @@ RUN cd functions && npm ci
 COPY functions ./functions
 COPY api ./api
 COPY public/data ./public/data
-COPY ips ./ips
+COPY docs/ips ./ips
 COPY data/angel_one ./data/angel_one
 RUN cd functions && npm run build:standalone
 
