@@ -111,7 +111,7 @@ export const StressTestSimulator = () => {
               onClick={() => handleSelectPreset(preset.id)}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                 !isCustom && selectedPresetId === preset.id
-                  ? 'bg-deep text-deep shadow-xs'
+                  ? 'bg-inkfill text-on-inkfill shadow-xs'
                   : 'text-ink-soft hover:text-ink hover:bg-sunken/60'
               }`}
             >

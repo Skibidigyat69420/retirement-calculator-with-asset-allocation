@@ -195,7 +195,7 @@ export const ReversePlanning = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-subtle pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="p-1.5 bg-deep text-deep rounded-lg">
+              <span className="p-1.5 bg-inkfill text-on-inkfill rounded-lg">
                 <Compass size={18} />
               </span>
               <h3 className="text-xl font-sans font-bold text-ink tracking-tight">
@@ -229,7 +229,7 @@ export const ReversePlanning = () => {
                   onClick={() => setTargetCorpus(amt)}
                   className={`px-2.5 py-1 text-[11px] rounded-lg font-semibold transition-colors cursor-pointer ${
                     targetCorpus === amt
-                      ? 'bg-deep text-deep shadow-2xs'
+                      ? 'bg-inkfill text-on-inkfill shadow-2xs'
                       : 'bg-raised border border-border text-ink-soft hover:bg-sunken hover:border-border'
                   }`}
                 >
@@ -258,7 +258,7 @@ export const ReversePlanning = () => {
                   onClick={() => handleTargetAgeChange(age)}
                   className={`px-2.5 py-1 text-[11px] rounded-lg font-semibold transition-colors cursor-pointer ${
                     targetAge === age
-                      ? 'bg-deep text-deep shadow-2xs'
+                      ? 'bg-inkfill text-on-inkfill shadow-2xs'
                       : 'bg-raised border border-border text-ink-soft hover:bg-sunken hover:border-border'
                   }`}
                 >
@@ -307,7 +307,7 @@ export const ReversePlanning = () => {
                 className={`w-full text-xs font-semibold ${
                   isSipAlreadyApplied
                     ? 'border-accent text-accent-strong bg-accent-softer'
-                    : 'bg-deep text-deep hover:bg-deep'
+                    : 'bg-inkfill text-on-inkfill hover:bg-inkfill'
                 }`}
               >
                 {isSipAlreadyApplied ? (
@@ -342,7 +342,7 @@ export const ReversePlanning = () => {
                 className={`w-full text-xs font-semibold ${
                   isAgeAlreadyApplied
                     ? 'border-accent text-accent-strong bg-accent-softer'
-                    : 'bg-deep text-deep hover:bg-deep'
+                    : 'bg-inkfill text-on-inkfill hover:bg-inkfill'
                 }`}
               >
                 {isAgeAlreadyApplied ? (
@@ -377,7 +377,7 @@ export const ReversePlanning = () => {
                 className={`w-full text-xs font-semibold ${
                   isSpendAlreadyApplied
                     ? 'border-accent text-accent-strong bg-accent-softer'
-                    : 'bg-deep text-deep hover:bg-deep'
+                    : 'bg-inkfill text-on-inkfill hover:bg-inkfill'
                 }`}
               >
                 {isSpendAlreadyApplied ? (
@@ -634,7 +634,7 @@ export const ReversePlanning = () => {
                     className={
                       isApplied
                         ? 'border-accent text-accent-strong bg-accent-softer text-xs font-semibold'
-                        : 'bg-deep text-deep hover:bg-deep text-xs font-semibold'
+                        : 'bg-inkfill text-on-inkfill hover:bg-inkfill text-xs font-semibold'
                     }
                   >
                     {isApplied ? (

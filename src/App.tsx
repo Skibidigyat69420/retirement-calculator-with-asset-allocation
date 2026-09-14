@@ -55,12 +55,12 @@ const UIReview = lazyNamed(() => import('./pages/UIReview'), 'UIReview');
 
 function WorkspaceRoutes() {
   const { ready, user } = useAuth();
-  if (!ready) return <div className="auth-loading"><div className="auth-loading-mark">ST</div><span>Loading your workspace…</span></div>;
+  if (!ready) return null;
   if (!user) return <Routes><Route path="/signup" element={<AuthPage mode="sign-up" />} /><Route path="/forgot-password" element={<AuthPage mode="reset" />} /><Route path="*" element={<AuthPage />} /></Routes>;
   return (
     <CalculatorProvider>
       <Layout>
-        <Suspense fallback={<Skeleton />}>
+        <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<Practitioner />} />
             <Route path="/overview" element={<Dashboard />} />

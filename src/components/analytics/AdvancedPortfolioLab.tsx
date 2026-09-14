@@ -174,7 +174,7 @@ export const AdvancedPortfolioLab = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-subtle pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="p-1.5 bg-deep text-deep rounded-lg">
+              <span className="p-1.5 bg-inkfill text-on-inkfill rounded-lg">
                 <Layers size={18} />
               </span>
               <h3 className="text-xl font-sans font-bold text-ink tracking-tight">
@@ -189,7 +189,7 @@ export const AdvancedPortfolioLab = () => {
             </p>
           </div>
 
-          <Button onClick={handleApplyFinalAllocation} className="bg-deep text-deep hover:bg-deep text-xs">
+          <Button onClick={handleApplyFinalAllocation} className="bg-inkfill text-on-inkfill hover:bg-inkfill text-xs">
             Apply Final Weights <ArrowRight size={13} className="ml-1" />
           </Button>
         </div>
@@ -230,7 +230,7 @@ export const AdvancedPortfolioLab = () => {
                 onClick={() => setActiveModel(m.id as any)}
                 className={`p-4 rounded-xl border text-left transition-all ${
                   activeModel === m.id
-                    ? 'bg-deep text-deep border-ink shadow-sm'
+                    ? 'bg-inkfill text-on-inkfill border-white/15 shadow-sm'
                     : 'bg-raised border-border text-ink-soft hover:border-border'
                 }`}
               >

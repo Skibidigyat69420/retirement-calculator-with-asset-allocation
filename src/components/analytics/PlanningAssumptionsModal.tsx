@@ -161,7 +161,7 @@ export const PlanningAssumptionsModal = ({ isOpen, onClose }: PlanningAssumption
           <Button variant="outline" size="sm" onClick={onClose}>
             Cancel
           </Button>
-          <Button size="sm" onClick={handleSave} className="bg-deep text-deep hover:bg-deep">
+          <Button size="sm" onClick={handleSave} className="bg-inkfill text-on-inkfill hover:bg-inkfill">
             Apply Methodology
           </Button>
         </div>

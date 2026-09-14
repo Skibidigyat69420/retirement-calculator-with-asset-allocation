@@ -61,7 +61,7 @@ export const PlanVsReality = () => {
             variant="primary"
             size="sm"
             onClick={handleRebalance}
-            className="text-xs h-8 px-3 gap-1.5 bg-deep text-deep hover:bg-deep self-start sm:self-center shrink-0"
+            className="text-xs h-8 px-3 gap-1.5 bg-inkfill text-on-inkfill hover:bg-inkfill self-start sm:self-center shrink-0"
           >
             <RefreshCw size={13} />
             Correct Allocation Drift
