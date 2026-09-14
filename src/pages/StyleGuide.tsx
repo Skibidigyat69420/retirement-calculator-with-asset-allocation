@@ -339,7 +339,7 @@ export const StyleGuide = () => {
             <SectionHeader title="Sunken panel" description="Recessed well — tracks, chips." />
             <p className="text-sm text-muted">Holds secondary content down, not up.</p>
           </div>
-          <div className="rounded-lg p-5 bg-deep text-ink">
+          <div className="rounded-lg p-5 bg-inkfill text-on-inkfill">
             <SectionHeader title="Deep panel" />
             <p className="text-sm opacity-80">Inverted ink surface for emphasis bands.</p>
           </div>

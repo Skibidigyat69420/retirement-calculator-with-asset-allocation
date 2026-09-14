@@ -239,7 +239,7 @@ export const AdvancedPortfolioLab = () => {
                     {m.tag}
                   </Badge>
                 </div>
-                <h4 className={`text-sm font-bold ${activeModel === m.id ? 'text-deep' : 'text-ink'}`}>
+                <h4 className={`text-sm font-bold ${activeModel === m.id ? 'text-on-inkfill' : 'text-ink'}`}>
                   {m.title}
                 </h4>
                 <p className={`text-xs mt-1 leading-relaxed ${activeModel === m.id ? 'text-faint' : 'text-muted'}`}>
@@ -434,7 +434,7 @@ export const AdvancedPortfolioLab = () => {
                 <th className="py-2 pr-2 text-right">Risk Parity</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100">
+            <tbody className="divide-y divide-border-subtle">
               {modelComparisonData.map((row) => (
                 <tr key={row.catKey} className="hover:bg-surface/70">
                   <td className="py-2 pr-4 flex items-center font-semibold text-ink">

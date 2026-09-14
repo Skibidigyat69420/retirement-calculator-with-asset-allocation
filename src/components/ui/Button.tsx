@@ -8,7 +8,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const variants = {
   primary:
-    'bg-accent text-deep border border-accent shadow-card hover:bg-accent-strong hover:border-accent-strong',
+    'bg-accent text-on-inkfill border border-accent shadow-card hover:bg-accent-strong hover:border-accent-strong',
   secondary:
     'bg-raised text-ink border border-border hover:border-border-strong hover:bg-surface',
   outline:
@@ -16,7 +16,7 @@ const variants = {
   ghost:
     'bg-transparent text-ink-soft border border-transparent hover:text-ink hover:bg-sunken',
   danger:
-    'bg-negative-soft text-negative border border-negative/30 hover:bg-negative hover:text-deep',
+    'bg-negative-soft text-negative border border-negative/30 hover:bg-negative hover:text-on-inkfill',
 };
 
 const sizes = {

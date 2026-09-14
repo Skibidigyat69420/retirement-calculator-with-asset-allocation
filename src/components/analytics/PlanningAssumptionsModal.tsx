@@ -61,7 +61,7 @@ export const PlanningAssumptionsModal = ({ isOpen, onClose }: PlanningAssumption
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-deep/50 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-overlay backdrop-blur-xs">
       <div className="bg-raised rounded-2xl p-6 max-w-lg w-full shadow-2xl border border-border space-y-5 animate-drawer-in">
         <div className="flex items-center justify-between border-b border-border-subtle pb-3">
           <div>

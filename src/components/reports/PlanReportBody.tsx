@@ -185,7 +185,7 @@ export const PlanReportBody = () => {
           <h3 className="text-[15px] font-semibold text-ink mb-4 flex items-center gap-2">
             <ShieldCheck size={16} strokeWidth={1.6} className="text-muted" /> Risk Profile
           </h3>
-          <div className="p-4 bg-deep text-canvas rounded-md mb-4">
+          <div className="p-4 bg-inkfill text-on-inkfill rounded-md mb-4">
             <div className="font-display text-2xl">{riskProfile.label}</div>
             <p className="text-sm text-canvas/70 mt-1 leading-relaxed">{riskProfile.description}</p>
           </div>

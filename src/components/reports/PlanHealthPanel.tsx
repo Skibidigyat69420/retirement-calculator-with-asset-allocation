@@ -96,7 +96,7 @@ export const PlanHealthPanel = ({ health, recommendations, detailed = false, cla
           {recommendations.slice(0, 5).map((rec) => (
             <div key={rec.id} className="p-4 rounded-md border border-border bg-raised space-y-1.5">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-mono font-medium bg-deep text-canvas">P{rec.priority}</span>
+                <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-mono font-medium bg-inkfill text-on-inkfill">P{rec.priority}</span>
                 <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-sunken text-ink-soft border border-border-subtle">{rec.category}</span>
                 <span className="text-xs font-semibold text-ink">{rec.title}</span>
               </div>

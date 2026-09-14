@@ -122,7 +122,7 @@ export const StressTestSimulator = () => {
             onClick={() => setIsCustom(true)}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               isCustom
-                ? 'bg-info text-deep shadow-xs'
+                ? 'bg-info text-on-inkfill shadow-xs'
                 : 'text-ink-soft hover:text-ink hover:bg-sunken/60'
             }`}
           >

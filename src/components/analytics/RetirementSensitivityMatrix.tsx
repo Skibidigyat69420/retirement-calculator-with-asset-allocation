@@ -231,7 +231,7 @@ export const RetirementSensitivityMatrix = () => {
 
           <button
             onClick={() => handleApplyScenario(selectedCell)}
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-info text-deep hover:bg-info shadow-xs flex items-center gap-1 self-start sm:self-center shrink-0"
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-info text-on-inkfill hover:bg-info shadow-xs flex items-center gap-1 self-start sm:self-center shrink-0"
           >
             Apply to Active Plan
             <ArrowRight size={13} />

@@ -57,7 +57,7 @@ export const AllocationCompareChart = ({ current, target, ariaLabel, summary }: 
                     title={`${ASSET_LABELS[c]}: ${formatPercent(pct)} of ${row.label.toLowerCase()} allocation`}
                   >
                     {pct >= 9 && (
-                      <span className="text-[10px] font-bold text-deep tabular-nums">{formatPercent(pct, 0)}</span>
+                      <span className="text-[10px] font-bold text-on-inkfill tabular-nums">{formatPercent(pct, 0)}</span>
                     )}
                   </div>
                 );
@@ -88,7 +88,7 @@ export const AllocationCompareChart = ({ current, target, ariaLabel, summary }: 
               <th className="py-2 px-3 text-right">Drift</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100">
+          <tbody className="divide-y divide-border-subtle">
             {categories.map((c) => {
               const curPct = (current[c] || 0) * 100;
               const tgtPct = (target[c] || 0) * 100;
