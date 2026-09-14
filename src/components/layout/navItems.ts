@@ -5,7 +5,6 @@ import {
   Target,
   Calculator,
   TrendingUp,
-  BarChart3,
   FileText,
   PiggyBank,
   Printer,

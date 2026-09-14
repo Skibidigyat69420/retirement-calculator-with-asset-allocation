@@ -23,11 +23,15 @@ export const getCurrencySymbol = (code: string): string =>
   CURRENCY_SYMBOLS[code] ?? code + ' ';
 
 export const formatCurrency = (
-  val: number,
-  fractionDigits = 0,
-  currency: string = 'INR',
+  val: any,
+  fractionDigitsOrIndex: any = 0,
+  currencyStr?: any,
 ): string => {
-  if (val === undefined || val === null || Number.isNaN(val))
+  const fractionDigits = typeof fractionDigitsOrIndex === 'number' ? fractionDigitsOrIndex : 0;
+  const currency = typeof currencyStr === 'string' ? currencyStr : (typeof fractionDigitsOrIndex === 'string' ? fractionDigitsOrIndex : 'INR');
+  const numericVal = typeof val === 'number' ? val : Number(val);
+
+  if (numericVal === undefined || numericVal === null || Number.isNaN(numericVal))
     return `${getCurrencySymbol(currency)}0`;
 
   const locale = CURRENCY_LOCALES[currency] ?? 'en-US';
@@ -37,23 +41,26 @@ export const formatCurrency = (
       currency,
       maximumFractionDigits: fractionDigits,
       minimumFractionDigits: fractionDigits,
-    }).format(val);
+    }).format(numericVal);
   } catch {
     // Fallback for unknown currency codes
-    return `${getCurrencySymbol(currency)}${val.toFixed(fractionDigits)}`;
+    return `${getCurrencySymbol(currency)}${numericVal.toFixed(fractionDigits)}`;
   }
 };
 
 export const formatCurrencyCompact = (
-  val: number,
-  currency: string = 'INR',
+  val: any,
+  currencyOrIndex?: any,
 ): string => {
-  if (val === undefined || val === null || Number.isNaN(val))
+  const currency = typeof currencyOrIndex === 'string' ? currencyOrIndex : 'INR';
+  const numericVal = typeof val === 'number' ? val : Number(val);
+
+  if (numericVal === undefined || numericVal === null || Number.isNaN(numericVal))
     return `${getCurrencySymbol(currency)}0`;
 
   const sym = getCurrencySymbol(currency);
-  const sign = val < 0 ? '-' : '';
-  const abs = Math.abs(val);
+  const sign = numericVal < 0 ? '-' : '';
+  const abs = Math.abs(numericVal);
 
   // Indian system for INR, Western for everything else
   if (currency === 'INR') {
@@ -65,7 +72,7 @@ export const formatCurrencyCompact = (
     if (abs >= 1_000_000) return `${sign}${sym}${(abs / 1_000_000).toFixed(2)}M`;
     if (abs >= 1_000) return `${sign}${sym}${(abs / 1_000).toFixed(1)}K`;
   }
-  return formatCurrency(val, 0, currency);
+  return formatCurrency(numericVal, 0, currency);
 };
 
 // Alias matching the audit-plan naming; same Lakhs/Crores-by-magnitude logic.

@@ -42,6 +42,7 @@ import { useCalculator } from '../../context/CalculatorContext';
 export const GoalsStep = ({
   inputs,
   onAddGoal,
+  onUpdateGoal,
   onRemoveGoal,
   onNext,
   onBack,

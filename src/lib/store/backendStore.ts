@@ -86,7 +86,7 @@ export const backendStore: DataStore = {
     }
   },
 
-  async deletePlan(id) {
+  async deletePlan(_id) {
     // Delete is not implemented in the API yet, we just mock it for now
     console.warn('Delete plan via backend is not supported yet.');
     return { success: true };

@@ -1,5 +1,5 @@
 import type { MasterPlanInputs } from '../types';
-import { DEFAULT_RATES, DEFAULT_ALLOCATION } from './constants';
+import { DEFAULT_RATES } from './constants';
 
 /**
  * Single source of truth for a blank planning workspace: every user-entered
