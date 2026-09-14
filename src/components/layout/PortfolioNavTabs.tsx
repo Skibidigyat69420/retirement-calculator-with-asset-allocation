@@ -45,7 +45,7 @@ export const PortfolioNavTabs = ({ currentPath }: PortfolioNavTabsProps) => {
               className={cn(
                 'flex items-center gap-2 px-3.5 sm:px-4 py-2 min-h-9 text-xs sm:text-sm font-semibold rounded-xl whitespace-nowrap transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 group',
                 active
-                  ? 'bg-deep text-deep shadow-2xs'
+                  ? 'bg-inkfill text-on-inkfill shadow-2xs'
                   : 'text-ink-soft hover:text-ink hover:bg-sunken/70',
               )}
             >
@@ -53,7 +53,7 @@ export const PortfolioNavTabs = ({ currentPath }: PortfolioNavTabsProps) => {
                 size={15}
                 className={cn(
                   'transition-colors shrink-0',
-                  active ? 'text-deep' : 'text-faint group-hover:text-ink',
+                  active ? 'text-on-inkfill' : 'text-faint group-hover:text-ink',
                 )}
               />
               <span className="hidden md:inline">{tab.label}</span>

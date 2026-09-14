@@ -37,7 +37,7 @@ export const TrajectoryCharts = () => {
         .map(([name, value]) => ({
           name,
           value: value * wealthResult.netWorth,
-          color: ASSET_COLORS[name as keyof typeof ASSET_COLORS] || '#94a3b8',
+          color: ASSET_COLORS[name as keyof typeof ASSET_COLORS] || '#A8A29A',
         })),
     [wealthResult],
   );

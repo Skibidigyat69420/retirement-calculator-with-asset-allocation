@@ -13,8 +13,8 @@ const BASE: string =
   (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_API_BASE_URL as string | undefined)) ||
   '/api/v1';
 
-let authToken: string | null = null;
-let organizationId: string | null = null;
+let authToken: string | null = typeof window !== 'undefined' ? localStorage.getItem('stw.token') : null;
+let organizationId: string | null = typeof window !== 'undefined' ? localStorage.getItem('stw.orgId') : null;
 
 export function setAuthContext(token: string | null, orgId: string | null): void {
   authToken = token;

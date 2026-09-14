@@ -16,7 +16,7 @@ interface WorkflowFooterProps {
 export const WorkflowFooter = ({ prev, next, flowHint }: WorkflowFooterProps) => {
   return (
     <div className="mt-12 rounded-2xl border border-border/80 bg-raised/85 backdrop-blur-md p-4 sm:p-5 shadow-sm relative overflow-hidden">
-      <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-emerald-500/25 to-transparent" />
+      <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         {/* Previous Step */}
         <div className="flex-1">
@@ -47,7 +47,7 @@ export const WorkflowFooter = ({ prev, next, flowHint }: WorkflowFooterProps) =>
 
         {/* Middle Data Flow Hint */}
         {flowHint && (
-          <div className="hidden md:flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50/70 via-zinc-50 to-emerald-50/70 rounded-full border border-accent-soft/50 text-xs text-ink-soft max-w-md text-center shadow-2xs">
+          <div className="hidden md:flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-accent-soft/70 via-sunken to-accent-soft/70 rounded-full border border-border/70 text-xs text-ink-soft max-w-md text-center shadow-2xs">
             <CheckCircle2 size={13} className="text-accent-strong shrink-0" />
             <span className="font-medium truncate">{flowHint}</span>
           </div>
@@ -58,18 +58,18 @@ export const WorkflowFooter = ({ prev, next, flowHint }: WorkflowFooterProps) =>
           {next ? (
             <Link
               to={next.path}
-              className="inline-flex items-center justify-end gap-3 px-5 py-2.5 min-h-11 rounded-xl bg-deep text-deep hover:bg-deep hover:shadow-sm ring-1 ring-zinc-800 text-xs font-semibold transition-all duration-200 group w-full sm:w-auto"
+              className="inline-flex items-center justify-end gap-3 px-5 py-2.5 min-h-11 rounded-xl bg-inkfill text-on-inkfill hover:bg-inkfill hover:shadow-sm text-xs font-semibold transition-all duration-200 group w-full sm:w-auto"
             >
               <div className="text-right">
-                <span className="block text-[9px] font-mono font-bold uppercase tracking-widest text-faint">
+                <span className="block text-[9px] font-mono font-bold uppercase tracking-widest text-on-inkfill/60">
                   Next Step
                 </span>
-                <span className="font-bold text-xs text-deep">{next.label}</span>
+                <span className="font-bold text-xs text-on-inkfill">{next.label}</span>
               </div>
-              <div className="w-7 h-7 rounded-lg bg-raised/10 flex items-center justify-center group-hover:bg-raised/20 transition-colors">
+              <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
                 <ArrowRight
                   size={14}
-                  className="text-deep group-hover:translate-x-0.5 transition-transform"
+                  className="text-on-inkfill group-hover:translate-x-0.5 transition-transform"
                 />
               </div>
             </Link>

@@ -1,31 +1,31 @@
 import type { AssetCategory } from '../types';
 
 export const COLORS = {
-  cream: '#f8fafc',
-  paper: '#ffffff',
-  warm: '#e2e8f0',
-  warmDark: '#94a3b8',
-  navy: '#0f172a',
-  navyDark: '#020617',
-  ink: '#0f172a',
-  gold: '#b45309',
-  red: '#be123c',
-  accent: '#f1f5f9',
-  textMain: '#0f172a',
-  textMuted: '#64748b',
+  cream: '#F4F2ED',
+  paper: '#FFFFFF',
+  warm: '#E8E5DA',
+  warmDark: '#A8A29A',
+  navy: '#20231F',
+  navyDark: '#151815',
+  ink: '#1B1D17',
+  gold: '#B3945A',
+  red: '#B45348',
+  accent: '#E8E5DA',
+  textMain: '#1B1D17',
+  textMuted: '#6E7268',
   white: '#FFFFFF',
-  success: '#059669',
-  danger: '#be123c',
-  warning: '#b45309',
+  success: '#3E7A57',
+  danger: '#B45348',
+  warning: '#B07C24',
 };
 
 export const ASSET_COLORS: Record<AssetCategory, string> = {
-  equity: '#2563eb',
-  debt: '#64748b',
-  gold: '#b45309',
-  realestate: '#7c3aed',
-  liquid: '#059669',
-  other: '#94a3b8',
+  equity: '#486B5A',
+  debt: '#8A94A6',
+  gold: '#B3945A',
+  realestate: '#96665A',
+  liquid: '#5E8B8B',
+  other: '#A8A29A',
 };
 
 export const ASSET_LABELS: Record<AssetCategory, string> = {

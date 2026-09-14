@@ -87,8 +87,8 @@ export const NetWorthEvolutionChart = ({ data, ariaLabel, summary }: NetWorthEvo
           <AreaChart data={data} margin={CHART_MARGIN}>
             <defs>
               <linearGradient id="dashNominalFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--color-accent)" stopOpacity={0.4} />
+                <stop offset="95%" stopColor="var(--color-accent)" stopOpacity={0} />
               </linearGradient>
               <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="6" result="blur" />
@@ -101,14 +101,14 @@ export const NetWorthEvolutionChart = ({ data, ariaLabel, summary }: NetWorthEvo
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 12, fill: '#78716c' }}
+              tick={{ fontSize: 12, fill: 'var(--color-muted)' }}
               axisLine={false}
               tickLine={false}
               tickMargin={10}
             />
             <YAxis
               tickFormatter={formatCurrencyCompact}
-              tick={{ fontSize: 12, fill: '#78716c' }}
+              tick={{ fontSize: 12, fill: 'var(--color-muted)' }}
               axisLine={false}
               tickLine={false}
             />
@@ -124,7 +124,7 @@ export const NetWorthEvolutionChart = ({ data, ariaLabel, summary }: NetWorthEvo
                 type="monotone"
                 dataKey="nominal"
                 name="Nominal Corpus"
-                stroke="#6366F1"
+                stroke="var(--color-accent)"
                 strokeWidth={3}
                 fill="url(#dashNominalFill)"
                 filter="url(#glow)"
@@ -135,7 +135,7 @@ export const NetWorthEvolutionChart = ({ data, ariaLabel, summary }: NetWorthEvo
                 type="monotone"
                 dataKey="real"
                 name="Real Corpus (Purchasing Power)"
-                stroke="#06B6D4"
+                stroke="var(--color-brass)"
                 strokeWidth={2}
                 strokeDasharray="6 4"
                 dot={false}

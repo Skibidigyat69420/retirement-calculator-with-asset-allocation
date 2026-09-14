@@ -38,7 +38,7 @@ const TOOLTIP_STYLE = {
 const KIND_COLORS: Record<CashflowKind, string> = {
   income: COLORS.navy,
   expense: COLORS.red,
-  sip: '#2563eb',
+  sip: COLORS.gold,
   surplus: COLORS.success,
 };
 
@@ -61,20 +61,20 @@ export const CashflowWaterfallChart = ({ data, ariaLabel, summary }: CashflowWat
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
           <XAxis
             dataKey="name"
-            tick={{ fontSize: 11, fill: '#78716c' }}
+            tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
             axisLine={false}
             tickLine={false}
             tickMargin={8}
           />
           <YAxis
             tickFormatter={formatCurrencyCompact}
-            tick={{ fontSize: 11, fill: '#78716c' }}
+            tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
             axisLine={false}
             tickLine={false}
             width={52}
           />
           <Tooltip
-            cursor={{ fill: 'rgba(15, 23, 42, 0.04)' }}
+            cursor={{ fill: 'rgba(27, 29, 23, 0.05)' }}
             content={({ active, payload }) => {
               if (!active || !payload || payload.length === 0) return null;
               const datum = payload[0].payload as CashflowWaterfallDatum;

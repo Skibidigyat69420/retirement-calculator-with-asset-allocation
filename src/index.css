@@ -5,51 +5,55 @@
 
 @theme {
   /* ─────────────────────────────────────────────────────────────
-     SOUND THESIS — "Modern Minimalist SaaS"
-     Semantic design tokens. Pristine whites, cool grays, deep
-     indigo accents, crisp borders, and clean shadows.
+     SOUND THESIS — "Editorial Financial Intelligence"
+     Semantic design tokens. Warm ivory canvas, deep charcoal ink,
+     moss primary, brass reference accent. Premium, calm, precise.
      ───────────────────────────────────────────────────────────── */
 
-  /* ── Light Mode: Frosty & High-Contrast ── */
-  --color-canvas: #F8FAFC;
-  --color-background: #F8FAFC;
-  --color-surface: #FFFFFF;
+  /* ── Light Mode: Ivory & Ink — warm editorial canvas ── */
+  --color-canvas: #F4F2ED;
+  --color-background: #F4F2ED;
+  --color-surface: #FBFAF7;
   --color-raised: #FFFFFF;
-  --color-sunken: #F1F5F9;
-  --color-inset: #F8FAFC;
+  --color-sunken: #ECEAE2;
+  --color-inset: #EFEDE6;
   --color-elevated: #FFFFFF;
-  --color-deep: #020617;
-  --color-overlay: rgba(15, 23, 42, 0.45);
+  --color-deep: #20231F;
+  /* Non-inverting ink panel: always charcoal with light text, both themes */
+  --color-inkfill: #20231F;
+  --color-on-inkfill: #F4F2ED;
+  --color-overlay: rgba(26, 27, 22, 0.45);
 
-  --color-border: #E2E8F0;
-  --color-border-strong: #CBD5E1;
-  --color-border-subtle: #F1F5F9;
+  --color-border: #DCD9CE;
+  --color-border-strong: #C5C2B5;
+  --color-border-subtle: #E8E5DA;
 
-  --color-ink: #0F172A;
-  --color-ink-soft: #334155;
-  --color-muted: #64748B;
-  --color-faint: #94A3B8;
+  --color-ink: #1B1D17;
+  --color-ink-soft: #4B4F45;
+  --color-muted: #6E7268;
+  --color-faint: #8C9083;
 
-  /* Accent — Neon Indigo */
-  --color-accent: #6366F1;
-  --color-accent-strong: #4F46E5;
-  --color-accent-soft: #E0E7FF;
-  --color-accent-softer: #EEF2FF;
+  /* Accent — deep moss (primary action & identity) */
+  --color-accent: #667A63;
+  --color-accent-strong: #4A5C47;
+  --color-accent-soft: #E6ECE3;
+  --color-accent-softer: #EFF3EC;
 
-  --color-brass: #0EA5E9;
-  --color-brass-strong: #0284C7;
-  --color-brass-soft: #E0F2FE;
+  /* Accent — brass (reference & highlight only) */
+  --color-brass: #B3945A;
+  --color-brass-strong: #96793F;
+  --color-brass-soft: #F1EADF;
 
-  --color-positive: #10B981;
-  --color-positive-soft: #D1FAE5;
-  --color-negative: #F43F5E;
-  --color-negative-soft: #FFE4E6;
-  --color-warning: #F59E0B;
-  --color-warning-soft: #FEF3C7;
-  --color-info: #3B82F6;
-  --color-info-soft: #DBEAFE;
+  --color-positive: #3E7A57;
+  --color-positive-soft: #E2EFE6;
+  --color-negative: #B45348;
+  --color-negative-soft: #F7E9E6;
+  --color-warning: #B07C24;
+  --color-warning-soft: #F6EDDA;
+  --color-info: #57779B;
+  --color-info-soft: #E6EDF4;
 
-  --color-focus-ring: #818CF8;
+  --color-focus-ring: #667A63;
 
   /* Legacy token aliases */
   --color-cream: var(--color-background);
@@ -64,19 +68,19 @@
   --color-textMain: var(--color-ink);
   --color-textMuted: var(--color-muted);
 
-  /* Typography */
+  /* Typography — Inter UI, Instrument Serif display, JetBrains Mono data */
   --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-serif: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --font-serif: "Instrument Serif", Georgia, "Times New Roman", serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Radius — Smooth and bubbly for Bento */
+  /* Radius — calm, editorial */
   --radius-xs: 6px;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-2xl: 32px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
 
   /* Spacing scale reference (Tailwind defaults match) */
   --space-1: 0.25rem;
@@ -92,71 +96,73 @@
   --space-20: 5rem;
   --space-24: 6rem;
 
-  /* Quiet depth — crisp modern shadows */
-  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
-  --shadow-card-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-  --shadow-raised: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --shadow-elevated: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  --shadow-popover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  --shadow-glow: 0 0 15px 0 rgba(99, 102, 241, 0.4);
+  /* Quiet depth — warm, low-contrast shadows */
+  --shadow-card: 0 1px 2px rgba(27, 29, 23, 0.05), 0 1px 3px rgba(27, 29, 23, 0.04);
+  --shadow-card-hover: 0 12px 28px -8px rgba(27, 29, 23, 0.14), 0 4px 10px -4px rgba(27, 29, 23, 0.06);
+  --shadow-raised: 0 2px 4px rgba(27, 29, 23, 0.05), 0 1px 2px rgba(27, 29, 23, 0.04);
+  --shadow-elevated: 0 24px 48px -12px rgba(27, 29, 23, 0.18), 0 8px 16px -8px rgba(27, 29, 23, 0.06);
+  --shadow-popover: 0 20px 40px -12px rgba(27, 29, 23, 0.2), 0 4px 12px -4px rgba(27, 29, 23, 0.08);
+  --shadow-glow: 0 0 18px rgba(102, 122, 99, 0.35);
 
   /* Motion */
   --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-emphasis: cubic-bezier(0.22, 1, 0.36, 1);
+  --spring-smooth: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-fast: 140ms;
   --duration-normal: 250ms;
   --duration-slow: 400ms;
 }
 
-/* ── Dark Mode: Aura & Insane Neon ── */
+/* ── Dark Mode: The Private Study — warm deep charcoal ── */
 .dark {
-  --color-canvas: #09090B;
-  --color-background: #09090B;
-  --color-surface: rgba(24, 24, 27, 0.6);
-  --color-raised: rgba(39, 39, 42, 0.6);
-  --color-sunken: rgba(9, 9, 11, 0.8);
-  --color-inset: rgba(0, 0, 0, 0.5);
-  --color-elevated: rgba(39, 39, 42, 0.8);
-  --color-deep: #FAFAFA;
-  --color-overlay: rgba(0, 0, 0, 0.7);
+  --color-canvas: #0E100E;
+  --color-background: #0E100E;
+  --color-surface: #151815;
+  --color-raised: #1B1F1B;
+  --color-sunken: #0A0C0A;
+  --color-inset: #101310;
+  --color-elevated: #222722;
+  --color-deep: #F1F1EA;
+  --color-overlay: rgba(5, 6, 5, 0.65);
 
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-strong: rgba(255, 255, 255, 0.15);
-  --color-border-subtle: rgba(255, 255, 255, 0.04);
+  --color-border: #2A302A;
+  --color-border-strong: #3B423B;
+  --color-border-subtle: #202520;
 
-  --color-ink: #FFFFFF;
-  --color-ink-soft: #A1A1AA;
-  --color-muted: #71717A;
-  --color-faint: #52525B;
+  --color-ink: #F1F1EA;
+  --color-ink-soft: #C9CCC2;
+  --color-muted: #9BA095;
+  --color-faint: #7E837A;
 
-  --color-accent: #6366F1;
-  --color-accent-strong: #818CF8;
-  --color-accent-soft: rgba(99, 102, 241, 0.15);
-  --color-accent-softer: rgba(99, 102, 241, 0.08);
+  --color-accent: #8EA889;
+  --color-accent-strong: #A9C0A3;
+  --color-accent-soft: rgba(142, 168, 137, 0.14);
+  --color-accent-softer: rgba(142, 168, 137, 0.08);
 
-  --color-brass: #06B6D4;
-  --color-brass-strong: #22D3EE;
-  --color-brass-soft: rgba(6, 182, 212, 0.15);
+  --color-brass: #C5A66D;
+  --color-brass-strong: #D8BC85;
+  --color-brass-soft: rgba(197, 166, 109, 0.12);
 
-  --color-positive: #10B981;
-  --color-positive-soft: rgba(16, 185, 129, 0.15);
-  --color-negative: #F43F5E;
-  --color-negative-soft: rgba(244, 63, 94, 0.15);
-  --color-warning: #F59E0B;
-  --color-warning-soft: rgba(245, 158, 11, 0.15);
-  --color-info: #3B82F6;
-  --color-info-soft: rgba(59, 130, 246, 0.15);
+  --color-positive: #5FA07E;
+  --color-positive-soft: rgba(95, 160, 126, 0.15);
+  --color-negative: #D0786B;
+  --color-negative-soft: rgba(208, 120, 107, 0.15);
+  --color-warning: #D3A44E;
+  --color-warning-soft: rgba(211, 164, 78, 0.15);
+  --color-info: #7FA3C2;
+  --color-info-soft: rgba(127, 163, 194, 0.15);
 
-  --color-focus-ring: #818CF8;
+  --color-focus-ring: #8EA889;
 
   --color-navy: #FAFAFA;
   --color-navy-dark: #FFFFFF;
 
-  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
-  --shadow-card-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.7), 0 0 15px rgba(99, 102, 241, 0.2);
-  --shadow-elevated: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
-  --shadow-popover: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
-  --shadow-glow: 0 0 20px 0 rgba(99, 102, 241, 0.6);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-card-hover: 0 12px 28px -8px rgba(0, 0, 0, 0.6), 0 0 16px rgba(142, 168, 137, 0.12);
+  --shadow-raised: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-elevated: 0 24px 48px -12px rgba(0, 0, 0, 0.7);
+  --shadow-popover: 0 20px 40px -12px rgba(0, 0, 0, 0.75);
+  --shadow-glow: 0 0 20px rgba(142, 168, 137, 0.25);
 }
 
 @layer base {
@@ -284,11 +290,11 @@
   }
   .dark .grid-motif {
     background-image:
-      linear-gradient(to right, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
+      linear-gradient(to right, rgba(142, 168, 137, 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(142, 168, 137, 0.06) 1px, transparent 1px);
   }
 
-  /* ── INSANE AURA ANIMATIONS ── */
+  /* ── Ambient aura — soft moss/brass glows (dark mode) ── */
   @keyframes auraPulse {
     0% { transform: scale(1) translate(0, 0); opacity: 0.3; }
     50% { transform: scale(1.1) translate(2%, 2%); opacity: 0.5; }
@@ -312,13 +318,13 @@
     transition: opacity 2s ease;
   }
   .dark .aura-bg::before {
-    opacity: 0.4;
-    background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 60%);
+    opacity: 0.35;
+    background: radial-gradient(circle, rgba(142,168,137,0.2) 0%, transparent 60%);
     top: -20%; left: -10%;
   }
   .dark .aura-bg::after {
-    opacity: 0.3;
-    background: radial-gradient(circle, rgba(6,182,212,0.2) 0%, transparent 60%);
+    opacity: 0.28;
+    background: radial-gradient(circle, rgba(197,166,109,0.16) 0%, transparent 60%);
     bottom: -20%; right: -10%;
     animation-delay: -7.5s;
   }
@@ -363,58 +369,63 @@
   .app-canvas {
     overflow-x: hidden;
     background:
-      radial-gradient(circle at 86% 4%, rgba(79, 70, 229, 0.05), transparent 22rem),
+      radial-gradient(circle at 86% 4%, rgba(102, 122, 99, 0.07), transparent 22rem),
+      radial-gradient(circle at 8% 96%, rgba(179, 148, 90, 0.05), transparent 20rem),
       var(--color-canvas);
   }
 
   .brand-rail {
-    background: #15181E;
-    color: #F7F5F0;
-    border-color: #272C35;
+    background: #20231F;
+    color: #F1F1EA;
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 2px 0 24px rgba(0, 0, 0, 0.12);
   }
 
-  .brand-rail .text-ink { color: #F7F5F0; }
-  .brand-rail .text-muted { color: #AEB7C4; }
-  .brand-rail .text-faint { color: #7E8998; }
+  .brand-rail .text-ink { color: #F1F1EA; }
+  .brand-rail .text-muted { color: #9BA095; }
+  .brand-rail .text-faint { color: #7E837A; }
   .brand-rail .border-border,
-  .brand-rail .border-border-subtle { border-color: #2A303A; }
-  .brand-rail .hover\:bg-sunken:hover { background: rgba(255,255,255,.06); }
+  .brand-rail .border-border-subtle { border-color: rgba(255, 255, 255, 0.09); }
+  .brand-rail .hover\:bg-sunken:hover { background: rgba(255, 255, 255, 0.05); }
 
-  .brand-rail .eyebrow { color: #89919A; }
+  .brand-rail .eyebrow { color: #7E837A; }
 
   .brand-rail [aria-current="page"] {
-    background: rgba(255, 255, 255, 0.09);
+    background: rgba(255, 255, 255, 0.08);
     color: #FFFFFF;
+    box-shadow: inset 2px 0 0 var(--color-brass);
   }
 
-  .brand-rail [aria-current="page"]::before { background: #77A2FF; }
+  .brand-rail [aria-current="page"]::before { display: none; }
 
   .topbar-light {
-    background: rgba(247, 245, 240, 0.88);
+    background: color-mix(in srgb, var(--color-canvas) 82%, transparent);
     border-color: var(--color-border);
     backdrop-filter: blur(18px);
   }
 
   .hero-orbit {
+    border-radius: var(--radius-xl);
     background:
-      radial-gradient(circle at 74% 26%, rgba(102, 122, 99, 0.22), transparent 10rem),
-      radial-gradient(circle at 92% 88%, rgba(179, 148, 90, 0.14), transparent 16rem),
+      radial-gradient(circle at 74% 26%, rgba(102, 122, 99, 0.28), transparent 12rem),
+      radial-gradient(circle at 92% 88%, rgba(179, 148, 90, 0.18), transparent 18rem),
       #20231F;
     color: #F1F1EA;
+    box-shadow: var(--shadow-elevated);
   }
 
   .hero-orbit::before {
     content: "";
     position: absolute;
     inset: 0;
-    opacity: 0.16;
-    background-image: linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px);
+    opacity: 0.14;
+    background-image: linear-gradient(rgba(255,255,255,.16) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.16) 1px, transparent 1px);
     background-size: 34px 34px;
     mask-image: linear-gradient(90deg, black, transparent 78%);
     pointer-events: none;
   }
 
-  .hero-orbit .hero-kicker { color: #A9B9A3; }
+  .hero-orbit .hero-kicker { color: #C5A66D; }
   .hero-orbit .hero-title { color: #F1F1EA; }
   .hero-orbit .hero-copy { color: #C9CCC2; }
 
@@ -460,9 +471,9 @@
     color: #A5AAA0 !important;
   }
 
-  .dark .bg-deep .eyebrow,
-  .dark .bg-deep .text-faint {
-    color: #4E524B !important;
+  .dark .bg-inkfill .eyebrow,
+  .dark .bg-inkfill .text-faint {
+    color: #9BA095 !important;
   }
 }
 
@@ -637,56 +648,14 @@ nav [aria-current="page"]::before {
   .print-keep { break-inside: avoid !important; }
 }
 
-/* ── Sound Thesis — Premium Wealth Platform ────────────────────────────── */
-/* Consolidated palette: warm charcoal + ivory + brass/gold accents.
-   This is the SINGLE source of truth — no more stacking overrides. */
+/* ── Global polish — transitions, entrances, motion ────────────────────── */
 
+body { letter-spacing: -.01em; }
 
-body { background: var(--color-canvas); letter-spacing: -.01em; }
-
-/* Subtle radial glow on the canvas */
-.app-canvas {
-  background: var(--color-canvas);
+::selection {
+  background: var(--color-brass-soft);
+  color: var(--color-ink);
 }
-
-/* Sidebar rail — deep charcoal with warm undertone */
-.brand-rail {
-  background: var(--color-deep);
-  border-color: rgba(255,255,255, 0.05);
-  box-shadow: 2px 0 24px rgba(0, 0, 0, 0.1);
-}
-.brand-rail .text-ink { color: #f9fafb; }
-.brand-rail .text-muted { color: #9ca3af; }
-.brand-rail .text-faint { color: #6b7280; }
-.brand-rail .border-border,
-.brand-rail .border-border-subtle { border-color: rgba(255,255,255, 0.1); }
-.brand-rail .hover\:bg-sunken:hover { background: rgba(255, 255, 255, 0.05); }
-.brand-rail .eyebrow { color: #6b7280; }
-
-/* Active nav — accent indicator */
-.brand-rail [aria-current="page"] {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  box-shadow: inset 2px 0 0 var(--color-accent);
-}
-.brand-rail [aria-current="page"]::before { display: none; }
-
-/* These were overriding the utilities with undefined variables, they have been removed. */
-
-/* Hero orbit — dark feature panel */
-.hero-orbit {
-  border-radius: 20px;
-  background:
-    radial-gradient(circle at 74% 26%, rgba(79, 70, 229, 0.15), transparent 12rem),
-    radial-gradient(circle at 92% 88%, rgba(79, 70, 229, 0.1), transparent 18rem),
-    var(--color-deep);
-  color: #f9fafb;
-  box-shadow: var(--shadow-elevated);
-}
-
-/* Border radius refinements */
-.rounded-lg { border-radius: 12px; }
-.rounded-2xl { border-radius: 20px; }
 
 /* Global interactive transitions */
 button, a {
@@ -855,20 +824,23 @@ button, a {
   background: var(--color-border);
   box-shadow: var(--shadow-card);
 }
-.desk-focus-copy { padding: 2rem; background: var(--color-deep); color: var(--color-deep); }
-.desk-focus-copy .eyebrow { color: var(--color-brass); }
-.desk-focus-copy h2 { margin-top: .55rem; color: var(--color-raised); font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3rem); font-weight: 400; line-height: .95; }
-.desk-focus-copy p { max-width: 34rem; margin-top: 1rem; color: color-mix(in srgb, var(--color-raised) 70%, transparent); font-size: .85rem; line-height: 1.6; }
+.desk-focus-copy { padding: 2rem; background: #20231F; color: #F1F1EA; }
+.desk-focus-copy .eyebrow { color: #C5A66D; }
+.desk-focus-copy h2 { margin-top: .55rem; color: #F1F1EA; font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3rem); font-weight: 400; line-height: .95; }
+.desk-focus-copy p { max-width: 34rem; margin-top: 1rem; color: rgba(241, 241, 234, 0.72); font-size: .85rem; line-height: 1.6; }
 .desk-focus-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.5rem; }
 .desk-primary-action, .desk-secondary-action { display: inline-flex; align-items: center; gap: .45rem; min-height: 2.4rem; padding: 0 .8rem; border-radius: var(--radius-sm); font-size: .72rem; font-weight: 650; }
-.desk-primary-action { background: var(--color-raised); color: var(--color-ink); }
-.desk-secondary-action { border: 1px solid color-mix(in srgb, var(--color-raised) 25%, transparent); color: var(--color-raised); }
+.desk-primary-action { background: #F4F2ED; color: #20231F; }
+.desk-primary-action:hover { background: #FFFFFF; }
+.desk-secondary-action { border: 1px solid rgba(244, 242, 237, 0.28); color: #F4F2ED; }
+.desk-secondary-action:hover { border-color: rgba(244, 242, 237, 0.5); }
 .desk-focus-map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--color-border); }
 .desk-focus-map > div { display: flex; min-height: 180px; flex-direction: column; padding: 1.25rem; background: var(--color-surface); color: var(--color-accent-strong); }
 .desk-focus-map span { margin-top: auto; color: var(--color-muted); font: 600 .62rem var(--font-mono); text-transform: uppercase; letter-spacing: .08em; }
 .desk-focus-map strong { margin-top: .35rem; color: var(--color-ink); font: 600 1rem var(--font-mono); letter-spacing: -.04em; }
 .desk-focus-map small { margin-top: .25rem; color: var(--color-faint); font-size: .65rem; }
 .client-avatar { background: var(--color-accent-soft); color: var(--color-accent-strong); }
+.dark .directory-metric { background: var(--color-surface); }
 .client-avatar.small { background: var(--color-accent-soft); color: var(--color-accent-strong); }
 .client-card:hover, .client-card.selected { border-color: var(--color-accent); box-shadow: var(--shadow-card-hover); }
 .client-card-value strong, .directory-metric strong { color: var(--color-ink); }

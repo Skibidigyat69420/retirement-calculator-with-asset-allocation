@@ -102,7 +102,7 @@ export const MonteCarloHistogram = ({ terminalValues, ariaLabel, summary }: Mont
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.accent} />
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 9, fill: '#78716c' }}
+            tick={{ fontSize: 9, fill: 'var(--color-muted)' }}
             angle={-28}
             textAnchor="end"
             axisLine={false}
@@ -112,13 +112,13 @@ export const MonteCarloHistogram = ({ terminalValues, ariaLabel, summary }: Mont
             interval={bins.length > 6 ? 1 : 0}
           />
           <YAxis
-            tick={{ fontSize: 11, fill: '#78716c' }}
+            tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
             axisLine={false}
             tickLine={false}
             allowDecimals={false}
           />
           <Tooltip
-            cursor={{ fill: 'rgba(15, 23, 42, 0.04)' }}
+            cursor={{ fill: 'rgba(27, 29, 23, 0.05)' }}
             content={({ active, payload }) => {
               if (!active || !payload || payload.length === 0) return null;
               const bin = payload[0].payload as HistogramBin;
