@@ -9,7 +9,7 @@ import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const root = process.cwd();
-const docsDir = join(root, 'ips');
+const docsDir = join(root, 'docs', 'ips');
 const outFile = join(root, 'api', 'lib', 'ipsDocs.generated.ts');
 
 let entries;
