@@ -1,5 +1,6 @@
 import { Suspense, lazy, type ComponentType } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { CalculatorProvider } from './context/CalculatorContext';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './lib/theme';
@@ -53,6 +54,49 @@ const Practitioner = lazyNamed(() => import('./pages/PractitionerPage'), 'Practi
 const StyleGuide = lazyNamed(() => import('./pages/StyleGuide'), 'StyleGuide');
 const UIReview = lazyNamed(() => import('./pages/UIReview'), 'UIReview');
 
+function AnimatedRoutes() {
+  const location = useLocation();
+  
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0, y: 15, filter: 'blur(8px)' }}
+        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+        exit={{ opacity: 0, y: -15, filter: 'blur(8px)' }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <Routes location={location}>
+          <Route path="/" element={<Practitioner />} />
+          <Route path="/overview" element={<Dashboard />} />
+          <Route path="/risk" element={<RiskQuestionnaire />} />
+          <Route path="/master-plan" element={<MasterPlan />} />
+          <Route path="/client-profile" element={<MasterPlan defaultStep="profile" />} />
+          <Route path="/balance-sheet" element={<MasterPlan defaultStep="financials" />} />
+          <Route path="/goal" element={<GoalPlanner />} />
+          <Route path="/retirement" element={<Retirement />} />
+          <Route path="/reverse-planning" element={<ReversePlanning />} />
+          <Route path="/allocation" element={<Allocation />} />
+          <Route path="/advanced-portfolio" element={<AdvancedPortfolio />} />
+          <Route path="/meeting-workflow" element={<ClientMeeting />} />
+          <Route path="/decision-history" element={<DecisionHistory />} />
+          <Route path="/reports" element={<Navigate to="/dossier" replace />} />
+          <Route path="/dossier" element={<Dossier />} />
+          <Route path="/calculators" element={<Calculators />} />
+          <Route path="/ips" element={<IPSTemplate />} />
+          <Route path="/angel-connect" element={<AngelConnect />} />
+          <Route path="/angel-data" element={<AngelData />} />
+          <Route path="/practitioner" element={<Practitioner />} />
+          <Route path="/style-guide" element={<StyleGuide />} />
+          <Route path="/ui-review" element={<UIReview />} />
+          <Route path="/login" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 function WorkspaceRoutes() {
   const { ready, user } = useAuth();
   if (!ready) return null;
@@ -61,32 +105,7 @@ function WorkspaceRoutes() {
     <CalculatorProvider>
       <Layout>
         <Suspense fallback={null}>
-          <Routes>
-            <Route path="/" element={<Practitioner />} />
-            <Route path="/overview" element={<Dashboard />} />
-            <Route path="/risk" element={<RiskQuestionnaire />} />
-            <Route path="/master-plan" element={<MasterPlan />} />
-            <Route path="/client-profile" element={<MasterPlan defaultStep="profile" />} />
-            <Route path="/balance-sheet" element={<MasterPlan defaultStep="financials" />} />
-            <Route path="/goal" element={<GoalPlanner />} />
-            <Route path="/retirement" element={<Retirement />} />
-            <Route path="/reverse-planning" element={<ReversePlanning />} />
-            <Route path="/allocation" element={<Allocation />} />
-            <Route path="/advanced-portfolio" element={<AdvancedPortfolio />} />
-            <Route path="/meeting-workflow" element={<ClientMeeting />} />
-            <Route path="/decision-history" element={<DecisionHistory />} />
-            <Route path="/reports" element={<Navigate to="/dossier" replace />} />
-            <Route path="/dossier" element={<Dossier />} />
-            <Route path="/calculators" element={<Calculators />} />
-            <Route path="/ips" element={<IPSTemplate />} />
-            <Route path="/angel-connect" element={<AngelConnect />} />
-            <Route path="/angel-data" element={<AngelData />} />
-            <Route path="/practitioner" element={<Practitioner />} />
-            <Route path="/style-guide" element={<StyleGuide />} />
-            <Route path="/ui-review" element={<UIReview />} />
-            <Route path="/login" element={<Navigate to="/" replace />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <AnimatedRoutes />
         </Suspense>
       </Layout>
     </CalculatorProvider>

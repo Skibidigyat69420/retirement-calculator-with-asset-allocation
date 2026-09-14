@@ -87,19 +87,28 @@ export const Dashboard = () => {
     { step: '04', label: 'Next conversation', Icon: CalendarDays },
   ];
 
-  const fadeProps = reducedMotion
+  const containerVariants = reducedMotion
     ? {}
     : {
-        initial: { opacity: 0, y: 8 },
-        animate: { opacity: 1, y: 0 },
-        transition: { duration: 0.2, ease: 'easeOut' as const },
+        initial: { opacity: 0 },
+        animate: {
+          opacity: 1,
+          transition: { staggerChildren: 0.08, delayChildren: 0.05 },
+        },
+      };
+
+  const itemVariants = reducedMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 15, filter: 'blur(8px)' },
+        animate: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { type: 'spring', stiffness: 100, damping: 15 } },
       };
 
   // ── Onboarding: a completely empty workspace is an invitation, not a report ──
   if (isPlanEmpty(inputs)) {
     return (
-      <div className="space-y-8 pb-10 aura-bg relative z-0">
-        <motion.section {...fadeProps} className="flex flex-col gap-5 border-b border-border pb-8 lg:flex-row lg:items-end lg:justify-between">
+      <motion.div variants={containerVariants} initial="initial" animate="animate" className="space-y-8 pb-10 aura-bg relative z-0">
+        <motion.section variants={itemVariants} className="flex flex-col gap-5 border-b border-border pb-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <div className="eyebrow mb-3">Sound Thesis / Practice desk</div>
             <h1 className="max-w-3xl font-display text-5xl leading-[.98] tracking-tight text-ink sm:text-6xl">
@@ -120,7 +129,7 @@ export const Dashboard = () => {
           </div>
         </motion.section>
 
-        <motion.section {...fadeProps} className="hero-orbit relative overflow-hidden rounded-[24px] p-6 shadow-elevated sm:p-10">
+        <motion.section variants={itemVariants} className="hero-orbit relative overflow-hidden rounded-[24px] p-6 shadow-elevated sm:p-10">
           <div className="relative z-10 grid gap-10 lg:grid-cols-[1.15fr_.85fr] lg:items-end">
             <div>
               <div className="hero-kicker eyebrow">The practice begins here</div>
@@ -145,7 +154,7 @@ export const Dashboard = () => {
           </div>
         </motion.section>
 
-        <section className="grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
+        <motion.section variants={itemVariants} className="grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
           <div className="rounded-2xl border border-border bg-raised p-6 shadow-card sm:p-8">
             <div className="flex items-start justify-between gap-4 border-b border-border pb-5">
               <div>
@@ -179,76 +188,82 @@ export const Dashboard = () => {
           </div>
         </section>
 
-        <WorkflowFooter next={{ path: '/master-plan', label: 'Create client' }} flowHint="Start with a profile. Every financial result stays unavailable until the workspace has enough real information to support it." />
-      </div>
+        <motion.div variants={itemVariants}>
+          <WorkflowFooter next={{ path: '/master-plan', label: 'Create client' }} flowHint="Start with a profile. Every financial result stays unavailable until the workspace has enough real information to support it." />
+        </motion.div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="space-y-10 pb-8 aura-bg relative z-0">
-      {header}
+    <motion.div variants={containerVariants} initial="initial" animate="animate" className="space-y-10 pb-8 aura-bg relative z-0">
+      <motion.div variants={itemVariants}>{header}</motion.div>
 
       {!configured && (
-        <Alert variant="info">
-          The plan timeline is incomplete — set current age, retirement age and life expectancy to
-          generate projections.{' '}
-          <Link to="/master-plan" className="font-semibold underline underline-offset-2">
-            Open Master Plan
-          </Link>
-        </Alert>
+        <motion.div variants={itemVariants}>
+          <Alert variant="info">
+            The plan timeline is incomplete — set current age, retirement age and life expectancy to
+            generate projections.{' '}
+            <Link to="/master-plan" className="font-semibold underline underline-offset-2">
+              Open Master Plan
+            </Link>
+          </Alert>
+        </motion.div>
       )}
 
-      <motion.section {...fadeProps} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Practice pulse">
+      <motion.section variants={itemVariants} whileHover={{ y: -2 }} whileTap={{ scale: 0.99 }} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Practice pulse">
         <PracticePulse />
       </motion.section>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
-        <motion.section {...fadeProps} className="lg:col-span-3 glass-bento rounded-2xl p-6 lg:p-8" aria-label="Priority queue">
+        <motion.section variants={itemVariants} whileHover={{ y: -2 }} whileTap={{ scale: 0.99 }} className="lg:col-span-3 glass-bento rounded-2xl p-6 lg:p-8" aria-label="Priority queue">
           <PriorityQueue />
         </motion.section>
         {planHealth && (
-          <motion.section {...fadeProps} className="lg:col-span-2 glass-bento rounded-2xl p-6 lg:p-8" aria-label="Planning health">
+          <motion.section variants={itemVariants} whileHover={{ y: -2 }} whileTap={{ scale: 0.99 }} className="lg:col-span-2 glass-bento rounded-2xl p-6 lg:p-8" aria-label="Planning health">
             <PlanHealthScoreCard health={planHealth} />
           </motion.section>
         )}
       </div>
 
-      <motion.section {...fadeProps} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Recent activity">
+      <motion.section variants={itemVariants} whileHover={{ y: -2 }} whileTap={{ scale: 0.99 }} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Recent activity">
         <WhatChangedPanel />
       </motion.section>
 
       {recommendations.length > 0 && (
-        <motion.section {...fadeProps} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Recommendations">
+        <motion.section variants={itemVariants} whileHover={{ y: -2 }} whileTap={{ scale: 0.99 }} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Recommendations">
           <RecommendationsList recommendations={recommendations} />
         </motion.section>
       )}
 
       {configured && (
-        <motion.section {...fadeProps} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Wealth trajectory and allocation">
+        <motion.section variants={itemVariants} whileHover={{ y: -2 }} whileTap={{ scale: 0.99 }} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Wealth trajectory and allocation">
           <TrajectoryCharts />
         </motion.section>
       )}
 
       {configured && (
-        <motion.section {...fadeProps} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Goals and simulation">
+        <motion.section variants={itemVariants} whileHover={{ y: -2 }} whileTap={{ scale: 0.99 }} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Goals and simulation">
           <GoalsAndSimulation />
         </motion.section>
       )}
 
-      <motion.section {...fadeProps} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Advisory suite">
+      <motion.section variants={itemVariants} whileHover={{ y: -2 }} whileTap={{ scale: 0.99 }} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Advisory suite">
         <WorkflowSuite />
       </motion.section>
 
-      <motion.section {...fadeProps} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Saved plans">
+      <motion.section variants={itemVariants} whileHover={{ y: -2 }} whileTap={{ scale: 0.99 }} className="glass-bento rounded-2xl p-6 lg:p-8" aria-label="Saved plans">
         <div className="max-w-xl">
           <PlanManager />
         </div>
       </motion.section>
 
-      <WorkflowFooter
-        next={{ path: '/risk', label: 'Risk Profile' }}
-        flowHint="Assess behavioral risk tolerance to calibrate asset allocation targets and portfolio limits."
-      />
-    </div>
+      <motion.div variants={itemVariants}>
+        <WorkflowFooter
+          next={{ path: '/risk', label: 'Risk Profile' }}
+          flowHint="Assess behavioral risk tolerance to calibrate asset allocation targets and portfolio limits."
+        />
+      </motion.div>
+    </motion.div>
   );
 };
