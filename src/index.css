@@ -30,7 +30,7 @@
 
   --color-ink: #1B1D17;
   --color-ink-soft: #4B4F45;
-  --color-muted: #6E7268;
+  --color-muted: #656A5F;
   --color-faint: #8C9083;
 
   /* Accent — deep moss (primary action & identity) */
@@ -46,7 +46,7 @@
 
   --color-positive: #3E7A57;
   --color-positive-soft: #E2EFE6;
-  --color-negative: #B45348;
+  --color-negative: #A84B40;
   --color-negative-soft: #F7E9E6;
   --color-warning: #B07C24;
   --color-warning-soft: #F6EDDA;
@@ -365,6 +365,57 @@
 }
 
 /* ── Light-first product chrome ────────────────────────────────────────── */
+/* Brand rail & hero orbit live OUTSIDE layers so their re-tints win over
+   Tailwind utilities (`.text-muted` etc.) on their children. */
+.brand-rail {
+  background: #20231F;
+  color: #F1F1EA;
+  border-color: rgba(255, 255, 255, 0.05);
+  box-shadow: 2px 0 24px rgba(0, 0, 0, 0.12);
+}
+
+.brand-rail .text-ink { color: #F1F1EA; }
+.brand-rail .text-muted { color: #9BA095; }
+.brand-rail .text-faint { color: #7E837A; }
+.brand-rail .border-border,
+.brand-rail .border-border-subtle { border-color: rgba(255, 255, 255, 0.09); }
+.brand-rail .hover\:bg-sunken:hover { background: rgba(255, 255, 255, 0.05); }
+
+.brand-rail .eyebrow { color: #9BA095; }
+
+.brand-rail [aria-current="page"] {
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+  box-shadow: inset 2px 0 0 var(--color-brass);
+}
+
+.brand-rail [aria-current="page"]::before { display: none; }
+
+.hero-orbit {
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(circle at 74% 26%, rgba(102, 122, 99, 0.28), transparent 12rem),
+    radial-gradient(circle at 92% 88%, rgba(179, 148, 90, 0.18), transparent 18rem),
+    #20231F;
+  color: #F1F1EA;
+  box-shadow: var(--shadow-elevated);
+}
+
+.hero-orbit::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.14;
+  background-image: linear-gradient(rgba(255,255,255,.16) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.16) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: linear-gradient(90deg, black, transparent 78%);
+  pointer-events: none;
+}
+
+.hero-orbit .hero-kicker { color: #C5A66D; }
+.hero-orbit .hero-title { color: #F1F1EA; }
+.hero-orbit .hero-copy { color: #C9CCC2; }
+
 @layer components {
   .app-canvas {
     overflow-x: hidden;
@@ -374,60 +425,11 @@
       var(--color-canvas);
   }
 
-  .brand-rail {
-    background: #20231F;
-    color: #F1F1EA;
-    border-color: rgba(255, 255, 255, 0.05);
-    box-shadow: 2px 0 24px rgba(0, 0, 0, 0.12);
-  }
-
-  .brand-rail .text-ink { color: #F1F1EA; }
-  .brand-rail .text-muted { color: #9BA095; }
-  .brand-rail .text-faint { color: #7E837A; }
-  .brand-rail .border-border,
-  .brand-rail .border-border-subtle { border-color: rgba(255, 255, 255, 0.09); }
-  .brand-rail .hover\:bg-sunken:hover { background: rgba(255, 255, 255, 0.05); }
-
-  .brand-rail .eyebrow { color: #7E837A; }
-
-  .brand-rail [aria-current="page"] {
-    background: rgba(255, 255, 255, 0.08);
-    color: #FFFFFF;
-    box-shadow: inset 2px 0 0 var(--color-brass);
-  }
-
-  .brand-rail [aria-current="page"]::before { display: none; }
-
   .topbar-light {
     background: color-mix(in srgb, var(--color-canvas) 82%, transparent);
     border-color: var(--color-border);
     backdrop-filter: blur(18px);
   }
-
-  .hero-orbit {
-    border-radius: var(--radius-xl);
-    background:
-      radial-gradient(circle at 74% 26%, rgba(102, 122, 99, 0.28), transparent 12rem),
-      radial-gradient(circle at 92% 88%, rgba(179, 148, 90, 0.18), transparent 18rem),
-      #20231F;
-    color: #F1F1EA;
-    box-shadow: var(--shadow-elevated);
-  }
-
-  .hero-orbit::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    opacity: 0.14;
-    background-image: linear-gradient(rgba(255,255,255,.16) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.16) 1px, transparent 1px);
-    background-size: 34px 34px;
-    mask-image: linear-gradient(90deg, black, transparent 78%);
-    pointer-events: none;
-  }
-
-  .hero-orbit .hero-kicker { color: #C5A66D; }
-  .hero-orbit .hero-title { color: #F1F1EA; }
-  .hero-orbit .hero-copy { color: #C9CCC2; }
 
   .review-mode {
     display: inline-flex;

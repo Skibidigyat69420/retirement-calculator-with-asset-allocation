@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import {
   devLogin,
   setAuthContext,
+  setUnauthorizedHandler,
   type DevLoginResponse,
   type Membership,
   type SessionUser,
@@ -99,6 +100,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setOrganizationId(null);
     setAuthContext(null, null);
   }, []);
+
+  // 401s from any API caller clear the session in React state (see api.ts —
+  // no hard redirects, so stale tokens can never cause a reload loop).
+  useEffect(() => {
+    setUnauthorizedHandler(logout);
+    return () => setUnauthorizedHandler(null);
+  }, [logout]);
 
   const selectOrganization = useCallback(
     (orgId: string) => {

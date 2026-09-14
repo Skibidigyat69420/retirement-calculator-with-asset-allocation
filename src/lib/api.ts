@@ -16,6 +16,17 @@ const BASE: string =
 let authToken: string | null = typeof window !== 'undefined' ? localStorage.getItem('stw.token') : null;
 let organizationId: string | null = typeof window !== 'undefined' ? localStorage.getItem('stw.orgId') : null;
 
+/**
+ * Called whenever the backend answers 401. Registered by AuthContext so the
+ * session is cleared in React state — never hard-redirect: a full-page
+ * redirect on 401 reloads the SPA, re-fires the failing request, and loops.
+ */
+let unauthorizedHandler: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  unauthorizedHandler = handler;
+}
+
 export function setAuthContext(token: string | null, orgId: string | null): void {
   authToken = token;
   organizationId = orgId;
@@ -61,13 +72,12 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   if (!res.ok) {
     if (res.status === 401) {
-      localStorage.removeItem('stw.token');
-      localStorage.removeItem('stw.user');
-      localStorage.removeItem('stw.memberships');
-      localStorage.removeItem('stw.orgId');
-      window.location.href = '/';
+      // Session expired or rejected: clear it through AuthContext and let the
+      // router render the sign-in screen. No location.href — that reloads the
+      // app, re-triggers the request, gets 401 again, and loops forever.
+      unauthorizedHandler?.();
     }
-    
+
     let code = 'UNKNOWN';
     let message = `Request failed with status ${res.status}.`;
     try {

@@ -65,18 +65,18 @@ defined in `src/index.css` under `@theme` (light) and `.dark` (dark).
 
 | Token | Light | Dark |
 |---|---|---|
-| `--color-border` | `#D9D8D1` | `#2A302A` |
-| `--color-border-strong` | `#C2C1B7` | `#3B423B` |
-| `--color-border-subtle` | `#E6E4DC` | `#202520` |
+| `--color-border` | `#DCD9CE` | `#2A302A` |
+| `--color-border-strong` | `#C5C2B5` | `#3B423B` |
+| `--color-border-subtle` | `#E8E5DA` | `#202520` |
 
 ### Ink (text)
 
 | Token | Light | Dark | Usage |
 |---|---|---|---|
-| `--color-ink` | `#171815` | `#F1F1EA` | Primary text, headings |
-| `--color-ink-soft` | `#4E524B` | `#C9CCC2` | Secondary text |
-| `--color-muted` | `#6E7268` | `#9BA095` | Labels, captions, metadata |
-| `--color-faint` | `#7B7E76` | `#7E837A` | Placeholders, quietest text |
+| `--color-ink` | `#1B1D17` | `#F1F1EA` | Primary text, headings |
+| `--color-ink-soft` | `#4B4F45` | `#C9CCC2` | Secondary text |
+| `--color-muted` | `#656A5F` | `#9BA095` | Labels, captions, metadata |
+| `--color-faint` | `#8C9083` | `#7E837A` | Placeholders, quietest text |
 
 ### Accent — moss (primary action & identity)
 
@@ -110,10 +110,10 @@ defined in `src/index.css` under `@theme` (light) and `.dark` (dark).
 
 | Token | Light | Dark |
 |---|---|---|
-| `--color-positive` / `-soft` | `#557A60` / `#E8EFE9` | `#96B99E` / `rgba(150,185,158,0.12)` |
-| `--color-negative` / `-soft` | `#A65954` / `#F4E8E6` | `#C88A84` / `rgba(200,138,132,0.12)` |
-| `--color-warning` / `-soft` | `#B07D3E` / `#F4EBDD` | `#CEA267` / `rgba(206,162,103,0.12)` |
-| `--color-info` / `-soft` | `#64758A` / `#E9EDF1` | `#93A3B5` / `rgba(147,163,181,0.12)` |
+| `--color-positive` / `-soft` | `#3E7A57` / `#E2EFE6` | `#5FA07E` / `rgba(95,160,126,0.15)` |
+| `--color-negative` / `-soft` | `#A84B40` / `#F7E9E6` | `#D0786B` / `rgba(208,120,107,0.15)` |
+| `--color-warning` / `-soft` | `#B07C24` / `#F6EDDA` | `#D3A44E` / `rgba(211,164,78,0.15)` |
+| `--color-info` / `-soft` | `#57779B` / `#E6EDF4` | `#7FA3C2` / `rgba(127,163,194,0.15)` |
 
 ---
 
@@ -178,19 +178,27 @@ full-width hairline dividers break up long pages without boxing everything.
 
 ## 5. Shape & depth
 
-**Radii** — quiet, not bubbly: `--radius-xs` 4 · `--radius-sm` 6 · `--radius-md` 10
-· `--radius-lg` 14 · `--radius-xl` 20. Buttons and inputs use 6–10; cards 10–14;
-large hero panels up to 20.
+**Radii** — quiet, not bubbly: `--radius-xs` 6 · `--radius-sm` 8 · `--radius-md` 12
+· `--radius-lg` 16 · `--radius-xl` 20 · `--radius-2xl` 24. Buttons and inputs use 6–12;
+cards 12–16; large hero panels up to 20–24.
 
 **Depth — hairlines first, shadows rarely.** A 1px `--color-border` hairline carries
 most structure. The shadow scale exists for elevation, not decoration:
 
 | Token | Value (light) | Use |
 |---|---|---|
-| `--shadow-card` | `0 1px 2px rgba(32,35,31,0.05)` | resting cards |
-| `--shadow-card-hover` | `0 4px 14px -4px rgba(32,35,31,0.08)` | interactive hover |
-| `--shadow-elevated` | `0 10px 28px -10px rgba(32,35,31,0.12)` | raised panels |
-| `--shadow-popover` | `0 20px 48px -12px rgba(32,35,31,0.22)` | **floating layers only** — drawers, dialogs, tooltips, toasts |
+| `--shadow-card` | `0 1px 2px rgba(27,29,23,0.05), 0 1px 3px rgba(27,29,23,0.04)` | resting cards |
+| `--shadow-card-hover` | `0 12px 28px -8px rgba(27,29,23,0.14)` | interactive hover |
+| `--shadow-raised` | `0 2px 4px rgba(27,29,23,0.05)` | slight lift |
+| `--shadow-elevated` | `0 24px 48px -12px rgba(27,29,23,0.18)` | raised panels |
+| `--shadow-popover` | `0 20px 40px -12px rgba(27,29,23,0.2)` | **floating layers only** — drawers, dialogs, tooltips, toasts |
+
+**Non-inverting ink tokens** — `--color-inkfill` (`#20231F`) and `--color-on-inkfill`
+(`#F4F2ED`) are charcoal-panel constants: they do NOT flip in dark mode. Use
+`bg-inkfill text-on-inkfill` for dark feature panels, primary pills, and any element
+that must stay charcoal in both themes. The `.ink-panel` helper re-tints common text
+utilities inside a charcoal card. Do not use `--color-deep` as a panel fill — it is
+inverted ink (`#20231F` light / `#F1F1EA` dark) and flips per theme.
 
 Never stack a card's hairline border *and* a heavy shadow; pick the quieter one.
 
