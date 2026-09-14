@@ -1,0 +1,79 @@
+# Production Docker Compose for GitHub Actions Deployment
+# Expects images to be pulled from a container registry (e.g. ghcr.io)
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: stw-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: stw
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - stw
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d stw']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: ${DOCKER_REGISTRY}/stw-backend:latest
+    container_name: stw-backend
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: '4000'
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/stw
+      AUTH_MODE: production
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET}
+      LOG_LEVEL: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - stw
+
+  api-utils:
+    image: ${DOCKER_REGISTRY}/stw-api-utils:latest
+    container_name: stw-api-utils
+    restart: always
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - stw
+
+  frontend:
+    image: ${DOCKER_REGISTRY}/stw-frontend:latest
+    container_name: stw-frontend
+    restart: always
+    depends_on:
+      - backend
+    networks:
+      - stw
+
+  nginx:
+    image: nginx:alpine
+    container_name: stw-nginx
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443' # Included for future SSL mapping
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+      - api-utils
+    networks:
+      - stw
+
+volumes:
+  postgres_data:
+
+networks:
+  stw:
