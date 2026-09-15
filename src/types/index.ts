@@ -9,6 +9,8 @@ export interface Asset {
   currency: string; // e.g. INR, USD
   liquidateAtRetirement: boolean;
   source?: string; // e.g. 'mvo' for optimizer-imported proxy assets
+  /** Household members who own the asset. Absent or empty = joint/whole-household. */
+  ownerMemberIds?: string[];
 }
 
 export interface Liability {
@@ -110,7 +112,29 @@ export interface Goal {
   probabilityDistribution?: GoalProbabilityBin[];
 }
 
+export interface ClientAggregationRow {
+  clientId: string;
+  name: string;
+  aum: number;
+  liabilities: number;
+  netWorth: number;
+  assetCount: number;
+}
+
+/** Rolled-up view of an advisor's book, built from ClientSummary DTOs. */
+export interface AdvisorAggregation {
+  clientCount: number;
+  householdCount: number;
+  totalAUM: number;
+  totalLiabilities: number;
+  totalNetWorth: number;
+  byCategory: Record<AssetCategory, number>;
+  byClient: ClientAggregationRow[];
+  topClientsByAUM: ClientAggregationRow[];
+}
+
 export interface ClientProfile {
+
   name: string;
   email?: string;
   advisor: string;
@@ -141,6 +165,25 @@ export interface FamilyMember {
   dateOfBirth?: string;
   status?: string;
   goal?: string;
+  occupation?: string;
+  dependent?: boolean;
+}
+
+/** Household member — the FamilyMember profile row serves as the household model. */
+export type HouseholdMember = FamilyMember;
+
+/** Selector for which slice of the household's assets a view renders. */
+export type HouseholdView =
+  | { kind: 'group' }
+  | { kind: 'joint' }
+  | { kind: 'member'; memberId: string };
+
+export interface MemberAllocation {
+  memberId: string;
+  name: string;
+  totalValue: number;
+  byCategory: Record<AssetCategory, number>;
+  assetCount: number;
 }
 
 export interface IncomeSource {

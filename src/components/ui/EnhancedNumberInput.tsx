@@ -14,10 +14,13 @@ export interface EnhancedNumberInputProps {
   helper?: string;
   error?: string;
   presets?: { label: string; value: number }[];
-  slider?: boolean;
+  /** `true` always shows the slider track; `'focus'` reveals it on hover/focus only. */
+  slider?: boolean | 'focus';
   disabled?: boolean;
   className?: string;
   id?: string;
+  /** 'stack' (default) label above; 'inline' small mono label left of the control. */
+  layout?: 'stack' | 'inline';
 }
 
 const formatValue = (val: number): string =>
@@ -39,6 +42,7 @@ export const EnhancedNumberInput = ({
   disabled,
   className,
   id: idProp,
+  layout = 'stack',
 }: EnhancedNumberInputProps) => {
   const [localValue, setLocalValue] = useState(String(value));
   const [isEditing, setIsEditing] = useState(false);
@@ -77,16 +81,30 @@ export const EnhancedNumberInput = ({
 
   const outOfRange = (min !== undefined && value < min) || (max !== undefined && value > max);
   const hasError = !!error || outOfRange;
+  const inline = layout === 'inline';
 
   return (
-    <div className={cn('space-y-1.5', className)}>
+    <div
+      className={cn(
+        inline ? 'flex flex-wrap items-center gap-x-3 gap-y-1' : 'space-y-1.5',
+        slider === 'focus' && 'group',
+        className,
+      )}
+    >
       {label && (
-        <label htmlFor={inputId} className="field-label block text-xs font-medium tracking-normal text-ink-soft">
+        <label
+          htmlFor={inputId}
+          className={cn(
+            inline
+              ? 'w-24 sm:w-28 shrink-0 pt-0 text-[10px] font-mono uppercase tracking-wider text-muted leading-tight'
+              : 'field-label block text-xs font-medium tracking-normal text-ink-soft',
+          )}
+        >
           {label}
         </label>
       )}
 
-      <div className="relative group">
+      <div className={cn('relative group', inline && 'flex-1 min-w-[8rem] basis-36')}>
         {prefix && (
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-faint select-none pointer-events-none tabular-nums">
             {prefix}
@@ -113,6 +131,7 @@ export const EnhancedNumberInput = ({
           }}
           className={cn(
             'w-full bg-surface border rounded-md px-3 py-2.5 text-sm text-ink tabular-nums placeholder:text-faint transition-colors',
+            inline && 'py-2',
             'focus:border-accent focus:ring-2 focus:ring-accent-soft focus:outline-none',
             'hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed',
             prefix && 'pl-8',
@@ -154,7 +173,13 @@ export const EnhancedNumberInput = ({
       </div>
 
       {slider && max !== undefined && (
-        <div className="pt-2 pb-1">
+        <div
+          className={cn(
+            'pt-2 pb-1',
+            inline && 'basis-full pl-[6.75rem] sm:pl-[7.75rem]',
+            slider === 'focus' && 'hidden group-hover:block group-focus-within:block',
+          )}
+        >
           <input
             type="range"
             min={min ?? 0}
@@ -173,7 +198,7 @@ export const EnhancedNumberInput = ({
       )}
 
       {presets && presets.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 pt-0.5">
+        <div className={cn('flex flex-wrap gap-1.5 pt-0.5', inline && 'basis-full pl-[6.75rem] sm:pl-[7.75rem]')}>
           {presets.map((p) => (
             <button
               key={p.label}
@@ -195,7 +220,12 @@ export const EnhancedNumberInput = ({
       )}
 
       {(helper || error || outOfRange) && (
-        <div className="flex items-start gap-1.5 pt-0.5">
+        <div
+          className={cn(
+            'flex items-start gap-1.5 pt-0.5',
+            inline && 'basis-full pl-[6.75rem] sm:pl-[7.75rem]',
+          )}
+        >
           {hasError && <AlertCircle size={13} strokeWidth={1.8} className="text-negative mt-0.5 shrink-0" />}
           <p className={cn('text-xs leading-relaxed', hasError ? 'text-negative' : 'text-faint')}>
             {error || (outOfRange ? `Value must be between ${min} and ${max}` : helper)}

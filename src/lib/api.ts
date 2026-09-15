@@ -9,6 +9,8 @@
  * `authorization` and `x-organization-id` headers.
  */
 
+import type { AssetCategory } from '../types';
+
 const BASE: string =
   (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_API_BASE_URL as string | undefined)) ||
   '/api/v1';
@@ -126,6 +128,9 @@ export interface ClientSummary {
     investableAssets: number;
     totalAssets: number;
     totalLiabilities: number;
+    /** Optional per-category asset split when the backend includes it. */
+    byCategory?: Partial<Record<AssetCategory, number>>;
+    assetCount?: number;
   };
 }
 

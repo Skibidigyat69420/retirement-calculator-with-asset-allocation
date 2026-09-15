@@ -1,10 +1,8 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import {
   AlertTriangle,
   CheckCircle2,
   ArrowLeft,
-  FileDown,
   Calendar,
   WalletMinimal,
   Globe,
@@ -28,7 +26,6 @@ interface ResultsStepProps {
   wealthResult: WealthEngineResult;
   riskProfile: RiskProfile;
   hasRiskAnswers?: boolean;
-  onBack: () => void;
   onStart?: () => void;
 }
 
@@ -37,7 +34,6 @@ export const ResultsStep = ({
   wealthResult,
   riskProfile,
   hasRiskAnswers,
-  onBack,
   onStart,
 }: ResultsStepProps) => {
   const configured = wealthResult.isConfigured;
@@ -386,21 +382,6 @@ export const ResultsStep = ({
               </table>
             </div>
           </section>
-
-          {/* Navigation */}
-          <div className="flex items-center justify-between border-t border-border pt-6">
-            <Button variant="ghost" onClick={onBack} className="flex items-center gap-2">
-              <ArrowLeft size={15} aria-hidden="true" />
-              <span>Back · Assumptions</span>
-            </Button>
-            <Link
-              to="/dossier?autoPrint=true"
-              className="inline-flex items-center gap-2 px-4 min-h-10 py-2 rounded-md bg-accent text-white text-sm font-medium hover:bg-accent-strong transition-colors"
-            >
-              <FileDown size={15} aria-hidden="true" />
-              <span>Export plan dossier</span>
-            </Link>
-          </div>
         </>
       )}
     </div>

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion, type Variants } from 'framer-motion';
 import { ArrowUpRight, CalendarDays, Layers3, Plus, Target, UserRound, type LucideIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useCalculator } from '../context/CalculatorContext';
@@ -87,7 +87,7 @@ export const Dashboard = () => {
     { step: '04', label: 'Next conversation', Icon: CalendarDays },
   ];
 
-  const containerVariants = reducedMotion
+  const containerVariants: Variants = reducedMotion
     ? {}
     : {
         initial: { opacity: 0 },
@@ -97,7 +97,7 @@ export const Dashboard = () => {
         },
       };
 
-  const itemVariants = reducedMotion
+  const itemVariants: Variants = reducedMotion
     ? {}
     : {
         initial: { opacity: 0, y: 15, filter: 'blur(8px)' },
@@ -186,7 +186,7 @@ export const Dashboard = () => {
               ))}
             </div>
           </div>
-        </section>
+        </motion.section>
 
         <motion.div variants={itemVariants}>
           <WorkflowFooter next={{ path: '/master-plan', label: 'Create client' }} flowHint="Start with a profile. Every financial result stays unavailable until the workspace has enough real information to support it." />

@@ -12,10 +12,11 @@ export interface NumberInputProps {
   max?: number;
   step?: number;
   presets?: { label: string; value: number }[];
-  slider?: boolean;
+  slider?: boolean | 'focus';
   disabled?: boolean;
   className?: string;
   id?: string;
+  layout?: 'stack' | 'inline';
 }
 
 export const NumberInput = ({
@@ -34,6 +35,7 @@ export const NumberInput = ({
   disabled,
   className,
   id,
+  layout,
 }: NumberInputProps) => {
   return (
     <EnhancedNumberInput
@@ -52,6 +54,7 @@ export const NumberInput = ({
       disabled={disabled}
       className={className}
       id={id}
+      layout={layout}
     />
   );
 };

@@ -1,29 +1,43 @@
-import { ArrowRight, Plus, Trash2, UserRound } from 'lucide-react';
+import { UserRound } from 'lucide-react';
 import { Input } from '../ui/Input';
 import { NumberInput } from '../ui/NumberInput';
 import { Select } from '../ui/Select';
 import { CurrencyInput } from '../ui/CurrencyInput';
-import { Button } from '../ui/Button';
+import { FormSection } from '../ui/FormSection';
+import { Repeater } from '../ui/Repeater';
 import { formatOrDash, isProfileConfigured } from '../../lib/planState';
+import { formatCurrency } from '../../lib/formatters';
 import type { FamilyMember, IncomeSource, InsurancePolicy, MasterPlanInputs } from '../../types';
 
 interface ProfileStepProps {
   inputs: MasterPlanInputs;
   updateInputs: (updates: Partial<MasterPlanInputs>) => void;
   updateClient: (updates: Partial<MasterPlanInputs['client']>) => void;
-  onNext: () => void;
 }
+
+const ageFromDob = (dob: string | undefined): number | null => {
+  if (!dob) return null;
+  const birth = new Date(dob);
+  if (Number.isNaN(birth.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const m = now.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age -= 1;
+  return age >= 0 ? age : null;
+};
 
 export const ProfileStep = ({
   inputs,
   updateInputs,
   updateClient,
-  onNext,
 }: ProfileStepProps) => {
   const configured = isProfileConfigured(inputs);
   const yearsToRetire = Math.max(0, inputs.retirementAge - inputs.currentAge);
   const retirementSpan = Math.max(1, inputs.lifeExpectancy - inputs.retirementAge);
   const currentYear = new Date().getFullYear();
+  const familyMembers = inputs.client?.familyMembers || [];
+  const incomeSources = inputs.client?.incomeSources || [];
+  const insurancePolicies = inputs.client?.insurancePolicies || [];
   const profileFields = [
     inputs.client?.name,
     inputs.client?.email,
@@ -47,10 +61,10 @@ export const ProfileStep = ({
   }, 0);
 
   const updateFamilyMember = (id: string, patch: Partial<FamilyMember>) => {
-    updateClient({ familyMembers: (inputs.client.familyMembers || []).map((member) => member.id === id ? { ...member, ...patch } : member) });
+    updateClient({ familyMembers: familyMembers.map((member) => member.id === id ? { ...member, ...patch } : member) });
   };
   const updateIncomeSource = (id: string, patch: Partial<IncomeSource>) => {
-    const sources = (inputs.client.incomeSources || []).map((source) => {
+    const sources = incomeSources.map((source) => {
       if (source.id !== id) return source;
       const next = { ...source, ...patch };
       return patch.currency === 'INR' || (next.currency === 'INR' && patch.amount !== undefined)
@@ -65,7 +79,7 @@ export const ProfileStep = ({
     updateInputs({ annualIncome: annualIncomeFromSources(sources) });
   };
   const updateInsurancePolicy = (id: string, patch: Partial<InsurancePolicy>) => {
-    updateClient({ insurancePolicies: (inputs.client.insurancePolicies || []).map((policy) => policy.id === id ? { ...policy, ...patch } : policy) });
+    updateClient({ insurancePolicies: insurancePolicies.map((policy) => policy.id === id ? { ...policy, ...patch } : policy) });
   };
 
   const timeline = [
@@ -81,109 +95,166 @@ export const ProfileStep = ({
     },
   ];
 
+  const monthlyIncomeTotal = Math.round(annualIncomeFromSources(incomeSources) / 12);
+
   return (
-    <div className="space-y-8 client-profile-form">
-      <header>
-        <div className="flex items-start justify-between gap-5 flex-wrap">
-          <div>
-            <div className="eyebrow">Step 01 · Client profile</div>
-            <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">Start with the household</h2>
-            <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
-              Capture the story behind the numbers. These notes stay with the plan so the next review starts with context, not a blank page.
-            </p>
+    <div className="border-t border-border">
+      <header className="py-4 flex items-start justify-between gap-5 flex-wrap">
+        <div>
+          <div className="eyebrow">Step 01 · Client profile</div>
+          <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">Start with the household</h2>
+          <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
+            Capture the story behind the numbers. These notes stay with the plan so the next review starts with context, not a blank page.
+          </p>
+        </div>
+        <div className="w-full sm:w-44 shrink-0" aria-label={`${completion}% profile captured`}>
+          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-muted">
+            <UserRound size={13} aria-hidden="true" />
+            <span>{completion}% captured</span>
           </div>
-          <div className="profile-completion" aria-label={`${completion}% profile captured`}>
-            <div className="flex items-center gap-2"><UserRound size={14} /><span>{completion}% captured</span></div>
-            <div className="profile-completion-track"><span style={{ width: `${completion}%` }} /></div>
+          <div className="mt-1.5 h-[3px] rounded-full bg-border overflow-hidden">
+            <span className="block h-full rounded-full bg-accent transition-[width] duration-200" style={{ width: `${completion}%` }} />
           </div>
         </div>
       </header>
 
-      {/* Identity */}
-      <section className="profile-section">
-        <div className="profile-section-heading"><div><span className="eyebrow">01 · Identity</span><h3>Who is this plan for?</h3></div><span className="profile-section-hint">Required to begin</span></div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+      <FormSection
+        index="01"
+        title="Identity"
+        description="Who is this plan for? Required to begin."
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">
           <Input
+            layout="inline"
             label="Client name"
             value={inputs.client?.name || ''}
             onChange={(e) => updateClient({ name: e.target.value })}
             placeholder="e.g. Vikram & Priya Malhotra"
+            className="md:col-span-2"
           />
           <Input
+            layout="inline"
             label="Lead advisor"
             value={inputs.client?.advisor || ''}
             onChange={(e) => updateClient({ advisor: e.target.value })}
             placeholder="e.g. Sound Thesis Private Wealth"
           />
           <Input
-            label="Client email / contact"
+            layout="inline"
+            label="Email"
             type="email"
             value={inputs.client?.email || ''}
             onChange={(e) => updateClient({ email: e.target.value })}
             placeholder="client@domain.com"
           />
           <Input
-            label="Annual plan review"
+            layout="inline"
+            label="Plan review"
             type="date"
             value={inputs.client?.reviewDate || ''}
             onChange={(e) => updateClient({ reviewDate: e.target.value })}
           />
-          <Input label="Phone / WhatsApp" value={inputs.client?.phone || ''} onChange={(e) => updateClient({ phone: e.target.value })} placeholder="Primary contact number" />
-          <Input label="Residence / address" value={inputs.client?.address || ''} onChange={(e) => updateClient({ address: e.target.value })} placeholder="City, country or full address" />
-          <Input label="Occupation" value={inputs.client?.occupation || ''} onChange={(e) => updateClient({ occupation: e.target.value })} placeholder="Role, profession or business owner" />
-          <Input label="Business / employer" value={inputs.client?.business || ''} onChange={(e) => updateClient({ business: e.target.value })} placeholder="Company or practice name" />
-          <Input label="Spouse / partner" value={inputs.client?.spouse || ''} onChange={(e) => updateClient({ spouse: e.target.value })} placeholder="Name and occupation (optional)" />
-          <SelectField label="Marital status" value={inputs.client?.maritalStatus || ''} onChange={(value) => updateClient({ maritalStatus: value })} options={['', 'Single', 'Married', 'Partnered', 'Divorced', 'Widowed'].map((value) => ({ value, label: value || 'Select status' }))} />
+          <Input layout="inline" label="Phone" value={inputs.client?.phone || ''} onChange={(e) => updateClient({ phone: e.target.value })} placeholder="Primary contact number" />
+          <Input layout="inline" label="Address" value={inputs.client?.address || ''} onChange={(e) => updateClient({ address: e.target.value })} placeholder="City, country or full address" className="md:col-span-2" />
+          <Input layout="inline" label="Occupation" value={inputs.client?.occupation || ''} onChange={(e) => updateClient({ occupation: e.target.value })} placeholder="Role, profession or business owner" />
+          <Input layout="inline" label="Business" value={inputs.client?.business || ''} onChange={(e) => updateClient({ business: e.target.value })} placeholder="Company or practice name" />
+          <Input layout="inline" label="Spouse" value={inputs.client?.spouse || ''} onChange={(e) => updateClient({ spouse: e.target.value })} placeholder="Name and occupation (optional)" />
+          <Select
+            layout="inline"
+            label="Marital status"
+            value={inputs.client?.maritalStatus || ''}
+            onChange={(value) => updateClient({ maritalStatus: value })}
+            options={['', 'Single', 'Married', 'Partnered', 'Divorced', 'Widowed'].map((value) => ({ value, label: value || 'Select status' }))}
+          />
         </div>
-      </section>
+      </FormSection>
 
-      <section className="profile-section">
-        <div className="profile-section-heading"><div><span className="eyebrow">02 · Household</span><h3>The people and responsibilities around the plan</h3></div></div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+      <FormSection
+        index="02"
+        title="Household"
+        description="The people and responsibilities around the plan."
+        meta={`${familyMembers.length} member${familyMembers.length === 1 ? '' : 's'}`}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
           <TextAreaField label="Household overview" value={inputs.client?.familyComposition || ''} onChange={(value) => updateClient({ familyComposition: value })} placeholder="Anything important about dependants, family structure, or support responsibilities" helper="Use the editable family rows below for individual members." />
           <TextAreaField label="Health context" value={inputs.client?.healthStatus || ''} onChange={(value) => updateClient({ healthStatus: value })} placeholder="Current health concerns, coverage gaps, or simply ‘no current concerns’" />
         </div>
-        <div className="profile-repeatable-list">
-          <div className="profile-subheading"><div><h4>Family members</h4><p>Add each person whose life or goals affect the plan.</p></div><button type="button" className="profile-add-button" onClick={() => updateClient({ familyMembers: [...(inputs.client.familyMembers || []), { id: `family-${Date.now()}`, name: '', relationship: '', dateOfBirth: '', status: '', goal: '' }] })}><Plus size={14} /> Add person</button></div>
-          {(inputs.client.familyMembers || []).map((member) => <div className="profile-repeatable-row" key={member.id}>
-            <Input label="Name" value={member.name} onChange={(event) => updateFamilyMember(member.id, { name: event.target.value })} placeholder="Full name" />
-            <Input label="Relationship" value={member.relationship} onChange={(event) => updateFamilyMember(member.id, { relationship: event.target.value })} placeholder="Child, spouse…" />
-            <Input label="Date of birth" type="date" value={member.dateOfBirth || ''} onChange={(event) => updateFamilyMember(member.id, { dateOfBirth: event.target.value })} />
-            <Input label="Current status" value={member.status || ''} onChange={(event) => updateFamilyMember(member.id, { status: event.target.value })} placeholder="Student, working…" />
-            <Input label="Goal / responsibility" value={member.goal || ''} onChange={(event) => updateFamilyMember(member.id, { goal: event.target.value })} placeholder="Education, support, legacy…" />
-            <button type="button" className="profile-remove-button" onClick={() => updateClient({ familyMembers: (inputs.client.familyMembers || []).filter((item) => item.id !== member.id) })} aria-label={`Remove ${member.name || 'family member'}`}><Trash2 size={15} /></button>
-          </div>)}
-          {(inputs.client.familyMembers || []).length === 0 && <p className="profile-empty-row">No family members added yet.</p>}
+        <div className="mt-6">
+          <Repeater<FamilyMember>
+            items={familyMembers}
+            getKey={(member) => member.id}
+            emptyLabel="No family members added yet."
+            addLabel="Add family member"
+            onAdd={() => updateClient({ familyMembers: [...familyMembers, { id: `family-${Date.now()}`, name: '', relationship: '', dateOfBirth: '', status: '', goal: '' }] })}
+            onRemove={(member) => updateClient({ familyMembers: familyMembers.filter((item) => item.id !== member.id) })}
+            renderSummary={(member) => {
+              const age = ageFromDob(member.dateOfBirth);
+              return (
+                <span className="flex items-baseline gap-3 min-w-0 text-sm">
+                  <span className="truncate font-medium text-ink">{member.name || 'Unnamed member'}</span>
+                  <span className="truncate text-xs text-muted">{member.relationship || '—'}</span>
+                  <span className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted">
+                    {age !== null ? `${age} yrs` : member.dateOfBirth || '—'}
+                  </span>
+                </span>
+              );
+            }}
+            renderEditor={(member) => (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">
+                <Input layout="inline" label="Name" value={member.name} onChange={(event) => updateFamilyMember(member.id, { name: event.target.value })} placeholder="Full name" />
+                <Input layout="inline" label="Relationship" value={member.relationship} onChange={(event) => updateFamilyMember(member.id, { relationship: event.target.value })} placeholder="Child, spouse…" />
+                <Input layout="inline" label="Date of birth" type="date" value={member.dateOfBirth || ''} onChange={(event) => updateFamilyMember(member.id, { dateOfBirth: event.target.value })} />
+                <Input layout="inline" label="Current status" value={member.status || ''} onChange={(event) => updateFamilyMember(member.id, { status: event.target.value })} placeholder="Student, working…" />
+                <Input layout="inline" label="Goal / responsibility" value={member.goal || ''} onChange={(event) => updateFamilyMember(member.id, { goal: event.target.value })} placeholder="Education, support, legacy…" />
+              </div>
+            )}
+          />
         </div>
-      </section>
+      </FormSection>
 
-      <section className="profile-section">
-        <div className="profile-section-heading"><div><span className="eyebrow">03 · Income sources</span><h3>Where does household cashflow come from?</h3></div></div>
-        <div className="profile-repeatable-list">
-          <div className="profile-subheading"><div><h4>Income sources</h4><p>Record each source separately. These values feed annual household income in Cashflow.</p></div><button type="button" className="profile-add-button" onClick={() => replaceIncomeSources([...(inputs.client.incomeSources || []), { id: `income-${Date.now()}`, name: '', amount: 0, amountInBaseCurrency: 0, currency: 'INR', frequency: 'monthly', notes: '' }])}><Plus size={14} /> Add income source</button></div>
-          {(inputs.client.incomeSources || []).map((source) => <div className="profile-repeatable-row profile-income-row" key={source.id}>
-            <Input label="Source" value={source.name} onChange={(event) => updateIncomeSource(source.id, { name: event.target.value })} placeholder="Salary, rental, freelance…" />
-            <CurrencyInput label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} currency={source.currency} onCurrencyChange={(value) => updateIncomeSource(source.id, { currency: value })} />
-            <CurrencyInput label="INR equivalent" value={source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0)} onChange={(value) => updateIncomeSource(source.id, { amountInBaseCurrency: value })} helper={source.currency === 'INR' ? 'Same as amount' : 'Used in projections'} />
-            <Select label="Frequency" value={source.frequency} onChange={(value) => updateIncomeSource(source.id, { frequency: value as IncomeSource['frequency'] })} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'annual', label: 'Annual' }]} />
-            <Input label="Notes" value={source.notes || ''} onChange={(event) => updateIncomeSource(source.id, { notes: event.target.value })} placeholder="Clients, rental property…" />
-            <button type="button" className="profile-remove-button" onClick={() => replaceIncomeSources((inputs.client.incomeSources || []).filter((item) => item.id !== source.id))} aria-label={`Remove ${source.name || 'income source'}`}><Trash2 size={15} /></button>
-          </div>)}
-          {(inputs.client.incomeSources || []).length === 0 && <p className="profile-empty-row">No income sources added yet.</p>}
-        </div>
-      </section>
+      <FormSection
+        index="03"
+        title="Income sources"
+        description="Where household cashflow comes from — feeds annual income in Cashflow."
+        meta={`${incomeSources.length} source${incomeSources.length === 1 ? '' : 's'} · ${formatCurrency(monthlyIncomeTotal)}/mo`}
+      >
+        <Repeater<IncomeSource>
+          items={incomeSources}
+          getKey={(source) => source.id}
+          emptyLabel="No income sources added yet."
+          addLabel="Add income source"
+          onAdd={() => replaceIncomeSources([...incomeSources, { id: `income-${Date.now()}`, name: '', amount: 0, amountInBaseCurrency: 0, currency: 'INR', frequency: 'monthly', notes: '' }])}
+          onRemove={(source) => replaceIncomeSources(incomeSources.filter((item) => item.id !== source.id))}
+          renderSummary={(source) => (
+            <span className="flex items-baseline gap-3 min-w-0 text-sm">
+              <span className="truncate font-medium text-ink">{source.name || 'Unnamed source'}</span>
+              <span className="truncate text-xs text-muted">{source.frequency}</span>
+              <span className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted">
+                {formatCurrency(source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0))}
+                {source.currency !== 'INR' && <span className="text-faint"> {source.currency}</span>}
+              </span>
+            </span>
+          )}
+          renderEditor={(source) => (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">
+              <Input layout="inline" label="Source" value={source.name} onChange={(event) => updateIncomeSource(source.id, { name: event.target.value })} placeholder="Salary, rental, freelance…" />
+              <CurrencyInput layout="inline" label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} currency={source.currency} onCurrencyChange={(value) => updateIncomeSource(source.id, { currency: value })} />
+              <CurrencyInput layout="inline" label="INR equivalent" value={source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0)} onChange={(value) => updateIncomeSource(source.id, { amountInBaseCurrency: value })} helper={source.currency === 'INR' ? 'Same as amount' : 'Used in projections'} />
+              <Select layout="inline" label="Frequency" value={source.frequency} onChange={(value) => updateIncomeSource(source.id, { frequency: value as IncomeSource['frequency'] })} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'annual', label: 'Annual' }]} />
+              <Input layout="inline" label="Notes" value={source.notes || ''} onChange={(event) => updateIncomeSource(source.id, { notes: event.target.value })} placeholder="Clients, rental property…" />
+            </div>
+          )}
+        />
+      </FormSection>
 
-      {/* Timeline */}
-      <section className="profile-section">
-        <div className="flex items-baseline justify-between gap-4 mb-5">
-          <div>
-            <h3 className="text-[15px] font-semibold text-ink tracking-tight">Demographic timeline</h3>
-            <p className="mt-0.5 text-xs text-muted">Ages define the accumulation and distribution windows.</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-5">
+      <FormSection
+        index="04"
+        title="Timeline"
+        description="Ages define the accumulation and distribution windows."
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-5 gap-y-4">
           <NumberInput
+            layout="inline"
             label="Current age"
             value={inputs.currentAge}
             onChange={(val) => updateInputs({ currentAge: val })}
@@ -199,6 +270,7 @@ export const ProfileStep = ({
             slider
           />
           <NumberInput
+            layout="inline"
             label="Retirement age"
             value={inputs.retirementAge}
             onChange={(val) => updateInputs({ retirementAge: val })}
@@ -214,6 +286,7 @@ export const ProfileStep = ({
             slider
           />
           <NumberInput
+            layout="inline"
             label="Life expectancy"
             value={inputs.lifeExpectancy}
             onChange={(val) => updateInputs({ lifeExpectancy: val })}
@@ -230,7 +303,7 @@ export const ProfileStep = ({
         </div>
 
         {/* Timeline preview */}
-        <div className="mt-6 divide-y divide-border border-t border-b border-border">
+        <div className="mt-5 divide-y divide-border border-t border-b border-border">
           {timeline.map((t) => (
             <div key={t.label} className="flex items-baseline justify-between gap-4 py-2.5">
               <span className="text-xs text-muted">{t.label}</span>
@@ -243,11 +316,16 @@ export const ProfileStep = ({
             Set the current age and retirement age to preview the plan timeline.
           </p>
         )}
-      </section>
+      </FormSection>
 
-      <section className="profile-section">
-        <div className="profile-section-heading"><div><span className="eyebrow">05 · Advisory brief</span><h3>What should the plan help decide?</h3></div></div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+      <FormSection
+        index="05"
+        title="Advisory brief"
+        description="What should the plan help decide?"
+        collapsible
+        defaultOpen={false}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
           <TextAreaField label="Planning purpose" value={inputs.client?.planningPurpose || ''} onChange={(value) => updateClient({ planningPurpose: value })} placeholder="e.g. Retirement security and a disciplined investment structure" />
           <TextAreaField label="Goals and milestones" value={inputs.client?.goalsSummary || ''} onChange={(value) => updateClient({ goalsSummary: value })} placeholder="Education, business, property, legacy, or other family goals" />
           <TextAreaField label="Investment philosophy" value={inputs.client?.investmentPhilosophy || ''} onChange={(value) => updateClient({ investmentPhilosophy: value })} placeholder="e.g. Capital preservation with steady growth; comfortable with measured drawdowns" />
@@ -255,35 +333,40 @@ export const ProfileStep = ({
           <TextAreaField label="Insurance and protection" value={inputs.client?.insuranceSummary || ''} onChange={(value) => updateClient({ insuranceSummary: value })} placeholder="Life, health, critical illness, endowment, or coverage gaps" />
           <TextAreaField label="Advisor discovery notes" value={inputs.client?.notes || ''} onChange={(value) => updateClient({ notes: value })} placeholder="Risk reservations, family circumstances, liquidity needs, or legacy intentions" />
         </div>
-        <div className="profile-repeatable-list">
-          <div className="profile-subheading"><div><h4>Insurance and protection</h4><p>Record every policy, cover amount, premium, and renewal detail.</p></div><button type="button" className="profile-add-button" onClick={() => updateClient({ insurancePolicies: [...(inputs.client.insurancePolicies || []), { id: `insurance-${Date.now()}`, type: '', provider: '', coverage: '', premium: 0, premiumFrequency: 'annual', notes: '' }] })}><Plus size={14} /> Add policy</button></div>
-          {(inputs.client.insurancePolicies || []).map((policy) => <div className="profile-repeatable-row" key={policy.id}>
-            <Input label="Policy type" value={policy.type} onChange={(event) => updateInsurancePolicy(policy.id, { type: event.target.value })} placeholder="Life, health…" />
-            <Input label="Provider" value={policy.provider || ''} onChange={(event) => updateInsurancePolicy(policy.id, { provider: event.target.value })} placeholder="Insurer" />
-            <Input label="Coverage" value={policy.coverage || ''} onChange={(event) => updateInsurancePolicy(policy.id, { coverage: event.target.value })} placeholder="₹1 Cr / USD 100k" />
-            <CurrencyInput label="Premium" value={policy.premium || 0} onChange={(value) => updateInsurancePolicy(policy.id, { premium: value })} />
-            <Select label="Frequency" value={policy.premiumFrequency || 'annual'} onChange={(value) => updateInsurancePolicy(policy.id, { premiumFrequency: value as InsurancePolicy['premiumFrequency'] })} options={[{ value: 'annual', label: 'Annual' }, { value: 'monthly', label: 'Monthly' }]} />
-            <Input label="Notes" value={policy.notes || ''} onChange={(event) => updateInsurancePolicy(policy.id, { notes: event.target.value })} placeholder="Term, renewal, exclusions…" />
-            <button type="button" className="profile-remove-button" onClick={() => updateClient({ insurancePolicies: (inputs.client.insurancePolicies || []).filter((item) => item.id !== policy.id) })} aria-label={`Remove ${policy.type || 'insurance policy'}`}><Trash2 size={15} /></button>
-          </div>)}
-          {(inputs.client.insurancePolicies || []).length === 0 && <p className="profile-empty-row">No insurance policies added yet.</p>}
+        <div className="mt-6">
+          <Repeater<InsurancePolicy>
+            items={insurancePolicies}
+            getKey={(policy) => policy.id}
+            emptyLabel="No insurance policies added yet."
+            addLabel="Add policy"
+            onAdd={() => updateClient({ insurancePolicies: [...insurancePolicies, { id: `insurance-${Date.now()}`, type: '', provider: '', coverage: '', premium: 0, premiumFrequency: 'annual', notes: '' }] })}
+            onRemove={(policy) => updateClient({ insurancePolicies: insurancePolicies.filter((item) => item.id !== policy.id) })}
+            renderSummary={(policy) => (
+              <span className="flex items-baseline gap-3 min-w-0 text-sm">
+                <span className="truncate font-medium text-ink">{policy.type || 'Policy'}</span>
+                <span className="truncate text-xs text-muted">{policy.provider || '—'}</span>
+                <span className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted">
+                  {formatCurrency(policy.premium || 0)}
+                  <span className="text-faint"> {policy.premiumFrequency === 'monthly' ? '/mo' : '/yr'}</span>
+                </span>
+              </span>
+            )}
+            renderEditor={(policy) => (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">
+                <Input layout="inline" label="Policy type" value={policy.type} onChange={(event) => updateInsurancePolicy(policy.id, { type: event.target.value })} placeholder="Life, health…" />
+                <Input layout="inline" label="Provider" value={policy.provider || ''} onChange={(event) => updateInsurancePolicy(policy.id, { provider: event.target.value })} placeholder="Insurer" />
+                <Input layout="inline" label="Coverage" value={policy.coverage || ''} onChange={(event) => updateInsurancePolicy(policy.id, { coverage: event.target.value })} placeholder="₹1 Cr / USD 100k" />
+                <CurrencyInput layout="inline" label="Premium" value={policy.premium || 0} onChange={(value) => updateInsurancePolicy(policy.id, { premium: value })} />
+                <Select layout="inline" label="Frequency" value={policy.premiumFrequency || 'annual'} onChange={(value) => updateInsurancePolicy(policy.id, { premiumFrequency: value as InsurancePolicy['premiumFrequency'] })} options={[{ value: 'annual', label: 'Annual' }, { value: 'monthly', label: 'Monthly' }]} />
+                <Input layout="inline" label="Notes" value={policy.notes || ''} onChange={(event) => updateInsurancePolicy(policy.id, { notes: event.target.value })} placeholder="Term, renewal, exclusions…" />
+              </div>
+            )}
+          />
         </div>
-      </section>
-
-      {/* Step navigation */}
-      <div className="flex justify-end border-t border-border pt-6">
-        <Button onClick={onNext} className="flex items-center gap-2">
-          <span>Next · Balance sheet</span>
-          <ArrowRight size={15} aria-hidden="true" />
-        </Button>
-      </div>
+      </FormSection>
     </div>
   );
 };
-
-function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: { value: string; label: string }[] }) {
-  return <Select label={label} value={value} onChange={onChange} options={options} />;
-}
 
 function TextAreaField({ label, value, onChange, placeholder, helper }: { label: string; value: string; onChange: (value: string) => void; placeholder: string; helper?: string }) {
   return <label className="space-y-1.5 block"><span className="field-label block text-xs font-medium text-ink-soft">{label}</span><textarea rows={3} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="w-full min-h-[88px] bg-surface border border-border rounded-md px-3 py-2.5 text-sm text-ink placeholder:text-faint hover:border-border-strong focus:border-accent focus:ring-2 focus:ring-accent-soft focus:outline-none transition-colors resize-y" />{helper && <span className="block text-xs text-faint leading-relaxed">{helper}</span>}</label>;

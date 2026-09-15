@@ -4,6 +4,7 @@ import { Menu, Search, Wallet, ShieldCheck, User, FlaskConical, RotateCcw, Chevr
 import { navItems } from './navItems';
 import { LogoMark } from './BrandMark';
 import { CommandPalette } from './CommandPalette';
+import { PersonaMenu } from './PersonaMenu';
 import { Avatar } from '../ui/Avatar';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { ThemeToggle } from '../ui/ThemeToggle';
@@ -26,7 +27,7 @@ const isEditableTarget = (el: EventTarget | null): boolean => {
 export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { inputs, riskProfile, riskScore, hasRiskAnswers, wealthResult, loadDemoWorkspace, resetToDefaults, saveCurrentPlan } =
+  const { inputs, riskProfile, riskScore, hasRiskAnswers, wealthResult, loadPersona, resetToDefaults, saveCurrentPlan } =
     useCalculator();
   const { user, organizationName, logout } = useAuth();
 
@@ -79,7 +80,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
     {
       label: 'Load demo workspace',
       icon: FlaskConical,
-      run: () => loadDemoWorkspace(),
+      run: () => loadPersona('john-doe'),
     },
     {
       label: 'Reset workspace…',
@@ -160,15 +161,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
 
             {/* Developer / Demo Quick Actions */}
             <div className="flex items-center gap-1.5 border-r border-border pr-2 sm:pr-3 mr-1">
-              <button
-                type="button"
-                onClick={() => loadDemoWorkspace()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-accent text-white hover:bg-accent-strong shadow-sm transition-all hover:-translate-y-px active:translate-y-0"
-                title="Load John Doe sample data"
-              >
-                <FlaskConical size={14} strokeWidth={2} />
-                <span className="text-[13px] font-semibold hidden sm:inline-block">Load Sample</span>
-              </button>
+              <PersonaMenu />
               <button
                 type="button"
                 onClick={() => setShowResetConfirm(true)}

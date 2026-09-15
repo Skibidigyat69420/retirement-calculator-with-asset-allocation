@@ -1,7 +1,7 @@
-import { ArrowRight, ArrowLeft, Sparkles } from 'lucide-react';
-import { Button } from '../ui/Button';
+import { Sparkles } from 'lucide-react';
 import { NumberInput } from '../ui/NumberInput';
 import { Badge } from '../ui/Badge';
+import { FormSection } from '../ui/FormSection';
 import { formatOrDash } from '../../lib/planState';
 import type { MasterPlanInputs, AssumptionMode } from '../../types';
 
@@ -11,8 +11,6 @@ interface AssumptionsStepProps {
   assumptionMode: AssumptionMode;
   setAssumptionMode: (mode: AssumptionMode) => void;
   activeAssumptionSourceLabel: string;
-  onNext: () => void;
-  onBack: () => void;
 }
 
 export const AssumptionsStep = ({
@@ -21,8 +19,6 @@ export const AssumptionsStep = ({
   assumptionMode,
   setAssumptionMode,
   activeAssumptionSourceLabel,
-  onNext,
-  onBack,
 }: AssumptionsStepProps) => {
   const inflation = inputs.inflation;
 
@@ -33,8 +29,8 @@ export const AssumptionsStep = ({
   ];
 
   return (
-    <div className="space-y-8">
-      <header>
+    <div className="border-t border-border">
+      <header className="py-4">
         <div className="eyebrow">Step 06 · Assumptions</div>
         <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">Market assumptions</h2>
         <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
@@ -43,14 +39,12 @@ export const AssumptionsStep = ({
       </header>
 
       {/* Preset regimes */}
-      <section className="border-t border-border pt-6">
-        <div className="flex items-baseline justify-between gap-4 flex-wrap mb-5">
-          <div>
-            <h3 className="text-[15px] font-semibold text-ink tracking-tight">Market regime presets</h3>
-            <p className="mt-0.5 text-xs text-muted">
-              Active source: <span className="text-accent">{activeAssumptionSourceLabel}</span>
-            </p>
-          </div>
+      <FormSection
+        index="01"
+        title="Market regime presets"
+        description={`Active source: ${activeAssumptionSourceLabel}`}
+      >
+        <div className="flex justify-end -mt-1 mb-3">
           <Badge tone="brass" className="capitalize">{assumptionMode}</Badge>
         </div>
 
@@ -78,13 +72,15 @@ export const AssumptionsStep = ({
             );
           })}
         </div>
-      </section>
+      </FormSection>
 
       {/* Inflation */}
-      <section className="border-t border-border pt-6">
-        <h3 className="text-[15px] font-semibold text-ink tracking-tight">Inflation & real returns</h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 mt-5 items-start">
+      <FormSection
+        index="02"
+        title="Inflation & real returns"
+        className="mt-8"
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 items-start">
           <NumberInput
             label="Baseline living inflation rate"
             value={inputs.inflation}
@@ -117,19 +113,7 @@ export const AssumptionsStep = ({
             </p>
           </div>
         </div>
-      </section>
-
-      {/* Step navigation */}
-      <div className="flex justify-between border-t border-border pt-6">
-        <Button variant="ghost" onClick={onBack} className="flex items-center gap-2">
-          <ArrowLeft size={15} aria-hidden="true" />
-          <span>Back · Risk</span>
-        </Button>
-        <Button onClick={onNext} className="flex items-center gap-2">
-          <span>Next · Outlook</span>
-          <ArrowRight size={15} aria-hidden="true" />
-        </Button>
-      </div>
+      </FormSection>
     </div>
   );
 };

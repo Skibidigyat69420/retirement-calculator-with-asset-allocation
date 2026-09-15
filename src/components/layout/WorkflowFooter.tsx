@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface WorkflowStep {
   path: string;
@@ -10,71 +10,47 @@ interface WorkflowStep {
 interface WorkflowFooterProps {
   prev?: WorkflowStep;
   next?: WorkflowStep;
+  /** @deprecated No longer rendered — kept for call-site compatibility. */
   flowHint?: string;
+  /** Center indicator, e.g. "Step 3 / 7 — Cashflows". Hidden below sm. */
+  stepIndicator?: string;
 }
 
-export const WorkflowFooter = ({ prev, next, flowHint }: WorkflowFooterProps) => {
+/**
+ * Slim sticky bottom action bar — the single nav system for the wizard.
+ * Replaces the old link-card footer.
+ */
+export const WorkflowFooter = ({ prev, next, stepIndicator }: WorkflowFooterProps) => {
   return (
-    <div className="mt-12 rounded-2xl border border-border/80 bg-raised/85 backdrop-blur-md p-4 sm:p-5 shadow-sm relative overflow-hidden">
-      <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        {/* Previous Step */}
-        <div className="flex-1">
-          {prev ? (
+    <div className="sticky bottom-0 z-30 -mx-4 sm:-mx-6 lg:-mx-10 px-4 sm:px-6 lg:px-10 mt-10 h-14 flex items-center gap-3 border-t border-border bg-surface/90 backdrop-blur">
+      <div className="max-w-[1440px] mx-auto w-full flex items-center gap-3">
+        <div className="flex-1 flex items-center">
+          {prev && (
             <Link
               to={prev.path}
-              className="inline-flex items-center gap-3 px-4 py-2.5 min-h-11 rounded-xl border border-border/80 bg-raised/90 hover:bg-raised text-ink-soft hover:text-ink hover:border-border hover:shadow-xs text-xs font-semibold transition-all duration-200 group w-full sm:w-auto"
+              className="inline-flex items-center gap-1 px-3 min-h-8 py-1.5 text-xs font-medium rounded-md text-ink-soft hover:text-ink hover:bg-sunken transition-colors"
             >
-              <div className="w-7 h-7 rounded-lg bg-sunken/90 border border-border/60 flex items-center justify-center group-hover:bg-sunken/70 group-hover:border-border transition-colors">
-                <ArrowLeft
-                  size={14}
-                  className="text-muted group-hover:text-ink group-hover:-translate-x-0.5 transition-transform"
-                />
-              </div>
-              <div className="text-left">
-                <span className="block text-[9px] font-mono font-bold uppercase tracking-widest text-faint">
-                  Previous Step
-                </span>
-                <span className="font-bold text-xs text-ink group-hover:text-ink">
-                  {prev.label}
-                </span>
-              </div>
+              <ChevronLeft size={14} aria-hidden="true" />
+              <span>Back{prev.label ? ` · ${prev.label}` : ''}</span>
             </Link>
-          ) : (
-            <div />
           )}
         </div>
 
-        {/* Middle Data Flow Hint */}
-        {flowHint && (
-          <div className="hidden md:flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-accent-soft/70 via-sunken to-accent-soft/70 rounded-full border border-border/70 text-xs text-ink-soft max-w-md text-center shadow-2xs">
-            <CheckCircle2 size={13} className="text-accent-strong shrink-0" />
-            <span className="font-medium truncate">{flowHint}</span>
-          </div>
+        {stepIndicator && (
+          <span className="hidden sm:block font-mono text-[11px] tabular-nums text-muted whitespace-nowrap">
+            {stepIndicator}
+          </span>
         )}
 
-        {/* Next Step */}
-        <div className="flex-1 flex justify-end">
-          {next ? (
+        <div className="flex-1 flex items-center justify-end">
+          {next && (
             <Link
               to={next.path}
-              className="inline-flex items-center justify-end gap-3 px-5 py-2.5 min-h-11 rounded-xl bg-inkfill text-on-inkfill hover:bg-inkfill hover:shadow-sm text-xs font-semibold transition-all duration-200 group w-full sm:w-auto"
+              className="inline-flex items-center gap-1 px-4 min-h-8 py-1.5 text-xs font-semibold rounded-md bg-accent text-on-inkfill border border-accent hover:bg-accent-strong hover:border-accent-strong transition-colors"
             >
-              <div className="text-right">
-                <span className="block text-[9px] font-mono font-bold uppercase tracking-widest text-on-inkfill/60">
-                  Next Step
-                </span>
-                <span className="font-bold text-xs text-on-inkfill">{next.label}</span>
-              </div>
-              <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
-                <ArrowRight
-                  size={14}
-                  className="text-on-inkfill group-hover:translate-x-0.5 transition-transform"
-                />
-              </div>
+              <span>{next.label}</span>
+              <ChevronRight size={14} aria-hidden="true" />
             </Link>
-          ) : (
-            <div />
           )}
         </div>
       </div>

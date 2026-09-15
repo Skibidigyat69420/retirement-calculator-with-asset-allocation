@@ -17,6 +17,7 @@ import { navItems } from './navItems';
 import { useCalculator } from '../../context/CalculatorContext';
 import { useTheme } from '../../lib/theme';
 import { formatDate } from '../../lib/formatters';
+import { PERSONAS } from '../../lib/personas';
 
 interface CommandPaletteProps {
   open: boolean;
@@ -38,7 +39,7 @@ const matches = (query: string, ...fields: (string | undefined)[]) =>
 
 export const CommandPalette = ({ open, onClose, onRequestReset }: CommandPaletteProps) => {
   const navigate = useNavigate();
-  const { savedPlans, loadSavedPlan, loadDemoWorkspace } = useCalculator();
+  const { savedPlans, loadSavedPlan, loadPersona } = useCalculator();
   const { theme, setTheme } = useTheme();
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
@@ -102,13 +103,16 @@ export const CommandPalette = ({ open, onClose, onRequestReset }: CommandPalette
     ].filter((o) => theme !== o.value);
 
     const actions: PaletteEntry[] = [
-      {
-        id: 'action:demo',
-        group: 'Actions' as const,
-        label: 'Load demo workspace',
-        icon: FlaskConical,
-        run: () => loadDemoWorkspace(),
-      },
+      ...PERSONAS.map(
+        (persona): PaletteEntry => ({
+          id: `action:persona-${persona.id}`,
+          group: 'Actions' as const,
+          label: `Sample: ${persona.label}`,
+          sublabel: persona.tagline,
+          icon: FlaskConical,
+          run: () => loadPersona(persona.id),
+        }),
+      ),
       {
         id: 'action:reset',
         group: 'Actions' as const,
@@ -125,12 +129,12 @@ export const CommandPalette = ({ open, onClose, onRequestReset }: CommandPalette
           run: () => setTheme(o.value),
         }),
       ),
-    ].filter((a) => !q || matches(q, a.label, 'action'));
+    ].filter((a) => !q || matches(q, a.label, a.sublabel, 'action'));
 
     // Empty query: quiet defaults — a few navigate targets + all actions.
     if (!q) return [...navigateEntries.slice(0, 6), ...actions];
     return [...plans, ...navigateEntries, ...actions];
-  }, [query, savedPlans, theme, navigate, loadSavedPlan, loadDemoWorkspace, setTheme, onRequestReset]);
+  }, [query, savedPlans, theme, navigate, loadSavedPlan, loadPersona, setTheme, onRequestReset]);
 
   // Clamp the active row instead of resetting it in an effect.
   const clampedIndex = entries.length === 0 ? 0 : Math.min(activeIndex, entries.length - 1);

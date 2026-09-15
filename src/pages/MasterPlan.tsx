@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { SlidersHorizontal, Save, FileDown } from 'lucide-react';
+import { SlidersHorizontal, Save, FileDown, Activity, X } from 'lucide-react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useCalculator } from '../context/CalculatorContext';
 import { planStatus } from '../lib/planState';
 import { SaveIndicator } from '../components/ui/SaveIndicator';
@@ -8,7 +9,7 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { Button } from '../components/ui/Button';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import { PlanningAssumptionsModal } from '../components/analytics/PlanningAssumptionsModal';
-import { MasterPlanSidebar } from '../components/master-plan/MasterPlanSidebar';
+import { MasterPlanSidebar, PLAN_STEPS } from '../components/master-plan/MasterPlanSidebar';
 import { MasterPlanSummary } from '../components/master-plan/MasterPlanSummary';
 import { ProfileStep } from '../components/master-plan/ProfileStep';
 import { FinancialsStep } from '../components/master-plan/FinancialsStep';
@@ -17,8 +18,113 @@ import { GoalsStep } from '../components/master-plan/GoalsStep';
 import { RiskStep } from '../components/master-plan/RiskStep';
 import { AssumptionsStep } from '../components/master-plan/AssumptionsStep';
 import { ResultsStep } from '../components/master-plan/ResultsStep';
+import type { MasterPlanInputs } from '../types';
+import type { WealthEngineResult } from '../lib/wealthEngine';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
+interface OutlookDockProps {
+  inputs: MasterPlanInputs;
+  wealthResult: WealthEngineResult;
+  totalLiabilities: number;
+  netBalanceSheet: number;
+  debtToAssetRatio: number;
+  hasRiskAnswers?: boolean;
+  onSavePlan: () => Promise<void>;
+  onViewDetails: () => void;
+}
+
+/** Floating outlook dock — collapsible replacement for the old right rail. */
+const OutlookDock = ({
+  inputs,
+  wealthResult,
+  totalLiabilities,
+  netBalanceSheet,
+  debtToAssetRatio,
+  hasRiskAnswers,
+  onSavePlan,
+  onViewDetails,
+}: OutlookDockProps) => {
+  const [open, setOpen] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  const close = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) close();
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close();
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open, close]);
+
+  return (
+    <div
+      ref={rootRef}
+      className="fixed bottom-20 right-4 z-40 xl:bottom-[4.5rem] xl:right-6 flex flex-col items-end"
+    >
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            key="panel"
+            initial={reduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 8 }}
+            transition={reduceMotion ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' }}
+            className="absolute bottom-14 right-0 w-[min(340px,calc(100vw-2rem))] max-h-[70vh] overflow-y-auto rounded-xl border border-border bg-surface shadow-popover"
+          >
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border bg-surface/95 backdrop-blur">
+              <span className="eyebrow">Plan outlook</span>
+              <button
+                type="button"
+                onClick={close}
+                aria-label="Close plan outlook"
+                className="p-1 rounded-md text-faint hover:text-ink hover:bg-sunken transition-colors cursor-pointer"
+              >
+                <X size={14} strokeWidth={1.8} aria-hidden="true" />
+              </button>
+            </div>
+            <div className="p-4">
+              <MasterPlanSummary
+                inputs={inputs}
+                wealthResult={wealthResult}
+                totalLiabilities={totalLiabilities}
+                netBalanceSheet={netBalanceSheet}
+                debtToAssetRatio={debtToAssetRatio}
+                hasRiskAnswers={hasRiskAnswers}
+                onSavePlan={onSavePlan}
+                onViewDetails={onViewDetails}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-label={open ? 'Close plan outlook' : 'Open plan outlook'}
+        className="w-12 h-12 rounded-full bg-accent text-on-inkfill border border-accent shadow-popover flex items-center justify-center cursor-pointer transition-colors hover:bg-accent-strong hover:border-accent-strong"
+      >
+        {open ? (
+          <X size={18} strokeWidth={1.8} aria-hidden="true" />
+        ) : (
+          <Activity size={18} strokeWidth={1.8} aria-hidden="true" />
+        )}
+      </button>
+    </div>
+  );
+};
 
 export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }) => {
   const {
@@ -98,6 +204,11 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
     showToast(`Removed goal "${goalToRemove?.name || 'Goal'}"`, 'info');
   };
 
+  const activeStepMeta = PLAN_STEPS.find((s) => s.id === activeStep);
+  const stepIndicator = activeStepMeta
+    ? `Step ${Number(activeStepMeta.stepNumber)} / ${PLAN_STEPS.length} — ${activeStepMeta.label}`
+    : undefined;
+
   return (
     <div className="pb-8">
       {/* Studio header — editable plan title, save state, plan status */}
@@ -152,10 +263,10 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
         </div>
       </header>
 
-      {/* Studio layout: rail · active section · outlook */}
+      {/* Studio layout: rail · active section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-8 gap-y-10 items-start">
         {/* Left: vertical progress rail */}
-        <aside className="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-20 z-10">
+        <aside className="lg:col-span-3 xl:col-span-2 lg:sticky lg:top-20 z-10">
           <MasterPlanSidebar
             activeStep={activeStep}
             onSelectStep={handleStepChange}
@@ -164,13 +275,12 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
         </aside>
 
         {/* Center: active section */}
-        <main className="lg:col-span-8 xl:col-span-6 min-w-0">
+        <main className="lg:col-span-9 xl:col-span-10 min-w-0">
           {activeStep === 'profile' && (
             <ProfileStep
               inputs={inputs}
               updateInputs={updateInputs}
               updateClient={updateClient}
-              onNext={() => handleStepChange('financials')}
             />
           )}
 
@@ -184,8 +294,6 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
               onRemoveLiability={removeLiability}
               onAddAsset={addAsset}
               onRemoveAsset={handleDeleteAsset}
-              onNext={() => handleStepChange('cashflows')}
-              onBack={() => handleStepChange('profile')}
             />
           )}
 
@@ -197,8 +305,6 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
               updateSIP={updateSIP}
               updateSTP={updateSTP}
               updateSWP={updateSWP}
-              onNext={() => handleStepChange('goals')}
-              onBack={() => handleStepChange('financials')}
             />
           )}
 
@@ -208,8 +314,6 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
               onAddGoal={addGoal}
               onUpdateGoal={updateGoal}
               onRemoveGoal={handleDeleteGoal}
-              onNext={() => handleStepChange('risk')}
-              onBack={() => handleStepChange('cashflows')}
             />
           )}
 
@@ -221,8 +325,6 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
               hasRiskAnswers={hasRiskAnswers}
               manualTargets={manualTargets}
               setManualTargets={setManualTargets}
-              onNext={() => handleStepChange('assumptions')}
-              onBack={() => handleStepChange('goals')}
             />
           )}
 
@@ -233,8 +335,6 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
               assumptionMode={assumptionMode}
               setAssumptionMode={setAssumptionMode}
               activeAssumptionSourceLabel={activeAssumptionSourceLabel}
-              onNext={() => handleStepChange('results')}
-              onBack={() => handleStepChange('risk')}
             />
           )}
 
@@ -243,24 +343,9 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
               inputs={inputs}
               wealthResult={wealthResult}
               riskProfile={riskProfile}
-              onBack={() => handleStepChange('assumptions')}
             />
           )}
         </main>
-
-        {/* Right: persistent plan outlook (desktop xl+) */}
-        <aside className="hidden xl:block xl:col-span-3 xl:sticky xl:top-20 z-10">
-          <MasterPlanSummary
-            inputs={inputs}
-            wealthResult={wealthResult}
-            totalLiabilities={totalLiabilities}
-            netBalanceSheet={netBalanceSheet}
-            debtToAssetRatio={debtToAssetRatio}
-            hasRiskAnswers={hasRiskAnswers}
-            onSavePlan={handleSave}
-            onViewDetails={() => handleStepChange('results')}
-          />
-        </aside>
       </div>
 
       {/* Assumptions Calibration Modal */}
@@ -269,10 +354,22 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
         onClose={() => setIsAssumptionsModalOpen(false)}
       />
 
-      {/* Modern Workflow Footer */}
+      {/* Floating plan outlook */}
+      <OutlookDock
+        inputs={inputs}
+        wealthResult={wealthResult}
+        totalLiabilities={totalLiabilities}
+        netBalanceSheet={netBalanceSheet}
+        debtToAssetRatio={debtToAssetRatio}
+        hasRiskAnswers={hasRiskAnswers}
+        onSavePlan={handleSave}
+        onViewDetails={() => handleStepChange('results')}
+      />
+
+      {/* Sticky workflow action bar — the single nav system */}
       <WorkflowFooter
         prev={activeStep === 'profile'
-          ? { path: '/', label: 'Dashboard' }
+          ? undefined
           : activeStep === 'financials'
             ? { path: '/master-plan?step=profile', label: 'Profile' }
             : activeStep === 'cashflows'
@@ -285,7 +382,7 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
                     ? { path: '/master-plan?step=risk', label: 'Risk Profile' }
                     : activeStep === 'results'
                       ? { path: '/master-plan?step=assumptions', label: 'Assumptions' }
-                      : { path: '/', label: 'Dashboard' }
+                      : undefined
         }
         next={activeStep === 'profile'
           ? { path: '/master-plan?step=financials', label: 'Balance Sheet' }
@@ -299,19 +396,9 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
                   ? { path: '/master-plan?step=assumptions', label: 'Assumptions' }
                   : activeStep === 'assumptions'
                     ? { path: '/master-plan?step=results', label: 'Results & Outlook' }
-                    : activeStep === 'results'
-                      ? { path: '/dossier', label: 'View Dossier' }
-                      : { path: '/dossier', label: 'View Dossier' }
+                    : { path: '/dossier', label: 'View Dossier' }
         }
-        flowHint={
-          activeStep === 'profile' ? 'Client identity, household context, and income sources feed the planning model.' :
-          activeStep === 'financials' ? 'Assets and liabilities determine the starting balance sheet and net worth position.' :
-          activeStep === 'cashflows' ? 'SIP, STP, and SWP cashflow strategies drive the accumulation and distribution phases.' :
-          activeStep === 'goals' ? 'Goals define target amounts, timelines, and priorities for the simulation engine.' :
-          activeStep === 'risk' ? 'Risk profiling determines asset allocation targets and stress-test tolerance bounds.' :
-          activeStep === 'assumptions' ? 'Market return, volatility, and correlation assumptions calibrate the wealth engine.' :
-          'Monte Carlo simulation results, goal feasibility, and plan health indicators.'
-        }
+        stepIndicator={stepIndicator}
       />
     </div>
   );

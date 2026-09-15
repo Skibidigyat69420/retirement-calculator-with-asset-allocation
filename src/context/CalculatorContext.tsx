@@ -7,12 +7,15 @@ import type {
   AssetCategory,
   ClientProfile,
   Liability,
+  FamilyMember,
   DecisionLogEntry,
   ClientMeetingState,
   ClientMeetingStageId,
   AssumptionMode,
 } from '../types';
-import { defaultClientInputs, demoClientInputs } from '../lib/scenarios';
+import { defaultClientInputs } from '../lib/scenarios';
+import { getPersona } from '../lib/personas';
+import { canAddHouseholdMember, MAX_HOUSEHOLD_MEMBERS } from '../lib/householdEngine';
 import {
   loadAssumptions,
   buildAssumptionsFromMarketData,
@@ -76,7 +79,12 @@ interface CalculatorContextType {
   manualTargets: Record<AssetCategory, number> | null;
   setManualTargets: React.Dispatch<React.SetStateAction<Record<AssetCategory, number> | null>>;
   resetToDefaults: () => void;
+  loadPersona: (id: string) => void;
   loadDemoWorkspace: () => void;
+  loadSampleWorkspace: () => void;
+  setAssetOwnership: (assetId: string, ownerMemberIds: string[]) => void;
+  addFamilyMember: (member?: Partial<FamilyMember>) => void;
+  removeFamilyMember: (id: string) => void;
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
   savedPlans: StoredPlan[];
   refreshSavedPlans: () => Promise<void>;
@@ -594,10 +602,72 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     showToast('Workspace reset to a blank planning state.', 'info');
   }, [setRiskAnswers, setManualTargets, showToast]);
 
+  const loadPersona = useCallback((id: string) => {
+    const persona = getPersona(id);
+    if (!persona) {
+      showToast('Unknown sample persona', 'error');
+      return;
+    }
+    setInputs(persona.build());
+    setRiskAnswers(persona.riskAnswers ?? {});
+    setManualTargets(null);
+    showToast(`Loaded sample: ${persona.label}`, 'info');
+  }, [showToast, setRiskAnswers, setManualTargets]);
+
   const loadDemoWorkspace = useCallback(() => {
-    setInputs(demoClientInputs());
-    showToast('Demo workspace loaded', 'info');
+    loadPersona('john-doe');
+  }, [loadPersona]);
+
+  const loadSampleWorkspace = useCallback(() => {
+    loadPersona('sharma-household');
+  }, [loadPersona]);
+
+  // Ownership tags and household membership live in the versioned plan
+  // snapshot only — there is no backend column for them, so no API sync here.
+  const setAssetOwnership = useCallback((assetId: string, ownerMemberIds: string[]) => {
+    setInputs((prev) => ({
+      ...prev,
+      assets: prev.assets.map((a) => (a.id === assetId ? { ...a, ownerMemberIds } : a)),
+    }));
+  }, []);
+
+  const addFamilyMember = useCallback((member?: Partial<FamilyMember>) => {
+    setInputs((prev) => {
+      if (!canAddHouseholdMember(prev)) {
+        showToast(`Household is full — a maximum of ${MAX_HOUSEHOLD_MEMBERS} members is allowed.`, 'warning');
+        return prev;
+      }
+      const newMember: FamilyMember = {
+        id: member?.id || generateId('member'),
+        name: member?.name ?? '',
+        relationship: member?.relationship ?? '',
+        ...member,
+      };
+      return {
+        ...prev,
+        client: {
+          ...prev.client,
+          familyMembers: [...(prev.client.familyMembers ?? []), newMember],
+        },
+      };
+    });
   }, [showToast]);
+
+  const removeFamilyMember = useCallback((id: string) => {
+    setInputs((prev) => ({
+      ...prev,
+      client: {
+        ...prev.client,
+        familyMembers: (prev.client.familyMembers ?? []).filter((m) => m.id !== id),
+      },
+      // Drop the removed member from asset ownership tags so views stay clean.
+      assets: prev.assets.map((a) =>
+        a.ownerMemberIds?.includes(id)
+          ? { ...a, ownerMemberIds: a.ownerMemberIds.filter((ownerId) => ownerId !== id) }
+          : a,
+      ),
+    }));
+  }, []);
 
   const refreshSavedPlans = useCallback(async () => {
     try {
@@ -891,7 +961,12 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         manualTargets,
         setManualTargets,
         resetToDefaults,
+        loadPersona,
         loadDemoWorkspace,
+        loadSampleWorkspace,
+        setAssetOwnership,
+        addFamilyMember,
+        removeFamilyMember,
         showToast,
         savedPlans,
         refreshSavedPlans,

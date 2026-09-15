@@ -1,12 +1,10 @@
 import { Link } from 'react-router-dom';
 import {
   ShieldCheck,
-  ArrowRight,
-  ArrowLeft,
   ExternalLink,
 } from 'lucide-react';
-import { Button } from '../ui/Button';
 import { DonutChart } from '../charts/DonutChart';
+import { FormSection } from '../ui/FormSection';
 import { ASSET_COLORS, ASSET_LABELS } from '../../lib/constants';
 import type { MasterPlanInputs, RiskProfile, AssetCategory } from '../../types';
 
@@ -17,8 +15,6 @@ interface RiskStepProps {
   hasRiskAnswers?: boolean;
   manualTargets: Record<AssetCategory, number> | null;
   setManualTargets?: (targets: Record<AssetCategory, number> | null) => void;
-  onNext: () => void;
-  onBack: () => void;
 }
 
 export const RiskStep = ({
@@ -27,8 +23,6 @@ export const RiskStep = ({
   riskScore,
   hasRiskAnswers,
   manualTargets,
-  onNext,
-  onBack,
 }: RiskStepProps) => {
   // Current actual asset weights
   const totalAssets = inputs.assets.reduce((sum, a) => sum + (Number(a.value) || 0), 0);
@@ -69,8 +63,8 @@ export const RiskStep = ({
   const answered = hasRiskAnswers !== false;
 
   return (
-    <div className="space-y-8">
-      <header>
+    <div className="border-t border-border">
+      <header className="py-4">
         <div className="eyebrow">Step 05 · Risk</div>
         <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">Risk & allocation</h2>
         <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
@@ -79,7 +73,11 @@ export const RiskStep = ({
       </header>
 
       {/* Risk profile — or questionnaire guidance when unanswered */}
-      <section className="border-t border-border pt-6">
+      <FormSection
+        index="01"
+        title="Risk profile"
+        meta={answered ? `Score ${riskScore}/100` : undefined}
+      >
         {answered ? (
           <>
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -145,20 +143,21 @@ export const RiskStep = ({
             </Link>
           </div>
         )}
-      </section>
+      </FormSection>
 
       {/* Target vs actual allocation */}
-      <section className="border-t border-border pt-6">
-        <h3 className="text-[15px] font-semibold text-ink tracking-tight">
-          Policy target vs. current portfolio
-        </h3>
+      <FormSection
+        index="02"
+        title="Target vs. current portfolio"
+        className="mt-8"
+      >
         {!answered && (
-          <p className="mt-1 text-xs text-faint">
+          <p className="mt-0 mb-4 text-xs text-faint">
             Targets reflect the default moderate baseline until the questionnaire is completed.
           </p>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
           <div>
             <span className="eyebrow">Policy targets</span>
             <div className="h-44 mt-3">
@@ -197,19 +196,7 @@ export const RiskStep = ({
             )}
           </div>
         </div>
-      </section>
-
-      {/* Step navigation */}
-      <div className="flex justify-between border-t border-border pt-6">
-        <Button variant="ghost" onClick={onBack} className="flex items-center gap-2">
-          <ArrowLeft size={15} aria-hidden="true" />
-          <span>Back · Goals</span>
-        </Button>
-        <Button onClick={onNext} className="flex items-center gap-2">
-          <span>Next · Assumptions</span>
-          <ArrowRight size={15} aria-hidden="true" />
-        </Button>
-      </div>
+      </FormSection>
     </div>
   );
 };

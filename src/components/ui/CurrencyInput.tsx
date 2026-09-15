@@ -18,6 +18,8 @@ export interface CurrencyInputProps {
   id?: string;
   currency?: string;
   onCurrencyChange?: (currency: string) => void;
+  /** 'stack' (default) label above; 'inline' small mono label left of the control. */
+  layout?: 'stack' | 'inline';
 }
 
 /** en-IN grouping on blur; zero renders as a real "0", never a fake placeholder. */
@@ -47,6 +49,7 @@ export const CurrencyInput = ({
   id: idProp,
   currency = 'INR',
   onCurrencyChange,
+  layout = 'stack',
 }: CurrencyInputProps) => {
   const [localValue, setLocalValue] = useState(formatDisplay(value, currency));
   const [isEditing, setIsEditing] = useState(false);
@@ -80,19 +83,24 @@ export const CurrencyInput = ({
 
   const outOfRange = (min !== undefined && value < min) || (max !== undefined && value > max);
   const hasError = !!error || outOfRange;
+  const inline = layout === 'inline';
 
   return (
-    <div className={cn('space-y-1.5', className)}>
+    <div className={cn(inline ? 'flex flex-wrap items-center gap-x-3 gap-y-1' : 'space-y-1.5', className)}>
       {label && (
         <label
           htmlFor={inputId}
-          className="field-label block text-xs font-medium tracking-normal text-ink-soft"
+          className={cn(
+            inline
+              ? 'w-24 sm:w-28 shrink-0 text-[10px] font-mono uppercase tracking-wider text-muted leading-tight'
+              : 'field-label block text-xs font-medium tracking-normal text-ink-soft',
+          )}
         >
           {label}
         </label>
       )}
 
-      <div className="relative group">
+      <div className={cn('relative group', inline && 'flex-1 min-w-[8rem] basis-36')}>
         {onCurrencyChange ? (
           <select
             value={currency}
@@ -133,6 +141,7 @@ export const CurrencyInput = ({
           }}
           className={cn(
             'w-full bg-surface border rounded-md pl-12 pr-10 py-2.5 text-sm text-ink tabular-nums placeholder:text-faint transition-colors',
+            inline && 'py-2',
             'focus:border-accent focus:ring-2 focus:ring-accent-soft focus:outline-none',
             'hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed',
             hasError
@@ -166,7 +175,7 @@ export const CurrencyInput = ({
       </div>
 
       {presets && presets.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 pt-0.5">
+        <div className={cn('flex flex-wrap gap-1.5 pt-0.5', inline && 'basis-full pl-[6.75rem] sm:pl-[7.75rem]')}>
           {presets.map((p) => (
             <button
               key={p.label}
@@ -188,7 +197,12 @@ export const CurrencyInput = ({
       )}
 
       {(helper || error || outOfRange) && (
-        <div className="flex items-start gap-1.5 pt-0.5">
+        <div
+          className={cn(
+            'flex items-start gap-1.5 pt-0.5',
+            inline && 'basis-full pl-[6.75rem] sm:pl-[7.75rem]',
+          )}
+        >
           {hasError && <AlertCircle size={13} strokeWidth={1.8} className="text-negative mt-0.5 shrink-0" />}
           <p className={cn('text-xs leading-relaxed', hasError ? 'text-negative' : 'text-faint')}>
             {error ||
