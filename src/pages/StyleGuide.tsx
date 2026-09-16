@@ -19,7 +19,7 @@ import { Alert } from '../components/ui/Alert';
 import { Avatar } from '../components/ui/Avatar';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
-import { CurrencyInput } from '../components/ui/CurrencyInput';
+import { Field, FieldGrid } from '../components/ui/Field';
 import { NumberInput } from '../components/ui/NumberInput';
 import { Select } from '../components/ui/Select';
 import { Slider } from '../components/ui/Slider';
@@ -129,6 +129,8 @@ export const StyleGuide = () => {
   const { resolved } = useTheme();
   const [segment, setSegment] = useState('overview');
   const [currency, setCurrency] = useState(5000000);
+  const [fieldYears, setFieldYears] = useState(58);
+  const [fieldAmount, setFieldAmount] = useState(75000);
   const [years, setYears] = useState(25);
   const [horizon, setHorizon] = useState('2046');
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -249,7 +251,8 @@ export const StyleGuide = () => {
         <div className="border border-border rounded-lg p-5 md:p-6 grid sm:grid-cols-2 gap-6">
           <Input label="Client name" helper="Used on the cover of every generated report." placeholder="e.g. Meera Krishnan" />
           <Input label="Email address" error="That email address doesn’t look complete." defaultValue="meera@" />
-          <CurrencyInput
+          <NumberInput
+            kind="currency"
             label="Monthly SIP"
             value={currency}
             onChange={setCurrency}
@@ -280,6 +283,78 @@ export const StyleGuide = () => {
             helper="How far out the projection chart runs."
           />
           <Slider label="Equity allocation" value={65} onChange={() => {}} min={0} max={100} suffix="%" />
+        </div>
+      </section>
+
+      {/* ── Fields ── */}
+      <section className="space-y-6">
+        <SectionTitle eyebrow="Forms" title="Fields" subtitle="Field owns the label, helper, error, and hint slots; FieldGrid owns the responsive grid. NumberInput with kind=&quot;currency&quot; replaces the old CurrencyInput." />
+        <div className="border border-border rounded-lg p-5 md:p-6 space-y-8">
+          <FieldGrid cols={{ sm: 2 }}>
+            <Field
+              label="Stacked field"
+              htmlFor="sg-field-stack"
+              helper="Default layout — label above the control."
+            >
+              <Input id="sg-field-stack" placeholder="e.g. Meera Krishnan" />
+            </Field>
+            <Field
+              label="Inline field"
+              htmlFor="sg-field-inline"
+              layout="inline"
+              helper="Small mono label left of the control, for dense grids."
+            >
+              <Input id="sg-field-inline" placeholder="e.g. 45" />
+            </Field>
+          </FieldGrid>
+          <FieldGrid cols={{ sm: 2, lg: 3 }}>
+            <NumberInput
+              label="With presets + slider"
+              value={fieldYears}
+              onChange={setFieldYears}
+              suffix="yrs"
+              min={40}
+              max={75}
+              presets={[
+                { label: '50', value: 50 },
+                { label: '60', value: 60 },
+                { label: '70', value: 70 },
+              ]}
+              slider="focus"
+              helper="Hover to reveal the slider; the value tracks the drag live."
+            />
+            <NumberInput
+              kind="currency"
+              label="Currency amount"
+              value={fieldAmount}
+              onChange={setFieldAmount}
+              currency="INR"
+              onCurrencyChange={() => {}}
+              presets={[
+                { label: '₹25k', value: 25000 },
+                { label: '₹1L', value: 100000 },
+              ]}
+              helper="Currency select on the left; en-IN grouping on blur."
+            />
+            <NumberInput
+              label="Error state"
+              value={12}
+              onChange={() => {}}
+              error="Value must be between 0 and 10."
+            />
+          </FieldGrid>
+          <Field
+            hint={
+              <p className="mt-1 rounded-md border border-accent/20 bg-accent-soft px-3 py-2 text-xs text-accent-strong">
+                The hint slot carries cross-page notices — anything that is not a helper or an error.
+              </p>
+            }
+          >
+            <FieldGrid cols={{ sm: 2 }}>
+              <NumberInput layout="inline" label="SIP amount" value={25000} onChange={() => {}} suffix="/mo" />
+              <NumberInput layout="inline" label="Step-up" value={10} onChange={() => {}} suffix="%" />
+            </FieldGrid>
+          </Field>
         </div>
       </section>
 

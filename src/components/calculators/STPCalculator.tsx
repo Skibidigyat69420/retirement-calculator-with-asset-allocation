@@ -1,14 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Wallet, ArrowRightLeft, PiggyBank, Calendar } from 'lucide-react';
-import { CurrencyInput } from '../ui/CurrencyInput';
-
+import { NumberInput } from '../ui/NumberInput';
+import { PlanLinkButton } from '../ui/PlanLinkButton';
 import { Slider } from '../ui/Slider';
 import { MetricCard } from '../ui/MetricCard';
 import { CalculatorShell } from './CalculatorShell';
 import { calculateSTP } from '../../lib/calculators';
 import { formatCurrency, formatCurrencyCompact } from '../../lib/formatters';
 import { useCalculator } from '../../context/CalculatorContext';
-import { Button } from '../ui/Button';
 import { getChartTheme } from '../../lib/chartTheme';
 import {
   ResponsiveContainer,
@@ -88,8 +87,8 @@ export const STPCalculator = () => {
       hasInput={lumpsum > 0 || monthlyTransfer > 0}
       inputs={
         <>
-          <CurrencyInput label="Lumpsum Capital" value={lumpsum} onChange={setLumpsum} step={50000} />
-          <CurrencyInput label="Monthly Transfer" value={monthlyTransfer} onChange={setMonthlyTransfer} step={10000} />
+          <NumberInput kind="currency" label="Lumpsum Capital" value={lumpsum} onChange={setLumpsum} step={50000} />
+          <NumberInput kind="currency" label="Monthly Transfer" value={monthlyTransfer} onChange={setMonthlyTransfer} step={10000} />
           <Slider
             label="Liquid Fund Return"
             value={liquidReturn}
@@ -109,12 +108,8 @@ export const STPCalculator = () => {
             suffix="%"
           />
           <div className="flex gap-2 pt-2 border-t border-border-subtle">
-            <Button onClick={handleSyncFromPlan} className="flex-1 text-xs" variant="ghost">
-              Sync from Plan
-            </Button>
-            <Button onClick={handleApply} className="flex-1 text-xs" variant="outline">
-              Apply to Plan
-            </Button>
+            <PlanLinkButton mode="pull" onClick={handleSyncFromPlan} />
+            <PlanLinkButton mode="push" onClick={handleApply} />
           </div>
         </>
       }

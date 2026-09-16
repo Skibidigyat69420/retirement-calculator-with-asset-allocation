@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Wallet, TrendingUp, PiggyBank } from 'lucide-react';
-import { CurrencyInput } from '../ui/CurrencyInput';
 import { Slider } from '../ui/Slider';
 import { NumberInput } from '../ui/NumberInput';
 import { MetricCard } from '../ui/MetricCard';
@@ -53,7 +52,7 @@ export const LumpsumCalculator = () => {
       hasInput={principal > 0}
       inputs={
         <>
-          <CurrencyInput label="Lumpsum Amount" value={principal} onChange={setPrincipal} step={10000} />
+          <NumberInput kind="currency" label="Lumpsum Amount" value={principal} onChange={setPrincipal} step={10000} />
           <Slider
             label="Expected Return"
             value={returnRate}

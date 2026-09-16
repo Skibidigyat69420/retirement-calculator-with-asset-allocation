@@ -1,15 +1,15 @@
-import { useState } from 'react';
 import { Target } from 'lucide-react';
 import { Input } from '../ui/Input';
-import { CurrencyInput } from '../ui/CurrencyInput';
 import { NumberInput } from '../ui/NumberInput';
 import { Select } from '../ui/Select';
+import { FieldGrid } from '../ui/Field';
 import { FormSection } from '../ui/FormSection';
 import { Repeater } from '../ui/Repeater';
 import { GoalConflictResolver } from '../analytics/GoalConflictResolver';
 import { GoalProbabilityLab } from './GoalProbabilityLab';
 import { formatOrDash } from '../../lib/planState';
 import { formatCurrency, formatCurrencyCompact } from '../../lib/formatters';
+import { useDraft } from '../../hooks/useDraft';
 import type { MasterPlanInputs, Goal, GoalPriority } from '../../types';
 
 interface GoalsStepProps {
@@ -33,6 +33,22 @@ const PRIORITY_TONE: Record<GoalPriority, string> = {
 
 import { useCalculator } from '../../context/CalculatorContext';
 
+interface GoalDraft {
+  name: string;
+  targetAmount: number;
+  yearsToGoal: number;
+  priority: GoalPriority;
+  currency: string;
+}
+
+const INITIAL_GOAL_DRAFT: GoalDraft = {
+  name: '',
+  targetAmount: 0,
+  yearsToGoal: 0,
+  priority: 'important',
+  currency: 'INR',
+};
+
 export const GoalsStep = ({
   inputs,
   onAddGoal,
@@ -40,15 +56,12 @@ export const GoalsStep = ({
   onRemoveGoal,
 }: GoalsStepProps) => {
   const { assumptions } = useCalculator();
-  const [name, setName] = useState('');
-  const [targetAmount, setTargetAmount] = useState(0);
-  const [yearsToGoal, setYearsToGoal] = useState(0);
-  const [priority, setPriority] = useState<GoalPriority>('important');
-  const [currency, setCurrency] = useState('INR');
+  const draft = useDraft(INITIAL_GOAL_DRAFT, { validate: (d) => !!d.name.trim() });
+  const { name, targetAmount, yearsToGoal, priority, currency } = draft.values;
   const inflation = inputs.inflation || 0;
 
   const handleAddGoal = () => {
-    if (!name.trim()) return;
+    if (!draft.isValid) return;
     onAddGoal({
       name: name.trim(),
       targetAmount,
@@ -58,10 +71,7 @@ export const GoalsStep = ({
       recurring: false,
       currency,
     });
-    setName('');
-    setTargetAmount(0);
-    setYearsToGoal(0);
-    setCurrency('INR');
+    draft.reset();
   };
 
   const totalGoalsCost = inputs.goals.reduce((sum, g) => {
@@ -97,7 +107,7 @@ export const GoalsStep = ({
           addCommitLabel="Add goal"
           onAdd={() => {}}
           onAddCommit={handleAddGoal}
-          addCommitDisabled={!name.trim()}
+          addCommitDisabled={!draft.isValid}
           onRemove={(goal) => onRemoveGoal(goal.id)}
           renderSummary={(goal) => (
             <span className="flex items-baseline gap-3 min-w-0 text-sm">
@@ -117,9 +127,10 @@ export const GoalsStep = ({
               (goal.targetAmount || 0) * Math.pow(1 + (goal.inflation || 0) / 100, goal.yearsToGoal ?? 0),
             );
             return onUpdateGoal ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">
+              <FieldGrid cols={{ md: 3 }}>
                 <Input layout="inline" label="Milestone name" value={goal.name} onChange={(e) => onUpdateGoal(goal.id, { name: e.target.value })} />
-                <CurrencyInput
+                <NumberInput
+                  kind="currency"
                   layout="inline"
                   label="Target amount"
                   value={goal.targetAmount}
@@ -131,7 +142,7 @@ export const GoalsStep = ({
                 <NumberInput layout="inline" label="Years to goal" value={goal.yearsToGoal} onChange={(val) => onUpdateGoal(goal.id, { yearsToGoal: val })} suffix="yrs" min={0} max={40} slider="focus" />
                 <Select layout="inline" label="Priority tier" value={goal.priority} onChange={(val) => onUpdateGoal(goal.id, { priority: val as GoalPriority })} options={PRIORITY_OPTIONS} />
                 <NumberInput layout="inline" label="Inflation" value={goal.inflation} onChange={(val) => onUpdateGoal(goal.id, { inflation: val })} suffix="%" step={0.5} min={0} max={15} />
-              </div>
+              </FieldGrid>
             ) : (
               <p className="text-sm text-muted">
                 {goal.name} — {formatCurrency(goal.targetAmount, 0, goal.currency || 'INR')} in {formatOrDash(goal.yearsToGoal, (v) => `${v} yrs`)}.
@@ -139,22 +150,23 @@ export const GoalsStep = ({
             );
           }}
           renderAddEditor={(
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-4">
+            <FieldGrid cols={{ sm: 2, lg: 5 }} className="gap-x-4">
               <div className="sm:col-span-2">
                 <Input
                   id="mp-goal-name"
                   label="Milestone name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => draft.set('name', e.target.value)}
                   placeholder="e.g. Children higher education"
                 />
               </div>
-              <CurrencyInput
+              <NumberInput
+                kind="currency"
                 label="Target amount (today's value)"
                 value={targetAmount}
-                onChange={(val) => setTargetAmount(val)}
+                onChange={(val) => draft.set('targetAmount', val)}
                 currency={currency}
-                onCurrencyChange={setCurrency}
+                onCurrencyChange={(curr) => draft.set('currency', curr)}
                 presets={[
                   { label: '₹10L', value: 1000000 },
                   { label: '₹50L', value: 5000000 },
@@ -164,7 +176,7 @@ export const GoalsStep = ({
               <NumberInput
                 label="Years to goal"
                 value={yearsToGoal}
-                onChange={(val) => setYearsToGoal(val)}
+                onChange={(val) => draft.set('yearsToGoal', val)}
                 suffix="yrs"
                 min={0}
                 max={40}
@@ -173,10 +185,10 @@ export const GoalsStep = ({
               <Select
                 label="Priority tier"
                 value={priority}
-                onChange={(val) => setPriority(val as GoalPriority)}
+                onChange={(val) => draft.set('priority', val as GoalPriority)}
                 options={PRIORITY_OPTIONS}
               />
-            </div>
+            </FieldGrid>
           )}
         />
       </FormSection>

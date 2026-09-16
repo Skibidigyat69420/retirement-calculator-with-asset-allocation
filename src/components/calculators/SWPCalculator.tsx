@@ -6,13 +6,11 @@ import {
   PiggyBank,
   Percent,
   Sparkles,
-  RefreshCw,
-  Send,
   Table as TableIcon,
   LineChart as ChartIcon,
 } from 'lucide-react';
-import { CurrencyInput } from '../ui/CurrencyInput';
 import { NumberInput } from '../ui/NumberInput';
+import { PlanLinkButton } from '../ui/PlanLinkButton';
 import { Slider } from '../ui/Slider';
 import { MetricCard } from '../ui/MetricCard';
 import { Badge } from '../ui/Badge';
@@ -130,8 +128,9 @@ export const SWPCalculator = () => {
       hasInput={corpus > 0 || monthlyWithdrawal > 0}
       inputs={
         <>
-          <CurrencyInput label="Starting Corpus" value={corpus} onChange={setCorpus} step={100000} />
-          <CurrencyInput
+          <NumberInput kind="currency" label="Starting Corpus" value={corpus} onChange={setCorpus} step={100000} />
+          <NumberInput
+            kind="currency"
             label="Monthly Withdrawal (today's ₹)"
             value={monthlyWithdrawal}
             onChange={setMonthlyWithdrawal}
@@ -179,12 +178,8 @@ export const SWPCalculator = () => {
           </div>
 
           <div className="flex gap-2 pt-2 border-t border-border-subtle">
-            <Button onClick={handleSyncFromPlan} className="flex-1 text-xs" variant="ghost">
-              <RefreshCw size={13} strokeWidth={1.6} className="mr-1.5" /> Sync from Plan
-            </Button>
-            <Button onClick={handleApply} className="flex-1 text-xs" variant="outline">
-              <Send size={13} strokeWidth={1.6} className="mr-1.5" /> Apply to Plan
-            </Button>
+            <PlanLinkButton mode="pull" onClick={handleSyncFromPlan} />
+            <PlanLinkButton mode="push" onClick={handleApply} />
           </div>
         </>
       }

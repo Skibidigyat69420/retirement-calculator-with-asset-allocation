@@ -450,6 +450,43 @@
     box-shadow: var(--shadow-card);
   }
 
+  /* Shared text/number/select control chrome. */
+  .input {
+    width: 100%;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-ink);
+    font-variant-numeric: tabular-nums;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  .input::placeholder {
+    color: var(--color-faint);
+  }
+  .input:hover:not(:disabled) {
+    border-color: var(--color-border-strong);
+  }
+  .input:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 2px var(--color-accent-soft);
+    outline: none;
+  }
+  .input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .input[aria-invalid="true"],
+  .input--error {
+    border-color: var(--color-negative);
+  }
+  .input[aria-invalid="true"]:focus,
+  .input--error:focus {
+    border-color: var(--color-negative);
+    box-shadow: 0 0 0 2px var(--color-negative-soft);
+  }
+
   .dark .metric-strip {
     background: color-mix(in srgb, var(--color-raised) 72%, transparent);
   }

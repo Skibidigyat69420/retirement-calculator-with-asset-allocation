@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Wallet, Percent, PiggyBank } from 'lucide-react';
-import { CurrencyInput } from '../ui/CurrencyInput';
 import { Slider } from '../ui/Slider';
 import { NumberInput } from '../ui/NumberInput';
 import { MetricCard } from '../ui/MetricCard';
@@ -67,7 +66,7 @@ export const EMICalculator = () => {
       hasInput={principal > 0 || rate > 0}
       inputs={
         <>
-          <CurrencyInput label="Loan Amount" value={principal} onChange={setPrincipal} step={50000} />
+          <NumberInput kind="currency" label="Loan Amount" value={principal} onChange={setPrincipal} step={50000} />
           <Slider
             label="Interest Rate"
             value={rate}

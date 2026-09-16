@@ -12,7 +12,6 @@ import type { Status } from '../components/ui/StatusBadge';
 import { ProgressBar } from '../components/ui/ProgressBar';
 import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
-import { CurrencyInput } from '../components/ui/CurrencyInput';
 import { NumberInput } from '../components/ui/NumberInput';
 import { Select } from '../components/ui/Select';
 import { FinancialMetric } from '../components/ui/FinancialMetric';
@@ -481,7 +480,8 @@ export const GoalPlanner = () => {
               onChange={(e) => updateGoal(editingGoal.id, { name: e.target.value })}
               placeholder="e.g. Child higher education"
             />
-            <CurrencyInput
+            <NumberInput
+              kind="currency"
               label="Target amount"
               value={editingGoal.targetAmount}
               onChange={(v) => updateGoal(editingGoal.id, { targetAmount: v })}

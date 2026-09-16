@@ -1,6 +1,9 @@
 import { useState, useCallback, useId } from 'react';
-import { Plus, Minus, AlertCircle } from 'lucide-react';
+import { Plus, Minus } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { Field } from './Field';
+import { Slider } from './Slider';
+import { getCurrencySymbol } from '../../lib/formatters';
 
 export interface EnhancedNumberInputProps {
   label?: string;
@@ -21,10 +24,31 @@ export interface EnhancedNumberInputProps {
   id?: string;
   /** 'stack' (default) label above; 'inline' small mono label left of the control. */
   layout?: 'stack' | 'inline';
+  /**
+   * 'number' (default) plain numeric field; 'currency' adds the currency
+   * select/symbol adornment and currency grouping on blur.
+   */
+  kind?: 'number' | 'currency';
+  currency?: string;
+  onCurrencyChange?: (currency: string) => void;
 }
 
 const formatValue = (val: number): string =>
   new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(val);
+
+/** en-IN grouping on blur; zero renders as a real "0", never a fake placeholder. */
+const formatCurrencyValue = (val: number, currency: string = 'INR'): string => {
+  const locale = currency === 'INR' ? 'en-IN' : 'en-US';
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(val);
+};
+
+/** Strip grouping separators and stray characters; NaN means "keep the prior value". */
+const parseRaw = (raw: string): number | null => {
+  const parsed = Number(raw.replace(/[^0-9.-]/g, ''));
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
+const CURRENCY_OPTIONS = ['INR', 'USD', 'EUR', 'GBP', 'SGD', 'AED'];
 
 export const EnhancedNumberInput = ({
   label,
@@ -32,7 +56,7 @@ export const EnhancedNumberInput = ({
   onChange,
   min,
   max,
-  step = 1,
+  step,
   suffix,
   prefix,
   helper,
@@ -43,34 +67,45 @@ export const EnhancedNumberInput = ({
   className,
   id: idProp,
   layout = 'stack',
+  kind = 'number',
+  currency = 'INR',
+  onCurrencyChange,
 }: EnhancedNumberInputProps) => {
+  const isCurrency = kind === 'currency';
+  const effectiveMin = isCurrency ? (min ?? 0) : min;
+  const effectiveStep = step ?? (isCurrency ? 1000 : 1);
+  const format = useCallback(
+    (val: number) => (isCurrency ? formatCurrencyValue(val, currency) : formatValue(val)),
+    [isCurrency, currency],
+  );
+
   const [localValue, setLocalValue] = useState(String(value));
   const [isEditing, setIsEditing] = useState(false);
   const generatedId = useId();
   const inputId = idProp ?? generatedId;
 
-  const displayValue = isEditing ? localValue : formatValue(value);
+  const displayValue = isEditing ? localValue : format(value);
 
   const clamp = useCallback(
     (val: number) => {
-      if (min !== undefined && val < min) return min;
+      if (effectiveMin !== undefined && val < effectiveMin) return effectiveMin;
       if (max !== undefined && val > max) return max;
       return val;
     },
-    [min, max],
+    [effectiveMin, max],
   );
 
   const commit = useCallback(
     (raw: string) => {
-      const parsed = Number(raw.replace(/,/g, ''));
-      if (!Number.isNaN(parsed)) {
+      const parsed = parseRaw(raw);
+      if (parsed !== null) {
         onChange(clamp(parsed));
       } else {
-        setLocalValue(String(value));
+        setLocalValue(format(value));
       }
       setIsEditing(false);
     },
-    [onChange, clamp, value],
+    [onChange, clamp, value, format],
   );
 
   const adjust = (delta: number) => {
@@ -79,33 +114,42 @@ export const EnhancedNumberInput = ({
     setLocalValue(String(newVal));
   };
 
-  const outOfRange = (min !== undefined && value < min) || (max !== undefined && value > max);
+  const outOfRange = (effectiveMin !== undefined && value < effectiveMin) || (max !== undefined && value > max);
   const hasError = !!error || outOfRange;
   const inline = layout === 'inline';
 
-  return (
-    <div
-      className={cn(
-        inline ? 'flex flex-wrap items-center gap-x-3 gap-y-1' : 'space-y-1.5',
-        slider === 'focus' && 'group',
-        className,
-      )}
-    >
-      {label && (
-        <label
-          htmlFor={inputId}
-          className={cn(
-            inline
-              ? 'w-24 sm:w-28 shrink-0 pt-0 text-[10px] font-mono uppercase tracking-wider text-muted leading-tight'
-              : 'field-label block text-xs font-medium tracking-normal text-ink-soft',
-          )}
-        >
-          {label}
-        </label>
-      )}
+  const rangeMessage = isCurrency
+    ? `Value must be between ${currency} ${formatCurrencyValue(effectiveMin ?? 0, currency)}${max !== undefined ? ` and ${currency} ${formatCurrencyValue(max, currency)}` : ' or more'}`
+    : `Value must be between ${effectiveMin} and ${max}`;
 
+  return (
+    <Field
+      label={label}
+      htmlFor={inputId}
+      layout={layout}
+      helper={helper}
+      error={hasError ? (error ?? rangeMessage) : undefined}
+      className={cn(slider === 'focus' && 'group', className)}
+    >
       <div className={cn('relative group', inline && 'flex-1 min-w-[8rem] basis-36')}>
-        {prefix && (
+        {isCurrency &&
+          (onCurrencyChange ? (
+            <select
+              value={currency}
+              onChange={(e) => onCurrencyChange(e.target.value)}
+              disabled={disabled}
+              className="absolute left-1 top-1/2 -translate-y-1/2 h-7 rounded-sm border-none bg-transparent py-0 pl-2 pr-6 text-xs text-faint hover:text-ink focus:ring-0 focus:outline-none cursor-pointer appearance-none z-10"
+            >
+              {CURRENCY_OPTIONS.map((code) => (
+                <option key={code} value={code}>{code}</option>
+              ))}
+            </select>
+          ) : (
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-faint select-none pointer-events-none tabular-nums">
+              {getCurrencySymbol(currency)}
+            </span>
+          ))}
+        {!isCurrency && prefix && (
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-faint select-none pointer-events-none tabular-nums">
             {prefix}
           </span>
@@ -114,7 +158,7 @@ export const EnhancedNumberInput = ({
         <input
           id={inputId}
           type="text"
-          inputMode="decimal"
+          inputMode={isCurrency ? 'numeric' : 'decimal'}
           value={displayValue}
           disabled={disabled}
           aria-invalid={hasError || undefined}
@@ -123,22 +167,16 @@ export const EnhancedNumberInput = ({
             setLocalValue(String(value));
           }}
           onBlur={(e) => commit(e.currentTarget.value)}
-          onChange={(e) => setLocalValue(e.currentTarget.value)}
+          onChange={(e) => setLocalValue(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') commit(e.currentTarget.value);
-            if (e.key === 'ArrowUp') { e.preventDefault(); adjust(step); }
-            if (e.key === 'ArrowDown') { e.preventDefault(); adjust(-step); }
+            if (e.key === 'ArrowUp') { e.preventDefault(); adjust(effectiveStep); }
+            if (e.key === 'ArrowDown') { e.preventDefault(); adjust(-effectiveStep); }
           }}
           className={cn(
-            'w-full bg-surface border rounded-md px-3 py-2.5 text-sm text-ink tabular-nums placeholder:text-faint transition-colors',
+            'input',
             inline && 'py-2',
-            'focus:border-accent focus:ring-2 focus:ring-accent-soft focus:outline-none',
-            'hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed',
-            prefix && 'pl-8',
-            suffix ? 'pr-16' : 'pr-9',
-            hasError
-              ? 'border-negative focus:border-negative focus:ring-negative-soft'
-              : 'border-border',
+            isCurrency ? 'pl-12 pr-10' : cn(prefix && 'pl-8', suffix ? 'pr-16' : 'pr-9'),
           )}
         />
 
@@ -151,7 +189,7 @@ export const EnhancedNumberInput = ({
         <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
           <button
             type="button"
-            onClick={() => adjust(step)}
+            onClick={() => adjust(effectiveStep)}
             disabled={disabled || (max !== undefined && value >= max)}
             className="p-1 rounded-sm text-faint hover:text-ink hover:bg-sunken transition-colors disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
             tabIndex={-1}
@@ -161,8 +199,8 @@ export const EnhancedNumberInput = ({
           </button>
           <button
             type="button"
-            onClick={() => adjust(-step)}
-            disabled={disabled || (min !== undefined && value <= min)}
+            onClick={() => adjust(-effectiveStep)}
+            disabled={disabled || (effectiveMin !== undefined && value <= effectiveMin)}
             className="p-1 rounded-sm text-faint hover:text-ink hover:bg-sunken transition-colors disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
             tabIndex={-1}
             aria-label={`Decrease ${label || 'value'}`}
@@ -180,19 +218,19 @@ export const EnhancedNumberInput = ({
             slider === 'focus' && 'hidden group-hover:block group-focus-within:block',
           )}
         >
-          <input
-            type="range"
-            min={min ?? 0}
+          <Slider
+            size="sm"
+            label={label || 'value'}
+            min={effectiveMin ?? 0}
             max={max}
-            step={step}
+            step={effectiveStep}
             value={value}
-            onChange={(e) => {
-              const val = Number(e.target.value);
+            onChange={(val) => {
               onChange(val);
               setLocalValue(String(val));
             }}
-            disabled={disabled}
-            className="w-full h-1.5 bg-border rounded-lg appearance-none cursor-pointer accent-accent"
+            formatValue={format}
+            className="flex-1"
           />
         </div>
       )}
@@ -218,20 +256,6 @@ export const EnhancedNumberInput = ({
           ))}
         </div>
       )}
-
-      {(helper || error || outOfRange) && (
-        <div
-          className={cn(
-            'flex items-start gap-1.5 pt-0.5',
-            inline && 'basis-full pl-[6.75rem] sm:pl-[7.75rem]',
-          )}
-        >
-          {hasError && <AlertCircle size={13} strokeWidth={1.8} className="text-negative mt-0.5 shrink-0" />}
-          <p className={cn('text-xs leading-relaxed', hasError ? 'text-negative' : 'text-faint')}>
-            {error || (outOfRange ? `Value must be between ${min} and ${max}` : helper)}
-          </p>
-        </div>
-      )}
-    </div>
+    </Field>
   );
 };

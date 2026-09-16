@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Target, Calendar, Wallet, TrendingUp } from 'lucide-react';
-import { CurrencyInput } from '../ui/CurrencyInput';
 import { NumberInput } from '../ui/NumberInput';
+import { PlanLinkButton } from '../ui/PlanLinkButton';
 import { Slider } from '../ui/Slider';
 import { MetricCard } from '../ui/MetricCard';
 import { CalculatorShell } from './CalculatorShell';
@@ -20,7 +20,6 @@ import {
 } from 'recharts';
 
 import { useCalculator } from '../../context/CalculatorContext';
-import { Button } from '../ui/Button';
 
 export const RetirementCorpusCalculator = () => {
   const { inputs, updateInputs, showToast } = useCalculator();
@@ -90,7 +89,7 @@ export const RetirementCorpusCalculator = () => {
           <NumberInput label="Current Age" value={currentAge} onChange={setCurrentAge} min={0} max={100} />
           <NumberInput label="Retirement Age" value={retirementAge} onChange={setRetirementAge} min={0} max={100} />
           <NumberInput label="Life Expectancy" value={lifeExpectancy} onChange={setLifeExpectancy} min={0} max={120} />
-          <CurrencyInput label="Monthly Need Today" value={monthlyNeedToday} onChange={setMonthlyNeedToday} step={5000} />
+          <NumberInput kind="currency" label="Monthly Need Today" value={monthlyNeedToday} onChange={setMonthlyNeedToday} step={5000} />
           <Slider
             label="Inflation"
             value={inflation}
@@ -110,12 +109,8 @@ export const RetirementCorpusCalculator = () => {
             suffix="%"
           />
           <div className="flex gap-2 pt-2 border-t border-border-subtle">
-            <Button onClick={handleSyncFromPlan} className="flex-1 text-xs" variant="ghost">
-              Sync from Plan
-            </Button>
-            <Button onClick={handleApply} className="flex-1 text-xs" variant="outline">
-              Apply to Plan
-            </Button>
+            <PlanLinkButton mode="pull" onClick={handleSyncFromPlan} />
+            <PlanLinkButton mode="push" onClick={handleApply} />
           </div>
         </>
       }

@@ -9,7 +9,7 @@ import { FinancialMetric } from '../components/ui/FinancialMetric';
 import { EmptyState } from '../components/ui/EmptyState';
 import { PageHeader } from '../components/ui/PageHeader';
 import { SectionHeader } from '../components/ui/SectionHeader';
-import { CurrencyInput } from '../components/ui/CurrencyInput';
+import { NumberInput } from '../components/ui/NumberInput';
 
 /** Internal visual QA surface. It is intentionally not linked from primary navigation. */
 export const UIReview = () => (
@@ -55,7 +55,7 @@ export const UIReview = () => (
           <Badge tone="info">System</Badge>
         </div>
         <div className="max-w-sm">
-          <CurrencyInput label="Current annual income" value={0} onChange={() => undefined} helper="Zero is a valid starting state." />
+          <NumberInput kind="currency" label="Current annual income" value={0} onChange={() => undefined} helper="Zero is a valid starting state." />
         </div>
       </Card>
     </section>

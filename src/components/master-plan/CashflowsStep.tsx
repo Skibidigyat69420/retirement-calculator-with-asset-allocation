@@ -1,9 +1,9 @@
 import { Repeat, Download } from 'lucide-react';
 import { Input } from '../ui/Input';
-import { CurrencyInput } from '../ui/CurrencyInput';
 import { NumberInput } from '../ui/NumberInput';
 import { Select } from '../ui/Select';
 import { Slider } from '../ui/Slider';
+import { Field, FieldGrid } from '../ui/Field';
 import { FormSection } from '../ui/FormSection';
 import { Repeater } from '../ui/Repeater';
 import { formatCurrency } from '../../lib/formatters';
@@ -75,27 +75,34 @@ export const CashflowsStep = ({
             : undefined
         }
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-          <CurrencyInput
-            layout="inline"
-            label="Annual gross income"
-            value={inputs.annualIncome}
-            onChange={(val) => updateInputs({ annualIncome: val })}
-            helper={`Approx ${formatCurrency(monthlyIncome)} per month`}
-          />
-          <CurrencyInput
-            layout="inline"
-            label="Monthly living spend"
-            value={inputs.monthlyLivingExpenses}
-            onChange={(val) => updateInputs({ monthlyLivingExpenses: val })}
-            helper={`Linked total with EMIs: ${formatCurrency(inputs.monthlyExpenditure)}/mo`}
-          />
-        </div>
-        {inputs.client.incomeSources && inputs.client.incomeSources.length > 0 && (
-          <p className="mt-4 rounded-md border border-accent/20 bg-accent-soft px-3 py-2 text-xs text-accent-strong">
-            {inputs.client.incomeSources.length} income source{inputs.client.incomeSources.length === 1 ? '' : 's'} linked from Client profile. Edit the source breakdown there; this annual total is used by every projection.
-          </p>
-        )}
+        <Field
+          hint={
+            inputs.client.incomeSources && inputs.client.incomeSources.length > 0 ? (
+              <p className="mt-3 rounded-md border border-accent/20 bg-accent-soft px-3 py-2 text-xs text-accent-strong">
+                {inputs.client.incomeSources.length} income source{inputs.client.incomeSources.length === 1 ? '' : 's'} linked from Client profile. Edit the source breakdown there; this annual total is used by every projection.
+              </p>
+            ) : undefined
+          }
+        >
+          <FieldGrid cols={{ sm: 2 }} className="gap-x-6">
+            <NumberInput
+              kind="currency"
+              layout="inline"
+              label="Annual gross income"
+              value={inputs.annualIncome}
+              onChange={(val) => updateInputs({ annualIncome: val })}
+              helper={`Approx ${formatCurrency(monthlyIncome)} per month`}
+            />
+            <NumberInput
+              kind="currency"
+              layout="inline"
+              label="Monthly living spend"
+              value={inputs.monthlyLivingExpenses}
+              onChange={(val) => updateInputs({ monthlyLivingExpenses: val })}
+              helper={`Linked total with EMIs: ${formatCurrency(inputs.monthlyExpenditure)}/mo`}
+            />
+          </FieldGrid>
+        </Field>
 
         <div className="mt-6">
           <Repeater<IncomeSource>
@@ -115,12 +122,12 @@ export const CashflowsStep = ({
               </span>
             )}
             renderEditor={(source) => (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">
+              <FieldGrid cols={{ md: 3 }}>
                 <Input layout="inline" label="Source" value={source.name} onChange={(event) => updateIncomeSource(source.id, { name: event.target.value })} placeholder="Salary, rental…" />
-                <CurrencyInput layout="inline" label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} currency={source.currency} onCurrencyChange={(value) => updateIncomeSource(source.id, { currency: value })} />
-                <CurrencyInput layout="inline" label="INR equivalent" value={source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0)} onChange={(value) => updateIncomeSource(source.id, { amountInBaseCurrency: value })} helper={source.currency === 'INR' ? 'Same as amount' : 'Used in projections'} />
+                <NumberInput kind="currency" layout="inline" label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} currency={source.currency} onCurrencyChange={(value) => updateIncomeSource(source.id, { currency: value })} />
+                <NumberInput kind="currency" layout="inline" label="INR equivalent" value={source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0)} onChange={(value) => updateIncomeSource(source.id, { amountInBaseCurrency: value })} helper={source.currency === 'INR' ? 'Same as amount' : 'Used in projections'} />
                 <Select layout="inline" label="Frequency" value={source.frequency} onChange={(value) => updateIncomeSource(source.id, { frequency: value as IncomeSource['frequency'] })} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'annual', label: 'Annual' }]} />
-              </div>
+              </FieldGrid>
             )}
           />
         </div>
@@ -140,8 +147,9 @@ export const CashflowsStep = ({
           <Repeat size={14} strokeWidth={1.7} className="text-accent" aria-hidden="true" />
           <span className="text-xs">SIP</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-          <CurrencyInput
+        <FieldGrid cols={{ sm: 2 }} className="gap-x-6">
+          <NumberInput
+            kind="currency"
             layout="inline"
             label="Monthly SIP amount"
             value={inputs.sip.amount}
@@ -163,7 +171,7 @@ export const CashflowsStep = ({
             ]}
             slider="focus"
           />
-        </div>
+        </FieldGrid>
 
         <div className="mt-6 max-w-md">
           <div className="flex items-baseline justify-between text-xs mb-2">
@@ -196,8 +204,9 @@ export const CashflowsStep = ({
           <Download size={14} strokeWidth={1.7} className="text-muted" aria-hidden="true" />
           <span className="text-xs">SWP</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-4">
-          <CurrencyInput
+        <FieldGrid cols={{ sm: 3 }} className="gap-x-6">
+          <NumberInput
+            kind="currency"
             layout="inline"
             label="Monthly need"
             value={inputs.swp.monthlyNeedToday}
@@ -232,7 +241,7 @@ export const CashflowsStep = ({
             ]}
             slider="focus"
           />
-        </div>
+        </FieldGrid>
       </FormSection>
     </div>
   );

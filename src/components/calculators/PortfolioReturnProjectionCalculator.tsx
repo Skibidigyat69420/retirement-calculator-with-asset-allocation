@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { Layers, Sliders, TrendingUp, ExternalLink } from 'lucide-react';
-import { CurrencyInput } from '../ui/CurrencyInput';
 import { NumberInput } from '../ui/NumberInput';
 import { Slider } from '../ui/Slider';
 import { Select } from '../ui/Select';
@@ -301,7 +300,8 @@ export const PortfolioReturnProjectionCalculator = () => {
               <span className="eyebrow">Global Projection Levers</span>
             </div>
 
-            <CurrencyInput
+            <NumberInput
+              kind="currency"
               label="Initial Lumpsum Corpus"
               value={initialCorpus}
               onChange={setInitialCorpus}
@@ -309,7 +309,8 @@ export const PortfolioReturnProjectionCalculator = () => {
               min={0}
             />
 
-            <CurrencyInput
+            <NumberInput
+              kind="currency"
               label="Monthly SIP Inflow"
               value={monthlyContribution}
               onChange={setMonthlyContribution}

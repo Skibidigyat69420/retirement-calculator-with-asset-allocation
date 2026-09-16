@@ -1,16 +1,18 @@
-import { useState, useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Input } from '../ui/Input';
-import { CurrencyInput } from '../ui/CurrencyInput';
 import { NumberInput } from '../ui/NumberInput';
 import { Select } from '../ui/Select';
+import { FieldGrid } from '../ui/Field';
 import { FormSection } from '../ui/FormSection';
 import { Repeater } from '../ui/Repeater';
 import { calculateEMI } from '../../lib/calculators';
 import { guardNumber, formatOrDash } from '../../lib/planState';
 import { formatCurrency, formatCurrencyCompact } from '../../lib/formatters';
 import { ASSET_LABELS, ASSET_COLORS } from '../../lib/constants';
+import { useDraft } from '../../hooks/useDraft';
 import type { MasterPlanInputs, Asset, AssetCategory, Liability } from '../../types';
 import { useCalculator } from '../../context/CalculatorContext';
+import { cn } from '../../lib/utils';
 
 interface FinancialsStepProps {
   inputs: MasterPlanInputs;
@@ -27,6 +29,60 @@ const CATEGORY_OPTIONS: { value: AssetCategory; label: string }[] = (
   ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'] as AssetCategory[]
 ).map((cat) => ({ value: cat, label: ASSET_LABELS[cat] }));
 
+const CheckboxField = ({
+  checked,
+  onChange,
+  children,
+  className,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  children: ReactNode;
+  className?: string;
+}) => (
+  <label className={cn('flex items-center gap-2 text-xs text-muted cursor-pointer select-none', className)}>
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={(e) => onChange(e.target.checked)}
+      className="accent-accent"
+    />
+    {children}
+  </label>
+);
+
+interface AssetDraft {
+  name: string;
+  category: AssetCategory;
+  value: number;
+  returnRate: number;
+  currency: string;
+}
+
+const INITIAL_ASSET_DRAFT: AssetDraft = {
+  name: '',
+  category: 'equity',
+  value: 0,
+  returnRate: 0,
+  currency: 'INR',
+};
+
+interface LoanDraft {
+  name: string;
+  principal: number;
+  rate: number;
+  tenure: number;
+  currency: string;
+}
+
+const INITIAL_LOAN_DRAFT: LoanDraft = {
+  name: '',
+  principal: 0,
+  rate: 0,
+  tenure: 0,
+  currency: 'INR',
+};
+
 export const FinancialsStep = ({
   inputs,
   liabilities,
@@ -40,18 +96,12 @@ export const FinancialsStep = ({
   const { assumptions } = useCalculator();
 
   // New Asset Form State — zero defaults, never pre-seeded demo amounts
-  const [newAssetName, setNewAssetName] = useState('');
-  const [newAssetCategory, setNewAssetCategory] = useState<AssetCategory>('equity');
-  const [newAssetValue, setNewAssetValue] = useState(0);
-  const [newAssetReturn, setNewAssetReturn] = useState(0);
-  const [newAssetCurrency, setNewAssetCurrency] = useState('INR');
+  const assetDraft = useDraft(INITIAL_ASSET_DRAFT, { validate: (d) => !!d.name.trim() });
+  const { name: newAssetName, category: newAssetCategory, value: newAssetValue, returnRate: newAssetReturn, currency: newAssetCurrency } = assetDraft.values;
 
   // New Loan Form State
-  const [newLoanName, setNewLoanName] = useState('');
-  const [newLoanPrincipal, setNewLoanPrincipal] = useState(0);
-  const [newLoanRate, setNewLoanRate] = useState(0);
-  const [newLoanTenure, setNewLoanTenure] = useState(0);
-  const [newLoanCurrency, setNewLoanCurrency] = useState('INR');
+  const loanDraft = useDraft(INITIAL_LOAN_DRAFT, { validate: (d) => !!d.name.trim() });
+  const { name: newLoanName, principal: newLoanPrincipal, rate: newLoanRate, tenure: newLoanTenure, currency: newLoanCurrency } = loanDraft.values;
 
   const totalAssets = useMemo(() => {
     return inputs.assets.reduce((sum, a) => {
@@ -94,7 +144,7 @@ export const FinancialsStep = ({
   const debtToAsset = totalAssets > 0 ? (totalLiabilities / totalAssets) * 100 : 0;
 
   const handleAddAsset = () => {
-    if (!newAssetName.trim()) return;
+    if (!assetDraft.isValid) return;
     onAddAsset({
       name: newAssetName.trim(),
       category: newAssetCategory,
@@ -103,14 +153,11 @@ export const FinancialsStep = ({
       currency: newAssetCurrency,
       liquidateAtRetirement: true,
     });
-    setNewAssetName('');
-    setNewAssetValue(0);
-    setNewAssetReturn(0);
-    setNewAssetCurrency('INR');
+    assetDraft.reset();
   };
 
   const handleAddLoan = () => {
-    if (!newLoanName.trim()) return;
+    if (!loanDraft.isValid) return;
     const newLoan: Liability = {
       id: `loan-${Date.now()}`,
       name: newLoanName.trim(),
@@ -121,11 +168,7 @@ export const FinancialsStep = ({
       currency: newLoanCurrency,
     };
     onAddLiability(newLoan);
-    setNewLoanName('');
-    setNewLoanPrincipal(0);
-    setNewLoanRate(0);
-    setNewLoanTenure(0);
-    setNewLoanCurrency('INR');
+    loanDraft.reset();
   };
 
   const summaryRows = [
@@ -190,7 +233,7 @@ export const FinancialsStep = ({
           addCommitLabel="Add asset"
           onAdd={() => {}}
           onAddCommit={handleAddAsset}
-          addCommitDisabled={!newAssetName.trim()}
+          addCommitDisabled={!assetDraft.isValid}
           onRemove={(asset) => onRemoveAsset(asset.id)}
           renderSummary={(asset) => (
             <span className="flex items-center gap-3 min-w-0 text-sm">
@@ -207,43 +250,42 @@ export const FinancialsStep = ({
             </span>
           )}
           renderEditor={(asset) => (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">
+            <FieldGrid cols={{ md: 3 }}>
               <Input layout="inline" label="Asset name" value={asset.name} onChange={(e) => updateAsset(asset.id, { name: e.target.value })} placeholder="e.g. Parag Parikh Flexi Cap" />
               <Select layout="inline" label="Category" value={asset.category} onChange={(value) => updateAsset(asset.id, { category: value as AssetCategory })} options={CATEGORY_OPTIONS} />
-              <CurrencyInput layout="inline" label="Current value" value={asset.value} onChange={(value) => updateAsset(asset.id, { value })} currency={asset.currency} onCurrencyChange={(currency) => updateAsset(asset.id, { currency })} />
+              <NumberInput kind="currency" layout="inline" label="Current value" value={asset.value} onChange={(value) => updateAsset(asset.id, { value })} currency={asset.currency} onCurrencyChange={(currency) => updateAsset(asset.id, { currency })} />
               <NumberInput layout="inline" label="Expected return" value={asset.returnRate} onChange={(value) => updateAsset(asset.id, { returnRate: value })} suffix="%" step={0.5} min={0} max={30} slider="focus" />
-              <label className="flex items-center gap-2 text-xs text-muted cursor-pointer select-none md:col-span-2">
-                <input
-                  type="checkbox"
-                  checked={asset.liquidateAtRetirement}
-                  onChange={(e) => updateAsset(asset.id, { liquidateAtRetirement: e.target.checked })}
-                  className="accent-accent"
-                />
+              <CheckboxField
+                className="md:col-span-2"
+                checked={asset.liquidateAtRetirement}
+                onChange={(checked) => updateAsset(asset.id, { liquidateAtRetirement: checked })}
+              >
                 Liquidate at retirement
-              </label>
-            </div>
+              </CheckboxField>
+            </FieldGrid>
           )}
           renderAddEditor={(
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4">
+            <FieldGrid cols={{ sm: 2, lg: 4 }} className="gap-x-4">
               <Input
                 id="mp-asset-name"
                 label="Asset name"
                 value={newAssetName}
-                onChange={(e) => setNewAssetName(e.target.value)}
+                onChange={(e) => assetDraft.set('name', e.target.value)}
                 placeholder="e.g. Parag Parikh Flexi Cap"
               />
               <Select
                 label="Category"
                 value={newAssetCategory}
-                onChange={(val) => setNewAssetCategory(val as AssetCategory)}
+                onChange={(val) => assetDraft.set('category', val as AssetCategory)}
                 options={CATEGORY_OPTIONS}
               />
-              <CurrencyInput
+              <NumberInput
+                kind="currency"
                 label="Current value"
                 value={newAssetValue}
-                onChange={(val) => setNewAssetValue(val)}
+                onChange={(val) => assetDraft.set('value', val)}
                 currency={newAssetCurrency}
-                onCurrencyChange={setNewAssetCurrency}
+                onCurrencyChange={(curr) => assetDraft.set('currency', curr)}
                 presets={[
                   { label: '₹1L', value: 100000 },
                   { label: '₹10L', value: 1000000 },
@@ -253,14 +295,14 @@ export const FinancialsStep = ({
               <NumberInput
                 label="Expected return"
                 value={newAssetReturn}
-                onChange={(val) => setNewAssetReturn(val)}
+                onChange={(val) => assetDraft.set('returnRate', val)}
                 suffix="%"
                 step={0.5}
                 min={0}
                 max={30}
                 slider
               />
-            </div>
+            </FieldGrid>
           )}
         />
       </FormSection>
@@ -280,7 +322,7 @@ export const FinancialsStep = ({
           addCommitLabel="Add loan"
           onAdd={() => {}}
           onAddCommit={handleAddLoan}
-          addCommitDisabled={!newLoanName.trim()}
+          addCommitDisabled={!loanDraft.isValid}
           onRemove={(loan) => onRemoveLiability(loan.id)}
           renderSummary={(loan) => (
             <span className="flex items-baseline gap-3 min-w-0 text-sm">
@@ -294,41 +336,39 @@ export const FinancialsStep = ({
             </span>
           )}
           renderEditor={(loan) => (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">
+            <FieldGrid cols={{ md: 3 }}>
               <Input layout="inline" label="Loan name" value={loan.name} onChange={(e) => updateLiability(loan.id, { name: e.target.value })} placeholder="e.g. HDFC Home Loan" />
-              <CurrencyInput layout="inline" label="Principal" value={loan.principal} onChange={(value) => updateLiability(loan.id, { principal: value })} currency={loan.currency || 'INR'} onCurrencyChange={(currency) => updateLiability(loan.id, { currency })} />
+              <NumberInput kind="currency" layout="inline" label="Principal" value={loan.principal} onChange={(value) => updateLiability(loan.id, { principal: value })} currency={loan.currency || 'INR'} onCurrencyChange={(currency) => updateLiability(loan.id, { currency })} />
               <NumberInput layout="inline" label="Interest rate" value={loan.rate} onChange={(value) => updateLiability(loan.id, { rate: value })} suffix="%" step={0.25} min={0} max={30} slider="focus" />
               <NumberInput layout="inline" label="Remaining tenure" value={loan.tenureYears} onChange={(value) => updateLiability(loan.id, { tenureYears: value })} suffix="yrs" step={1} min={1} max={40} />
               <div className="flex items-center gap-4 md:col-span-2">
-                <label className="flex items-center gap-2 text-xs text-muted cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={loan.includeInExpenses}
-                    onChange={(e) => updateLiability(loan.id, { includeInExpenses: e.target.checked })}
-                    className="accent-accent"
-                  />
+                <CheckboxField
+                  checked={loan.includeInExpenses}
+                  onChange={(checked) => updateLiability(loan.id, { includeInExpenses: checked })}
+                >
                   Include EMI in monthly expenses
-                </label>
+                </CheckboxField>
                 <span className="font-mono text-[11px] tabular-nums text-faint">
                   Interest {formatCurrencyCompact(loan.totalInterest)}
                 </span>
               </div>
-            </div>
+            </FieldGrid>
           )}
           renderAddEditor={(
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4">
+            <FieldGrid cols={{ sm: 2, lg: 4 }} className="gap-x-4">
               <Input
                 label="Loan name"
                 value={newLoanName}
-                onChange={(e) => setNewLoanName(e.target.value)}
+                onChange={(e) => loanDraft.set('name', e.target.value)}
                 placeholder="e.g. HDFC Home Loan"
               />
-              <CurrencyInput
+              <NumberInput
+                kind="currency"
                 label="Principal outstanding"
                 value={newLoanPrincipal}
-                onChange={(val) => setNewLoanPrincipal(val)}
+                onChange={(val) => loanDraft.set('principal', val)}
                 currency={newLoanCurrency}
-                onCurrencyChange={setNewLoanCurrency}
+                onCurrencyChange={(curr) => loanDraft.set('currency', curr)}
                 presets={[
                   { label: '₹10L', value: 1000000 },
                   { label: '₹50L', value: 5000000 },
@@ -338,7 +378,7 @@ export const FinancialsStep = ({
               <NumberInput
                 label="Interest rate"
                 value={newLoanRate}
-                onChange={(val) => setNewLoanRate(val)}
+                onChange={(val) => loanDraft.set('rate', val)}
                 suffix="%"
                 step={0.25}
                 min={0}
@@ -348,14 +388,14 @@ export const FinancialsStep = ({
               <NumberInput
                 label="Remaining tenure"
                 value={newLoanTenure}
-                onChange={(val) => setNewLoanTenure(val)}
+                onChange={(val) => loanDraft.set('tenure', val)}
                 suffix="yrs"
                 step={1}
                 min={0}
                 max={40}
                 slider
               />
-            </div>
+            </FieldGrid>
           )}
         />
       </FormSection>

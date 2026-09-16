@@ -2,7 +2,7 @@ import { UserRound } from 'lucide-react';
 import { Input } from '../ui/Input';
 import { NumberInput } from '../ui/NumberInput';
 import { Select } from '../ui/Select';
-import { CurrencyInput } from '../ui/CurrencyInput';
+
 import { FormSection } from '../ui/FormSection';
 import { Repeater } from '../ui/Repeater';
 import { formatOrDash, isProfileConfigured } from '../../lib/planState';
@@ -238,8 +238,8 @@ export const ProfileStep = ({
           renderEditor={(source) => (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">
               <Input layout="inline" label="Source" value={source.name} onChange={(event) => updateIncomeSource(source.id, { name: event.target.value })} placeholder="Salary, rental, freelance…" />
-              <CurrencyInput layout="inline" label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} currency={source.currency} onCurrencyChange={(value) => updateIncomeSource(source.id, { currency: value })} />
-              <CurrencyInput layout="inline" label="INR equivalent" value={source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0)} onChange={(value) => updateIncomeSource(source.id, { amountInBaseCurrency: value })} helper={source.currency === 'INR' ? 'Same as amount' : 'Used in projections'} />
+              <NumberInput kind="currency" layout="inline" label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} currency={source.currency} onCurrencyChange={(value) => updateIncomeSource(source.id, { currency: value })} />
+              <NumberInput kind="currency" layout="inline" label="INR equivalent" value={source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0)} onChange={(value) => updateIncomeSource(source.id, { amountInBaseCurrency: value })} helper={source.currency === 'INR' ? 'Same as amount' : 'Used in projections'} />
               <Select layout="inline" label="Frequency" value={source.frequency} onChange={(value) => updateIncomeSource(source.id, { frequency: value as IncomeSource['frequency'] })} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'annual', label: 'Annual' }]} />
               <Input layout="inline" label="Notes" value={source.notes || ''} onChange={(event) => updateIncomeSource(source.id, { notes: event.target.value })} placeholder="Clients, rental property…" />
             </div>
@@ -356,7 +356,7 @@ export const ProfileStep = ({
                 <Input layout="inline" label="Policy type" value={policy.type} onChange={(event) => updateInsurancePolicy(policy.id, { type: event.target.value })} placeholder="Life, health…" />
                 <Input layout="inline" label="Provider" value={policy.provider || ''} onChange={(event) => updateInsurancePolicy(policy.id, { provider: event.target.value })} placeholder="Insurer" />
                 <Input layout="inline" label="Coverage" value={policy.coverage || ''} onChange={(event) => updateInsurancePolicy(policy.id, { coverage: event.target.value })} placeholder="₹1 Cr / USD 100k" />
-                <CurrencyInput layout="inline" label="Premium" value={policy.premium || 0} onChange={(value) => updateInsurancePolicy(policy.id, { premium: value })} />
+                <NumberInput kind="currency" layout="inline" label="Premium" value={policy.premium || 0} onChange={(value) => updateInsurancePolicy(policy.id, { premium: value })} />
                 <Select layout="inline" label="Frequency" value={policy.premiumFrequency || 'annual'} onChange={(value) => updateInsurancePolicy(policy.id, { premiumFrequency: value as InsurancePolicy['premiumFrequency'] })} options={[{ value: 'annual', label: 'Annual' }, { value: 'monthly', label: 'Monthly' }]} />
                 <Input layout="inline" label="Notes" value={policy.notes || ''} onChange={(event) => updateInsurancePolicy(policy.id, { notes: event.target.value })} placeholder="Term, renewal, exclusions…" />
               </div>

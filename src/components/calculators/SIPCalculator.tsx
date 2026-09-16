@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { TrendingUp, Wallet, PiggyBank } from 'lucide-react';
-import { CurrencyInput } from '../ui/CurrencyInput';
 import { NumberInput } from '../ui/NumberInput';
+import { PlanLinkButton } from '../ui/PlanLinkButton';
 import { Slider } from '../ui/Slider';
 import { MetricCard } from '../ui/MetricCard';
 import { CalculatorShell } from './CalculatorShell';
@@ -18,7 +18,6 @@ import {
 } from 'recharts';
 import { getChartTheme } from '../../lib/chartTheme';
 import { useCalculator } from '../../context/CalculatorContext';
-import { Button } from '../ui/Button';
 
 export const SIPCalculator = () => {
   const { inputs, updateInputs, showToast } = useCalculator();
@@ -73,7 +72,7 @@ export const SIPCalculator = () => {
       hasInput={amount > 0}
       inputs={
         <>
-          <CurrencyInput label="Monthly Investment" value={amount} onChange={setAmount} step={1000} />
+          <NumberInput kind="currency" label="Monthly Investment" value={amount} onChange={setAmount} step={1000} />
           <Slider
             label="Expected Return"
             value={returnRate}
@@ -86,12 +85,8 @@ export const SIPCalculator = () => {
           <NumberInput label="Duration" value={years} onChange={setYears} suffix="years" min={1} max={50} />
           <NumberInput label="Annual Step-up" value={stepUp} onChange={setStepUp} suffix="%" min={0} max={50} />
           <div className="flex gap-2 pt-2 border-t border-border-subtle">
-            <Button onClick={handleSyncFromPlan} className="flex-1 text-xs" variant="ghost">
-              Sync from Plan
-            </Button>
-            <Button onClick={handleApply} className="flex-1 text-xs" variant="outline">
-              Apply to Plan
-            </Button>
+            <PlanLinkButton mode="pull" onClick={handleSyncFromPlan} />
+            <PlanLinkButton mode="push" onClick={handleApply} />
           </div>
         </>
       }

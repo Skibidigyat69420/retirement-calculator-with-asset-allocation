@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Target, Coins, TrendingUp, CheckCircle2, Sparkles, RefreshCw, Trash2 } from 'lucide-react';
-import { CurrencyInput } from '../ui/CurrencyInput';
 import { NumberInput } from '../ui/NumberInput';
 import { Slider } from '../ui/Slider';
 import { MetricCard } from '../ui/MetricCard';
@@ -269,7 +268,8 @@ export const GoalCalculator = () => {
             onChange={(e) => handleNameChange(e.currentTarget.value)}
             placeholder="e.g. Child Higher Education"
           />
-          <CurrencyInput
+          <NumberInput
+            kind="currency"
             label="Target Amount (today's ₹)"
             value={target}
             onChange={handleTargetChange}

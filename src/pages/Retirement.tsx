@@ -35,6 +35,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { NumberInput } from '../components/ui/NumberInput';
+import { FieldGrid } from '../components/ui/Field';
 import { NominalRealChart } from '../components/charts/NominalRealChart';
 import { SWPDrawdownChart } from '../components/charts/SWPDrawdownChart';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
@@ -419,7 +420,7 @@ export const Retirement = () => {
             <Calculator size={17} strokeWidth={1.7} className="text-muted" />
             <h3 className="text-[15px] font-semibold text-ink tracking-tight">Plan inputs</h3>
           </div>
-          <div className="space-y-4">
+          <FieldGrid>
             <NumberInput label="Current Age" value={inputs.currentAge} onChange={v => updateInputs({ currentAge: v })} />
             <NumberInput label="Retirement Age" value={inputs.retirementAge} onChange={v => updateInputs({ retirementAge: v })} />
             <NumberInput label="Life Expectancy" value={inputs.lifeExpectancy} onChange={v => updateInputs({ lifeExpectancy: v })} />
@@ -429,7 +430,7 @@ export const Retirement = () => {
             <NumberInput label="Inflation" value={inputs.inflation} onChange={v => updateInputs({ inflation: v })} suffix="%" />
             <NumberInput label="Post-Retirement Return" value={inputs.swp.postRetirementReturn} onChange={v => updateSWP({ postRetirementReturn: v })} suffix="%" />
             <NumberInput label="SWP Tax Rate" value={inputs.swp.taxRate} onChange={v => updateSWP({ taxRate: v })} suffix="%" />
-          </div>
+          </FieldGrid>
         </Card>
 
         {configured && (

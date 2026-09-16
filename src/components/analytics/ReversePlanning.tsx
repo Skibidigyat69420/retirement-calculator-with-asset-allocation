@@ -25,7 +25,7 @@ import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Slider } from '../ui/Slider';
-import { CurrencyInput } from '../ui/CurrencyInput';
+import { NumberInput } from '../ui/NumberInput';
 import { EmptyState } from '../ui/EmptyState';
 import { runReversePlanning } from '../../lib/reversePlanning';
 import { useCalculator } from '../../context/CalculatorContext';
@@ -214,7 +214,8 @@ export const ReversePlanning = () => {
         {/* Milestone Inputs */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 bg-surface rounded-2xl border border-border">
           <div className="space-y-2.5">
-            <CurrencyInput
+            <NumberInput
+              kind="currency"
               label="Target Retirement Corpus Milestone"
               value={targetCorpus}
               onChange={setTargetCorpus}
