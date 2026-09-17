@@ -102,62 +102,64 @@ export const PlanReportBody = () => {
   );
 
   return (
-    <div className="space-y-6 print:space-y-4 print:p-0">
-      {/* Executive Client Header Banner */}
-      <Card className="print:border-none print:shadow-none print:p-0">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <div className="eyebrow">Institutional Wealth Plan</div>
-            <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">{inputs.client?.name || 'Private Client Plan'}</h2>
-            <p className="text-xs text-muted mt-1.5">
-              Advisor: <span className="text-ink-soft font-medium">{inputs.client?.advisor || 'Sound Thesis Wealth Advisory'}</span>
-              {' · '}Review Date: <span className="font-mono text-ink-soft">{inputs.client?.reviewDate || new Date().toISOString().split('T')[0]}</span>
-            </p>
+    <div className="plan-report-pages space-y-6 print:space-y-0 print:p-0">
+      <div className="report-executive-exhibit space-y-6">
+        {/* Executive Client Header Banner */}
+        <Card className="print:border-none print:shadow-none print:p-0">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <div className="eyebrow">Institutional Wealth Plan</div>
+              <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">{inputs.client?.name || 'Private Client Plan'}</h2>
+              <p className="text-xs text-muted mt-1.5">
+                Advisor: <span className="text-ink-soft font-medium">{inputs.client?.advisor || 'Sound Thesis Wealth Advisory'}</span>
+                {' · '}Review Date: <span className="font-mono text-ink-soft">{inputs.client?.reviewDate || new Date().toISOString().split('T')[0]}</span>
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge tone="neutral">{riskProfile.label}</Badge>
+              <Badge tone={wealthResult.sustainable ? 'positive' : 'negative'}>
+                {wealthResult.sustainable ? 'Sustainable' : `Depletes Age ${wealthResult.depletionAge}`}
+              </Badge>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge tone="neutral">{riskProfile.label}</Badge>
-            <Badge tone={wealthResult.sustainable ? 'positive' : 'negative'}>
-              {wealthResult.sustainable ? 'Sustainable' : `Depletes Age ${wealthResult.depletionAge}`}
-            </Badge>
-          </div>
-        </div>
-      </Card>
+        </Card>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          label="Net Worth"
-          value={fmtOrDash(wealthResult.netWorth, formatCurrencyCompact)}
-          subtext={fmtOrDash(wealthResult.netWorth, formatCurrency)}
-          icon={<Wallet size={16} strokeWidth={1.6} />}
-        />
-        <MetricCard
-          label="Net Annual Savings"
-          value={fmtOrDash(wealthResult.annualSavings, formatCurrencyCompact)}
-          subtext={`${fmtOrDash(wealthResult.savingsRate, formatPercent)} of income`}
-          icon={<TrendingUp size={16} strokeWidth={1.6} />}
-          variant="gold"
-        />
-        <MetricCard
-          label="Terminal Corpus"
-          value={fmtOrDash(wealthResult.terminalValue, formatCurrencyCompact)}
-          subtext={
-            guardNumber(mc.medianTerminal) !== null
-              ? `Median path ${formatCurrencyCompact(mc.medianTerminal)} · P5–P95 ${formatCurrencyCompact(mc.percentile5)}–${formatCurrencyCompact(mc.percentile95)}`
-              : 'Median path —'
-          }
-          icon={<Target size={16} strokeWidth={1.6} />}
-        />
-        <MetricCard
-          label="Plan Success Rate"
-          value={fmtOrDash(mc.successRate * 100, formatPercent)}
-          subtext={
-            mc.medianDepletionAge !== null
-              ? `Median path depletes at age ${mc.medianDepletionAge}`
-              : `Median path sustains withdrawals through age ${inputs.lifeExpectancy}`
-          }
-          icon={<CheckCircle2 size={16} strokeWidth={1.6} />}
-          variant={mc.successRate * 100 >= riskProfile.goalSuccessThreshold ? 'success' : 'danger'}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard
+            label="Net Worth"
+            value={fmtOrDash(wealthResult.netWorth, formatCurrencyCompact)}
+            subtext={fmtOrDash(wealthResult.netWorth, formatCurrency)}
+            icon={<Wallet size={16} strokeWidth={1.6} />}
+          />
+          <MetricCard
+            label="Net Annual Savings"
+            value={fmtOrDash(wealthResult.annualSavings, formatCurrencyCompact)}
+            subtext={`${fmtOrDash(wealthResult.savingsRate, formatPercent)} of income`}
+            icon={<TrendingUp size={16} strokeWidth={1.6} />}
+            variant="gold"
+          />
+          <MetricCard
+            label="Terminal Corpus"
+            value={fmtOrDash(wealthResult.terminalValue, formatCurrencyCompact)}
+            subtext={
+              guardNumber(mc.medianTerminal) !== null
+                ? `Median path ${formatCurrencyCompact(mc.medianTerminal)} · P5–P95 ${formatCurrencyCompact(mc.percentile5)}–${formatCurrencyCompact(mc.percentile95)}`
+                : 'Median path —'
+            }
+            icon={<Target size={16} strokeWidth={1.6} />}
+          />
+          <MetricCard
+            label="Plan Success Rate"
+            value={fmtOrDash(mc.successRate * 100, formatPercent)}
+            subtext={
+              mc.medianDepletionAge !== null
+                ? `Median path depletes at age ${mc.medianDepletionAge}`
+                : `Median path sustains withdrawals through age ${inputs.lifeExpectancy}`
+            }
+            icon={<CheckCircle2 size={16} strokeWidth={1.6} />}
+            variant={mc.successRate * 100 >= riskProfile.goalSuccessThreshold ? 'success' : 'danger'}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
