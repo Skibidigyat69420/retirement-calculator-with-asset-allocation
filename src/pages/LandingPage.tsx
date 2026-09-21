@@ -34,6 +34,19 @@ export function LandingPage() {
         duration,
         ease: 'out(4)',
       });
+      animate('.landing-word', {
+        opacity: [0, 1],
+        x: reduceMotion ? 0 : [-34, 0],
+        delay: stagger(reduceMotion ? 0 : 90, { start: reduceMotion ? 0 : 120 }),
+        duration: reduceMotion ? 0 : 860,
+        ease: 'out(4)',
+      });
+      animate('.landing-bars i', {
+        scaleY: [0, 1],
+        delay: stagger(reduceMotion ? 0 : 42, { from: 'center', start: reduceMotion ? 0 : 420 }),
+        duration: reduceMotion ? 0 : 780,
+        ease: 'out(4)',
+      });
       animate('.landing-proof article, .landing-section-head, .landing-capability-grid article, .landing-final', {
         opacity: [0, 1],
         y: reduceMotion ? 0 : [18, 0],
@@ -70,7 +83,7 @@ export function LandingPage() {
       <section className="landing-hero">
         <div className="landing-hero-copy">
           <p className="landing-index landing-reveal">PRIVATE WEALTH / DECISION INTELLIGENCE / 2026</p>
-          <h1 className="landing-reveal">WEALTH,<br />MADE<br /><span>LEGIBLE.</span></h1>
+          <h1><span className="landing-word">WEALTH,</span><br /><span className="landing-word">MADE</span><br /><span className="landing-word landing-word-outline">LEGIBLE.</span></h1>
           <div className="landing-rule"><i className="landing-rule-fill" /></div>
           <div className="landing-hero-bottom landing-reveal">
             <p>A rigorous planning workspace for advisers who need every currency, every allocation and every trade-off to resolve into one comparable truth.</p>
