@@ -24,6 +24,7 @@ export const backendStore: DataStore = {
         assumptions: {},
         riskAnswers: {},
         manualTargets: null,
+        manualAllocationPolicy: null,
         updatedAt: new Date().toISOString(), // Mock timestamp for now
       } as StoredPlan));
     } catch (err) {
@@ -46,6 +47,7 @@ export const backendStore: DataStore = {
         assumptions: assumptionsSnapshot || {},
         riskAnswers: inputSnapshot.riskAnswers || {},
         manualTargets: inputSnapshot.manualTargets || null,
+        manualAllocationPolicy: inputSnapshot.manualAllocationPolicy || null,
         ipsState: inputSnapshot.ipsState || {},
         updatedAt: p.currentVersion ? new Date().toISOString() : new Date().toISOString(),
       } as StoredPlan;
@@ -64,6 +66,7 @@ export const backendStore: DataStore = {
         inputs: plan.inputs,
         riskAnswers: plan.riskAnswers,
         manualTargets: plan.manualTargets,
+        manualAllocationPolicy: plan.manualAllocationPolicy,
         ipsState: plan.ipsState,
       };
 

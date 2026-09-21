@@ -13,6 +13,7 @@ export interface StoredPlan {
   assumptions: unknown;
   riskAnswers: unknown;
   manualTargets: unknown | null;
+  manualAllocationPolicy?: unknown | null;
   ipsState?: unknown;
   updatedAt: string;
 }

@@ -20,12 +20,12 @@ export const COLORS = {
 };
 
 export const ASSET_COLORS: Record<AssetCategory, string> = {
-  equity: '#486B5A',
-  debt: '#8A94A6',
-  gold: '#B3945A',
-  realestate: '#96665A',
-  liquid: '#5E8B8B',
-  other: '#A8A29A',
+  equity: '#111111',
+  debt: '#3A3A3A',
+  gold: '#626262',
+  realestate: '#898989',
+  liquid: '#B0B0B0',
+  other: '#D6D6D6',
 };
 
 export const ASSET_LABELS: Record<AssetCategory, string> = {

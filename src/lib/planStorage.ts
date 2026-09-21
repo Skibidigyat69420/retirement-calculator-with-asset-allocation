@@ -1,4 +1,4 @@
-import type { MasterPlanInputs, RiskAnswers, AssetCategory } from '../types';
+import type { MasterPlanInputs, RiskAnswers, AssetCategory, ManualAllocationPolicy } from '../types';
 import type { AssumptionSet } from './assumptions';
 import { createStore, localStorageStore, type StoredPlan } from './store';
 
@@ -7,6 +7,7 @@ export interface PlanBundle {
   assumptions: AssumptionSet;
   riskAnswers: RiskAnswers;
   manualTargets: Record<AssetCategory, number> | null;
+  manualAllocationPolicy: ManualAllocationPolicy | null;
 }
 
 function createPlanId(): string {
@@ -24,6 +25,7 @@ function buildStoredPlan(bundle: PlanBundle, id?: string, name?: string): Stored
     assumptions: bundle.assumptions,
     riskAnswers: bundle.riskAnswers,
     manualTargets: bundle.manualTargets,
+    manualAllocationPolicy: bundle.manualAllocationPolicy,
     updatedAt: new Date().toISOString(),
   };
 }

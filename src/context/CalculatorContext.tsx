@@ -12,6 +12,7 @@ import type {
   ClientMeetingState,
   ClientMeetingStageId,
   AssumptionMode,
+  ManualAllocationPolicy,
 } from '../types';
 import { defaultClientInputs } from '../lib/scenarios';
 import { getPersona } from '../lib/personas';
@@ -78,6 +79,8 @@ interface CalculatorContextType {
   applyRiskProfileToPlan: () => void;
   manualTargets: Record<AssetCategory, number> | null;
   setManualTargets: React.Dispatch<React.SetStateAction<Record<AssetCategory, number> | null>>;
+  manualAllocationPolicy: ManualAllocationPolicy | null;
+  setManualAllocationPolicy: React.Dispatch<React.SetStateAction<ManualAllocationPolicy | null>>;
   resetToDefaults: () => void;
   loadPersona: (id: string) => void;
   loadDemoWorkspace: () => void;
@@ -110,6 +113,7 @@ const CalculatorContext = createContext<CalculatorContextType | undefined>(undef
 
 const RISK_ANSWERS_KEY = 'soundthesis_risk_answers';
 const MANUAL_TARGETS_KEY = 'soundthesis_manual_targets';
+const MANUAL_ALLOCATION_POLICY_KEY = 'soundthesis_manual_allocation_policy';
 const DECISION_HISTORY_KEY = 'soundthesis_decision_history';
 const MEETING_STATE_KEY = 'soundthesis_meeting_state';
 const ASSUMPTION_MODE_KEY = 'soundthesis_assumption_mode';
@@ -178,6 +182,16 @@ function loadManualTargets(): Record<AssetCategory, number> | null {
     if (raw) return JSON.parse(raw);
   } catch {
     // ignore
+  }
+  return null;
+}
+
+function loadManualAllocationPolicy(): ManualAllocationPolicy | null {
+  try {
+    const raw = localStorage.getItem(MANUAL_ALLOCATION_POLICY_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // ignore malformed legacy values
   }
   return null;
 }
@@ -318,6 +332,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
   const [assumptions, setAssumptions] = useState<AssumptionSet>(() => loadAssumptions());
   const [riskAnswers, setRiskAnswersState] = useState<RiskAnswers>(() => loadRiskAnswers());
   const [manualTargets, setManualTargetsState] = useState<Record<AssetCategory, number> | null>(() => loadManualTargets());
+  const [manualAllocationPolicy, setManualAllocationPolicyState] = useState<ManualAllocationPolicy | null>(() => loadManualAllocationPolicy());
   const [decisionHistory, setDecisionHistory] = useState<DecisionLogEntry[]>(() => loadDecisionHistory());
   const [meetingState, setMeetingState] = useState<ClientMeetingState>(() => loadMeetingState());
   const [assumptionMode, setAssumptionModeState] = useState<AssumptionMode>(() => loadAssumptionMode());
@@ -344,7 +359,10 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         const plan = plans.data[0] ? await getPlan(plans.data[0].id) : null;
         if (cancelled) return;
         backendPlanIdRef.current = plan?.id ?? null;
-        const snapshot = (plan?.currentVersion?.inputSnapshot || {}) as Partial<MasterPlanInputs>;
+        const snapshot = (plan?.currentVersion?.inputSnapshot || {}) as Partial<MasterPlanInputs> & {
+          manualTargets?: Record<AssetCategory, number> | null;
+          manualAllocationPolicy?: ManualAllocationPolicy | null;
+        };
         const incomeRule = profile.cashflows.find((row) => row.type === 'income');
         const expenseRule = profile.cashflows.find((row) => row.type === 'expense');
         const sipRule = profile.cashflows.find((row) => row.type === 'sip');
@@ -367,6 +385,8 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
           goals: profile.goals.map(mapServerGoal),
           sip: { ...defaultClientInputs().sip, ...(snapshot.sip || {}), amount: sipRule ? numberValue(sipRule.monthlyAmount) : numberValue(snapshot.sip?.amount) },
         }));
+        setManualTargetsState(snapshot.manualTargets ?? null);
+        setManualAllocationPolicyState(snapshot.manualAllocationPolicy ?? null);
         backendLoadedRef.current = true;
       } catch (error) {
         console.warn('Could not hydrate the selected client from the backend:', error);
@@ -487,11 +507,12 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     if (!activeClientId || !backendLoadedRef.current || backendHydratingRef.current || !backendPlanIdRef.current) return;
     const timer = setTimeout(() => {
       const { assets: _assets, liabilities: _liabilities, goals: _goals, monthlyExpenditure: _total, ...scalarSnapshot } = inputs;
-      void createPlanVersion(backendPlanIdRef.current as string, scalarSnapshot as unknown as Record<string, unknown>)
+      const versionSnapshot = { ...scalarSnapshot, manualTargets, manualAllocationPolicy };
+      void createPlanVersion(backendPlanIdRef.current as string, versionSnapshot as unknown as Record<string, unknown>)
         .catch((error) => console.warn('Plan version save failed:', error));
     }, 700);
     return () => clearTimeout(timer);
-  }, [activeClientId, inputs]);
+  }, [activeClientId, inputs, manualTargets, manualAllocationPolicy]);
 
   // Auto-calibrate assumptions using extracted historical market-data CSV bundle
   useEffect(() => {
@@ -515,6 +536,17 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         : value;
       if (next) localStorage.setItem(MANUAL_TARGETS_KEY, JSON.stringify(next));
       else localStorage.removeItem(MANUAL_TARGETS_KEY);
+      return next;
+    });
+  }, []);
+
+  const setManualAllocationPolicy = useCallback((value: React.SetStateAction<ManualAllocationPolicy | null>) => {
+    setManualAllocationPolicyState((prev) => {
+      const next = typeof value === 'function'
+        ? (value as (prev: ManualAllocationPolicy | null) => ManualAllocationPolicy | null)(prev)
+        : value;
+      if (next) localStorage.setItem(MANUAL_ALLOCATION_POLICY_KEY, JSON.stringify(next));
+      else localStorage.removeItem(MANUAL_ALLOCATION_POLICY_KEY);
       return next;
     });
   }, []);
@@ -588,19 +620,21 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       stp: { ...prev.stp, equitySplit, debtSplit: 100 - equitySplit },
     }));
     setManualTargets(null); // Reset manual overrides to match risk profile
+    setManualAllocationPolicy(null);
     showToast(`Applied ${riskProfile.label} profile (${targets.equity}% Equity / ${targets.debt}% Debt) to allocation & SIP/STP!`, 'success');
-  }, [riskProfile, setManualTargets, showToast]);
+  }, [riskProfile, setManualTargets, setManualAllocationPolicy, showToast]);
 
   const resetToDefaults = useCallback(() => {
     setInputs(defaultClientInputs());
     setRiskAnswers({});
     setManualTargets(null);
+    setManualAllocationPolicy(null);
     resetClientData();
     localStorage.removeItem(RISK_ANSWERS_KEY);
     setActivePlanIdState(null);
     setActivePlanId(null);
     showToast('Workspace reset to a blank planning state.', 'info');
-  }, [setRiskAnswers, setManualTargets, showToast]);
+  }, [setRiskAnswers, setManualTargets, setManualAllocationPolicy, showToast]);
 
   const loadPersona = useCallback((id: string) => {
     const persona = getPersona(id);
@@ -611,8 +645,9 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     setInputs(persona.build());
     setRiskAnswers(persona.riskAnswers ?? {});
     setManualTargets(null);
+    setManualAllocationPolicy(null);
     showToast(`Loaded sample: ${persona.label}`, 'info');
-  }, [showToast, setRiskAnswers, setManualTargets]);
+  }, [showToast, setRiskAnswers, setManualTargets, setManualAllocationPolicy]);
 
   const loadDemoWorkspace = useCallback(() => {
     loadPersona('john-doe');
@@ -680,7 +715,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
 
   const saveCurrentPlan = useCallback(async (name?: string) => {
     try {
-      const result = await savePlan({ inputs, assumptions, riskAnswers, manualTargets }, undefined, name);
+      const result = await savePlan({ inputs, assumptions, riskAnswers, manualTargets, manualAllocationPolicy }, undefined, name);
       if (result.success) {
         showToast(name ? `Saved plan: ${name}` : 'Plan saved to cloud', 'success');
         await refreshSavedPlans();
@@ -690,7 +725,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to save plan', 'error');
     }
-  }, [inputs, assumptions, riskAnswers, manualTargets, showToast, refreshSavedPlans]);
+  }, [inputs, assumptions, riskAnswers, manualTargets, manualAllocationPolicy, showToast, refreshSavedPlans]);
 
   const loadSavedPlan = useCallback(async (id: string) => {
     try {
@@ -703,13 +738,14 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       if (plan.assumptions) setAssumptions(plan.assumptions as AssumptionSet);
       if (plan.riskAnswers) setRiskAnswers(plan.riskAnswers as RiskAnswers);
       if (plan.manualTargets !== undefined) setManualTargets(plan.manualTargets as Record<AssetCategory, number> | null);
+      if (plan.manualAllocationPolicy !== undefined) setManualAllocationPolicy(plan.manualAllocationPolicy as ManualAllocationPolicy | null);
       setActivePlanIdState(plan.id);
       setActivePlanId(plan.id);
       showToast(`Loaded plan: ${plan.name}`, 'success');
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to load plan', 'error');
     }
-  }, [showToast, setRiskAnswers, setManualTargets]);
+  }, [showToast, setRiskAnswers, setManualTargets, setManualAllocationPolicy]);
 
   const deleteSavedPlan = useCallback(async (id: string) => {
     try {
@@ -960,6 +996,8 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         applyRiskProfileToPlan,
         manualTargets,
         setManualTargets,
+        manualAllocationPolicy,
+        setManualAllocationPolicy,
         resetToDefaults,
         loadPersona,
         loadDemoWorkspace,

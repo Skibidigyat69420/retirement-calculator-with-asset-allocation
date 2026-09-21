@@ -76,6 +76,26 @@ export interface RiskProfile {
   stressTestVerdict: string;
 }
 
+export interface AllocationRange {
+  min: number;
+  max: number;
+}
+
+/** Advisor-authored client allocation mandate that accompanies manual target weights. */
+export interface ManualAllocationPolicy {
+  name: string;
+  objective: string;
+  rationale: string;
+  constraints: string;
+  reviewFrequency: 'quarterly' | 'semiannual' | 'annual';
+  rebalanceThreshold: number;
+  status: 'draft' | 'proposed' | 'approved';
+  effectiveDate: string;
+  approvedBy: string;
+  ranges: Record<AssetCategory, AllocationRange>;
+  updatedAt: string;
+}
+
 export interface RiskQuestion {
   id: string;
   category: 'time' | 'capacity' | 'attitude' | 'experience' | 'liquidity' | 'goals';
