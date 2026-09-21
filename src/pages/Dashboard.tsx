@@ -123,7 +123,7 @@ export const Dashboard = () => {
               <span className="h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
               Workspace ready
             </span>
-            <Link to="/master-plan">
+            <Link to="/practitioner?add=1">
               <Button size="md"><Plus size={15} /> New client</Button>
             </Link>
           </div>
@@ -139,7 +139,7 @@ export const Dashboard = () => {
               <p className="hero-copy mt-5 max-w-lg text-sm leading-relaxed">
                 Add a person, capture the starting position, and let the planning studio reveal what matters next. No demo numbers. No invented health score.
               </p>
-              <Link to="/master-plan" className="mt-7 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-ink transition-transform hover:-translate-y-0.5">
+              <Link to="/practitioner?add=1" className="mt-7 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-ink transition-transform hover:-translate-y-0.5">
                 Create your first client <ArrowUpRight size={16} />
               </Link>
             </div>

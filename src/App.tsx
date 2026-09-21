@@ -33,6 +33,7 @@ function lazyNamed<T extends ComponentType<any>>(
 }
 
 const Dashboard = lazyNamed(() => import('./pages/Dashboard'), 'Dashboard');
+const LandingPage = lazyNamed(() => import('./pages/LandingPage'), 'LandingPage');
 const MasterPlan = lazyNamed(() => import('./pages/MasterPlan'), 'MasterPlan');
 const Allocation = lazyNamed(() => import('./pages/Allocation'), 'Allocation');
 const GoalPlanner = lazyNamed(() => import('./pages/GoalPlanner'), 'GoalPlanner');
@@ -100,7 +101,7 @@ function AnimatedRoutes() {
 function WorkspaceRoutes() {
   const { ready, user } = useAuth();
   if (!ready) return null;
-  if (!user) return <Routes><Route path="/signup" element={<AuthPage mode="sign-up" />} /><Route path="/forgot-password" element={<AuthPage mode="reset" />} /><Route path="*" element={<AuthPage />} /></Routes>;
+  if (!user) return <Suspense fallback={null}><Routes><Route path="/" element={<LandingPage />} /><Route path="/login" element={<AuthPage />} /><Route path="/signup" element={<AuthPage mode="sign-up" />} /><Route path="/forgot-password" element={<AuthPage mode="reset" />} /><Route path="*" element={<Navigate to="/" replace />} /></Routes></Suspense>;
   return (
     <CalculatorProvider>
       <Layout>

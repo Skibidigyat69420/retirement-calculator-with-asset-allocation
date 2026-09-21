@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowUpRight, BriefcaseBusiness, CalendarClock, ChevronRight, Download, Filter, LayoutGrid, List, LogOut, RefreshCw, Search, ShieldCheck, Sparkles, Target, Users, WalletCards } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { ArrowUpRight, BriefcaseBusiness, CalendarClock, ChevronRight, Download, Filter, LayoutGrid, List, LogOut, RefreshCw, Search, ShieldCheck, Sparkles, Target, UserPlus, Users, WalletCards, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ApiRequestError, exportClientBundle, listClients, createClient, type ClientSummary } from '../lib/api';
 import { formatCurrencyCompact } from '../lib/formatters';
@@ -11,6 +11,7 @@ function Metric({ label, value, detail, icon: Icon }: { label: string; value: st
 }
 
 export function PractitionerPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { ready, user, organizationName, logout } = useAuth();
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -19,6 +20,16 @@ export function PractitionerPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newClient, setNewClient] = useState({ firstName: '', lastName: '', email: '', phone: '' });
+
+  useEffect(() => {
+    if (searchParams.get('add') !== '1') return;
+    setError(null);
+    setAddOpen(true);
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const loadClients = useCallback(async () => {
     setLoading(true); setError(null);
@@ -26,11 +37,11 @@ export function PractitionerPage() {
       const response = await listClients();
       const assigned = response.data.filter((client) => client.assignedPractitioners.some((advisor) => advisor.userId === user?.id));
       setClients(assigned);
-      if (!selectedId && assigned[0]) setSelectedId(assigned[0].id);
+      setSelectedId((current) => current ?? assigned[0]?.id ?? null);
     } catch (cause) {
       setError(cause instanceof ApiRequestError ? cause.message : 'Could not load the client database.');
     } finally { setLoading(false); }
-  }, [selectedId, user?.id]);
+  }, [user?.id]);
 
   useEffect(() => { if (ready && user) void loadClients(); }, [ready, user, loadClients]);
 
@@ -44,22 +55,31 @@ export function PractitionerPage() {
     try { await exportClientBundle(client.id, client.name); } catch (cause) { setError(cause instanceof ApiRequestError ? cause.message : 'Export failed.'); } finally { setExporting(null); }
   };
 
-  const handleAddClient = async () => {
-    const fullName = window.prompt('Enter new client name (First Last):');
-    if (!fullName?.trim()) return;
-    
-    const parts = fullName.trim().split(' ');
-    const firstName = parts[0];
-    const lastName = parts.length > 1 ? parts.slice(1).join(' ') : 'Client';
-    
-    setLoading(true);
+  const handleAddClient = () => {
+    setError(null);
+    setAddOpen(true);
+  };
+
+  const submitNewClient = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!newClient.firstName.trim() || !newClient.lastName.trim()) return;
+    setCreating(true);
+    setError(null);
     try {
-      const newClient = await createClient({ firstName, lastName });
+      const created = await createClient({
+        firstName: newClient.firstName.trim(),
+        lastName: newClient.lastName.trim(),
+        email: newClient.email.trim() || undefined,
+        phone: newClient.phone.trim() || undefined,
+      });
       await loadClients();
-      setSelectedId(newClient.id);
+      setSelectedId(created.id);
+      setNewClient({ firstName: '', lastName: '', email: '', phone: '' });
+      setAddOpen(false);
     } catch (cause) {
       setError(cause instanceof ApiRequestError ? cause.message : 'Could not create client.');
-      setLoading(false);
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -97,6 +117,21 @@ export function PractitionerPage() {
       {view === 'grid' && filtered.length > 0 && <div className="client-grid">{filtered.map((client, index) => <ClientCard key={client.id} client={client} index={index} selected={selected?.id === client.id} onSelect={() => setSelectedId(client.id)} onExport={() => void handleExport(client)} exporting={exporting === client.id} />)}</div>}
       {view === 'list' && filtered.length > 0 && <div className="client-table"><div className="client-table-head"><span>Client</span><span>Portfolio</span><span>Coverage</span><span>Status</span><span /></div>{filtered.map((client, index) => <ClientRow key={client.id} client={client} index={index} selected={selected?.id === client.id} onSelect={() => setSelectedId(client.id)} />)}</div>}
       {selected && <aside className="client-insight"><div><span className="eyebrow">Selected relationship</span><h2>{selected.name}</h2><p>Primary relationship · {selected.status || 'Active engagement'}</p></div><div className="client-insight-actions"><button onClick={() => void handleExport(selected)} disabled={exporting === selected.id}><Download size={15} /> {exporting === selected.id ? 'Preparing…' : 'Export file'}</button><Link to="/master-plan" onClick={() => openClientWorkspace(selected.id)}><span>Open planning workspace</span><ArrowUpRight size={15} /></Link></div><div className="client-insight-stats"><div><span>Net worth</span><strong>{formatCurrencyCompact(selected.financialSummary.netWorth)}</strong></div><div><span>Investable</span><strong>{formatCurrencyCompact(selected.financialSummary.investableAssets)}</strong></div><div><span>Profile</span><strong><ShieldCheck size={15} /> Active</strong></div></div><div className="client-insight-footer"><span><span className="live-dot" /> Access scoped to your assignment</span><button onClick={logout}><LogOut size={14} /> Sign out</button></div></aside>}
+
+      {addOpen && <div className="client-create-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !creating) setAddOpen(false); }}>
+        <section className="client-create-dialog" role="dialog" aria-modal="true" aria-labelledby="create-client-title">
+          <header><div><span className="eyebrow">NEW RELATIONSHIP / 001</span><h2 id="create-client-title">Add client</h2></div><button type="button" onClick={() => setAddOpen(false)} disabled={creating} aria-label="Close add client form"><X size={18} /></button></header>
+          <p className="client-create-intro">Create the household record and its first master plan. Financial data can be added next inside the planning workspace.</p>
+          <form onSubmit={submitNewClient}>
+            <label><span>First name *</span><input autoFocus required value={newClient.firstName} onChange={(event) => setNewClient((value) => ({ ...value, firstName: event.target.value }))} placeholder="Aarav" /></label>
+            <label><span>Last name *</span><input required value={newClient.lastName} onChange={(event) => setNewClient((value) => ({ ...value, lastName: event.target.value }))} placeholder="Mehta" /></label>
+            <label><span>Email</span><input type="email" value={newClient.email} onChange={(event) => setNewClient((value) => ({ ...value, email: event.target.value }))} placeholder="aarav@example.com" /></label>
+            <label><span>Phone</span><input type="tel" value={newClient.phone} onChange={(event) => setNewClient((value) => ({ ...value, phone: event.target.value }))} placeholder="+91 98765 43210" /></label>
+            <div className="client-create-note"><UserPlus size={18} /><span>The signed-in adviser is assigned as primary. A versioned starter plan is created automatically.</span></div>
+            <div className="client-create-actions"><button type="button" onClick={() => setAddOpen(false)} disabled={creating}>Cancel</button><button type="submit" disabled={creating || !newClient.firstName.trim() || !newClient.lastName.trim()}>{creating ? 'Creating…' : 'Create client'} <ArrowUpRight size={15} /></button></div>
+          </form>
+        </section>
+      </div>}
     </div>
   );
 }
