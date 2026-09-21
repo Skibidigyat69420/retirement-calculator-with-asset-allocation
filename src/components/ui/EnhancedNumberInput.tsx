@@ -31,6 +31,8 @@ export interface EnhancedNumberInputProps {
   kind?: 'number' | 'currency';
   currency?: string;
   onCurrencyChange?: (currency: string) => void;
+  /** ISO currency codes offered by the live backend FX catalogue. */
+  currencyOptions?: string[];
 }
 
 const formatValue = (val: number): string =>
@@ -48,7 +50,7 @@ const parseRaw = (raw: string): number | null => {
   return Number.isNaN(parsed) ? null : parsed;
 };
 
-const CURRENCY_OPTIONS = ['INR', 'USD', 'EUR', 'GBP', 'SGD', 'AED'];
+const DEFAULT_CURRENCY_OPTIONS = ['INR', 'USD', 'EUR', 'GBP', 'SGD', 'AED', 'JPY', 'AUD', 'CAD', 'CHF'];
 
 export const EnhancedNumberInput = ({
   label,
@@ -70,6 +72,7 @@ export const EnhancedNumberInput = ({
   kind = 'number',
   currency = 'INR',
   onCurrencyChange,
+  currencyOptions,
 }: EnhancedNumberInputProps) => {
   const isCurrency = kind === 'currency';
   const effectiveMin = isCurrency ? (min ?? 0) : min;
@@ -83,6 +86,10 @@ export const EnhancedNumberInput = ({
   const [isEditing, setIsEditing] = useState(false);
   const generatedId = useId();
   const inputId = idProp ?? generatedId;
+  const availableCurrencies = Array.from(new Set([
+    currency,
+    ...(currencyOptions?.length ? currencyOptions : DEFAULT_CURRENCY_OPTIONS),
+  ])).sort((a, b) => (a === 'INR' ? -1 : b === 'INR' ? 1 : a.localeCompare(b)));
 
   const displayValue = isEditing ? localValue : format(value);
 
@@ -140,7 +147,7 @@ export const EnhancedNumberInput = ({
               disabled={disabled}
               className="absolute left-1 top-1/2 -translate-y-1/2 h-7 rounded-sm border-none bg-transparent py-0 pl-2 pr-6 text-xs text-faint hover:text-ink focus:ring-0 focus:outline-none cursor-pointer appearance-none z-10"
             >
-              {CURRENCY_OPTIONS.map((code) => (
+              {availableCurrencies.map((code) => (
                 <option key={code} value={code}>{code}</option>
               ))}
             </select>

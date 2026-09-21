@@ -94,6 +94,7 @@ export const FinancialsStep = ({
   onRemoveAsset,
 }: FinancialsStepProps) => {
   const { assumptions } = useCalculator();
+  const currencyOptions = useMemo(() => Object.keys(assumptions.fx), [assumptions.fx]);
 
   // New Asset Form State — zero defaults, never pre-seeded demo amounts
   const assetDraft = useDraft(INITIAL_ASSET_DRAFT, { validate: (d) => !!d.name.trim() });
@@ -253,7 +254,7 @@ export const FinancialsStep = ({
             <FieldGrid cols={{ md: 3 }}>
               <Input layout="inline" label="Asset name" value={asset.name} onChange={(e) => updateAsset(asset.id, { name: e.target.value })} placeholder="e.g. Parag Parikh Flexi Cap" />
               <Select layout="inline" label="Category" value={asset.category} onChange={(value) => updateAsset(asset.id, { category: value as AssetCategory })} options={CATEGORY_OPTIONS} />
-              <NumberInput kind="currency" layout="inline" label="Current value" value={asset.value} onChange={(value) => updateAsset(asset.id, { value })} currency={asset.currency} onCurrencyChange={(currency) => updateAsset(asset.id, { currency })} />
+              <NumberInput kind="currency" layout="inline" label="Current value" value={asset.value} onChange={(value) => updateAsset(asset.id, { value })} currency={asset.currency} currencyOptions={currencyOptions} onCurrencyChange={(currency) => updateAsset(asset.id, { currency })} />
               <NumberInput layout="inline" label="Expected return" value={asset.returnRate} onChange={(value) => updateAsset(asset.id, { returnRate: value })} suffix="%" step={0.5} min={0} max={30} slider="focus" />
               <CheckboxField
                 className="md:col-span-2"
@@ -285,6 +286,7 @@ export const FinancialsStep = ({
                 value={newAssetValue}
                 onChange={(val) => assetDraft.set('value', val)}
                 currency={newAssetCurrency}
+                currencyOptions={currencyOptions}
                 onCurrencyChange={(curr) => assetDraft.set('currency', curr)}
                 presets={[
                   { label: '₹1L', value: 100000 },
@@ -338,7 +340,7 @@ export const FinancialsStep = ({
           renderEditor={(loan) => (
             <FieldGrid cols={{ md: 3 }}>
               <Input layout="inline" label="Loan name" value={loan.name} onChange={(e) => updateLiability(loan.id, { name: e.target.value })} placeholder="e.g. HDFC Home Loan" />
-              <NumberInput kind="currency" layout="inline" label="Principal" value={loan.principal} onChange={(value) => updateLiability(loan.id, { principal: value })} currency={loan.currency || 'INR'} onCurrencyChange={(currency) => updateLiability(loan.id, { currency })} />
+              <NumberInput kind="currency" layout="inline" label="Principal" value={loan.principal} onChange={(value) => updateLiability(loan.id, { principal: value })} currency={loan.currency || 'INR'} currencyOptions={currencyOptions} onCurrencyChange={(currency) => updateLiability(loan.id, { currency })} />
               <NumberInput layout="inline" label="Interest rate" value={loan.rate} onChange={(value) => updateLiability(loan.id, { rate: value })} suffix="%" step={0.25} min={0} max={30} slider="focus" />
               <NumberInput layout="inline" label="Remaining tenure" value={loan.tenureYears} onChange={(value) => updateLiability(loan.id, { tenureYears: value })} suffix="yrs" step={1} min={1} max={40} />
               <div className="flex items-center gap-4 md:col-span-2">
@@ -368,6 +370,7 @@ export const FinancialsStep = ({
                 value={newLoanPrincipal}
                 onChange={(val) => loanDraft.set('principal', val)}
                 currency={newLoanCurrency}
+                currencyOptions={currencyOptions}
                 onCurrencyChange={(curr) => loanDraft.set('currency', curr)}
                 presets={[
                   { label: '₹10L', value: 1000000 },

@@ -16,6 +16,7 @@ import notificationRoutes from './notifications.js';
 import reportRoutes from './reports.js';
 import documentRoutes from './documents.js';
 import exportRoutes from './export.js';
+import fxRoutes from './fx.js';
 
 /**
  * Domain routes — registered by app.ts under the `/api/v1` prefix.
@@ -40,4 +41,5 @@ export default async function domainRoutes(app: FastifyInstance): Promise<void> 
   await app.register(reportRoutes);
   await app.register(documentRoutes);
   await app.register(exportRoutes);
+  await app.register(fxRoutes);
 }

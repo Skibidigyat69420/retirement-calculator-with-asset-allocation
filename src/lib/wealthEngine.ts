@@ -59,6 +59,8 @@ export interface WealthEngineResult {
   /** False when inputs were empty/invalid and every output below is a neutral zero. */
   isConfigured: boolean;
   netWorth: number;
+  /** INR value available to fund goals/retirement after liabilities. */
+  investableNetWorth: number;
   totalInvested: number;
   annualIncome: number;
   annualSavings: number;
@@ -184,6 +186,7 @@ function emptyEngineResult(riskProfile?: { profile?: RiskProfile; score?: number
   return {
     isConfigured: false,
     netWorth: 0,
+    investableNetWorth: 0,
     totalInvested: 0,
     annualIncome: 0,
     annualSavings: 0,
@@ -273,7 +276,7 @@ function calculateCurrencyExposure(assets: Asset[], baseCurrency = 'INR'): Curre
   const total = assets.reduce((sum, a) => sum + a.value, 0);
   if (total <= 0) return [{ currency: baseCurrency, amount: 0, percentage: 100 }];
 
-  const byCurrency: Record<string, number> = { [baseCurrency]: 0 };
+  const byCurrency: Record<string, number> = {};
   assets.forEach((a) => {
     const currency = a.currency || baseCurrency;
     byCurrency[currency] = (byCurrency[currency] || 0) + a.value;
@@ -725,11 +728,13 @@ export function runWealthEngine(
   // Pre-process inputs: Normalize amounts to base currency using spot rates.
   const convertedInputs = {
     ...inputs,
-    annualIncome: (inputs.client.incomeSources || []).reduce((total, source) => {
-      const spotRate = assumptions?.fx?.[source.currency || 'INR']?.spotRate || 1.0;
-      const baseAmount = source.amount * spotRate;
-      return total + Math.max(0, baseAmount) * (source.frequency === 'monthly' ? 12 : 1);
-    }, inputs.annualIncome), // Fallback if no incomeSources
+    annualIncome: (inputs.client.incomeSources || []).length > 0
+      ? (inputs.client.incomeSources || []).reduce((total, source) => {
+          const spotRate = assumptions?.fx?.[source.currency || 'INR']?.spotRate || 1.0;
+          const baseAmount = source.amount * spotRate;
+          return total + Math.max(0, baseAmount) * (source.frequency === 'monthly' ? 12 : 1);
+        }, 0)
+      : inputs.annualIncome,
     assets: inputs.assets.map(a => ({
       ...a,
       value: a.value * (assumptions?.fx?.[a.currency || 'INR']?.spotRate || 1.0)
@@ -759,6 +764,11 @@ export function runWealthEngine(
     return emptyEngineResult(riskProfile);
   }
   const netWorth = assets.reduce((sum, a) => sum + a.value, 0);
+  const totalLiabilities = convertedInputs.liabilities.reduce((sum, liability) => sum + liability.principal, 0);
+  const liquidatableAssets = assets
+    .filter((asset) => asset.liquidateAtRetirement !== false)
+    .reduce((sum, asset) => sum + asset.value, 0);
+  const investableNetWorth = Math.max(0, liquidatableAssets - totalLiabilities);
   const annualExpenses = monthlyExpenditure * 12;
   const annualSavings = Math.max(0, annualIncome - annualExpenses);
   const savingsRate = annualIncome > 0 ? (annualSavings / annualIncome) * 100 : 0;
@@ -834,6 +844,7 @@ export function runWealthEngine(
   return sanitizeFinite({
     isConfigured: true,
     netWorth: round2(netWorth),
+    investableNetWorth: round2(investableNetWorth),
     totalInvested: round2(terminalSnapshot?.invested || 0),
     annualIncome: round2(annualIncome),
     annualSavings: round2(annualSavings),

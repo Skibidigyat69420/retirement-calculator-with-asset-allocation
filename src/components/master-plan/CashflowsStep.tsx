@@ -28,17 +28,20 @@ export const CashflowsStep = ({
   updateSWP,
 }: CashflowsStepProps) => {
   const { assumptions } = useCalculator();
+  const currencyOptions = Object.keys(assumptions.fx);
+  const toInr = (amount: number, currency: string) =>
+    amount * (assumptions.fx[currency || 'INR']?.spotRate ?? 0);
 
   const incomeSources = inputs.client.incomeSources || [];
-  const monthlyIncome = Math.round(inputs.annualIncome / 12);
-  const monthlySavingsSurplus = monthlyIncome - inputs.monthlyExpenditure;
-  const savingsRate = monthlyIncome > 0 ? (monthlySavingsSurplus / monthlyIncome) * 100 : 0;
-
   const annualIncomeFromSources = (sources: IncomeSource[]) => sources.reduce((total, source) => {
     const spotRate = assumptions?.fx[source.currency || 'INR']?.spotRate || 1.0;
     const baseAmount = source.amount * spotRate;
     return total + Math.max(0, baseAmount) * (source.frequency === 'monthly' ? 12 : 1);
   }, 0);
+  const annualIncome = incomeSources.length > 0 ? annualIncomeFromSources(incomeSources) : inputs.annualIncome;
+  const monthlyIncome = Math.round(annualIncome / 12);
+  const monthlySavingsSurplus = monthlyIncome - inputs.monthlyExpenditure;
+  const savingsRate = monthlyIncome > 0 ? (monthlySavingsSurplus / monthlyIncome) * 100 : 0;
 
   const replaceIncomeSources = (sources: IncomeSource[]) => {
     updateClient({ incomeSources: sources });
@@ -117,15 +120,15 @@ export const CashflowsStep = ({
                 <span className="truncate font-medium text-ink">{source.name || 'Unnamed source'}</span>
                 <span className="truncate text-xs text-muted">{source.frequency}</span>
                 <span className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted">
-                  {formatCurrency(source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0))}
+                  {formatCurrency(toInr(source.amount, source.currency))}
                 </span>
               </span>
             )}
             renderEditor={(source) => (
               <FieldGrid cols={{ md: 3 }}>
                 <Input layout="inline" label="Source" value={source.name} onChange={(event) => updateIncomeSource(source.id, { name: event.target.value })} placeholder="Salary, rental…" />
-                <NumberInput kind="currency" layout="inline" label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} currency={source.currency} onCurrencyChange={(value) => updateIncomeSource(source.id, { currency: value })} />
-                <NumberInput kind="currency" layout="inline" label="INR equivalent" value={source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0)} onChange={(value) => updateIncomeSource(source.id, { amountInBaseCurrency: value })} helper={source.currency === 'INR' ? 'Same as amount' : 'Used in projections'} />
+                <NumberInput kind="currency" layout="inline" label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} currency={source.currency} currencyOptions={currencyOptions} onCurrencyChange={(value) => updateIncomeSource(source.id, { currency: value })} />
+                <NumberInput kind="currency" layout="inline" label="INR equivalent" value={toInr(source.amount, source.currency)} onChange={() => {}} disabled helper="Live reference rate · all plan outputs use INR" />
                 <Select layout="inline" label="Frequency" value={source.frequency} onChange={(value) => updateIncomeSource(source.id, { frequency: value as IncomeSource['frequency'] })} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'annual', label: 'Annual' }]} />
               </FieldGrid>
             )}

@@ -43,9 +43,10 @@ export const ReversePlanning = () => {
     logDecision,
   } = useCalculator();
 
-  const currentWealth = wealthResult.netWorth;
-  const initialTargetCorpus = wealthResult.terminalValue > 0
-    ? Math.round((wealthResult.terminalValue * 1.15) / 1000000) * 1000000
+  const currentWealth = wealthResult.investableNetWorth;
+  const retirementProjection = wealthResult.snapshots.find((snapshot) => snapshot.age === inputs.retirementAge)?.total ?? 0;
+  const initialTargetCorpus = retirementProjection > 0
+    ? Math.round((retirementProjection * 1.15) / 1000000) * 1000000
     : 0;
 
   const [targetCorpus, setTargetCorpus] = useState<number>(initialTargetCorpus);
@@ -402,7 +403,7 @@ export const ReversePlanning = () => {
                   {formatCurrencyCompact(result.requiredInitialCorpus)}
                 </div>
                 <p className="text-xs text-muted mt-1 leading-snug">
-                  Net worth: {formatCurrencyCompact(currentWealth)} ({currentWealth >= result.requiredInitialCorpus ? (
+                  Investable capital: {formatCurrencyCompact(currentWealth)} ({currentWealth >= result.requiredInitialCorpus ? (
                     <span className="text-accent-strong font-semibold">Surplus</span>
                   ) : (
                     <span className="text-negative font-semibold">Shortfall {formatCurrencyCompact(result.requiredInitialCorpus - currentWealth)}</span>

@@ -40,6 +40,7 @@ export const PUBLIC_PATHS: readonly string[] = [
   // is public by design (spec §131).
   '/api/v1/auth/dev-login',
   '/api/v1/auth/invitations/accept',
+  '/api/v1/fx',
 ];
 
 export function isPublicPath(url: string): boolean {

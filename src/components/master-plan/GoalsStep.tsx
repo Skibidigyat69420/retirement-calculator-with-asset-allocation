@@ -56,6 +56,7 @@ export const GoalsStep = ({
   onRemoveGoal,
 }: GoalsStepProps) => {
   const { assumptions } = useCalculator();
+  const currencyOptions = Object.keys(assumptions.fx);
   const draft = useDraft(INITIAL_GOAL_DRAFT, { validate: (d) => !!d.name.trim() });
   const { name, targetAmount, yearsToGoal, priority, currency } = draft.values;
   const inflation = inputs.inflation || 0;
@@ -136,6 +137,7 @@ export const GoalsStep = ({
                   value={goal.targetAmount}
                   onChange={(val) => onUpdateGoal(goal.id, { targetAmount: val })}
                   currency={goal.currency || 'INR'}
+                  currencyOptions={currencyOptions}
                   onCurrencyChange={(curr) => onUpdateGoal(goal.id, { currency: curr })}
                   helper={`Future ${formatCurrencyCompact(futureVal, goal.currency || 'INR')} in ${formatOrDash(goal.yearsToGoal ? targetYear : null, String)}`}
                 />
@@ -166,6 +168,7 @@ export const GoalsStep = ({
                 value={targetAmount}
                 onChange={(val) => draft.set('targetAmount', val)}
                 currency={currency}
+                currencyOptions={currencyOptions}
                 onCurrencyChange={(curr) => draft.set('currency', curr)}
                 presets={[
                   { label: '₹10L', value: 1000000 },

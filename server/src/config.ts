@@ -26,6 +26,7 @@ const envSchema = z.object({
   LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
     .default('info'),
+  FX_API_BASE_URL: z.string().url().default('https://api.frankfurter.dev/v2'),
 });
 
 export type Env = z.infer<typeof envSchema>;

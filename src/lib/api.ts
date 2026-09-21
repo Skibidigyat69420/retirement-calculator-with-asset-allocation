@@ -184,10 +184,25 @@ export interface CalculateResponse {
   baseScenarioRecalculated: boolean;
 }
 
+export interface FxRatesResponse {
+  base: 'INR';
+  rates: Record<string, number>;
+  currencies: string[];
+  asOf: string;
+  fetchedAt: string;
+  source: 'frankfurter' | 'frankfurter-cache' | 'bundled-fallback';
+  stale: boolean;
+}
+
 // ------------------------------------------------------------- endpoints
 
 export function devLogin(email: string): Promise<DevLoginResponse> {
   return request<DevLoginResponse>('/auth/dev-login', { method: 'POST', body: { email } });
+}
+
+/** Public INR normalization rates. Each value is INR per one unit of currency. */
+export function fetchInrFxRates(): Promise<FxRatesResponse> {
+  return request<FxRatesResponse>('/fx/rates');
 }
 
 export function listClients(): Promise<{ data: ClientSummary[] }> {

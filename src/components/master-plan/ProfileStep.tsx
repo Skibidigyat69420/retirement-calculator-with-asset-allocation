@@ -8,6 +8,7 @@ import { Repeater } from '../ui/Repeater';
 import { formatOrDash, isProfileConfigured } from '../../lib/planState';
 import { formatCurrency } from '../../lib/formatters';
 import type { FamilyMember, IncomeSource, InsurancePolicy, MasterPlanInputs } from '../../types';
+import { useCalculator } from '../../context/CalculatorContext';
 
 interface ProfileStepProps {
   inputs: MasterPlanInputs;
@@ -31,6 +32,8 @@ export const ProfileStep = ({
   updateInputs,
   updateClient,
 }: ProfileStepProps) => {
+  const { assumptions } = useCalculator();
+  const currencyOptions = Object.keys(assumptions.fx);
   const configured = isProfileConfigured(inputs);
   const yearsToRetire = Math.max(0, inputs.retirementAge - inputs.currentAge);
   const retirementSpan = Math.max(1, inputs.lifeExpectancy - inputs.retirementAge);
@@ -38,6 +41,8 @@ export const ProfileStep = ({
   const familyMembers = inputs.client?.familyMembers || [];
   const incomeSources = inputs.client?.incomeSources || [];
   const insurancePolicies = inputs.client?.insurancePolicies || [];
+  const toInr = (amount: number, currency: string) =>
+    amount * (assumptions.fx[currency || 'INR']?.spotRate ?? 0);
   const profileFields = [
     inputs.client?.name,
     inputs.client?.email,
@@ -56,7 +61,8 @@ export const ProfileStep = ({
   const completion = Math.round(((completedFields + completedCollections) / (profileFields.length + collectionFields.length)) * 100);
 
   const annualIncomeFromSources = (sources: IncomeSource[]) => sources.reduce((total, source) => {
-    const baseAmount = source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0);
+    const spotRate = assumptions.fx[source.currency || 'INR']?.spotRate ?? 0;
+    const baseAmount = source.amount * spotRate;
     return total + Math.max(0, baseAmount) * (source.frequency === 'monthly' ? 12 : 1);
   }, 0);
 
@@ -67,9 +73,8 @@ export const ProfileStep = ({
     const sources = incomeSources.map((source) => {
       if (source.id !== id) return source;
       const next = { ...source, ...patch };
-      return patch.currency === 'INR' || (next.currency === 'INR' && patch.amount !== undefined)
-        ? { ...next, amountInBaseCurrency: next.amount }
-        : next;
+      const spotRate = assumptions.fx[next.currency || 'INR']?.spotRate ?? 0;
+      return { ...next, amountInBaseCurrency: next.amount * spotRate };
     });
     updateClient({ incomeSources: sources });
     updateInputs({ annualIncome: annualIncomeFromSources(sources) });
@@ -230,7 +235,7 @@ export const ProfileStep = ({
               <span className="truncate font-medium text-ink">{source.name || 'Unnamed source'}</span>
               <span className="truncate text-xs text-muted">{source.frequency}</span>
               <span className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted">
-                {formatCurrency(source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0))}
+                {formatCurrency(toInr(source.amount, source.currency))}
                 {source.currency !== 'INR' && <span className="text-faint"> {source.currency}</span>}
               </span>
             </span>
@@ -238,8 +243,8 @@ export const ProfileStep = ({
           renderEditor={(source) => (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">
               <Input layout="inline" label="Source" value={source.name} onChange={(event) => updateIncomeSource(source.id, { name: event.target.value })} placeholder="Salary, rental, freelance…" />
-              <NumberInput kind="currency" layout="inline" label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} currency={source.currency} onCurrencyChange={(value) => updateIncomeSource(source.id, { currency: value })} />
-              <NumberInput kind="currency" layout="inline" label="INR equivalent" value={source.amountInBaseCurrency ?? (source.currency === 'INR' ? source.amount : 0)} onChange={(value) => updateIncomeSource(source.id, { amountInBaseCurrency: value })} helper={source.currency === 'INR' ? 'Same as amount' : 'Used in projections'} />
+              <NumberInput kind="currency" layout="inline" label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} currency={source.currency} currencyOptions={currencyOptions} onCurrencyChange={(value) => updateIncomeSource(source.id, { currency: value })} />
+              <NumberInput kind="currency" layout="inline" label="INR equivalent" value={toInr(source.amount, source.currency)} onChange={() => {}} disabled helper="Live reference rate · all plan outputs use INR" />
               <Select layout="inline" label="Frequency" value={source.frequency} onChange={(value) => updateIncomeSource(source.id, { frequency: value as IncomeSource['frequency'] })} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'annual', label: 'Annual' }]} />
               <Input layout="inline" label="Notes" value={source.notes || ''} onChange={(event) => updateIncomeSource(source.id, { notes: event.target.value })} placeholder="Clients, rental property…" />
             </div>

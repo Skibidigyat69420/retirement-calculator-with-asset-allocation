@@ -43,6 +43,7 @@ function solveRequiredReturn(
   stepUpPct: number,
   targetCorpus: number,
   years: number,
+  goals: WealthEngineResult['goalResults'] = [],
 ): number {
   if (years <= 0) return 0;
 
@@ -54,7 +55,12 @@ function solveRequiredReturn(
     const mid = (low + high) / 2;
     const fvCapital = initialCapital * Math.pow(1 + mid, years);
     const fvSip = calculateSipFutureValue(monthlySip, stepUpPct, mid, years);
-    const totalFv = fvCapital + fvSip;
+    const goalCostAtTarget = goals.reduce((sum, goalResult) => {
+      const goalYear = Math.max(0, goalResult.goal.yearsToGoal);
+      if (goalYear >= years) return sum;
+      return sum + goalResult.futureValue * Math.pow(1 + mid, years - goalYear);
+    }, 0);
+    const totalFv = fvCapital + fvSip - goalCostAtTarget;
 
     if (Math.abs(totalFv - targetCorpus) < 5000) {
       bestRate = mid;
@@ -77,13 +83,19 @@ function solveFeasibleRetirementAge(
   stepUpPct: number,
   annualReturn: number,
   targetCorpus: number,
+  goals: WealthEngineResult['goalResults'] = [],
   maxAge = 75,
 ): number {
   for (let age = currentAge + 1; age <= maxAge; age++) {
     const years = age - currentAge;
     const fvCapital = initialCapital * Math.pow(1 + annualReturn, years);
     const fvSip = calculateSipFutureValue(monthlySip, stepUpPct, annualReturn, years);
-    if (fvCapital + fvSip >= targetCorpus) {
+    const goalCostAtRetirement = goals.reduce((sum, goalResult) => {
+      const goalYear = Math.max(0, goalResult.goal.yearsToGoal);
+      if (goalYear >= years) return sum;
+      return sum + goalResult.futureValue * Math.pow(1 + annualReturn, years - goalYear);
+    }, 0);
+    if (fvCapital + fvSip - goalCostAtRetirement >= targetCorpus) {
       return age;
     }
   }
@@ -124,20 +136,33 @@ export function runReversePlanning(
   const targetAge = params?.targetAge ?? inputs.retirementAge;
   const yearsToTarget = Math.max(1, targetAge - currentAge);
 
-  const currentWealth = wealthResult.netWorth > 0 ? wealthResult.netWorth : 15000000;
-  const defaultTarget = Math.max(50000000, Math.round(((wealthResult.terminalValue || currentWealth * 2.5) * 1.1) / 1000000) * 1000000);
+  // Reverse planning uses capital that can actually fund the plan—not the
+  // headline balance sheet (which may include a non-liquidated family home).
+  const currentWealth = Math.max(0, params?.currentCorpus ?? wealthResult.investableNetWorth ?? wealthResult.netWorth);
+  const projectedAtTarget = wealthResult.snapshots.find((snapshot) => snapshot.age === targetAge)?.total;
+  const defaultTarget = Math.max(50000000, Math.round(((projectedAtTarget || currentWealth * 2.5) * 1.1) / 1000000) * 1000000);
   const targetCorpus = params?.targetCorpus ?? defaultTarget;
 
   const annualReturn = (params?.expectedReturnPct ?? 11.2) / 100;
   const stepUp = inputs.sip.stepUp || 5;
 
+  // Goals falling before retirement consume capital that would otherwise
+  // compound toward the target. Roll each planned withdrawal forward to the
+  // target date so the reverse solve reserves for it explicitly.
+  const preTargetGoalReserve = wealthResult.goalResults.reduce((sum, goalResult) => {
+    const goalYear = Math.max(0, goalResult.goal.yearsToGoal);
+    if (goalYear >= yearsToTarget) return sum;
+    return sum + goalResult.futureValue * Math.pow(1 + annualReturn, yearsToTarget - goalYear);
+  }, 0);
+  const capitalRequiredAtTarget = targetCorpus + preTargetGoalReserve;
+
   const fvCurrentCapital = currentWealth * Math.pow(1 + annualReturn, yearsToTarget);
-  const remainingGap = Math.max(0, targetCorpus - fvCurrentCapital);
+  const remainingGap = Math.max(0, capitalRequiredAtTarget - fvCurrentCapital);
 
   const requiredMonthlySip = solveRequiredMonthlySip(remainingGap, stepUp, annualReturn, yearsToTarget);
 
   const fvCurrentSip = calculateSipFutureValue(inputs.sip.amount, stepUp, annualReturn, yearsToTarget);
-  const requiredInitialCorpus = Math.max(0, Math.round((targetCorpus - fvCurrentSip) / Math.pow(1 + annualReturn, yearsToTarget)));
+  const requiredInitialCorpus = Math.max(0, Math.round((capitalRequiredAtTarget - fvCurrentSip) / Math.pow(1 + annualReturn, yearsToTarget)));
 
   const maxSustainableMonthlySpend = calculateMaxSustainableMonthlySpend(
     targetCorpus,
@@ -154,6 +179,7 @@ export function runReversePlanning(
     stepUp,
     targetCorpus,
     yearsToTarget,
+    wealthResult.goalResults,
   );
 
   const feasibleRetirementAge = solveFeasibleRetirementAge(
@@ -163,11 +189,12 @@ export function runReversePlanning(
     stepUp,
     annualReturn,
     targetCorpus,
+    wealthResult.goalResults,
     Math.min(inputs.lifeExpectancy - 5, 75),
   );
 
   const currentSip = inputs.sip.amount;
-  const pathASip = Math.max(currentSip + 10000, requiredMonthlySip);
+  const pathASip = Math.max(currentSip, requiredMonthlySip);
   const pathBAge = Math.max(targetAge + 1, feasibleRetirementAge);
   const pathCSpend = Math.round(inputs.swp.monthlyNeedToday * 0.85);
 

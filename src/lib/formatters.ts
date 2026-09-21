@@ -66,11 +66,11 @@ export const formatCurrencyCompact = (
   if (currency === 'INR') {
     if (abs >= 1_00_00_000) return `${sign}${sym}${(abs / 1_00_00_000).toFixed(2)}Cr`;
     if (abs >= 1_00_000) return `${sign}${sym}${(abs / 1_00_000).toFixed(2)}L`;
-    if (abs >= 1_000) return `${sign}${sym}${(abs / 1_000).toFixed(1)}K`;
+    if (abs >= 1_000) return `${sign}${sym}${(abs / 1_000).toFixed(2)}K`;
   } else {
     if (abs >= 1_000_000_000) return `${sign}${sym}${(abs / 1_000_000_000).toFixed(2)}B`;
     if (abs >= 1_000_000) return `${sign}${sym}${(abs / 1_000_000).toFixed(2)}M`;
-    if (abs >= 1_000) return `${sign}${sym}${(abs / 1_000).toFixed(1)}K`;
+    if (abs >= 1_000) return `${sign}${sym}${(abs / 1_000).toFixed(2)}K`;
   }
   return formatCurrency(numericVal, 0, currency);
 };

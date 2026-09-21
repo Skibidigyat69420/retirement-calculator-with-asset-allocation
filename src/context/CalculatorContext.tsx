@@ -43,6 +43,7 @@ import {
   listPlans as listBackendPlans,
   patchClient,
   patchFinancialResource,
+  fetchInrFxRates,
 } from '../lib/api';
 
 export interface ToastNotification {
@@ -521,10 +522,52 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       .then((marketData) => {
         if (!active || !marketData) return;
         const empiricalAssumptions = buildAssumptionsFromMarketData(marketData);
-        setAssumptions(empiricalAssumptions);
+        setAssumptions((previous) => {
+          const currencies = new Set([
+            ...Object.keys(empiricalAssumptions.fx),
+            ...Object.keys(previous.fx),
+          ]);
+          const fx = Object.fromEntries(Array.from(currencies).map((code) => {
+            const empirical = empiricalAssumptions.fx[code];
+            const prior = previous.fx[code];
+            return [code, {
+              mean: empirical?.mean ?? prior?.mean ?? 0,
+              std: empirical?.std ?? prior?.std ?? 0,
+              spotRate: prior?.spotRate ?? empirical?.spotRate ?? (code === 'INR' ? 1 : 0),
+            }];
+          }));
+          return { ...empiricalAssumptions, fx };
+        });
       })
       .catch((err) => {
         console.warn('Could not auto-calibrate assumptions from CSV bundle:', err);
+      });
+    return () => { active = false; };
+  }, []);
+
+  // Reference FX is fetched by our backend, not directly by the browser. The
+  // engine then converts every native-currency amount to INR before doing any
+  // allocation, goal, cash-flow, or dossier calculation.
+  useEffect(() => {
+    let active = true;
+    fetchInrFxRates()
+      .then((response) => {
+        if (!active) return;
+        setAssumptions((previous) => {
+          const fx = { ...previous.fx };
+          for (const [code, spotRate] of Object.entries(response.rates)) {
+            if (!Number.isFinite(spotRate) || spotRate <= 0) continue;
+            fx[code] = {
+              mean: previous.fx[code]?.mean ?? 0,
+              std: previous.fx[code]?.std ?? 0,
+              spotRate,
+            };
+          }
+          return { ...previous, fx };
+        });
+      })
+      .catch((error) => {
+        console.warn('Could not refresh INR currency rates; using bundled reference rates:', error);
       });
     return () => { active = false; };
   }, []);

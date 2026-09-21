@@ -13,6 +13,7 @@ describe('wealthEngine', () => {
     const expectedKeys = [
       'isConfigured',
       'netWorth',
+      'investableNetWorth',
       'totalInvested',
       'annualIncome',
       'annualSavings',
@@ -63,6 +64,23 @@ describe('wealthEngine', () => {
     const result = runWealthEngine(inputs, assumptions);
     const expectedNetWorth = inputs.assets.reduce((sum, a) => sum + a.value, 0);
     assert.equal(result.netWorth, expectedNetWorth);
+  });
+
+  it('normalizes native-currency inputs to INR before comparison', () => {
+    const inputs = demoClientInputs();
+    inputs.assets = [
+      { ...inputs.assets[0], value: 10_000, currency: 'USD', liquidateAtRetirement: true },
+    ];
+    inputs.liabilities = [];
+    const assumptions = getDefaultAssumptions();
+    assumptions.fx.USD.spotRate = 84;
+
+    const result = runWealthEngine(inputs, assumptions, undefined, null, 'fx-normalization');
+
+    assert.equal(result.netWorth, 840_000);
+    assert.equal(result.investableNetWorth, 840_000);
+    assert.equal(result.currencyExposure[0]?.currency, 'USD');
+    assert.equal(result.currencyExposure[0]?.amount, 840_000);
   });
 
   it('runWealthEngine returns financially sensible value ranges', () => {

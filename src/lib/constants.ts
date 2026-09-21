@@ -72,7 +72,11 @@ export const FX_ASSUMPTIONS: Record<string, { mean: number; std: number; spotRat
   EUR: { mean: 0.03, std: 0.07, spotRate: 91.2 },
   GBP: { mean: 0.03, std: 0.09, spotRate: 106.4 },
   SGD: { mean: 0.02, std: 0.05, spotRate: 61.8 },
+  AED: { mean: 0.04, std: 0.08, spotRate: 22.73 },
+  JPY: { mean: 0.01, std: 0.09, spotRate: 0.56 },
   AUD: { mean: 0.02, std: 0.09, spotRate: 54.6 },
+  CAD: { mean: 0.03, std: 0.08, spotRate: 61.4 },
+  CHF: { mean: 0.02, std: 0.08, spotRate: 94.5 },
 };
 
 export const GLIDE_PATH_PRESETS = {
