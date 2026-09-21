@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, BriefcaseBusiness, CalendarClock, ChevronRight, Download, Filter, LayoutGrid, List, LogOut, RefreshCw, Search, ShieldCheck, Sparkles, Target, Users, WalletCards } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { ApiRequestError, exportClientBundle, listClients, type ClientSummary } from '../lib/api';
+import { ApiRequestError, exportClientBundle, listClients, createClient, type ClientSummary } from '../lib/api';
 import { formatCurrencyCompact } from '../lib/formatters';
 
 const initials = (name: string) => name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
@@ -44,6 +44,25 @@ export function PractitionerPage() {
     try { await exportClientBundle(client.id, client.name); } catch (cause) { setError(cause instanceof ApiRequestError ? cause.message : 'Export failed.'); } finally { setExporting(null); }
   };
 
+  const handleAddClient = async () => {
+    const fullName = window.prompt('Enter new client name (First Last):');
+    if (!fullName?.trim()) return;
+    
+    const parts = fullName.trim().split(' ');
+    const firstName = parts[0];
+    const lastName = parts.length > 1 ? parts.slice(1).join(' ') : 'Client';
+    
+    setLoading(true);
+    try {
+      const newClient = await createClient({ firstName, lastName });
+      await loadClients();
+      setSelectedId(newClient.id);
+    } catch (cause) {
+      setError(cause instanceof ApiRequestError ? cause.message : 'Could not create client.');
+      setLoading(false);
+    }
+  };
+
   const openClientWorkspace = (clientId: string) => {
     localStorage.setItem('stw.activeClientId', clientId);
     window.dispatchEvent(new Event('stw:active-client-changed'));
@@ -60,7 +79,7 @@ export function PractitionerPage() {
           <h1>Make the next<br /><em>decision clearer.</em></h1>
           <p>One calm workspace for the household, the balance sheet, and the conversations that move a plan forward.</p>
         </div>
-        <div className="directory-hero-actions"><button className="directory-icon-button" onClick={() => void loadClients()} aria-label="Refresh clients"><RefreshCw size={17} className={loading ? 'animate-spin' : ''} /></button><button className="directory-new-button"><Sparkles size={16} /> Add client <ArrowUpRight size={15} /></button></div>
+        <div className="directory-hero-actions"><button className="directory-icon-button" onClick={() => void loadClients()} aria-label="Refresh clients"><RefreshCw size={17} className={loading ? 'animate-spin' : ''} /></button><button className="directory-new-button" onClick={handleAddClient} disabled={loading}><Sparkles size={16} /> Add client <ArrowUpRight size={15} /></button></div>
       </header>
 
       <section className="directory-metrics"><Metric label="Assigned clients" value={String(clients.length).padStart(2, '0')} detail="Your active book" icon={Users} /><Metric label="Net worth covered" value={formatCurrencyCompact(totalNetWorth)} detail="Across assigned clients" icon={WalletCards} /><Metric label="Investable assets" value={formatCurrencyCompact(totalInvestable)} detail="Ready for planning" icon={BriefcaseBusiness} /><Metric label="Reviews this month" value="04" detail="Two due this week" icon={CalendarClock} /></section>

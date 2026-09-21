@@ -209,6 +209,11 @@ export function listClients(): Promise<{ data: ClientSummary[] }> {
   return request<{ data: ClientSummary[] }>('/clients');
 }
 
+export function createClient(body: { firstName: string; lastName: string; preferredName?: string; email?: string; phone?: string }): Promise<ClientRecord> {
+  return request<ClientRecord>('/clients', { method: 'POST', body });
+}
+
+
 export function getClient(clientId: string): Promise<ClientRecord> {
   return request<ClientRecord>(`/clients/${clientId}`);
 }
