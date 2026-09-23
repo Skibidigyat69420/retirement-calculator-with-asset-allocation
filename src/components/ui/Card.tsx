@@ -16,16 +16,16 @@ export const Card = ({
   const variants = {
     default: 'glass-bento text-ink',
     elevated: 'glass-bento shadow-elevated text-ink',
-    navy: 'bg-sunken border border-border-strong text-ink rounded-2xl',
-    gold: 'bg-brass-soft border border-brass/30 text-ink rounded-2xl',
-    subtle: 'bg-surface border border-border-subtle text-ink-soft rounded-2xl',
+    navy: 'bg-sunken border border-border-strong text-ink rounded-xl',
+    gold: 'bg-brass-soft border border-brass/30 text-ink rounded-xl',
+    subtle: 'bg-surface border border-border-subtle text-ink-soft rounded-xl',
     bento: 'glass-bento text-ink',
   };
 
   return (
     <div
       {...props}
-      className={cn('rounded-2xl p-5 md:p-6 print:break-inside-avoid', variants[variant], className)}
+      className={cn('rounded-xl p-5 md:p-6 print:break-inside-avoid', variants[variant], className)}
     >
       {children}
     </div>

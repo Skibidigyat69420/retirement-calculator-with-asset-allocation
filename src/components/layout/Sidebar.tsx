@@ -38,8 +38,8 @@ const NavLink = ({ item, collapsed, onClick }: NavLinkProps) => {
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       title={collapsed ? item.label : undefined}
-      className={cn(
-        'group relative flex items-center gap-2.5 min-h-9 rounded-lg text-[13px] transition-all duration-150',
+          className={cn(
+        'group relative flex items-center gap-2.5 min-h-9 rounded-md text-[13px] transition-all duration-150',
         collapsed ? 'justify-center px-0 py-2' : 'px-3 py-1.5',
         active
           ? 'bg-accent-soft text-accent-strong font-semibold'

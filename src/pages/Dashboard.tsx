@@ -129,25 +129,25 @@ export const Dashboard = () => {
           </div>
         </motion.section>
 
-        <motion.section variants={itemVariants} className="hero-orbit relative overflow-hidden rounded-[24px] p-6 shadow-elevated sm:p-10">
+        <motion.section variants={itemVariants} className="hero-orbit relative overflow-hidden rounded-xl p-6 shadow-elevated sm:p-10">
           <div className="relative z-10 grid gap-10 lg:grid-cols-[1.15fr_.85fr] lg:items-end">
             <div>
               <div className="hero-kicker eyebrow">The practice begins here</div>
-              <h2 className="hero-title mt-4 max-w-xl font-display text-4xl leading-[1.02] sm:text-5xl">
+              <h2 className="hero-title mt-4 max-w-xl font-display text-4xl leading-[1.05] sm:text-5xl">
                 Start with the client, not the spreadsheet.
               </h2>
               <p className="hero-copy mt-5 max-w-lg text-sm leading-relaxed">
                 Add a person, capture the starting position, and let the planning studio reveal what matters next. No demo numbers. No invented health score.
               </p>
-              <Link to="/practitioner?add=1" className="mt-7 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-ink transition-transform hover:-translate-y-0.5">
+              <Link to="/practitioner?add=1" className="mt-7 inline-flex items-center gap-2 rounded-md bg-[#F1F1EA] px-4 py-3 text-sm font-semibold text-[#12150F] transition-transform hover:-translate-y-0.5">
                 Create your first client <ArrowUpRight size={16} />
               </Link>
             </div>
-            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/15 bg-white/10">
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/15 bg-white/10">
               {onboardingSteps.map(({ step, label, Icon }) => (
                 <div key={step} className="border-b border-r border-white/10 bg-white/[.045] p-4 last:border-0 sm:p-5">
-                  <div className="flex items-center justify-between text-[#A9B9D5]"><span className="font-mono text-[10px]">{step}</span><Icon size={16} strokeWidth={1.5} /></div>
-                  <div className="mt-8 text-sm font-medium text-white">{label}</div>
+                  <div className="flex items-center justify-between text-[#C5A66D]"><span className="font-mono text-[10px]">{step}</span><Icon size={16} strokeWidth={1.5} /></div>
+                  <div className="mt-8 text-sm font-medium text-[#F1F1EA]">{label}</div>
                 </div>
               ))}
             </div>

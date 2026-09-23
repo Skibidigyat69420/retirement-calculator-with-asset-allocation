@@ -44,7 +44,7 @@ export const SegmentedControl = ({
       aria-label={ariaLabel}
       onKeyDown={handleKeyDown}
       className={cn(
-        'inline-flex items-center gap-0.5 p-0.5 rounded-[9px] border border-border bg-sunken',
+        'inline-flex items-center gap-0.5 p-0.5 rounded-lg border border-border bg-sunken',
         className,
       )}
     >
@@ -59,14 +59,14 @@ export const SegmentedControl = ({
             tabIndex={active ? 0 : -1}
             onClick={() => onChange(optValue)}
             className={cn(
-              'relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-[7px] text-xs font-medium transition-colors cursor-pointer select-none',
+              'relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer select-none',
               active ? 'text-ink' : 'text-muted hover:text-ink',
             )}
           >
             {active && (
               <motion.span
                 layoutId={`segmented-${layoutId}`}
-                className="absolute inset-0 rounded-[7px] bg-raised shadow-card border border-border-subtle"
+                className="absolute inset-0 rounded-md bg-raised shadow-card border border-border-subtle"
                 transition={{ type: 'spring', stiffness: 500, damping: 42, mass: 0.7 }}
                 aria-hidden="true"
               />

@@ -4,13 +4,13 @@ Sound Thesis is a wealth-practitioner workspace built around one promise: **a cl
 
 ## Identity
 
-The visual concept is **Editorial Financial Intelligence**: the restraint of a private wealth report, the information density of a research terminal, and the usability of modern software. The product should communicate clarity, confidence, continuity, context and precision.
+The visual concept is **dark-first luxury editorial**: the restraint of a private wealth study, the information density of a research terminal, and the usability of modern software. The product should communicate clarity, confidence, continuity, context and precision.
 
-The mark is an ascending thesis: two measured bars establish a baseline and a higher point, with a small brass reference marker. It is rendered as a token-driven SVG so the same mark works in light and dark themes.
+**Dark is the default** — a private study with near-black green-tinted surfaces, warm-white ink, moss actions and brass reference marks. Light mode is the warm parchment companion. The mark is an ascending thesis: two measured bars establish a baseline and a higher point, with a small brass reference marker. It is rendered as a token-driven SVG so the same mark works in light and dark themes.
 
 ## Palette
 
-The semantic tokens in `src/index.css` are the source of truth. Light mode uses warm parchment, primary ink, moss action color and brass reference color. Dark mode is a private study: layered near-black greens, warm white text, moss highlights and brass references. Product code should use semantic utilities (`bg-surface`, `text-ink`, `border-border`, `text-accent-strong`) rather than raw hex values.
+The semantic tokens in `src/index.css` are the source of truth. Dark (default) uses a near-black green-tinted canvas, warm white text, moss action color and brass reference color. Light mode uses warm parchment, primary ink, moss action and brass reference. Product code should use semantic utilities (`bg-surface`, `text-ink`, `border-border`, `text-accent-strong`) rather than raw hex values.
 
 Brass marks a target, benchmark or reference. It is not an action color. Negative is reserved for real problems; status always includes a label or icon in addition to color.
 
@@ -24,11 +24,11 @@ The type system is deliberately quiet. Numbers are read before decoration; white
 
 ## Shape, depth and motif
 
-Radii are restrained (4–20px). Hairline borders and surface shifts carry structure. Shadows are reserved for raised layers, dialogs and popovers. The graph-paper `.grid-motif` is used only on hero and empty-state surfaces, never behind dense charts.
+Radii are restrained (4–20px). Hairline borders and surface shifts carry structure. Shadows are reserved for raised layers, dialogs and popovers. Glass panels blur chrome (sidebar, top bar, cards). The graph-paper `.grid-motif` is used only on hero and empty-state surfaces, never behind dense charts.
 
 ## Usage checklist
 
 - Use `PageHeader`, `SectionHeader`, `FinancialMetric`, `StatusBadge`, `Card` and `EmptyState` before introducing a new visual primitive.
 - Keep financial defaults at `0` or empty; use `—` / “Not configured” for uncomputed results.
 - Keep formulas and shared state in the existing calculation/context modules.
-- Test every new surface in Light, Dark and System themes, at 360px and desktop widths.
+- Test every new surface in Dark (default), Light and System themes, at 360px and desktop widths.

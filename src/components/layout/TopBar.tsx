@@ -145,7 +145,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-2.5 ml-auto shrink-0 min-w-0">
-            {/* Command palette trigger — macOS search pill */}
+            {/* Command palette trigger — quiet search pill */}
             <button
               type="button"
               onClick={() => setPaletteOpen(true)}

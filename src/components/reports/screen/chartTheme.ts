@@ -1,10 +1,10 @@
-/** Shared Recharts styling — soft macOS-style floating panel. */
+/** Shared Recharts styling — quiet floating panel. */
 export const CHART_TOOLTIP_STYLE = {
-  borderRadius: '12px',
+  borderRadius: '10px',
   border: '1px solid var(--color-border)',
   backgroundColor: 'var(--color-raised)',
-  backdropFilter: 'blur(14px)',
-  boxShadow: '0 6px 24px rgba(0, 0, 0, 0.10), 0 1px 2px rgba(0, 0, 0, 0.04)',
+  backdropFilter: 'blur(16px)',
+  boxShadow: '0 8px 28px rgba(0, 0, 0, 0.18), 0 1px 3px rgba(0, 0, 0, 0.08)',
   padding: '10px 14px',
 };
 

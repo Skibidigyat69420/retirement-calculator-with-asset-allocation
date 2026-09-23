@@ -8,15 +8,15 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const variants = {
   primary:
-    'bg-accent text-white border border-transparent shadow-[0_1px_2px_rgba(0,0,0,0.08),0_6px_16px_rgba(0,113,227,0.18),inset_0_1px_0_rgba(255,255,255,0.18)] hover:bg-accent-strong',
+    'bg-accent text-on-inkfill border border-transparent shadow-[0_1px_2px_rgba(0,0,0,0.12),0_6px_16px_-4px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.12)] hover:bg-accent-strong hover:shadow-[0_2px_4px_rgba(0,0,0,0.14),0_10px_22px_-4px_rgba(0,0,0,0.3)]',
   secondary:
     'bg-raised text-ink border border-border shadow-card hover:border-border-strong hover:bg-surface',
   outline:
-    'bg-transparent text-ink border border-border-strong hover:border-ink/40 hover:bg-surface',
+    'bg-transparent text-ink border border-border-strong hover:border-accent/50 hover:bg-accent-softer',
   ghost:
     'bg-transparent text-ink-soft border border-transparent hover:text-ink hover:bg-sunken',
   danger:
-    'bg-negative text-white border border-transparent shadow-[0_1px_2px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.16)] hover:bg-negative/90',
+    'bg-negative text-white border border-transparent shadow-[0_1px_2px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.12)] hover:bg-negative/90',
 };
 
 const sizes = {

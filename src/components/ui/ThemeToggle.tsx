@@ -11,8 +11,8 @@ interface ThemeToggleProps {
 }
 
 const OPTIONS: { value: ThemePreference; label: string; icon: typeof Sun }[] = [
-  { value: 'light', label: 'Light', icon: Sun },
   { value: 'dark', label: 'Dark', icon: Moon },
+  { value: 'light', label: 'Light', icon: Sun },
   { value: 'system', label: 'System', icon: Monitor },
 ];
 
@@ -46,7 +46,7 @@ export const ThemeToggle = ({ variant = 'segmented', className }: ThemeTogglePro
       role="group"
       aria-label="Color theme"
       className={cn(
-        'inline-flex items-center gap-0.5 p-0.5 rounded-[9px] border border-border bg-sunken',
+        'inline-flex items-center gap-0.5 p-0.5 rounded-lg border border-border bg-sunken',
         className,
       )}
     >
@@ -60,14 +60,14 @@ export const ThemeToggle = ({ variant = 'segmented', className }: ThemeTogglePro
             aria-pressed={active}
             title={label}
             className={cn(
-              'relative flex items-center gap-1.5 px-2 py-1 rounded-[7px] text-[11px] font-medium transition-colors duration-150 cursor-pointer',
+              'relative flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition-colors duration-150 cursor-pointer',
               active ? 'text-ink' : 'text-muted hover:text-ink',
             )}
           >
             {active && (
               <motion.span
                 layoutId={`theme-${layoutId}`}
-                className="absolute inset-0 rounded-[7px] bg-raised shadow-card border border-border-subtle"
+                className="absolute inset-0 rounded-md bg-raised shadow-card border border-border-subtle"
                 transition={{ type: 'spring', stiffness: 500, damping: 42, mass: 0.7 }}
                 aria-hidden="true"
               />

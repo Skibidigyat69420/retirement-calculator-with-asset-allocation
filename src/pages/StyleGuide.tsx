@@ -148,7 +148,7 @@ export const StyleGuide = () => {
 
       {/* ── Theme ── */}
       <section className="space-y-6">
-        <SectionTitle eyebrow="Appearance" title="Theme" subtitle="Light, dark, and system follow the OS. The preference persists in localStorage and is applied before first paint." />
+        <SectionTitle eyebrow="Appearance" title="Theme" subtitle="Dark is the default — a private study. Light is the parchment companion. System follows the OS. The preference persists in localStorage and is applied before first paint." />
         <div className="flex flex-wrap items-center gap-4">
           <ThemeToggle variant="segmented" />
           <ThemeToggle variant="icon" />
@@ -160,7 +160,7 @@ export const StyleGuide = () => {
 
       {/* ── Color ── */}
       <section className="space-y-8">
-        <SectionTitle eyebrow="Tokens" title="Color" subtitle="Semantic tokens only — never raw hex in product code. The fills below are the documented light values; the dark set mirrors them. Brass marks reference, never action." />
+        <SectionTitle eyebrow="Tokens" title="Color" subtitle="Semantic tokens only — never raw hex in product code. Light values shown; the dark set mirrors them as the private study. Brass marks reference, never action." />
         <SwatchGrid title="Surfaces" items={SURFACES} />
         <SwatchGrid title="Hairlines" items={HAIRLINES} />
         <SwatchGrid title="Ink" items={INKS} />
@@ -170,7 +170,7 @@ export const StyleGuide = () => {
 
       {/* ── Typography ── */}
       <section className="space-y-6">
-        <SectionTitle eyebrow="Type" title="Typography" subtitle="Inter carries the UI. The system display face handles heroes and section anchors. IBM Plex Mono with tabular figures aligns every amount." />
+        <SectionTitle eyebrow="Type" title="Typography" subtitle="Inter carries the UI. Instrument Serif handles heroes and section anchors. JetBrains Mono with tabular figures aligns every amount." />
         <div className="border border-border rounded-lg divide-y divide-border">
           <div className="p-6">
             <p className="eyebrow mb-2">num-hero · system display · 48–72</p>
