@@ -44,10 +44,10 @@ export const PersonaMenu = () => {
         aria-expanded={open}
         aria-label="Sample workspaces"
         title="Load a sample workspace"
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-accent text-white hover:bg-accent-strong shadow-sm transition-all hover:-translate-y-px active:translate-y-0"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface/80 text-ink-soft hover:text-ink hover:border-border-strong hover:bg-raised transition-colors"
       >
-        <FlaskConical size={14} strokeWidth={2} />
-        <span className="text-[13px] font-semibold hidden sm:inline-block">Samples</span>
+        <FlaskConical size={14} strokeWidth={1.7} />
+        <span className="text-[13px] font-medium hidden sm:inline-block">Samples</span>
         <ChevronDown
           size={12}
           strokeWidth={2}
@@ -60,7 +60,7 @@ export const PersonaMenu = () => {
         <div
           role="menu"
           aria-label="Sample workspaces"
-          className="absolute right-0 top-full mt-1.5 w-[22rem] max-w-[calc(100vw-2rem)] bg-raised border border-border rounded-md shadow-popover py-1.5 z-50"
+          className="absolute right-0 top-full mt-1.5 w-[22rem] max-w-[calc(100vw-2rem)] bg-raised border border-border rounded-lg shadow-popover py-1.5 z-50"
         >
           <div className="px-3 pt-1.5 pb-1">
             <span className="eyebrow">Sample personas</span>

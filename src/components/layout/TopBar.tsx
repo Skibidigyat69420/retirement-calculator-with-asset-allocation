@@ -119,7 +119,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
 
   return (
     <>
-      <header className="sticky top-0 z-30 glass-header px-4 sm:px-6 lg:px-10 py-2.5 text-ink">
+      <header className="sticky top-0 z-30 glass-header px-4 sm:px-6 lg:px-10 py-2 text-ink">
         <div className="flex items-center gap-3 max-w-[1440px] mx-auto w-full min-w-0">
           {/* Mobile: hamburger + mark */}
           <div className="flex items-center gap-2 lg:hidden min-w-0 flex-1">
@@ -141,46 +141,35 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
           <div className="hidden lg:flex items-baseline gap-2 min-w-0">
             <span className="eyebrow">{section}</span>
             <span className="text-muted text-xs" aria-hidden="true">/</span>
-            <span className="text-sm font-medium text-ink tracking-tight truncate">{label}</span>
+            <span className="text-sm font-semibold text-ink tracking-tight truncate">{label}</span>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 ml-auto shrink-0 min-w-0">
-            {/* Command palette trigger */}
+          <div className="flex items-center gap-2 sm:gap-2.5 ml-auto shrink-0 min-w-0">
+            {/* Command palette trigger — macOS search pill */}
             <button
               type="button"
               onClick={() => setPaletteOpen(true)}
-              className="hidden md:flex items-center gap-2 pl-2.5 pr-2 py-1.5 min-h-8 rounded-md border border-border bg-surface text-muted hover:text-ink hover:border-border-strong transition-colors"
+              className="hidden md:flex items-center gap-2 pl-3 pr-2 py-1.5 min-h-8 w-52 rounded-lg border border-border bg-surface/80 text-muted hover:text-ink hover:border-border-strong hover:bg-raised transition-colors"
               aria-label="Open search (Command K)"
             >
-              <Search size={14} strokeWidth={1.7} />
-              <span className="text-[13px]">Search</span>
-              <kbd className="text-[10px] text-muted border border-border rounded-sm px-1 font-mono leading-[14px]">
-                ⌘K
-              </kbd>
+              <Search size={14} strokeWidth={1.7} className="shrink-0" />
+              <span className="text-[13px] flex-1 text-left">Search</span>
+              <kbd>⌘K</kbd>
             </button>
 
-            {/* Developer / Demo Quick Actions */}
-            <div className="flex items-center gap-1.5 border-r border-border pr-2 sm:pr-3 mr-1">
+            {/* Demo personas */}
+            <div className="flex items-center gap-1.5 border-r border-border pr-2 sm:pr-2.5 mr-0.5">
               <PersonaMenu />
-              <button
-                type="button"
-                onClick={() => setShowResetConfirm(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-negative bg-negative-soft hover:bg-negative hover:text-white transition-colors"
-                title="Reset workspace"
-              >
-                <RotateCcw size={14} strokeWidth={2} />
-                <span className="text-[13px] font-semibold hidden sm:inline-block">Reset</span>
-              </button>
             </div>
 
             {/* Net worth — only when a plan is configured */}
             {wealthResult.isConfigured && (
               <div
-                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-surface text-ink"
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-surface/80 text-ink"
                 title="Net worth"
               >
                 <Wallet size={14} strokeWidth={1.7} className="text-accent-strong shrink-0" />
-                <span className="text-[13px] font-medium tabular-nums">
+                <span className="text-[13px] font-semibold tabular-nums">
                   {formatCurrencyCompact(wealthResult.netWorth)}
                 </span>
               </div>
@@ -191,7 +180,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
               <Link
                 to="/risk"
                 title={`Risk profile: ${riskProfile.label} (${riskScore}/100)`}
-                className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-surface text-ink hover:border-border-strong transition-colors"
+                className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-surface/80 text-ink hover:border-border-strong transition-colors"
               >
                 <ShieldCheck size={14} strokeWidth={1.7} className="text-accent-strong shrink-0" />
                 <span className="text-[13px] font-medium capitalize">{riskProfile.label}</span>
@@ -226,7 +215,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
                   role="menu"
                   aria-label="Workspace menu"
                   onKeyDown={handleMenuKeyDown}
-                  className="absolute right-0 top-full mt-1.5 w-56 bg-raised border border-border rounded-md shadow-popover py-1 z-50"
+                  className="absolute right-0 top-full mt-1.5 w-56 bg-raised border border-border rounded-lg shadow-popover py-1 z-50 overflow-hidden"
                 >
                   {menuItems.map((item, i) => (
                     <div key={item.label}>

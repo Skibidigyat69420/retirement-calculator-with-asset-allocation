@@ -10,8 +10,8 @@ import { useCalculator } from '../../context/CalculatorContext';
 import { isProfileConfigured, planStatus } from '../../lib/planState';
 
 const NAV_STORAGE_KEY = 'soundthesis_nav';
-const EXPANDED_WIDTH = 250;
-const COLLAPSED_WIDTH = 72;
+const EXPANDED_WIDTH = 248;
+const COLLAPSED_WIDTH = 68;
 
 const loadCollapsed = (): boolean => {
   try {
@@ -39,17 +39,20 @@ const NavLink = ({ item, collapsed, onClick }: NavLinkProps) => {
       aria-current={active ? 'page' : undefined}
       title={collapsed ? item.label : undefined}
       className={cn(
-        'group relative flex items-center gap-2.5 min-h-9 rounded-md text-[13px] font-medium transition-colors duration-150',
+        'group relative flex items-center gap-2.5 min-h-9 rounded-lg text-[13px] transition-all duration-150',
         collapsed ? 'justify-center px-0 py-2' : 'px-3 py-1.5',
         active
-          ? 'bg-accent-soft text-ink'
-          : 'text-muted hover:bg-sunken hover:text-ink',
+          ? 'bg-accent-soft text-accent-strong font-semibold'
+          : 'text-muted hover:bg-sunken hover:text-ink font-medium',
       )}
     >
       <Icon
         size={17}
-        strokeWidth={1.7}
-        className={cn('shrink-0 transition-colors', active ? 'text-accent-strong' : 'text-faint group-hover:text-ink')}
+        strokeWidth={1.6}
+        className={cn(
+          'shrink-0 transition-colors',
+          active ? 'text-accent-strong' : 'text-faint group-hover:text-ink',
+        )}
       />
       {!collapsed && <span className="truncate">{item.label}</span>}
     </Link>
@@ -63,7 +66,7 @@ const NavSections = ({ collapsed, onClick }: { collapsed?: boolean; onClick?: ()
     {groupBySection(navItems).map(([section, items]) => (
       <div key={section} className={cn(collapsed ? 'mt-1 first:mt-0' : 'mt-4 first:mt-1')}>
         {!collapsed && (
-          <div className="px-3 mb-1">
+          <div className="px-3 mb-1.5">
             <span className="eyebrow">{section}</span>
           </div>
         )}

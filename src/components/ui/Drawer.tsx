@@ -54,11 +54,11 @@ export const Drawer = ({
         tabIndex={-1}
         style={{ width: clampWidth(width) }}
         className={cn(
-          'absolute inset-y-0 bg-surface shadow-popover outline-none overflow-y-auto',
+          'absolute inset-y-0 bg-surface shadow-popover outline-none overflow-y-auto backdrop-blur-2xl',
           'focus-visible:outline-none',
           side === 'right'
-            ? 'right-0 border-l border-border animate-drawer-right-in'
-            : 'left-0 border-r border-border animate-drawer-in',
+            ? 'right-0 border-l border-border rounded-l-2xl animate-drawer-right-in'
+            : 'left-0 border-r border-border rounded-r-2xl animate-drawer-in',
         )}
       >
         {title && (

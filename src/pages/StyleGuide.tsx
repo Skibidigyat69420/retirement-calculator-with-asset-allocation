@@ -170,10 +170,10 @@ export const StyleGuide = () => {
 
       {/* ── Typography ── */}
       <section className="space-y-6">
-        <SectionTitle eyebrow="Type" title="Typography" subtitle="Inter carries the UI. Instrument Serif is display-only — heroes and section anchors. JetBrains Mono with tabular figures aligns every amount." />
+        <SectionTitle eyebrow="Type" title="Typography" subtitle="Inter carries the UI. The system display face handles heroes and section anchors. IBM Plex Mono with tabular figures aligns every amount." />
         <div className="border border-border rounded-lg divide-y divide-border">
           <div className="p-6">
-            <p className="eyebrow mb-2">num-hero · Instrument Serif · 48–72</p>
+            <p className="eyebrow mb-2">num-hero · system display · 48–72</p>
             <p className="num-hero text-ink text-5xl sm:text-6xl">₹5.32 Cr</p>
           </div>
           <div className="p-6">
@@ -423,7 +423,7 @@ export const StyleGuide = () => {
             <p className="text-sm text-muted">Signature motif — bands and empty states only.</p>
           </div>
           <div className="hero-gradient rounded-lg p-5 border border-border">
-            <SectionHeader title=".hero-gradient" description="Moss + brass radial wash." />
+            <SectionHeader title=".hero-gradient" description="Soft neutral radial wash." />
             <p className="text-sm text-muted">Dashboard hero, empty states, report covers.</p>
           </div>
         </div>

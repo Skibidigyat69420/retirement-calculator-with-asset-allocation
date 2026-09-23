@@ -8,21 +8,21 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const variants = {
   primary:
-    'bg-accent text-on-inkfill border border-accent shadow-card hover:bg-accent-strong hover:border-accent-strong',
+    'bg-accent text-white border border-transparent shadow-[0_1px_2px_rgba(0,0,0,0.08),0_6px_16px_rgba(0,113,227,0.18),inset_0_1px_0_rgba(255,255,255,0.18)] hover:bg-accent-strong',
   secondary:
-    'bg-raised text-ink border border-border hover:border-border-strong hover:bg-surface',
+    'bg-raised text-ink border border-border shadow-card hover:border-border-strong hover:bg-surface',
   outline:
-    'bg-transparent text-ink border border-border-strong hover:border-ink hover:bg-surface',
+    'bg-transparent text-ink border border-border-strong hover:border-ink/40 hover:bg-surface',
   ghost:
     'bg-transparent text-ink-soft border border-transparent hover:text-ink hover:bg-sunken',
   danger:
-    'bg-negative-soft text-negative border border-negative/30 hover:bg-negative hover:text-on-inkfill',
+    'bg-negative text-white border border-transparent shadow-[0_1px_2px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.16)] hover:bg-negative/90',
 };
 
 const sizes = {
   sm: 'px-3 min-h-8 py-1.5 text-xs rounded-md gap-1.5',
-  md: 'px-4 min-h-10 py-2 text-sm rounded-md gap-2',
-  lg: 'px-5 min-h-11 py-2.5 text-[15px] rounded-md gap-2',
+  md: 'px-3.5 min-h-9 py-2 text-[13px] rounded-md gap-2',
+  lg: 'px-5 min-h-11 py-2.5 text-sm rounded-md gap-2',
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -33,8 +33,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         type={type}
         {...props}
         className={cn(
-          'inline-flex items-center justify-center font-medium cursor-pointer select-none',
-          'rounded-md transition-colors duration-150 active:scale-[0.98]',
+          'inline-flex items-center justify-center font-semibold cursor-pointer select-none',
+          'rounded-md transition-all duration-150 active:scale-[0.97]',
           'disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100',
           variants[variant],
           sizes[size],

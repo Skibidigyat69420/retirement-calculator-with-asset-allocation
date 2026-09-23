@@ -16,6 +16,7 @@ import {
   Database,
   Users,
   UserRound,
+  ClipboardList,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -39,13 +40,20 @@ export const navItems: NavItem[] = [
   },
   {
     path: '/overview',
-    label: 'Practice overview',
+    label: 'Dashboard',
     icon: Activity,
     section: 'Workspace',
     description: 'Executive overview & plan health check',
   },
 
   // Plan
+  {
+    path: '/master-plan',
+    label: 'Master Plan',
+    icon: ClipboardList,
+    section: 'Plan',
+    description: 'Guided seven-step planning wizard',
+  },
   {
     path: '/client-profile',
     label: 'Client profile',
@@ -92,23 +100,23 @@ export const navItems: NavItem[] = [
   // Portfolio
   {
     path: '/allocation',
-    label: 'Portfolio Allocation',
+    label: 'Allocation',
     icon: TrendingUp,
     section: 'Portfolio',
     description: 'Current vs target rebalancing & trade orders',
   },
   {
     path: '/advanced-portfolio',
-    label: 'Portfolio Lab',
+    label: 'Portfolio Lab · MVO',
     icon: Layers,
     section: 'Portfolio',
-    description: 'Black-Litterman, risk parity & glide paths',
+    description: 'MVO, Black-Litterman, risk parity & glide paths',
   },
 
   // Deliver
   {
     path: '/ips',
-    label: 'Policy Statement (IPS)',
+    label: 'IPS',
     icon: FileText,
     section: 'Deliver',
     description: 'Investment Policy Statement with live sync toggle',
@@ -129,7 +137,7 @@ export const navItems: NavItem[] = [
   },
   {
     path: '/dossier',
-    label: 'Plan Dossier & Reports',
+    label: 'Reports & Dossier',
     icon: Printer,
     section: 'Deliver',
     description: 'Unified comprehensive plan report and PDF dossier',

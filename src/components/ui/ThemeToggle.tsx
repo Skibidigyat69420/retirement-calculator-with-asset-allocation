@@ -1,3 +1,5 @@
+import { useId } from 'react';
+import { motion } from 'framer-motion';
 import { Monitor, Moon, Sun } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useTheme, type ThemePreference } from '../../lib/theme';
@@ -17,6 +19,7 @@ const OPTIONS: { value: ThemePreference; label: string; icon: typeof Sun }[] = [
 /** Persistent Light / Dark / System theme control. */
 export const ThemeToggle = ({ variant = 'segmented', className }: ThemeToggleProps) => {
   const { theme, resolved, setTheme } = useTheme();
+  const layoutId = useId();
 
   if (variant === 'icon') {
     const currentIndex = OPTIONS.findIndex((o) => o.value === theme);
@@ -43,7 +46,7 @@ export const ThemeToggle = ({ variant = 'segmented', className }: ThemeTogglePro
       role="group"
       aria-label="Color theme"
       className={cn(
-        'inline-flex items-center gap-0.5 p-0.5 rounded-md border border-border bg-sunken',
+        'inline-flex items-center gap-0.5 p-0.5 rounded-[9px] border border-border bg-sunken',
         className,
       )}
     >
@@ -57,14 +60,22 @@ export const ThemeToggle = ({ variant = 'segmented', className }: ThemeTogglePro
             aria-pressed={active}
             title={label}
             className={cn(
-              'flex items-center gap-1.5 px-2 py-1 rounded-[5px] text-[11px] font-medium transition-all duration-150',
-              active
-                ? 'bg-raised text-ink shadow-card'
-                : 'text-muted hover:text-ink',
+              'relative flex items-center gap-1.5 px-2 py-1 rounded-[7px] text-[11px] font-medium transition-colors duration-150 cursor-pointer',
+              active ? 'text-ink' : 'text-muted hover:text-ink',
             )}
           >
-            <Icon size={13} strokeWidth={1.6} aria-hidden="true" />
-            <span className="hidden sm:inline">{label}</span>
+            {active && (
+              <motion.span
+                layoutId={`theme-${layoutId}`}
+                className="absolute inset-0 rounded-[7px] bg-raised shadow-card border border-border-subtle"
+                transition={{ type: 'spring', stiffness: 500, damping: 42, mass: 0.7 }}
+                aria-hidden="true"
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-1.5">
+              <Icon size={13} strokeWidth={1.6} aria-hidden="true" />
+              <span className="hidden sm:inline">{label}</span>
+            </span>
           </button>
         );
       })}

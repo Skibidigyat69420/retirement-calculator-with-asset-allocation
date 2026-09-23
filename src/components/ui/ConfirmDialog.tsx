@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from './Button';
 
@@ -42,11 +43,14 @@ export const ConfirmDialog = ({
         onClick={onCancel}
         aria-hidden="true"
       />
-      <div
+      <motion.div
         role="alertdialog"
         aria-modal="true"
         aria-label={title}
-        className="relative w-full max-w-sm bg-raised border border-border rounded-lg shadow-popover p-5"
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        className="relative w-full max-w-sm bg-raised border border-border rounded-xl shadow-popover p-5"
       >
         <div className="flex items-start gap-3.5">
           {danger && (
@@ -69,7 +73,7 @@ export const ConfirmDialog = ({
             {confirmLabel}
           </Button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

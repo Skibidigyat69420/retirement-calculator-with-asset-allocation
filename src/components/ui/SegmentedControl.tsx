@@ -1,4 +1,5 @@
-import type { KeyboardEvent } from 'react';
+import { useId, type KeyboardEvent } from 'react';
+import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -23,6 +24,7 @@ export const SegmentedControl = ({
   ariaLabel,
   className,
 }: SegmentedControlProps) => {
+  const layoutId = useId();
   const currentIndex = options.findIndex((o) => o.value === value);
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -41,7 +43,10 @@ export const SegmentedControl = ({
       role="radiogroup"
       aria-label={ariaLabel}
       onKeyDown={handleKeyDown}
-      className={cn('inline-flex items-center gap-0.5 p-0.5 rounded-md border border-border bg-sunken', className)}
+      className={cn(
+        'inline-flex items-center gap-0.5 p-0.5 rounded-[9px] border border-border bg-sunken',
+        className,
+      )}
     >
       {options.map(({ value: optValue, label, icon: Icon }) => {
         const active = optValue === value;
@@ -54,12 +59,22 @@ export const SegmentedControl = ({
             tabIndex={active ? 0 : -1}
             onClick={() => onChange(optValue)}
             className={cn(
-              'flex items-center gap-1.5 px-2.5 py-1.5 rounded-[5px] text-xs font-medium transition-colors cursor-pointer select-none',
-              active ? 'bg-raised text-ink shadow-card' : 'text-muted hover:text-ink',
+              'relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-[7px] text-xs font-medium transition-colors cursor-pointer select-none',
+              active ? 'text-ink' : 'text-muted hover:text-ink',
             )}
           >
-            {Icon && <Icon size={13} strokeWidth={1.6} aria-hidden="true" />}
-            {label}
+            {active && (
+              <motion.span
+                layoutId={`segmented-${layoutId}`}
+                className="absolute inset-0 rounded-[7px] bg-raised shadow-card border border-border-subtle"
+                transition={{ type: 'spring', stiffness: 500, damping: 42, mass: 0.7 }}
+                aria-hidden="true"
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-1.5">
+              {Icon && <Icon size={13} strokeWidth={1.6} aria-hidden="true" />}
+              {label}
+            </span>
           </button>
         );
       })}

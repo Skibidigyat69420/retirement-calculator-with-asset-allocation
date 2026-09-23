@@ -108,7 +108,7 @@ export const MasterPlanSidebar = ({
     <nav aria-label="Master Plan Steps" className="relative">
       {/* Vertical hairline threading the step markers */}
       <div
-        className="absolute left-[11px] top-4 bottom-4 w-px bg-border"
+        className="absolute left-[17px] top-4 bottom-4 w-px bg-border"
         aria-hidden="true"
       />
 
@@ -124,8 +124,10 @@ export const MasterPlanSidebar = ({
                 onClick={() => onSelectStep(step.id)}
                 aria-current={isActive ? 'step' : undefined}
                 className={cn(
-                  'group w-full flex items-center gap-3.5 py-2.5 pr-2 rounded-md text-left transition-colors duration-150 cursor-pointer select-none',
-                  isActive ? 'text-ink' : 'text-muted hover:text-ink',
+                  'group w-full flex items-center gap-3.5 py-2.5 pl-1.5 pr-2 rounded-lg text-left transition-colors duration-150 cursor-pointer select-none',
+                  isActive
+                    ? 'bg-accent-soft text-ink'
+                    : 'text-muted hover:text-ink hover:bg-sunken',
                 )}
               >
                 {/* Step marker */}

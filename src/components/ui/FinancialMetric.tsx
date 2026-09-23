@@ -1,5 +1,6 @@
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { AnimatedNumber } from './AnimatedNumber';
 
 export interface FinancialMetricProps {
   label: string;
@@ -53,7 +54,15 @@ export const FinancialMetric = ({
         ) : (
           <>
             {prefix && <span className={cn(size === 'hero' && 'text-[0.5em] text-muted align-baseline')}>{prefix}</span>}
-            <span className={size !== 'hero' ? 'font-mono' : undefined}>{formatted}</span>
+            {typeof value === 'number' && Number.isFinite(value) ? (
+              <AnimatedNumber
+                value={value}
+                format={(n) => inr.format(n)}
+                className={size !== 'hero' ? 'font-mono' : undefined}
+              />
+            ) : (
+              <span className={size !== 'hero' ? 'font-mono' : undefined}>{formatted}</span>
+            )}
             {suffix && <span className="text-[0.6em] text-muted font-normal">{suffix}</span>}
           </>
         )}

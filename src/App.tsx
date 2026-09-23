@@ -5,6 +5,7 @@ import { CalculatorProvider } from './context/CalculatorContext';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './lib/theme';
 import { Layout } from './components/layout/Layout';
+import { Skeleton } from './components/Skeleton';
 
 import { AuthPage } from './pages/AuthPage';
 import { useAuth } from './context/AuthContext';
@@ -54,17 +55,35 @@ const Practitioner = lazyNamed(() => import('./pages/PractitionerPage'), 'Practi
 const StyleGuide = lazyNamed(() => import('./pages/StyleGuide'), 'StyleGuide');
 const UIReview = lazyNamed(() => import('./pages/UIReview'), 'UIReview');
 
+function RouteFallback() {
+  return (
+    <div className="p-6 sm:p-8 lg:p-10 space-y-6 max-w-[1440px] mx-auto" aria-busy="true" aria-label="Loading">
+      <div className="space-y-2.5">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-7 w-64" />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
+      </div>
+      <Skeleton className="h-72 rounded-xl" />
+    </div>
+  );
+}
+
 function AnimatedRoutes() {
   const location = useLocation();
-  
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
         key={location.pathname}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.16, ease: 'easeOut' }}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -4 }}
+        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
       >
         <Routes location={location}>
           <Route path="/" element={<Practitioner />} />
@@ -104,7 +123,7 @@ function WorkspaceRoutes() {
   return (
     <CalculatorProvider>
       <Layout>
-        <Suspense fallback={null}>
+        <Suspense fallback={<RouteFallback />}>
           <AnimatedRoutes />
         </Suspense>
       </Layout>

@@ -46,8 +46,10 @@ export const MobileNav = () => {
         onClick={() => setMoreOpen(false)}
         aria-current={active ? 'page' : undefined}
         className={cn(
-          'flex items-center gap-2.5 min-h-10 px-3 rounded-md text-[13px] font-medium transition-colors',
-          active ? 'bg-accent-soft text-ink' : 'text-muted hover:bg-sunken hover:text-ink',
+          'flex items-center gap-2.5 min-h-10 px-3 rounded-lg text-[13px] transition-colors',
+          active
+            ? 'bg-accent-soft text-accent-strong font-semibold'
+            : 'text-muted hover:bg-sunken hover:text-ink font-medium',
         )}
       >
         <Icon size={16} strokeWidth={1.7} className={cn('shrink-0', active ? 'text-accent-strong' : 'text-faint')} />

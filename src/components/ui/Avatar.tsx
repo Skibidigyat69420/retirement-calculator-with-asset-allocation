@@ -43,7 +43,7 @@ export const Avatar = ({ name, id, size = 'md' }: AvatarProps) => {
       aria-label={name}
       title={name}
       className={cn(
-        'inline-flex items-center justify-center rounded-md font-semibold font-mono uppercase select-none',
+        'inline-flex items-center justify-center rounded-full font-semibold font-mono uppercase select-none',
         sizeStyles[size],
         tone,
       )}
