@@ -1,5 +1,5 @@
-import { Suspense, lazy, type ComponentType } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Suspense, lazy, useEffect, type ComponentType } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CalculatorProvider } from './context/CalculatorContext';
 import { AuthProvider } from './context/AuthContext';
@@ -7,6 +7,7 @@ import { ThemeProvider } from './lib/theme';
 import { Layout } from './components/layout/Layout';
 import { Skeleton } from './components/Skeleton';
 
+import { OnboardingPage, INVITATION_KEY } from './pages/OnboardingPage';
 import { AuthPage } from './pages/AuthPage';
 import { useAuth } from './context/AuthContext';
 
@@ -45,12 +46,14 @@ const IPSTemplate = lazy(async () => {
 });
 const RiskQuestionnaire = lazyNamed(() => import('./pages/RiskQuestionnaire'), 'RiskQuestionnaire');
 const Dossier = lazyNamed(() => import('./pages/Dossier'), 'Dossier');
+const ReportsPage = lazyNamed(() => import('./pages/ReportsPage'), 'ReportsPage');
 const AngelData = lazyNamed(() => import('./pages/AngelData'), 'AngelData');
 const Calculators = lazyNamed(() => import('./pages/Calculators'), 'Calculators');
 const ReversePlanning = lazyNamed(() => import('./pages/ReversePlanningPage'), 'ReversePlanningPage');
 const AdvancedPortfolio = lazyNamed(() => import('./pages/AdvancedPortfolioPage'), 'AdvancedPortfolioPage');
 const ClientMeeting = lazyNamed(() => import('./pages/ClientMeetingPage'), 'ClientMeetingPage');
 const DecisionHistory = lazyNamed(() => import('./pages/DecisionHistoryPage'), 'DecisionHistoryPage');
+const PracticeTeam = lazyNamed(() => import('./pages/PracticeTeamPage'), 'PracticeTeamPage');
 const Practitioner = lazyNamed(() => import('./pages/PractitionerPage'), 'PractitionerPage');
 const StyleGuide = lazyNamed(() => import('./pages/StyleGuide'), 'StyleGuide');
 const UIReview = lazyNamed(() => import('./pages/UIReview'), 'UIReview');
@@ -99,12 +102,13 @@ function AnimatedRoutes() {
           <Route path="/advanced-portfolio" element={<AdvancedPortfolio />} />
           <Route path="/meeting-workflow" element={<ClientMeeting />} />
           <Route path="/decision-history" element={<DecisionHistory />} />
-          <Route path="/reports" element={<Navigate to="/dossier" replace />} />
+          <Route path="/reports" element={<ReportsPage />} />
           <Route path="/dossier" element={<Dossier />} />
           <Route path="/calculators" element={<Calculators />} />
           <Route path="/ips" element={<IPSTemplate />} />
           <Route path="/angel-connect" element={<AngelConnect />} />
           <Route path="/angel-data" element={<AngelData />} />
+          <Route path="/team" element={<PracticeTeam />} />
           <Route path="/practitioner" element={<Practitioner />} />
           <Route path="/style-guide" element={<StyleGuide />} />
           <Route path="/ui-review" element={<UIReview />} />
@@ -117,11 +121,22 @@ function AnimatedRoutes() {
 }
 
 function WorkspaceRoutes() {
-  const { ready, user } = useAuth();
-  if (!ready) return null;
+  const { ready, user, recovery, needsOnboarding, organizationId } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    const token = new URLSearchParams(location.hash.slice(1)).get('invite');
+    if (token && token.length <= 200) {
+      sessionStorage.setItem(INVITATION_KEY, token);
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.hash, location.pathname, navigate]);
+  if (!ready) return <p role="status">Restoring your session…</p>;
+  if (recovery || location.pathname === '/reset-password') return <AuthPage key="update-password" mode="update-password" />;
+  if (needsOnboarding || (user && (location.pathname === '/join-practice' || sessionStorage.getItem(INVITATION_KEY)))) return <OnboardingPage invitationOnly={Boolean(user)} />;
   if (!user) return <Routes><Route path="/signup" element={<AuthPage mode="sign-up" />} /><Route path="/forgot-password" element={<AuthPage mode="reset" />} /><Route path="*" element={<AuthPage />} /></Routes>;
   return (
-    <CalculatorProvider>
+    <CalculatorProvider key={`${user.id}:${organizationId}`}>
       <Layout>
         <Suspense fallback={<RouteFallback />}>
           <AnimatedRoutes />

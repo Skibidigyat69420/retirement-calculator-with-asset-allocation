@@ -18,22 +18,28 @@
     "fetch:angel": ".venv/bin/python scripts/fetch_angel_historical.py",
     "fetch:angel:all": ".venv/bin/python scripts/fetch_angel_all.py",
     "build:market-db": ".venv/bin/python scripts/build_market_database.py",
-    "live:angel": ".venv/bin/python scripts/angel_live_feed.py"
+    "live:angel": ".venv/bin/python scripts/angel_live_feed.py",
+    "test:onboarding:ui": "node scripts/test-onboarding-ui.mjs"
   },
   "dependencies": {
+    "@fastify/cors": "^11.3.0",
+    "@supabase/supabase-js": "^2.116.0",
     "@tailwindcss/vite": "^4.3.3",
     "autoprefixer": "^10.5.4",
     "clsx": "^2.1.1",
+    "fastify": "^5.12.5",
     "framer-motion": "^13.1.1",
     "lucide-react": "^1.35.0",
     "otpauth": "^9.5.1",
     "postcss": "^8.5.26",
+    "postgres": "^3.4.9",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",
     "recharts": "^3.10.1",
     "tailwind-merge": "^3.6.0",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@axe-core/puppeteer": "^4.13.0",

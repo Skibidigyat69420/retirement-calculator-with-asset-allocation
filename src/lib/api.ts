@@ -49,12 +49,15 @@ export class ApiRequestError extends Error {
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   body?: unknown;
+  token?: string;
+  sessionRequest?: boolean;
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = {};
   if (options.body !== undefined) headers['content-type'] = 'application/json';
   if (authToken) headers['authorization'] = `Bearer ${authToken}`;
+  if (options.token) headers['authorization'] = `Bearer ${options.token}`;
   if (organizationId) headers['x-organization-id'] = organizationId;
 
   let res: Response;
@@ -73,7 +76,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   }
 
   if (!res.ok) {
-    if (res.status === 401) {
+    if (res.status === 401 && !options.sessionRequest) {
       // Session expired or rejected: clear it through AuthContext and let the
       // router render the sign-in screen. No location.href — that reloads the
       // app, re-triggers the request, gets 401 again, and loops forever.
@@ -194,10 +197,28 @@ export interface FxRatesResponse {
   stale: boolean;
 }
 
+export type ReportStatus = 'draft' | 'review' | 'approved' | 'archived';
+export type ReportKind = 'plan-report' | 'dossier';
+export interface ReportRecord {
+  id: string;
+  clientId: string;
+  kind: ReportKind;
+  name: string;
+  clientName: string;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+  status: ReportStatus;
+}
+
 // ------------------------------------------------------------- endpoints
 
 export function devLogin(email: string): Promise<DevLoginResponse> {
   return request<DevLoginResponse>('/auth/dev-login', { method: 'POST', body: { email } });
+}
+
+export function getAuthSession(token: string): Promise<Pick<DevLoginResponse, 'user' | 'memberships'>> {
+  return request('/auth/session', { token, sessionRequest: true });
 }
 
 /** Public INR normalization rates. Each value is INR per one unit of currency. */
@@ -234,6 +255,10 @@ export function patchPlan(planId: string, body: Record<string, unknown>): Promis
   return request<PlanRecord>(`/plans/${planId}`, { method: 'PATCH', body });
 }
 
+export function deletePlan(planId: string): Promise<PlanRecord> {
+  return request<PlanRecord>(`/plans/${planId}`, { method: 'DELETE' });
+}
+
 export function createPlan(clientId: string, body: Record<string, unknown>): Promise<PlanRecord> {
   return request<PlanRecord>(`/clients/${clientId}/plans`, { method: 'POST', body });
 }
@@ -265,6 +290,27 @@ export function calculatePlan(planId: string): Promise<CalculateResponse> {
   return request<CalculateResponse>(`/plans/${planId}/calculate`, { method: 'POST', body: {} });
 }
 
+export function listReports(clientId?: string): Promise<{ data: ReportRecord[] }> {
+  const query = clientId ? `?clientId=${encodeURIComponent(clientId)}` : '';
+  return request<{ data: ReportRecord[] }>(`/reports${query}`);
+}
+
+export function createReport(clientId: string, body: { kind: ReportKind; name?: string }): Promise<ReportRecord> {
+  return request<ReportRecord>(`/clients/${clientId}/reports`, { method: 'POST', body });
+}
+
+export function updateReport(reportId: string, body: { status: ReportStatus }): Promise<ReportRecord> {
+  return request<ReportRecord>(`/reports/${reportId}`, { method: 'PATCH', body });
+}
+
+export function archiveReport(reportId: string): Promise<ReportRecord> {
+  return request<ReportRecord>(`/reports/${reportId}/archive`, { method: 'POST' });
+}
+
+export function getReportDownloadUrl(reportId: string): Promise<{ url: string; expiresAt: string }> {
+  return request<{ url: string; expiresAt: string }>(`/reports/${reportId}/download-url`);
+}
+
 /** Authenticated JSON export — returns a Blob ready for download. */
 export async function exportClientBundle(clientId: string, clientName: string): Promise<void> {
   const headers: Record<string, string> = {};
@@ -282,4 +328,23 @@ export async function exportClientBundle(clientId: string, clientName: string): 
   anchor.download = `${clientName.replace(/\s+/g, '-').toLowerCase()}-export.json`;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+// Practice setup uses a verified identity before an organization exists.
+export function createPracticeWorkspace(token: string, fullName: string, practiceName: string): Promise<{ organization: { id: string; name: string } }> {
+  return request('/auth/onboarding/practice', { method: 'POST', body: { fullName, practiceName }, token, sessionRequest: true });
+}
+export function acceptPracticeInvitation(token: string, invitationToken: string, fullName: string): Promise<{ organization: { id: string; name: string } }> {
+  return request('/auth/invitations/accept', { method: 'POST', body: { token: invitationToken, fullName }, token, sessionRequest: true });
+}
+export type InviteRole = 'practice_admin' | 'wealth_practitioner' | 'associate' | 'read_only';
+export interface PracticeInvitation { id: string; email: string; role: InviteRole; status: string; expiresAt: string; }
+export function listPracticeInvitations(): Promise<{ data: PracticeInvitation[] }> {
+  return request('/organizations/current/invitations');
+}
+export function invitePracticeMember(email: string, role: InviteRole): Promise<PracticeInvitation & { token: string }> {
+  return request('/organizations/current/invitations', { method: 'POST', body: { email, role } });
+}
+export function revokePracticeInvitation(id: string): Promise<unknown> {
+  return request('/organizations/current/invitations/' + encodeURIComponent(id) + '/revoke', { method: 'POST' });
 }

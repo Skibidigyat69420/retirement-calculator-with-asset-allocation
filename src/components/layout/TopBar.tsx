@@ -29,7 +29,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
   const navigate = useNavigate();
   const { inputs, riskProfile, riskScore, hasRiskAnswers, wealthResult, loadPersona, resetToDefaults, saveCurrentPlan } =
     useCalculator();
-  const { user, organizationName, logout } = useAuth();
+  const { user, organizationName, organizationId, memberships, logout } = useAuth();
 
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -95,6 +95,10 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
       danger: true,
     },
   ];
+
+  if (memberships.some(m => m.organizationId === organizationId && ['practice_owner', 'practice_admin', 'platform_admin'].includes(m.role))) {
+    menuItems.splice(0, 0, { label: 'Practice team', icon: User, run: () => navigate('/team') });
+  }
 
   const handleMenuKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {

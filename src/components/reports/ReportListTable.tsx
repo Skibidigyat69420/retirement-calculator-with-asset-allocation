@@ -8,6 +8,7 @@ export type ReportStatus = 'draft' | 'review' | 'approved' | 'archived';
 
 export interface ReportRecord {
   id: string;
+  clientId: string;
   kind: 'plan-report' | 'dossier';
   name: string;
   clientName: string;

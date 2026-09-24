@@ -15,15 +15,7 @@
     "types": ["node"]
   },
   "include": [
-    "src/**/*.ts",
-    "test/**/*.ts",
-    "scripts/**/*.ts",
-    "../src/lib/wealthEngine.ts",
-    "../src/lib/monteCarlo.ts",
-    "../src/lib/random.ts",
-    "../src/lib/returns.ts",
-    "../src/lib/riskQuestionnaire.ts",
-    "../src/types/**/*.ts"
+    "src/**/*.ts"
   ],
   "exclude": ["node_modules", "dist"]
 }

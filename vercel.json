@@ -1,11 +1,6 @@
 {
-  "buildCommand": "node scripts/generate-ips-docs.mjs && npm run build",
+  "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "functions": {
-    "api/market-data.ts": {
-      "includeFiles": "public/data/market-data.json"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/angelone/:path*",

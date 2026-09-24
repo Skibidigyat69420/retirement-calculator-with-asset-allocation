@@ -136,11 +136,11 @@ export const navItems: NavItem[] = [
     description: 'Audit trail of plan modifications & reverts',
   },
   {
-    path: '/dossier',
+    path: '/reports',
     label: 'Reports & Dossier',
     icon: Printer,
     section: 'Deliver',
-    description: 'Unified comprehensive plan report and PDF dossier',
+    description: 'Generate reports and open the PDF dossier deck',
   },
 
   // Practice
