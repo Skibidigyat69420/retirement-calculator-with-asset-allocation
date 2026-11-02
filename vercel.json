@@ -7,7 +7,15 @@
       "destination": "https://apiconnect.angelone.in/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/api/market-data",
+      "destination": "/data/market-data.json"
+    },
+    {
+      "source": "/api/market-status",
+      "destination": "/data/market-data.json"
+    },
+    {
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ],

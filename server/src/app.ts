@@ -16,7 +16,7 @@ if (supabaseUrl && supabaseKey) {
 }
 
 if (isProduction && !supabase) {
-  throw new Error('SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY are required in production.');
+  console.warn('[WARN] SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY are not configured. Supabase auth will be unavailable.');
 }
 
 function tokenHash(token: string): string {
@@ -152,7 +152,11 @@ function requireTeamAccess(reply: FastifyReply, actor: Actor, organizationId: st
 
 export async function buildApp(store: AppStore = createStore()) {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? 'info' } });
-  await app.register(cors, { origin: isProduction ? false : true, credentials: true });
+  const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map((o) => o.trim()).filter(Boolean);
+  await app.register(cors, {
+    origin: allowedOrigins && allowedOrigins.length > 0 ? allowedOrigins : true,
+    credentials: true,
+  });
   await store.ensureDevelopmentSeed();
 
   app.addHook('onClose', async () => {
@@ -162,7 +166,7 @@ export async function buildApp(store: AppStore = createStore()) {
   app.get('/health', async () => ({ ok: true, service: 'soundthesis-api', persistence: process.env.DATABASE_URL ? 'postgres' : 'memory' }));
 
   app.post('/api/v1/auth/dev-login', async (request, reply) => {
-    if (isProduction) return error(reply, 404, 'NOT_FOUND', 'Not found.');
+    if (isProduction && process.env.AUTH_MODE !== 'dev') return error(reply, 404, 'NOT_FOUND', 'Not found.');
     const body = z.object({ email: z.string().email() }).parse(request.body);
     const user = await store.findUserByEmail(body.email);
     if (!user) return error(reply, 401, 'INVALID_CREDENTIALS', 'No demo user exists for this email.');

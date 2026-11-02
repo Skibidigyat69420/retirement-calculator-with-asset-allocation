@@ -104,19 +104,21 @@ export const FinancialsStep = ({
   const loanDraft = useDraft(INITIAL_LOAN_DRAFT, { validate: (d) => !!d.name.trim() });
   const { name: newLoanName, principal: newLoanPrincipal, rate: newLoanRate, tenure: newLoanTenure, currency: newLoanCurrency } = loanDraft.values;
 
+  const fx = assumptions?.fx;
+
   const totalAssets = useMemo(() => {
     return inputs.assets.reduce((sum, a) => {
-      const spotRate = assumptions?.fx[a.currency || 'INR']?.spotRate || 1.0;
+      const spotRate = fx?.[a.currency || 'INR']?.spotRate || 1.0;
       return sum + (Number(a.value) * spotRate || 0);
     }, 0);
-  }, [inputs.assets, assumptions?.fx]);
+  }, [inputs.assets, fx]);
 
   const activeLoansWithEMI = useMemo(() => {
     return liabilities.map((loan) => {
       const p = Math.max(0, Number(loan.principal) || 0);
       const r = Math.max(0, Number(loan.rate) || 0);
       const t = Math.max(1, Number(loan.tenureYears) || 1);
-      const spotRate = assumptions?.fx[loan.currency || 'INR']?.spotRate || 1.0;
+      const spotRate = fx?.[loan.currency || 'INR']?.spotRate || 1.0;
 
       const res = p > 0 ? calculateEMI(p * spotRate, r, t) : { emi: 0, totalPayment: 0, totalInterest: 0, principal: 0, yearlyData: [] };
       return {
@@ -126,14 +128,14 @@ export const FinancialsStep = ({
         totalInterest: res.totalInterest,
       };
     });
-  }, [liabilities, assumptions?.fx]);
+  }, [liabilities, fx]);
 
   const totalLiabilities = useMemo(() => {
     return liabilities.reduce((sum, l) => {
-      const spotRate = assumptions?.fx[l.currency || 'INR']?.spotRate || 1.0;
+      const spotRate = fx?.[l.currency || 'INR']?.spotRate || 1.0;
       return sum + (Number(l.principal) * spotRate || 0);
     }, 0);
-  }, [liabilities, assumptions?.fx]);
+  }, [liabilities, fx]);
 
   const totalMonthlyEMI = useMemo(() => {
     return activeLoansWithEMI
