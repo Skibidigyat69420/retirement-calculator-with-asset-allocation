@@ -1,22 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowUpRight, BriefcaseBusiness, CalendarClock, ChevronRight, Download, Filter, LayoutGrid, List, LogOut, RefreshCw, Search, ShieldCheck, Sparkles, Target, UserPlus, Users, WalletCards, X } from 'lucide-react';
+import { ArrowUpRight, ChevronRight, Download, LayoutGrid, List, RefreshCw, Search, ShieldCheck, Sparkles, UserPlus, Users, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ApiRequestError, exportClientBundle, listClients, createClient, type ClientSummary } from '../lib/api';
 import { formatCurrencyCompact } from '../lib/formatters';
 
 const initials = (name: string) => name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
-function Metric({ label, value, detail, icon: Icon }: { label: string; value: string; detail: string; icon: typeof Users }) {
-  return <div className="directory-metric"><div className="directory-metric-icon"><Icon size={17} /></div><div><p>{label}</p><strong>{value}</strong><span>{detail}</span></div></div>;
-}
-
 export function PractitionerPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { ready, user, organizationName, logout } = useAuth();
+  const { ready, user, organizationName } = useAuth();
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [view, setView] = useState<'grid' | 'list'>('list');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState<string | null>(null);
@@ -47,8 +43,6 @@ export function PractitionerPage() {
 
   const filtered = useMemo(() => clients.filter((client) => client.name.toLowerCase().includes(query.toLowerCase()) || client.assignedPractitioners.some((advisor) => advisor.fullName?.toLowerCase().includes(query.toLowerCase()))), [clients, query]);
   const selected = clients.find((client) => client.id === selectedId) ?? filtered[0] ?? null;
-  const totalNetWorth = clients.reduce((sum, client) => sum + (client.financialSummary.netWorth || 0), 0);
-  const totalInvestable = clients.reduce((sum, client) => sum + (client.financialSummary.investableAssets || 0), 0);
 
   const handleExport = async (client: ClientSummary) => {
     setExporting(client.id);
@@ -95,28 +89,25 @@ export function PractitionerPage() {
     <div className="directory-page">
       <header className="directory-hero">
         <div>
-          <div className="directory-kicker"><span className="live-dot" /> {organizationName ?? 'Sound Thesis Wealth'} <span className="slash">/</span> Practice desk</div>
-          <h1>Make the next<br /><em>decision clearer.</em></h1>
-          <p>One calm workspace for the household, the balance sheet, and the conversations that move a plan forward.</p>
+          <div className="directory-kicker">{organizationName ?? 'Sound Thesis Wealth'} <span className="slash">/</span> Clients</div>
+          <h1>Clients</h1>
+          <p>Select a client, create an IPS, and return here for the next review.</p>
         </div>
         <div className="directory-hero-actions"><button className="directory-icon-button" onClick={() => void loadClients()} aria-label="Refresh clients"><RefreshCw size={17} className={loading ? 'animate-spin' : ''} /></button><button className="directory-new-button" onClick={handleAddClient} disabled={loading}><Sparkles size={16} /> Add client <ArrowUpRight size={15} /></button></div>
       </header>
 
-      <section className="directory-metrics"><Metric label="Assigned clients" value={String(clients.length).padStart(2, '0')} detail="Your active book" icon={Users} /><Metric label="Net worth covered" value={formatCurrencyCompact(totalNetWorth)} detail="Across assigned clients" icon={WalletCards} /><Metric label="Investable assets" value={formatCurrencyCompact(totalInvestable)} detail="Ready for planning" icon={BriefcaseBusiness} /><Metric label="Reviews this month" value="04" detail="Two due this week" icon={CalendarClock} /></section>
+      <section className="directory-toolbar"><div className="directory-toolbar-title"><h2>All clients <span>{filtered.length}</span></h2></div><div className="directory-controls"><label className="directory-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search clients" aria-label="Search clients" /></label><div className="directory-view-toggle"><button className={view === 'grid' ? 'active' : ''} onClick={() => setView('grid')} aria-label="Grid view"><LayoutGrid size={16} /></button><button className={view === 'list' ? 'active' : ''} onClick={() => setView('list')} aria-label="List view"><List size={16} /></button></div></div></section>
 
-      {selected && <section className="desk-focus">
-        <div className="desk-focus-copy"><span className="eyebrow">Current relationship</span><h2>{selected.name}</h2><p>Start with the facts that shape advice: family context, liquidity needs, goals, and the decisions waiting for a conversation.</p><div className="desk-focus-actions"><Link to="/master-plan" onClick={() => openClientWorkspace(selected.id)} className="desk-primary-action">Open household plan <ArrowUpRight size={15} /></Link><Link to="/reports" onClick={() => openClientWorkspace(selected.id)} className="desk-secondary-action">Prepare review <ArrowUpRight size={15} /></Link></div></div>
-        <div className="desk-focus-map" aria-label="Planning areas"><div><WalletCards size={16} /><span>Position</span><strong>{formatCurrencyCompact(selected.financialSummary.netWorth)}</strong><small>net worth</small></div><div><Target size={16} /><span>Focus</span><strong>Goals</strong><small>next conversation</small></div><div><ShieldCheck size={16} /><span>Readiness</span><strong>Review</strong><small>confirm assumptions</small></div></div>
-      </section>}
-
-      <section className="directory-toolbar"><div className="directory-toolbar-title"><span className="eyebrow">Relationship book</span><h2>People you advise <span>{filtered.length}</span></h2></div><div className="directory-controls"><label className="directory-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search clients" aria-label="Search clients" /></label><button className="directory-filter"><Filter size={15} /> <span>Filter</span></button><div className="directory-view-toggle"><button className={view === 'grid' ? 'active' : ''} onClick={() => setView('grid')} aria-label="Grid view"><LayoutGrid size={16} /></button><button className={view === 'list' ? 'active' : ''} onClick={() => setView('list')} aria-label="List view"><List size={16} /></button></div></div></section>
-
-      {error && <div className="directory-error">{error}</div>}
-      {loading && clients.length === 0 && <div className="directory-empty">Loading your assigned clients…</div>}
-      {!loading && !error && filtered.length === 0 && <div className="directory-empty"><Users size={26} /><h3>No clients found</h3><p>Try a different search or add your first client.</p></div>}
-      {view === 'grid' && filtered.length > 0 && <div className="client-grid">{filtered.map((client, index) => <ClientCard key={client.id} client={client} index={index} selected={selected?.id === client.id} onSelect={() => setSelectedId(client.id)} onExport={() => void handleExport(client)} exporting={exporting === client.id} />)}</div>}
-      {view === 'list' && filtered.length > 0 && <div className="client-table"><div className="client-table-head"><span>Client</span><span>Portfolio</span><span>Coverage</span><span>Status</span><span /></div>{filtered.map((client, index) => <ClientRow key={client.id} client={client} index={index} selected={selected?.id === client.id} onSelect={() => setSelectedId(client.id)} />)}</div>}
-      {selected && <aside className="client-insight"><div><span className="eyebrow">Selected relationship</span><h2>{selected.name}</h2><p>Primary relationship · {selected.status || 'Active engagement'}</p></div><div className="client-insight-actions"><button onClick={() => void handleExport(selected)} disabled={exporting === selected.id}><Download size={15} /> {exporting === selected.id ? 'Preparing…' : 'Export file'}</button><Link to="/master-plan" onClick={() => openClientWorkspace(selected.id)}><span>Open planning workspace</span><ArrowUpRight size={15} /></Link></div><div className="client-insight-stats"><div><span>Net worth</span><strong>{formatCurrencyCompact(selected.financialSummary.netWorth)}</strong></div><div><span>Investable</span><strong>{formatCurrencyCompact(selected.financialSummary.investableAssets)}</strong></div><div><span>Profile</span><strong><ShieldCheck size={15} /> Active</strong></div></div><div className="client-insight-footer"><span><span className="live-dot" /> Access scoped to your assignment</span><button onClick={logout}><LogOut size={14} /> Sign out</button></div></aside>}
+      <div className="client-workspace">
+        <section className="client-results" aria-label="Client list">
+          {error && <div className="directory-error">{error}</div>}
+          {loading && clients.length === 0 && <div className="directory-empty">Loading clients…</div>}
+          {!loading && !error && filtered.length === 0 && <div className="directory-empty"><Users size={26} /><h3>No clients found</h3><p>Try another search or add a client.</p></div>}
+          {view === 'grid' && filtered.length > 0 && <div className="client-grid">{filtered.map((client, index) => <ClientCard key={client.id} client={client} index={index} selected={selected?.id === client.id} onSelect={() => setSelectedId(client.id)} onExport={() => void handleExport(client)} exporting={exporting === client.id} />)}</div>}
+          {view === 'list' && filtered.length > 0 && <div className="client-table"><div className="client-table-head"><span>Client</span><span>Portfolio</span><span>Coverage</span><span>Status</span><span /></div>{filtered.map((client, index) => <ClientRow key={client.id} client={client} index={index} selected={selected?.id === client.id} onSelect={() => setSelectedId(client.id)} />)}</div>}
+        </section>
+        {selected && <aside className="client-action-panel" aria-label={`Actions for ${selected.name}`}><div className="client-action-panel-head"><span className="client-avatar">{initials(selected.name)}</span><div><h2>{selected.name}</h2><p><i /> {selected.status || 'Active'}</p></div></div><div className="client-action-stats"><div><span>Net worth</span><strong>{formatCurrencyCompact(selected.financialSummary.netWorth)}</strong></div><div><span>Investable assets</span><strong>{formatCurrencyCompact(selected.financialSummary.investableAssets)}</strong></div></div><div className="client-action-buttons"><Link to="/ips" onClick={() => openClientWorkspace(selected.id)} className="client-action-primary">Create IPS <ArrowUpRight size={15} /></Link><Link to="/master-plan" onClick={() => openClientWorkspace(selected.id)}>Open client plan <ArrowUpRight size={15} /></Link><Link to="/reports" onClick={() => openClientWorkspace(selected.id)}>Documents & reports <ArrowUpRight size={15} /></Link></div><button className="client-export-button" onClick={() => void handleExport(selected)} disabled={exporting === selected.id}><Download size={15} /> {exporting === selected.id ? 'Preparing export…' : 'Export client file'}</button><p className="client-action-note"><ShieldCheck size={14} /> Changes stay scoped to this client record.</p></aside>}
+      </div>
 
       {addOpen && <div className="client-create-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !creating) setAddOpen(false); }}>
         <section className="client-create-dialog" role="dialog" aria-modal="true" aria-labelledby="create-client-title">

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Check, Eye, EyeOff, LockKeyhole, Mail, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, ClipboardList, Eye, EyeOff, FileText, LockKeyhole, Mail, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { demoAuth } from '../lib/authClient';
 import { LogoMark } from '../components/layout/BrandMark';
@@ -8,7 +8,7 @@ import { LogoMark } from '../components/layout/BrandMark';
 type AuthMode = 'sign-in' | 'sign-up' | 'reset' | 'update-password';
 
 const content: Record<AuthMode, { eyebrow: string; title: string; copy: string; cta: string }> = {
-  'sign-in': { eyebrow: 'Welcome back', title: 'See the whole picture.', copy: 'Your planning desk, client context, and next best decision in one calm workspace.', cta: 'Enter workspace' },
+  'sign-in': { eyebrow: 'Advisor workspace', title: 'Sign in', copy: 'Access your client list, plans and Investment Policy Statements.', cta: 'Enter workspace' },
   'sign-up': { eyebrow: 'Create your account', title: 'Make wealth legible.', copy: 'Confirm your email to create your account. Your administrator will arrange practice access.', cta: 'Create account' },
   'update-password': { eyebrow: 'Account recovery', title: 'Set a new password.', copy: 'Choose a new password for your account.', cta: 'Save password' },
   reset: { eyebrow: 'Account recovery', title: 'Back to better decisions.', copy: 'Enter your email and we’ll send a secure link to restore access to your practice.', cta: 'Send recovery link' },
@@ -57,26 +57,19 @@ export function AuthPage({ mode = 'sign-in' }: { mode?: AuthMode }) {
 
   return (
     <main className="auth-page">
-      <section className="auth-visual">
-        <div className="auth-visual-grid" />
-        <div className="auth-visual-orb auth-visual-orb-one" />
-        <div className="auth-visual-orb auth-visual-orb-two" />
-        <div className="auth-visual-inner">
-          <Link to="/login" className="auth-brand"><LogoMark size={34} /><span>Sound Thesis</span></Link>
-          <div className="auth-quote">
-            <span className="eyebrow auth-eyebrow"><Sparkles size={13} /> Wealth intelligence, clarified</span>
-            <h1>Every plan has a<br /><em>better next move.</em></h1>
-            <p>A considered operating system for advisors who want their work to feel as good as the decisions it produces.</p>
-          </div>
-          <div className="auth-proof">
-            <div className="auth-proof-line"><span className="auth-proof-dot" /><span>Private by design</span></div>
-            <div className="auth-proof-line"><span className="auth-proof-dot gold" /><span>Built for the long view</span></div>
-          </div>
-        </div>
-      </section>
-
-      <section className="auth-panel">
-        <div className="auth-panel-top"><span className="auth-mobile-brand"><LogoMark size={26} /> Sound Thesis</span><span className="auth-top-note">Advisor workspace</span></div>
+      <header className="auth-simple-header"><Link to="/login" className="auth-brand"><LogoMark size={30} /><span>Sound Thesis</span></Link><span>Advisor workspace</span></header>
+      <section className="auth-simple-layout">
+        <aside className="auth-simple-intro">
+          <span className="eyebrow">A practical client workspace</span>
+          <h1>Make client work easier to run.</h1>
+          <p>Start with the client, create a clear Investment Policy Statement, and keep every decision in one place.</p>
+          <ul className="auth-product-list">
+            <li><Users size={17} /><span><strong>Clients</strong><small>Search and manage each household.</small></span></li>
+            <li><FileText size={17} /><span><strong>Investment policy</strong><small>Generate a policy from the essential facts.</small></span></li>
+            <li><ClipboardList size={17} /><span><strong>Review</strong><small>Return to the plan when decisions change.</small></span></li>
+          </ul>
+        </aside>
+        <section className="auth-panel">
         <div className="auth-form-wrap">
           <div className="auth-form-heading"><span className="eyebrow">{copy.eyebrow}</span><h2>{copy.title}</h2><p>{copy.copy}</p></div>
           <form onSubmit={submit} className="auth-form">
@@ -88,14 +81,15 @@ export function AuthPage({ mode = 'sign-in' }: { mode?: AuthMode }) {
             <button className="auth-submit" type="submit" disabled={busy}>{busy ? 'Opening your workspace…' : copy.cta}<ArrowRight size={17} /></button>
           </form>
           {mode === 'sign-in' && !demoAuth && <div className="auth-links"><Link to="/forgot-password">Forgot password?</Link><span>New to Sound Thesis? <Link to="/signup">Create an account</Link></span></div>}
-          {mode === 'sign-in' && demoAuth && <div className="demo-advisors"><div><span className="eyebrow">Demo advisor access</span><p>Jump into a seeded client book</p></div><div className="demo-advisor-list"><button type="button" onClick={() => void signIn('you@soundthesis.local')} disabled={busy}><b>AM</b><span>Aarav Mehta<small>1 client</small></span><ArrowRight size={14} /></button><button type="button" onClick={() => void signIn('adviser@soundthesis.local')} disabled={busy}><b>MK</b><span>Maya Kapoor<small>2 clients</small></span><ArrowRight size={14} /></button><button type="button" onClick={() => void signIn('advisor3@soundthesis.local')} disabled={busy}><b>RS</b><span>Rohan Shah<small>3 clients</small></span><ArrowRight size={14} /></button></div></div>}
+          {mode === 'sign-in' && demoAuth && <div className="demo-advisors"><div><span className="eyebrow">Local development demo</span><p>Uses the seeded practice and a fictional client record.</p></div><div className="demo-credential"><code>adviser@soundthesis.local</code><span>No password required</span><button type="button" onClick={() => void signIn('adviser@soundthesis.local')} disabled={busy}>Open demo workspace <ArrowRight size={14} /></button></div></div>}
           {mode === 'sign-up' && <div className="auth-links"><span>Already have an account? <Link to="/login">Sign in</Link></span></div>}
           {mode === 'update-password' && <div className="auth-links"><Link to="/login" onClick={logout}>Cancel and return to sign in</Link></div>}
           {mode === 'reset' && <div className="auth-links"><Link to="/login">Return to sign in</Link></div>}
           <div className="auth-security"><LockKeyhole size={14} /><span>Your workspace is encrypted in transit and scoped to your practice.</span></div>
         </div>
-        <div className="auth-panel-footer"><span>© 2026 Sound Thesis</span><span>Terms&nbsp;&nbsp; Privacy</span></div>
+        </section>
       </section>
+      <footer className="auth-simple-footer"><span>© 2026 Sound Thesis</span><span>Private practice software</span></footer>
     </main>
   );
 }

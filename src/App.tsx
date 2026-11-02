@@ -44,6 +44,7 @@ const IPSTemplate = lazy(async () => {
   const mod = await import('./pages/IPSTemplate');
   return { default: mod.IPSTemplate };
 });
+const IPSWorkspace = lazyNamed(() => import('./pages/IPSWorkspacePage'), 'IPSWorkspacePage');
 const RiskQuestionnaire = lazyNamed(() => import('./pages/RiskQuestionnaire'), 'RiskQuestionnaire');
 const Dossier = lazyNamed(() => import('./pages/Dossier'), 'Dossier');
 const ReportsPage = lazyNamed(() => import('./pages/ReportsPage'), 'ReportsPage');
@@ -105,7 +106,8 @@ function AnimatedRoutes() {
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/dossier" element={<Dossier />} />
           <Route path="/calculators" element={<Calculators />} />
-          <Route path="/ips" element={<IPSTemplate />} />
+          <Route path="/ips" element={<IPSWorkspace />} />
+          <Route path="/ips/editor" element={<IPSTemplate />} />
           <Route path="/angel-connect" element={<AngelConnect />} />
           <Route path="/angel-data" element={<AngelData />} />
           <Route path="/team" element={<PracticeTeam />} />

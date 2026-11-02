@@ -33,14 +33,14 @@ export const SECTION_ORDER = ['Workspace', 'Plan', 'Portfolio', 'Deliver', 'Prac
 export const navItems: NavItem[] = [
   {
     path: '/',
-    label: 'Client desk',
+    label: 'Clients',
     icon: Users,
     section: 'Workspace',
-    description: 'Assigned client database and advisor workspace',
+    description: 'Client relationships and active households',
   },
   {
     path: '/overview',
-    label: 'Dashboard',
+    label: 'Practice overview',
     icon: Activity,
     section: 'Workspace',
     description: 'Executive overview & plan health check',
@@ -49,7 +49,7 @@ export const navItems: NavItem[] = [
   // Plan
   {
     path: '/master-plan',
-    label: 'Master Plan',
+    label: 'Client plan',
     icon: ClipboardList,
     section: 'Plan',
     description: 'Guided seven-step planning wizard',
@@ -116,10 +116,17 @@ export const navItems: NavItem[] = [
   // Deliver
   {
     path: '/ips',
-    label: 'IPS',
+    label: 'Create IPS',
     icon: FileText,
     section: 'Deliver',
-    description: 'Investment Policy Statement with live sync toggle',
+    description: 'Guided Investment Policy Statement builder',
+  },
+  {
+    path: '/ips/editor',
+    label: 'IPS full editor',
+    icon: FileText,
+    section: 'Deliver',
+    description: 'Clause-level policy template and saved drafts',
   },
   {
     path: '/meeting-workflow',
@@ -137,7 +144,7 @@ export const navItems: NavItem[] = [
   },
   {
     path: '/reports',
-    label: 'Reports & Dossier',
+    label: 'Documents & reports',
     icon: Printer,
     section: 'Deliver',
     description: 'Generate reports and open the PDF dossier deck',

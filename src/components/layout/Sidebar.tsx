@@ -1,8 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
-import { PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
+import { ChevronDown, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/utils';
-import { navItems, groupBySection, type NavItem } from './navItems';
+import { navItems, type NavItem } from './navItems';
 import { Lockup, LogoMark } from './BrandMark';
 import { Avatar } from '../ui/Avatar';
 import { StatusBadge } from '../ui/StatusBadge';
@@ -61,26 +61,56 @@ const NavLink = ({ item, collapsed, onClick }: NavLinkProps) => {
   return link;
 };
 
-const NavSections = ({ collapsed, onClick }: { collapsed?: boolean; onClick?: () => void }) => (
-  <nav aria-label="Primary" className="flex-1 overflow-y-auto py-2" style={{ scrollbarWidth: 'none' }}>
-    {groupBySection(navItems).map(([section, items]) => (
-      <div key={section} className={cn(collapsed ? 'mt-1 first:mt-0' : 'mt-4 first:mt-1')}>
-        {!collapsed && (
-          <div className="px-3 mb-1.5">
-            <span className="eyebrow">{section}</span>
-          </div>
-        )}
-        <ul className={cn('space-y-px', collapsed && 'space-y-1')}>
-          {items.map((item) => (
-            <li key={item.path}>
-              <NavLink item={item} collapsed={collapsed} onClick={onClick} />
-            </li>
-          ))}
-        </ul>
+const PRIMARY_PATHS = ['/', '/ips', '/master-plan', '/reports'];
+
+const TOOL_GROUPS: { id: string; label: string; paths: string[] }[] = [
+  { id: 'details', label: 'Client details', paths: ['/client-profile', '/balance-sheet', '/goal', '/risk', '/retirement', '/reverse-planning'] },
+  { id: 'portfolio', label: 'Portfolio & policy', paths: ['/allocation', '/advanced-portfolio', '/ips/editor'] },
+  { id: 'review', label: 'Review & delivery', paths: ['/overview', '/meeting-workflow', '/decision-history'] },
+  { id: 'utilities', label: 'Utilities & market data', paths: ['/calculators', '/angel-connect', '/angel-data'] },
+];
+
+const NavSections = ({ collapsed, onClick }: { collapsed?: boolean; onClick?: () => void }) => {
+  const location = useLocation();
+  const [openGroups, setOpenGroups] = useState<string[]>(() => {
+    const current = TOOL_GROUPS.find((group) => group.paths.includes(location.pathname));
+    return current ? [current.id] : [];
+  });
+  const primary = navItems.filter((item) => PRIMARY_PATHS.includes(item.path));
+  const toggleGroup = (id: string) => setOpenGroups((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+
+  return (
+    <nav aria-label="Primary" className="flex-1 overflow-y-auto py-2" style={{ scrollbarWidth: 'none' }}>
+      {!collapsed && <div className="px-3 mb-1.5"><span className="eyebrow">Workspace</span></div>}
+      <ul className={cn('space-y-px', collapsed && 'space-y-1')}>
+        {primary.map((item) => <li key={item.path}><NavLink item={item} collapsed={collapsed} onClick={onClick} /></li>)}
+      </ul>
+      <div className="mt-5 pt-4 border-t border-border-subtle space-y-1">
+        {TOOL_GROUPS.map((group) => {
+          const items = navItems.filter((item) => group.paths.includes(item.path));
+          const groupActive = group.paths.includes(location.pathname);
+          const open = openGroups.includes(group.id);
+          const GroupIcon = items[0]?.icon;
+          return <div key={group.id} className="sidebar-tool-group">
+            <button
+              type="button"
+              onClick={() => toggleGroup(group.id)}
+              aria-expanded={open}
+              title={collapsed ? group.label : undefined}
+              className={cn('sidebar-tool-group-button', collapsed && 'justify-center px-0', groupActive && 'text-accent-strong')}
+            >
+              {GroupIcon && <GroupIcon size={16} strokeWidth={1.6} className="shrink-0" />}
+              {!collapsed && <><span className="flex-1 text-left">{group.label}</span><ChevronDown size={14} className={cn('transition-transform duration-150', open && 'rotate-180')} /></>}
+            </button>
+            {open && <ul className={cn('mt-1 space-y-px', collapsed && 'space-y-1')}>
+              {items.map((item) => <li key={item.path}><NavLink item={item} collapsed={collapsed} onClick={onClick} /></li>)}
+            </ul>}
+          </div>;
+        })}
       </div>
-    ))}
-  </nav>
-);
+    </nav>
+  );
+};
 
 interface SidebarProps {
   mobileOpen: boolean;
