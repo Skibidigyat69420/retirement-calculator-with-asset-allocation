@@ -9,7 +9,8 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { Button } from '../components/ui/Button';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import { PlanningAssumptionsModal } from '../components/analytics/PlanningAssumptionsModal';
-import { MasterPlanSidebar, PLAN_STEPS } from '../components/master-plan/MasterPlanSidebar';
+import { PLAN_STEPS } from '../components/master-plan/MasterPlanSidebar';
+import { MasterPlanHorizontalStepper } from '../components/master-plan/MasterPlanHorizontalStepper';
 import { MasterPlanSummary } from '../components/master-plan/MasterPlanSummary';
 import { ProfileStep } from '../components/master-plan/ProfileStep';
 import { FinancialsStep } from '../components/master-plan/FinancialsStep';
@@ -263,19 +264,15 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
         </div>
       </header>
 
-      {/* Studio layout: rail · active section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-8 gap-y-10 items-start">
-        {/* Left: vertical progress rail */}
-        <aside className="lg:col-span-3 xl:col-span-2 lg:sticky lg:top-20 z-10">
-          <MasterPlanSidebar
-            activeStep={activeStep}
-            onSelectStep={handleStepChange}
-            inputs={inputs}
-          />
-        </aside>
+      {/* Horizontal progress bar on top — eliminates sidebar overhang */}
+      <MasterPlanHorizontalStepper
+        activeStep={activeStep}
+        onSelectStep={handleStepChange}
+        inputs={inputs}
+      />
 
-        {/* Center: active section */}
-        <main className="lg:col-span-9 xl:col-span-10 min-w-0">
+      {/* Main active section — full width */}
+      <main className="w-full min-w-0">
           {activeStep === 'profile' && (
             <ProfileStep
               inputs={inputs}
@@ -346,7 +343,6 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
             />
           )}
         </main>
-      </div>
 
       {/* Assumptions Calibration Modal */}
       <PlanningAssumptionsModal

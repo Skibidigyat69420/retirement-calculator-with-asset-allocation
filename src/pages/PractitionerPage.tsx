@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowUpRight, ChevronRight, Download, LayoutGrid, List, RefreshCw, Search, ShieldCheck, Sparkles, UserPlus, Users, X } from 'lucide-react';
+import { ArrowUpRight, ChevronRight, Download, LayoutGrid, List, RefreshCw, Search, Sparkles, UserPlus, Users, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCalculator } from '../context/CalculatorContext';
 import { ApiRequestError, exportClientBundle, listClients, createClient, type ClientSummary } from '../lib/api';
@@ -70,7 +70,7 @@ export function PractitionerPage() {
     } catch (cause) {
       setError(cause instanceof ApiRequestError ? cause.message : 'Could not load the client database.');
     } finally { setLoading(false); }
-  }, [user?.id]);
+  }, [user]);
 
   useEffect(() => { if (ready) void loadClients(); }, [ready, loadClients]);
 
@@ -162,7 +162,56 @@ export function PractitionerPage() {
 
       <section className="directory-toolbar"><div className="directory-toolbar-title"><h2>All clients <span>{filtered.length}</span></h2></div><div className="directory-controls"><label className="directory-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search clients" aria-label="Search clients" /></label><div className="directory-view-toggle"><button className={view === 'grid' ? 'active' : ''} onClick={() => setView('grid')} aria-label="Grid view"><LayoutGrid size={16} /></button><button className={view === 'list' ? 'active' : ''} onClick={() => setView('list')} aria-label="List view"><List size={16} /></button></div></div></section>
 
-      <div className="client-workspace">
+      {selected && (
+        <aside className="client-selected-banner" aria-label={`Actions for ${selected.name}`}>
+          <div className="client-selected-banner-left">
+            <span className="client-avatar">{initials(selected.name)}</span>
+            <div>
+              <div className="client-selected-title-row">
+                <h2>{selected.name}</h2>
+                <span className="client-status"><i /> {selected.status || 'Active'}</span>
+              </div>
+              <p className="client-selected-advisor">{selected.assignedPractitioners[0]?.fullName ?? 'Lead Adviser'}</p>
+            </div>
+          </div>
+
+          <div className="client-selected-banner-stats">
+            <div>
+              <span>Net worth</span>
+              <strong>{formatCurrencyCompact(selected.financialSummary.netWorth)}</strong>
+            </div>
+            <div>
+              <span>Investable assets</span>
+              <strong>{formatCurrencyCompact(selected.financialSummary.investableAssets)}</strong>
+            </div>
+            <div>
+              <span>Liabilities</span>
+              <strong>{formatCurrencyCompact(selected.financialSummary.totalLiabilities)}</strong>
+            </div>
+          </div>
+
+          <div className="client-selected-banner-actions">
+            <Link to="/ips" onClick={() => openClientWorkspace(selected.id)} className="client-action-primary">
+              Create IPS <ArrowUpRight size={14} />
+            </Link>
+            <Link to="/master-plan" onClick={() => openClientWorkspace(selected.id)} className="client-action-btn">
+              Open Plan <ArrowUpRight size={14} />
+            </Link>
+            <Link to="/reports" onClick={() => openClientWorkspace(selected.id)} className="client-action-btn">
+              Reports <ArrowUpRight size={14} />
+            </Link>
+            <button
+              className="client-action-btn"
+              onClick={() => void handleExport(selected)}
+              disabled={exporting === selected.id}
+            >
+              <Download size={13} /> {exporting === selected.id ? 'Exporting…' : 'Export'}
+            </button>
+          </div>
+        </aside>
+      )}
+
+      <div className="client-workspace-full">
         <section className="client-results" aria-label="Client list">
           {error && <div className="directory-error">{error}</div>}
           {loading && clients.length === 0 && <div className="directory-empty">Loading clients…</div>}
@@ -170,7 +219,6 @@ export function PractitionerPage() {
           {view === 'grid' && filtered.length > 0 && <div className="client-grid">{filtered.map((client, index) => <ClientCard key={client.id} client={client} index={index} selected={selected?.id === client.id} onSelect={() => selectClient(client)} onExport={() => void handleExport(client)} exporting={exporting === client.id} />)}</div>}
           {view === 'list' && filtered.length > 0 && <div className="client-table"><div className="client-table-head"><span>Client</span><span>Portfolio</span><span>Coverage</span><span>Status</span><span /></div>{filtered.map((client, index) => <ClientRow key={client.id} client={client} index={index} selected={selected?.id === client.id} onSelect={() => selectClient(client)} />)}</div>}
         </section>
-        {selected && <aside className="client-action-panel" aria-label={`Actions for ${selected.name}`}><div className="client-action-panel-head"><span className="client-avatar">{initials(selected.name)}</span><div><h2>{selected.name}</h2><p><i /> {selected.status || 'Active'}</p></div></div><div className="client-action-stats"><div><span>Net worth</span><strong>{formatCurrencyCompact(selected.financialSummary.netWorth)}</strong></div><div><span>Investable assets</span><strong>{formatCurrencyCompact(selected.financialSummary.investableAssets)}</strong></div></div><div className="client-action-buttons"><Link to="/ips" onClick={() => openClientWorkspace(selected.id)} className="client-action-primary">Create IPS <ArrowUpRight size={15} /></Link><Link to="/master-plan" onClick={() => openClientWorkspace(selected.id)}>Open client plan <ArrowUpRight size={15} /></Link><Link to="/reports" onClick={() => openClientWorkspace(selected.id)}>Documents & reports <ArrowUpRight size={15} /></Link></div><button className="client-export-button" onClick={() => void handleExport(selected)} disabled={exporting === selected.id}><Download size={15} /> {exporting === selected.id ? 'Preparing export…' : 'Export client file'}</button><p className="client-action-note"><ShieldCheck size={14} /> Changes stay scoped to this client record.</p></aside>}
       </div>
 
       {addOpen && <div className="client-create-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !creating) setAddOpen(false); }}>
