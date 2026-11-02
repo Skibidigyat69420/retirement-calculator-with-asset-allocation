@@ -1263,10 +1263,10 @@ export const IPSTemplate = () => {
                   REF: IPS-{effectiveClient.reviewDate.replace(/-/g, '')}
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-serif font-bold text-ink tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-ink tracking-tight">
                 Investment Policy Statement
               </h1>
-              <p className="text-sm font-serif italic text-ink-soft mt-1">
+              <p className="text-sm text-ink-soft mt-1">
                 Sound Thesis Institutional Wealth Policy Standard
               </p>
 
@@ -1295,7 +1295,7 @@ export const IPSTemplate = () => {
 
             {/* Section 1: Client Profile & Governance Scope */}
             <div className="space-y-3">
-              <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
+              <h2 className="text-base font-semibold text-ink flex items-center gap-2 border-b border-border pb-1.5">
                 <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">1</span>
                 Client Profile & Governance Scope
               </h2>
@@ -1333,7 +1333,7 @@ export const IPSTemplate = () => {
 
             {/* Section 2: Investment Objectives & Hurdle Rates */}
             <div className="space-y-3">
-              <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
+              <h2 className="text-base font-semibold text-ink flex items-center gap-2 border-b border-border pb-1.5">
                 <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">2</span>
                 Investment Objectives & Return Hurdle
               </h2>
@@ -1373,7 +1373,7 @@ export const IPSTemplate = () => {
 
             {/* Section 3: Portfolio Constraints & Liquidity Architecture */}
             <div className="space-y-3">
-              <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
+              <h2 className="text-base font-semibold text-ink flex items-center gap-2 border-b border-border pb-1.5">
                 <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">3</span>
                 Portfolio Constraints & Liquidity Horizons
               </h2>
@@ -1405,7 +1405,7 @@ export const IPSTemplate = () => {
 
             {/* Section 4: Priority-Tiered Goals & Liabilities */}
             <div className="space-y-3">
-              <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
+              <h2 className="text-base font-semibold text-ink flex items-center gap-2 border-b border-border pb-1.5">
                 <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">4</span>
                 Priority-Tiered Goals & Liabilities
               </h2>
@@ -1458,7 +1458,7 @@ export const IPSTemplate = () => {
             {/* Section 5: Strategic Asset Allocation (SAA) & Rebalancing Corridors */}
             <div className="space-y-3">
               <div className="flex items-center justify-between border-b border-border pb-1.5">
-                <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2">
+                <h2 className="text-base font-semibold text-ink flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">5</span>
                   Strategic Asset Allocation (SAA) & Rebalancing Corridors
                 </h2>
@@ -1573,7 +1573,7 @@ export const IPSTemplate = () => {
 
             {/* Section 6: Balance Sheet Inventory & Holdings Schedule */}
             <div className="space-y-3">
-              <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
+              <h2 className="text-base font-semibold text-ink flex items-center gap-2 border-b border-border pb-1.5">
                 <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">6</span>
                 Balance Sheet Inventory & Asset Schedule
               </h2>
@@ -1626,7 +1626,7 @@ export const IPSTemplate = () => {
 
             {/* Section 7: Currency Policy & Hedging Architecture */}
             <div className="space-y-3">
-              <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
+              <h2 className="text-base font-semibold text-ink flex items-center gap-2 border-b border-border pb-1.5">
                 <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">7</span>
                 Currency Architecture & Hedging Mandate
               </h2>
@@ -1649,7 +1649,7 @@ export const IPSTemplate = () => {
 
             {/* Section 8: Rebalancing Protocols & Governance Rules */}
             <div className="space-y-3">
-              <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
+              <h2 className="text-base font-semibold text-ink flex items-center gap-2 border-b border-border pb-1.5">
                 <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">8</span>
                 Execution Protocols & Rebalancing Rules
               </h2>
@@ -1680,7 +1680,7 @@ export const IPSTemplate = () => {
             {/* Section 9: Special Covenants & Mandate Exclusions */}
             {effectiveState.notes && (
               <div className="space-y-3">
-                <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2 border-b border-border pb-1.5">
+                <h2 className="text-base font-semibold text-ink flex items-center gap-2 border-b border-border pb-1.5">
                   <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">9</span>
                   Special Covenants & Mandate Exclusions
                 </h2>
@@ -1693,7 +1693,7 @@ export const IPSTemplate = () => {
             {/* Section 10: Fiduciary Execution & Ratification */}
             <div className="pt-6 border-t-2 border-ink space-y-6">
               <div>
-                <h2 className="text-base font-serif font-bold text-ink flex items-center gap-2">
+                <h2 className="text-base font-semibold text-ink flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-inkfill text-on-inkfill text-[10px] flex items-center justify-center font-sans font-bold">10</span>
                   Fiduciary Execution & Ratification
                 </h2>

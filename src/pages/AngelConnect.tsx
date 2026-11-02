@@ -234,7 +234,7 @@ export const AngelConnect = () => {
         <button
           onClick={() => setActiveTab('connect')}
           className={`pb-3 text-sm font-semibold transition-all relative ${
-            activeTab === 'connect' ? 'text-ink border-b-2 border-brass' : 'text-ink-soft hover:text-ink'
+            activeTab === 'connect' ? 'text-accent border-b-2 border-accent' : 'text-ink-soft hover:text-ink'
           }`}
         >
           API Authentication & Credentials
@@ -242,7 +242,7 @@ export const AngelConnect = () => {
         <button
           onClick={() => setActiveTab('guide')}
           className={`pb-3 text-sm font-semibold transition-all relative ${
-            activeTab === 'guide' ? 'text-ink border-b-2 border-brass' : 'text-ink-soft hover:text-ink'
+            activeTab === 'guide' ? 'text-accent border-b-2 border-accent' : 'text-ink-soft hover:text-ink'
           }`}
         >
           Setup Guide & Portal Form
@@ -250,7 +250,7 @@ export const AngelConnect = () => {
         <button
           onClick={() => setActiveTab('holdings')}
           className={`pb-3 text-sm font-semibold transition-all relative ${
-            activeTab === 'holdings' ? 'text-ink border-b-2 border-brass' : 'text-ink-soft hover:text-ink'
+            activeTab === 'holdings' ? 'text-accent border-b-2 border-accent' : 'text-ink-soft hover:text-ink'
           }`}
         >
           Live Portfolio & Holdings ({holdings.length})
@@ -258,7 +258,7 @@ export const AngelConnect = () => {
         <button
           onClick={() => setActiveTab('scripts')}
           className={`pb-3 text-sm font-semibold transition-all relative ${
-            activeTab === 'scripts' ? 'text-ink border-b-2 border-brass' : 'text-ink-soft hover:text-ink'
+            activeTab === 'scripts' ? 'text-accent border-b-2 border-accent' : 'text-ink-soft hover:text-ink'
           }`}
         >
           Standalone Scripts & CLI
@@ -272,7 +272,7 @@ export const AngelConnect = () => {
           <Card className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-serif text-ink">SmartAPI Connection Parameters</h3>
+                <h3 className="text-base font-semibold text-ink">SmartAPI Connection Parameters</h3>
                 <p className="text-xs text-ink-soft">
                   Enter your credentials from the Angel One SmartAPI Developer Portal.
                 </p>
@@ -506,7 +506,7 @@ export const AngelConnect = () => {
               <div className="absolute top-0 right-0 p-6 opacity-10">
                 <ShieldCheck size={120} />
               </div>
-              <h3 className="text-lg font-serif text-ink mb-2">Network & Identity</h3>
+              <h3 className="text-base font-semibold text-ink mb-2">Network & Identity</h3>
               <p className="text-xs text-faint mb-4">
                 Angel One SmartAPI matches these headers with your registered developer app.
               </p>
@@ -610,7 +610,7 @@ export const AngelConnect = () => {
       {activeTab === 'guide' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="space-y-5">
-            <h3 className="text-lg font-serif text-ink flex items-center gap-2">
+            <h3 className="text-base font-semibold text-ink flex items-center gap-2">
               <Key size={20} className="text-muted" /> Step 1: Create App on Angel One Portal
             </h3>
 
@@ -662,7 +662,7 @@ export const AngelConnect = () => {
           </Card>
 
           <Card className="space-y-5">
-            <h3 className="text-lg font-serif text-ink flex items-center gap-2">
+            <h3 className="text-base font-semibold text-ink flex items-center gap-2">
               <ShieldCheck size={20} className="text-muted" /> Step 2: Enable Automated TOTP
             </h3>
 
@@ -709,13 +709,13 @@ export const AngelConnect = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card className="bg-raised">
               <div className="text-xs text-ink-soft font-medium">Total Live Portfolio Value</div>
-              <div className="text-2xl font-serif font-bold text-ink mt-1">{formatCurrency(totalHoldingsValue)}</div>
+              <div className="text-2xl font-bold font-mono text-ink mt-1">{formatCurrency(totalHoldingsValue)}</div>
               <div className="text-xs text-ink-soft mt-1">{holdings.length} Positions</div>
             </Card>
 
             <Card className="bg-raised">
               <div className="text-xs text-ink-soft font-medium">Total Unrealized P&L</div>
-              <div className={`text-2xl font-serif font-bold mt-1 ${totalPnL >= 0 ? 'text-accent-strong' : 'text-negative'}`}>
+              <div className={`text-2xl font-bold font-mono mt-1 ${totalPnL >= 0 ? 'text-accent-strong' : 'text-negative'}`}>
                 {formatCurrency(totalPnL)}
               </div>
               <div className="text-xs text-ink-soft mt-1">
@@ -742,7 +742,7 @@ export const AngelConnect = () => {
 
           <Card className="overflow-x-auto">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-serif text-ink">Live Angel One Demat Holdings</h3>
+              <h3 className="text-base font-semibold text-ink">Live Angel One Demat Holdings</h3>
               {session && (
                 <Button
                   variant="outline"
@@ -804,7 +804,7 @@ export const AngelConnect = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-serif text-ink flex items-center gap-2">
+              <h3 className="text-base font-semibold text-ink flex items-center gap-2">
                 <Terminal size={18} className="text-muted" /> Node.js Standalone Script
               </h3>
               <Badge variant="outline">scripts/test-smartapi.js</Badge>
@@ -832,7 +832,7 @@ export const AngelConnect = () => {
 
           <Card className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-serif text-ink flex items-center gap-2">
+              <h3 className="text-base font-semibold text-ink flex items-center gap-2">
                 <Terminal size={18} className="text-muted" /> Python Connector Script
               </h3>
               <Badge variant="outline">smartapi_connector.py</Badge>

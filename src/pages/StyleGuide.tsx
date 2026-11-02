@@ -48,47 +48,47 @@ interface Swatch {
 }
 
 const SURFACES: Swatch[] = [
-  { name: 'canvas', bg: '#F4F2ED', pair: 'ink', pairHex: '#171815' },
-  { name: 'surface', bg: '#FBFAF7', pair: 'ink', pairHex: '#171815' },
-  { name: 'raised', bg: '#FFFFFF', pair: 'ink', pairHex: '#171815' },
-  { name: 'sunken', bg: '#ECEAE2', pair: 'ink-soft', pairHex: '#4E524B' },
-  { name: 'inset', bg: '#EFEDE6', pair: 'muted', pairHex: '#6E7268' },
-  { name: 'elevated', bg: '#FFFFFF', pair: 'ink', pairHex: '#171815' },
-  { name: 'deep', bg: '#20231F', pair: 'inverted ink', pairHex: '#F1F1EA' },
+  { name: 'canvas', bg: '#F8FAFC', pair: 'ink', pairHex: '#0F172A' },
+  { name: 'surface', bg: '#FFFFFF', pair: 'ink', pairHex: '#0F172A' },
+  { name: 'raised', bg: '#FFFFFF', pair: 'ink', pairHex: '#0F172A' },
+  { name: 'sunken', bg: '#F1F5F9', pair: 'ink-soft', pairHex: '#334155' },
+  { name: 'inset', bg: '#F8FAFC', pair: 'muted', pairHex: '#64748B' },
+  { name: 'elevated', bg: '#FFFFFF', pair: 'ink', pairHex: '#0F172A' },
+  { name: 'deep', bg: '#0F172A', pair: 'inverted ink', pairHex: '#F8FAFC' },
 ];
 
 const HAIRLINES: Swatch[] = [
-  { name: 'border', bg: '#D9D8D1', pair: 'ink', pairHex: '#171815' },
-  { name: 'border-strong', bg: '#C2C1B7', pair: 'ink', pairHex: '#171815' },
-  { name: 'border-subtle', bg: '#E6E4DC', pair: 'ink-soft', pairHex: '#4E524B' },
+  { name: 'border', bg: '#E2E8F0', pair: 'ink', pairHex: '#0F172A' },
+  { name: 'border-strong', bg: '#CBD5E1', pair: 'ink', pairHex: '#0F172A' },
+  { name: 'border-subtle', bg: '#F1F5F9', pair: 'ink-soft', pairHex: '#334155' },
 ];
 
 const INKS: Swatch[] = [
-  { name: 'ink', bg: '#171815', pair: 'canvas', pairHex: '#F4F2ED' },
-  { name: 'ink-soft', bg: '#4E524B', pair: 'canvas', pairHex: '#F4F2ED' },
-  { name: 'muted', bg: '#6E7268', pair: 'raised', pairHex: '#FFFFFF' },
-  { name: 'faint', bg: '#7B7E76', pair: 'raised', pairHex: '#FFFFFF' },
+  { name: 'ink', bg: '#0F172A', pair: 'canvas', pairHex: '#F8FAFC' },
+  { name: 'ink-soft', bg: '#334155', pair: 'canvas', pairHex: '#F8FAFC' },
+  { name: 'muted', bg: '#64748B', pair: 'raised', pairHex: '#FFFFFF' },
+  { name: 'faint', bg: '#94A3B8', pair: 'raised', pairHex: '#FFFFFF' },
 ];
 
 const ACCENTS: Swatch[] = [
-  { name: 'accent', bg: '#667A63', pair: 'white', pairHex: '#FFFFFF' },
-  { name: 'accent-strong', bg: '#4A5C47', pair: 'white', pairHex: '#FFFFFF' },
-  { name: 'accent-soft', bg: '#E6ECE3', pair: 'accent-strong', pairHex: '#4A5C47' },
-  { name: 'accent-softer', bg: '#EFF3EC', pair: 'accent-strong', pairHex: '#4A5C47' },
-  { name: 'brass', bg: '#B3945A', pair: 'white', pairHex: '#FFFFFF' },
-  { name: 'brass-strong', bg: '#96793F', pair: 'white', pairHex: '#FFFFFF' },
-  { name: 'brass-soft', bg: '#F1EADF', pair: 'brass-strong', pairHex: '#96793F' },
+  { name: 'accent', bg: '#2563EB', pair: 'white', pairHex: '#FFFFFF' },
+  { name: 'accent-strong', bg: '#1D4ED8', pair: 'white', pairHex: '#FFFFFF' },
+  { name: 'accent-soft', bg: '#EFF6FF', pair: 'accent-strong', pairHex: '#1D4ED8' },
+  { name: 'accent-softer', bg: '#F8FAFC', pair: 'accent-strong', pairHex: '#1D4ED8' },
+  { name: 'brass', bg: '#D97706', pair: 'white', pairHex: '#FFFFFF' },
+  { name: 'brass-strong', bg: '#B45309', pair: 'white', pairHex: '#FFFFFF' },
+  { name: 'brass-soft', bg: '#FEF3C7', pair: 'brass-strong', pairHex: '#B45309' },
 ];
 
 const STATUS: Swatch[] = [
-  { name: 'positive', bg: '#557A60', pair: 'white', pairHex: '#FFFFFF' },
-  { name: 'positive-soft', bg: '#E8EFE9', pair: 'positive', pairHex: '#557A60' },
-  { name: 'negative', bg: '#A65954', pair: 'white', pairHex: '#FFFFFF' },
-  { name: 'negative-soft', bg: '#F4E8E6', pair: 'negative', pairHex: '#A65954' },
-  { name: 'warning', bg: '#B07D3E', pair: 'white', pairHex: '#FFFFFF' },
-  { name: 'warning-soft', bg: '#F4EBDD', pair: 'warning', pairHex: '#B07D3E' },
-  { name: 'info', bg: '#64758A', pair: 'white', pairHex: '#FFFFFF' },
-  { name: 'info-soft', bg: '#E9EDF1', pair: 'info', pairHex: '#64758A' },
+  { name: 'positive', bg: '#16A34A', pair: 'white', pairHex: '#FFFFFF' },
+  { name: 'positive-soft', bg: '#F0FDF4', pair: 'positive', pairHex: '#16A34A' },
+  { name: 'negative', bg: '#DC2626', pair: 'white', pairHex: '#FFFFFF' },
+  { name: 'negative-soft', bg: '#FEF2F2', pair: 'negative', pairHex: '#DC2626' },
+  { name: 'warning', bg: '#D97706', pair: 'white', pairHex: '#FFFFFF' },
+  { name: 'warning-soft', bg: '#FFFBEB', pair: 'warning', pairHex: '#D97706' },
+  { name: 'info', bg: '#0284C7', pair: 'white', pairHex: '#FFFFFF' },
+  { name: 'info-soft', bg: '#F0F9FF', pair: 'info', pairHex: '#0284C7' },
 ];
 
 const SwatchGrid = ({ title, items }: { title: string; items: Swatch[] }) => (
@@ -164,13 +164,13 @@ export const StyleGuide = () => {
         <SwatchGrid title="Surfaces" items={SURFACES} />
         <SwatchGrid title="Hairlines" items={HAIRLINES} />
         <SwatchGrid title="Ink" items={INKS} />
-        <SwatchGrid title="Accents — moss & brass" items={ACCENTS} />
+        <SwatchGrid title="Accents & References" items={ACCENTS} />
         <SwatchGrid title="Status" items={STATUS} />
       </section>
 
       {/* ── Typography ── */}
       <section className="space-y-6">
-        <SectionTitle eyebrow="Type" title="Typography" subtitle="Inter carries the UI. Instrument Serif handles heroes and section anchors. JetBrains Mono with tabular figures aligns every amount." />
+        <SectionTitle eyebrow="Type" title="Typography" subtitle="Inter carries the UI and headings with clean, modern hierarchy. JetBrains Mono with tabular figures aligns every amount." />
         <div className="border border-border rounded-lg divide-y divide-border">
           <div className="p-6">
             <p className="eyebrow mb-2">num-hero · system display · 48–72</p>

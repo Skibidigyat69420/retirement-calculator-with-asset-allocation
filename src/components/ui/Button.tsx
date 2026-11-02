@@ -8,15 +8,15 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const variants = {
   primary:
-    'bg-accent text-on-inkfill border border-transparent shadow-[0_1px_2px_rgba(0,0,0,0.12),0_6px_16px_-4px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.12)] hover:bg-accent-strong hover:shadow-[0_2px_4px_rgba(0,0,0,0.14),0_10px_22px_-4px_rgba(0,0,0,0.3)]',
+    'bg-accent text-white border border-transparent hover:bg-accent-strong shadow-xs transition-colors',
   secondary:
-    'bg-raised text-ink border border-border shadow-card hover:border-border-strong hover:bg-surface',
+    'bg-raised text-ink border border-border hover:border-border-strong hover:bg-sunken transition-colors',
   outline:
-    'bg-transparent text-ink border border-border-strong hover:border-accent/50 hover:bg-accent-softer',
+    'bg-transparent text-ink border border-border hover:border-accent hover:bg-accent-soft transition-colors',
   ghost:
-    'bg-transparent text-ink-soft border border-transparent hover:text-ink hover:bg-sunken',
+    'bg-transparent text-ink-soft border border-transparent hover:text-ink hover:bg-sunken transition-colors',
   danger:
-    'bg-negative text-white border border-transparent shadow-[0_1px_2px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.12)] hover:bg-negative/90',
+    'bg-negative text-white border border-transparent hover:bg-negative/90 shadow-xs transition-colors',
 };
 
 const sizes = {

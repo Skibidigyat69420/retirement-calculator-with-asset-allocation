@@ -277,7 +277,7 @@ export const AngelData = () => {
         <Card>
           <div className="flex items-center gap-2 mb-4">
             <User size={18} className="text-warning" />
-            <h3 className="text-lg font-serif text-deep">Profile</h3>
+            <h3 className="text-base font-semibold text-deep">Profile</h3>
           </div>
           {profile?.data ? (
             <div className="space-y-2 text-sm">
@@ -295,7 +295,7 @@ export const AngelData = () => {
         <Card>
           <div className="flex items-center gap-2 mb-4">
             <Wallet size={18} className="text-warning" />
-            <h3 className="text-lg font-serif text-deep">RMS / Funds</h3>
+            <h3 className="text-base font-semibold text-deep">RMS / Funds</h3>
           </div>
           {rms?.data ? (
             <div className="space-y-2 text-sm">
@@ -314,7 +314,7 @@ export const AngelData = () => {
       <Card>
         <div className="flex items-center gap-2 mb-4">
           <Briefcase size={18} className="text-warning" />
-          <h3 className="text-lg font-serif text-deep">Holdings</h3>
+          <h3 className="text-base font-semibold text-deep">Holdings</h3>
           <Badge variant="outline">{holdingList.length}</Badge>
         </div>
         {holdingList.length > 0 ? (
@@ -354,7 +354,7 @@ export const AngelData = () => {
           <Card>
             <div className="flex items-center gap-2 mb-1">
               <PieChartIcon size={18} className="text-warning" />
-              <h3 className="text-lg font-serif text-deep">Holdings Allocation</h3>
+              <h3 className="text-base font-semibold text-deep">Holdings Allocation</h3>
             </div>
             <p className="text-xs text-ink-soft mb-2">
               {holdingRows[0]?.symbol} is the largest position at{' '}
@@ -386,7 +386,7 @@ export const AngelData = () => {
           <Card>
             <div className="flex items-center gap-2 mb-1">
               <Scale size={18} className="text-warning" />
-              <h3 className="text-lg font-serif text-deep">P&L per Holding</h3>
+              <h3 className="text-base font-semibold text-deep">P&L per Holding</h3>
             </div>
             <p className="text-xs text-ink-soft mb-2">
               Unrealised P&L across the book nets to{' '}
@@ -461,7 +461,7 @@ export const AngelData = () => {
       <Card>
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp size={18} className="text-warning" />
-          <h3 className="text-lg font-serif text-deep">Positions</h3>
+          <h3 className="text-base font-semibold text-deep">Positions</h3>
           <Badge variant="outline">{positionList.length}</Badge>
         </div>
         {positionList.length > 0 ? (
@@ -501,7 +501,7 @@ export const AngelData = () => {
       <Card>
         <div className="flex items-center gap-2 mb-4">
           <ListOrdered size={18} className="text-warning" />
-          <h3 className="text-lg font-serif text-deep">Order Book</h3>
+          <h3 className="text-base font-semibold text-deep">Order Book</h3>
           <Badge variant="outline">{orderList.length}</Badge>
         </div>
         {orderList.length > 0 ? (
@@ -539,7 +539,7 @@ export const AngelData = () => {
       <Card>
         <div className="flex items-center gap-2 mb-4">
           <Receipt size={18} className="text-warning" />
-          <h3 className="text-lg font-serif text-deep">Trade Book</h3>
+          <h3 className="text-base font-semibold text-deep">Trade Book</h3>
           <Badge variant="outline">{tradeList.length}</Badge>
         </div>
         {tradeList.length > 0 ? (
