@@ -1,5 +1,5 @@
-import { Suspense, lazy, useEffect, type ComponentType } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Suspense, lazy, useState, type ComponentType } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CalculatorProvider } from './context/CalculatorContext';
 import { AuthProvider } from './context/AuthContext';
@@ -7,9 +7,9 @@ import { ThemeProvider } from './lib/theme';
 import { Layout } from './components/layout/Layout';
 import { Skeleton } from './components/Skeleton';
 
-import { OnboardingPage, INVITATION_KEY } from './pages/OnboardingPage';
 import { AuthPage } from './pages/AuthPage';
-import { useAuth } from './context/AuthContext';
+
+const WORKSPACE_ENTERED_KEY = 'stw.workspace-entered';
 
 function lazyNamed<T extends ComponentType<any>>(
   factory: () => Promise<{ [key: string]: T }>,
@@ -123,22 +123,17 @@ function AnimatedRoutes() {
 }
 
 function WorkspaceRoutes() {
-  const { ready, user, recovery, needsOnboarding, organizationId } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
-  useEffect(() => {
-    const token = new URLSearchParams(location.hash.slice(1)).get('invite');
-    if (token && token.length <= 200) {
-      sessionStorage.setItem(INVITATION_KEY, token);
-      navigate(location.pathname, { replace: true });
-    }
-  }, [location.hash, location.pathname, navigate]);
-  if (!ready) return <p role="status">Restoring your session…</p>;
-  if (recovery || location.pathname === '/reset-password') return <AuthPage key="update-password" mode="update-password" />;
-  if (needsOnboarding || (user && (location.pathname === '/join-practice' || sessionStorage.getItem(INVITATION_KEY)))) return <OnboardingPage invitationOnly={Boolean(user)} />;
-  if (!user) return <Routes><Route path="/signup" element={<AuthPage mode="sign-up" />} /><Route path="/forgot-password" element={<AuthPage mode="reset" />} /><Route path="*" element={<AuthPage />} /></Routes>;
+  const [hasEnteredWorkspace, setHasEnteredWorkspace] = useState(() => sessionStorage.getItem(WORKSPACE_ENTERED_KEY) === 'true');
+
+  if (!hasEnteredWorkspace) {
+    return <AuthPage onEnter={() => {
+      sessionStorage.setItem(WORKSPACE_ENTERED_KEY, 'true');
+      setHasEnteredWorkspace(true);
+    }} />;
+  }
+
   return (
-    <CalculatorProvider key={`${user.id}:${organizationId}`}>
+    <CalculatorProvider key="local-workspace">
       <Layout>
         <Suspense fallback={<RouteFallback />}>
           <AnimatedRoutes />

@@ -2,13 +2,30 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowUpRight, ChevronRight, Download, LayoutGrid, List, RefreshCw, Search, ShieldCheck, Sparkles, UserPlus, Users, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useCalculator } from '../context/CalculatorContext';
 import { ApiRequestError, exportClientBundle, listClients, createClient, type ClientSummary } from '../lib/api';
 import { formatCurrencyCompact } from '../lib/formatters';
 
+const LOCAL_CLIENTS_KEY = 'stw.local-client-directory';
 const initials = (name: string) => name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
+
+function readLocalClients(): ClientSummary[] {
+  try {
+    const saved = localStorage.getItem(LOCAL_CLIENTS_KEY);
+    return saved ? JSON.parse(saved) as ClientSummary[] : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalClients(clients: ClientSummary[]) {
+  localStorage.setItem(LOCAL_CLIENTS_KEY, JSON.stringify(clients));
+}
+
 export function PractitionerPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { ready, user, organizationName } = useAuth();
+  const { updateClient } = useCalculator();
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -29,6 +46,13 @@ export function PractitionerPage() {
 
   const loadClients = useCallback(async () => {
     setLoading(true); setError(null);
+    if (!user) {
+      const localClients = readLocalClients();
+      setClients(localClients);
+      setSelectedId((current) => current ?? localClients[0]?.id ?? null);
+      setLoading(false);
+      return;
+    }
     try {
       const response = await listClients();
       const assigned = response.data.filter((client) => client.assignedPractitioners.some((advisor) => advisor.userId === user?.id));
@@ -39,7 +63,7 @@ export function PractitionerPage() {
     } finally { setLoading(false); }
   }, [user?.id]);
 
-  useEffect(() => { if (ready && user) void loadClients(); }, [ready, user, loadClients]);
+  useEffect(() => { if (ready) void loadClients(); }, [ready, loadClients]);
 
   const filtered = useMemo(() => clients.filter((client) => client.name.toLowerCase().includes(query.toLowerCase()) || client.assignedPractitioners.some((advisor) => advisor.fullName?.toLowerCase().includes(query.toLowerCase()))), [clients, query]);
   const selected = clients.find((client) => client.id === selectedId) ?? filtered[0] ?? null;
@@ -60,6 +84,23 @@ export function PractitionerPage() {
     setCreating(true);
     setError(null);
     try {
+      if (!user) {
+        const created: ClientSummary = {
+          id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          name: `${newClient.firstName.trim()} ${newClient.lastName.trim()}`,
+          status: 'Active',
+          householdId: 'local-household',
+          assignedPractitioners: [{ userId: 'local-adviser', fullName: 'Local workspace', assignmentRole: 'Primary' }],
+          financialSummary: { netWorth: 0, investableAssets: 0, totalAssets: 0, totalLiabilities: 0 },
+        };
+        const nextClients = [...clients, created];
+        writeLocalClients(nextClients);
+        setClients(nextClients);
+        setSelectedId(created.id);
+        setNewClient({ firstName: '', lastName: '', email: '', phone: '' });
+        setAddOpen(false);
+        return;
+      }
       const created = await createClient({
         firstName: newClient.firstName.trim(),
         lastName: newClient.lastName.trim(),
@@ -78,18 +119,21 @@ export function PractitionerPage() {
   };
 
   const openClientWorkspace = (clientId: string) => {
+    const client = clients.find((item) => item.id === clientId);
+    if (!user && client) {
+      updateClient({ name: client.name });
+    }
     localStorage.setItem('stw.activeClientId', clientId);
     window.dispatchEvent(new Event('stw:active-client-changed'));
   };
 
   if (!ready) return <div className="directory-loading">Restoring your practice desk…</div>;
-  if (!user) return <div className="directory-loading">Please sign in to access the advisor database.</div>;
 
   return (
     <div className="directory-page">
       <header className="directory-hero">
         <div>
-          <div className="directory-kicker">{organizationName ?? 'Sound Thesis Wealth'} <span className="slash">/</span> Clients</div>
+          <div className="directory-kicker">{organizationName ?? 'Local workspace'} <span className="slash">/</span> Clients</div>
           <h1>Clients</h1>
           <p>Select a client, create an IPS, and return here for the next review.</p>
         </div>
@@ -118,7 +162,7 @@ export function PractitionerPage() {
             <label><span>Last name *</span><input required value={newClient.lastName} onChange={(event) => setNewClient((value) => ({ ...value, lastName: event.target.value }))} placeholder="Mehta" /></label>
             <label><span>Email</span><input type="email" value={newClient.email} onChange={(event) => setNewClient((value) => ({ ...value, email: event.target.value }))} placeholder="aarav@example.com" /></label>
             <label><span>Phone</span><input type="tel" value={newClient.phone} onChange={(event) => setNewClient((value) => ({ ...value, phone: event.target.value }))} placeholder="+91 98765 43210" /></label>
-            <div className="client-create-note"><UserPlus size={18} /><span>The signed-in adviser is assigned as primary. A versioned starter plan is created automatically.</span></div>
+            <div className="client-create-note"><UserPlus size={18} /><span>{user ? 'The signed-in adviser is assigned as primary. A versioned starter plan is created automatically.' : 'This client is saved in the local workspace. Add financial details in the planning workspace.'}</span></div>
             <div className="client-create-actions"><button type="button" onClick={() => setAddOpen(false)} disabled={creating}>Cancel</button><button type="submit" disabled={creating || !newClient.firstName.trim() || !newClient.lastName.trim()}>{creating ? 'Creating…' : 'Create client'} <ArrowUpRight size={15} /></button></div>
           </form>
         </section>
