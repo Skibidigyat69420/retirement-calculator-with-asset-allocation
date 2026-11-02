@@ -18,7 +18,7 @@ export function AuthPage({ mode = 'sign-in' }: { mode?: AuthMode }) {
   const navigate = useNavigate();
   const { login, signup, resetPassword, updatePassword, sessionError, logout } = useAuth();
   const [email, setEmail] = useState(demoAuth ? (import.meta.env.VITE_DEV_LOGIN_EMAIL ?? 'adviser@soundthesis.local') : '');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState(demoAuth ? '1' : '');
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -35,6 +35,9 @@ export function AuthPage({ mode = 'sign-in' }: { mode?: AuthMode }) {
     setNotice(null);
     setBusy(true);
     try {
+      if (mode === 'sign-in' && demoAuth && password !== '1') {
+        throw new Error('Use the local demo password: 1');
+      }
       if (mode === 'reset') {
         await resetPassword(identity);
         setNotice('If an account exists for that email, check your inbox for a recovery link.');
@@ -75,13 +78,13 @@ export function AuthPage({ mode = 'sign-in' }: { mode?: AuthMode }) {
           <form onSubmit={submit} className="auth-form">
             {mode !== 'reset' && mode !== 'update-password' && <label className="auth-field"><span>Work email</span><div className="auth-input-wrap"><Mail size={17} /><input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@practice.com" /></div></label>}
             {mode === 'reset' && <label className="auth-field"><span>Work email</span><div className="auth-input-wrap"><Mail size={17} /><input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@practice.com" /></div></label>}
-            {mode !== 'reset' && !demoAuth && <label className="auth-field"><span>Password <small>{mode === 'sign-up' ? 'Minimum 8 characters' : ''}</small></span><div className="auth-input-wrap"><LockKeyhole size={17} /><input type={showPassword ? 'text' : 'password'} autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" minLength={mode === 'sign-in' ? undefined : 8} required /><button type="button" className="auth-eye" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button></div></label>}
+            {mode !== 'reset' && <label className="auth-field"><span>Password <small>{mode === 'sign-in' && demoAuth ? 'Local demo: 1' : mode === 'sign-up' ? 'Minimum 8 characters' : ''}</small></span><div className="auth-input-wrap"><LockKeyhole size={17} /><input type={showPassword ? 'text' : 'password'} autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" minLength={mode === 'sign-in' ? undefined : 8} required /><button type="button" className="auth-eye" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button></div></label>}
             {(error || sessionError) && <p role="alert" className="auth-error">{error || sessionError}</p>}
             {notice && <p className="auth-notice"><Check size={16} />{notice}</p>}
             <button className="auth-submit" type="submit" disabled={busy}>{busy ? 'Opening your workspace…' : copy.cta}<ArrowRight size={17} /></button>
           </form>
           {mode === 'sign-in' && !demoAuth && <div className="auth-links"><Link to="/forgot-password">Forgot password?</Link><span>New to Sound Thesis? <Link to="/signup">Create an account</Link></span></div>}
-          {mode === 'sign-in' && demoAuth && <div className="demo-advisors"><div><span className="eyebrow">Local development demo</span><p>Uses the seeded practice and a fictional client record.</p></div><div className="demo-credential"><code>adviser@soundthesis.local</code><span>No password required</span><button type="button" onClick={() => void signIn('adviser@soundthesis.local')} disabled={busy}>Open demo workspace <ArrowRight size={14} /></button></div></div>}
+          {mode === 'sign-in' && demoAuth && <div className="demo-advisors"><div><span className="eyebrow">Local development demo</span><p>Uses the seeded practice and a fictional client record.</p></div><div className="demo-credential"><code>adviser@soundthesis.local</code><span>Password: <code>1</code></span><button type="button" onClick={() => { setPassword('1'); void signIn('adviser@soundthesis.local'); }} disabled={busy}>Open demo workspace <ArrowRight size={14} /></button></div></div>}
           {mode === 'sign-up' && <div className="auth-links"><span>Already have an account? <Link to="/login">Sign in</Link></span></div>}
           {mode === 'update-password' && <div className="auth-links"><Link to="/login" onClick={logout}>Cancel and return to sign in</Link></div>}
           {mode === 'reset' && <div className="auth-links"><Link to="/login">Return to sign in</Link></div>}
