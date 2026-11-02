@@ -322,6 +322,7 @@ function mapServerGoal(row: Record<string, unknown>): Goal {
 
 export const CalculatorProvider = ({ children }: { children: React.ReactNode }) => {
   const { user, organizationId } = useAuth();
+  const backendEnabled = Boolean(user && organizationId);
   const [savedPlans, setSavedPlans] = useState<StoredPlan[]>([]);
   const [, setActivePlanIdState] = useState<string | null>(() => getActivePlanId());
 
@@ -345,7 +346,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
   const backendHydratingRef = useRef(false);
 
   useEffect(() => {
-    if (!user || !organizationId || !activeClientId) return;
+    if (!backendEnabled || !activeClientId) return;
     let cancelled = false;
     backendHydratingRef.current = true;
     backendLoadedRef.current = false;
@@ -396,7 +397,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       }
     })();
     return () => { cancelled = true; };
-  }, [activeClientId, organizationId, user]);
+  }, [activeClientId, backendEnabled, organizationId, user]);
 
   useEffect(() => {
     const syncActiveClient = () => setActiveClientId(localStorage.getItem('stw.activeClientId'));
@@ -495,17 +496,17 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
   // Debounced persistence for client inputs
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => {
-    if (activeClientId) return;
+    if (activeClientId && backendEnabled) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => saveClientData(inputs), 500);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
-  }, [inputs, activeClientId]);
+  }, [inputs, activeClientId, backendEnabled]);
 
   // The database is authoritative for an advisor-selected client. Scalar
   // planning assumptions are versioned on the plan; row-shaped financial
   // records are written through their table endpoints above.
   useEffect(() => {
-    if (!activeClientId || !backendLoadedRef.current || backendHydratingRef.current || !backendPlanIdRef.current) return;
+    if (!backendEnabled || !activeClientId || !backendLoadedRef.current || backendHydratingRef.current || !backendPlanIdRef.current) return;
     const timer = setTimeout(() => {
       const { assets: _assets, liabilities: _liabilities, goals: _goals, monthlyExpenditure: _total, ...scalarSnapshot } = inputs;
       const versionSnapshot = { ...scalarSnapshot, manualTargets, manualAllocationPolicy };
@@ -513,7 +514,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         .catch((error) => console.warn('Plan version save failed:', error));
     }, 700);
     return () => clearTimeout(timer);
-  }, [activeClientId, inputs, manualTargets, manualAllocationPolicy]);
+  }, [activeClientId, backendEnabled, inputs, manualTargets, manualAllocationPolicy]);
 
   // Auto-calibrate assumptions using extracted historical market-data CSV bundle
   useEffect(() => {
@@ -634,7 +635,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       ...prev,
       client: { ...prev.client, ...patch },
     }));
-    if (activeClientId) {
+    if (backendEnabled && activeClientId) {
       const nameParts = String(patch.name || '').trim().split(/\s+/).filter(Boolean);
       // Keep the client row API payload separate from the richer profile
       // snapshot. Household arrays and advisory fields live in the versioned
@@ -651,7 +652,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         void patchClient(activeClientId, body).catch((error) => console.warn('Client profile save failed:', error));
       }
     }
-  }, [activeClientId]);
+  }, [activeClientId, backendEnabled]);
 
   const applyRiskProfileToPlan = useCallback(() => {
     const targets = riskProfile.targets;
@@ -815,7 +816,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     type: 'income' | 'expense' | 'sip' | 'swp',
     values: { annualAmount?: number; monthlyAmount?: number },
   ) => {
-    if (!activeClientId || !backendLoadedRef.current || backendHydratingRef.current) return;
+    if (!backendEnabled || !activeClientId || !backendLoadedRef.current || backendHydratingRef.current) return;
     const id = backendCashflowIdsRef.current[type];
     try {
       if (id) {
@@ -832,7 +833,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     } catch (error) {
       console.warn(`Could not sync ${type} cashflow to the backend:`, error);
     }
-  }, [activeClientId]);
+  }, [activeClientId, backendEnabled]);
 
   const updateInputs = useCallback((patch: Partial<MasterPlanInputs>) => {
     setInputs((prev) => ({
@@ -868,7 +869,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       ...prev,
       liabilities: (prev.liabilities || []).map((liability) => liability.id === id ? { ...liability, ...patch } : liability),
     }));
-    if (activeClientId && id.length > 20) {
+    if (backendEnabled && activeClientId && id.length > 20) {
       const metadata: Record<string, unknown> = {};
       if (patch.tenureYears !== undefined) metadata.tenureYears = patch.tenureYears;
       if (patch.includeInExpenses !== undefined) metadata.includeInExpenses = patch.includeInExpenses;
@@ -880,7 +881,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       if (Object.keys(metadata).length) apiPatch.metadata = metadata;
       void patchFinancialResource(activeClientId, 'liabilities', id, apiPatch).catch((error) => console.warn('Liability save failed:', error));
     }
-  }, [activeClientId]);
+  }, [activeClientId, backendEnabled]);
 
   const addLiability = useCallback((liability?: Partial<Liability>) => {
     const localLiability: Liability = { id: generateId('liability'), name: 'New liability', principal: 0, rate: 0, tenureYears: 1, includeInExpenses: true, ...liability };
@@ -888,22 +889,22 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       ...prev,
       liabilities: [...(prev.liabilities || []), localLiability],
     }));
-    if (activeClientId) void createFinancialResource(activeClientId, 'liabilities', { name: localLiability.name, liabilityType: 'loan', outstandingAmount: localLiability.principal, interestRate: localLiability.rate, monthlyPayment: localLiability.monthlyPayment, metadata: { tenureYears: localLiability.tenureYears, includeInExpenses: localLiability.includeInExpenses } })
+    if (backendEnabled && activeClientId) void createFinancialResource(activeClientId, 'liabilities', { name: localLiability.name, liabilityType: 'loan', outstandingAmount: localLiability.principal, interestRate: localLiability.rate, monthlyPayment: localLiability.monthlyPayment, metadata: { tenureYears: localLiability.tenureYears, includeInExpenses: localLiability.includeInExpenses } })
       .then((row) => setInputs((prev) => ({ ...prev, liabilities: prev.liabilities.map((item) => item.id === localLiability.id ? mapServerLiability(row) : item) })))
       .catch((error) => console.warn('Liability create failed:', error));
-  }, [activeClientId]);
+  }, [activeClientId, backendEnabled]);
 
   const removeLiability = useCallback((id: string) => {
     setInputs((prev) => ({ ...prev, liabilities: (prev.liabilities || []).filter((liability) => liability.id !== id) }));
-    if (activeClientId && id.length > 20) void archiveFinancialResource(activeClientId, 'liabilities', id).catch((error) => console.warn('Liability archive failed:', error));
-  }, [activeClientId]);
+    if (backendEnabled && activeClientId && id.length > 20) void archiveFinancialResource(activeClientId, 'liabilities', id).catch((error) => console.warn('Liability archive failed:', error));
+  }, [activeClientId, backendEnabled]);
 
   const updateAsset = useCallback((id: string, patch: Partial<MasterPlanInputs['assets'][number]>) => {
     setInputs((prev) => ({
       ...prev,
       assets: prev.assets.map((a) => (a.id === id ? { ...a, ...patch } : a)),
     }));
-    if (activeClientId && id.length > 20) {
+    if (backendEnabled && activeClientId && id.length > 20) {
       const apiPatch: Record<string, unknown> = {};
       if (patch.name !== undefined) apiPatch.name = patch.name;
       if (patch.value !== undefined) apiPatch.currentValue = patch.value;
@@ -913,7 +914,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       if (patch.liquidateAtRetirement !== undefined) apiPatch.liquidateAtRetirement = patch.liquidateAtRetirement;
       void patchFinancialResource(activeClientId, 'assets', id, apiPatch).catch((error) => console.warn('Asset save failed:', error));
     }
-  }, [activeClientId]);
+  }, [activeClientId, backendEnabled]);
 
   const addAsset = useCallback((asset?: Partial<MasterPlanInputs['assets'][number]>) => {
     const localAsset = { id: generateId('asset'), name: 'New Asset', value: 0, returnRate: 0, category: 'other' as AssetCategory, currency: 'INR', liquidateAtRetirement: false, ...asset };
@@ -921,18 +922,18 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       ...prev,
       assets: [...prev.assets, localAsset],
     }));
-    if (activeClientId) void createFinancialResource(activeClientId, 'assets', { name: localAsset.name, assetType: localAsset.category, assetCategory: localAsset.category, currency: localAsset.currency, currentValue: localAsset.value, expectedReturn: localAsset.returnRate, liquidateAtRetirement: localAsset.liquidateAtRetirement })
+    if (backendEnabled && activeClientId) void createFinancialResource(activeClientId, 'assets', { name: localAsset.name, assetType: localAsset.category, assetCategory: localAsset.category, currency: localAsset.currency, currentValue: localAsset.value, expectedReturn: localAsset.returnRate, liquidateAtRetirement: localAsset.liquidateAtRetirement })
       .then((row) => setInputs((prev) => ({ ...prev, assets: prev.assets.map((item) => item.id === localAsset.id ? mapServerAsset(row) : item) })))
       .catch((error) => console.warn('Asset create failed:', error));
-  }, [activeClientId]);
+  }, [activeClientId, backendEnabled]);
 
   const removeAsset = useCallback((id: string) => {
     setInputs((prev) => ({
       ...prev,
       assets: prev.assets.filter((a) => a.id !== id),
     }));
-    if (activeClientId && id.length > 20) void archiveFinancialResource(activeClientId, 'assets', id).catch((error) => console.warn('Asset archive failed:', error));
-  }, [activeClientId]);
+    if (backendEnabled && activeClientId && id.length > 20) void archiveFinancialResource(activeClientId, 'assets', id).catch((error) => console.warn('Asset archive failed:', error));
+  }, [activeClientId, backendEnabled]);
 
   const updateSIP = useCallback((patch: Partial<MasterPlanInputs['sip']>) => {
     setInputs((prev) => ({

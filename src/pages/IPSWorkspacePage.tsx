@@ -55,8 +55,8 @@ export function IPSWorkspacePage() {
   const policyReady = Math.abs(allocationTotal - 100) < 0.1;
   const completed: Record<StepId, boolean> = {
     client: clientReady,
-    position: positionReady,
-    policy: policyReady,
+    position: clientReady && positionReady,
+    policy: clientReady && policyReady,
     document: clientReady && policyReady,
   };
 
@@ -170,7 +170,7 @@ export function IPSWorkspacePage() {
             <label className="ips-field"><span>Next review date</span><input type="date" value={inputs.client.reviewDate || ''} onChange={(event) => updateClient({ reviewDate: event.target.value })} /></label>
             <label className="ips-field wide"><span>Lead adviser</span><input value={inputs.client.advisor} onChange={(event) => updateClient({ advisor: event.target.value })} placeholder="Adviser or firm name" /></label>
           </div>
-          <div className="ips-card-footer"><p>{clientReady ? 'Household details are ready.' : 'Add a name and a sensible planning horizon to continue.'}</p><button type="button" onClick={() => advance('position')} className="ips-primary-button">Continue <ArrowRight size={16} /></button></div>
+          <div className="ips-card-footer"><p>{clientReady ? 'Household details are ready. Next, capture the few facts that shape this policy.' : 'Add a name, current age and retirement age to continue.'}</p><button type="button" onClick={() => advance('position')} className="ips-primary-button" disabled={!clientReady}>Continue <ArrowRight size={16} /></button></div>
         </div>}
 
         {step === 'position' && <div className="ips-builder-section">

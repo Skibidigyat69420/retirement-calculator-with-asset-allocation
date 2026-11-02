@@ -9,6 +9,15 @@ import { formatCurrencyCompact } from '../lib/formatters';
 const LOCAL_CLIENTS_KEY = 'stw.local-client-directory';
 const initials = (name: string) => name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
 
+const createSampleClient = (): ClientSummary => ({
+  id: `local-sample-${Date.now()}`,
+  name: 'Rhea and Karan Shah',
+  status: 'Active',
+  householdId: 'local-sample-household',
+  assignedPractitioners: [{ userId: 'local-adviser', fullName: 'Local workspace', assignmentRole: 'Primary' }],
+  financialSummary: { netWorth: 18500000, investableAssets: 13200000, totalAssets: 20100000, totalLiabilities: 1600000 },
+});
+
 function readLocalClients(): ClientSummary[] {
   try {
     const saved = localStorage.getItem(LOCAL_CLIENTS_KEY);
@@ -78,6 +87,19 @@ export function PractitionerPage() {
     setAddOpen(true);
   };
 
+  const selectClient = (client: ClientSummary) => {
+    setSelectedId(client.id);
+    if (!user) updateClient({ name: client.name });
+  };
+
+  const addSampleClient = () => {
+    const sample = createSampleClient();
+    const nextClients = [...clients, sample];
+    writeLocalClients(nextClients);
+    setClients(nextClients);
+    selectClient(sample);
+  };
+
   const submitNewClient = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!newClient.firstName.trim() || !newClient.lastName.trim()) return;
@@ -120,9 +142,7 @@ export function PractitionerPage() {
 
   const openClientWorkspace = (clientId: string) => {
     const client = clients.find((item) => item.id === clientId);
-    if (!user && client) {
-      updateClient({ name: client.name });
-    }
+    if (client) selectClient(client);
     localStorage.setItem('stw.activeClientId', clientId);
     window.dispatchEvent(new Event('stw:active-client-changed'));
   };
@@ -146,9 +166,9 @@ export function PractitionerPage() {
         <section className="client-results" aria-label="Client list">
           {error && <div className="directory-error">{error}</div>}
           {loading && clients.length === 0 && <div className="directory-empty">Loading clients…</div>}
-          {!loading && !error && filtered.length === 0 && <div className="directory-empty"><Users size={26} /><h3>No clients found</h3><p>Try another search or add a client.</p></div>}
-          {view === 'grid' && filtered.length > 0 && <div className="client-grid">{filtered.map((client, index) => <ClientCard key={client.id} client={client} index={index} selected={selected?.id === client.id} onSelect={() => setSelectedId(client.id)} onExport={() => void handleExport(client)} exporting={exporting === client.id} />)}</div>}
-          {view === 'list' && filtered.length > 0 && <div className="client-table"><div className="client-table-head"><span>Client</span><span>Portfolio</span><span>Coverage</span><span>Status</span><span /></div>{filtered.map((client, index) => <ClientRow key={client.id} client={client} index={index} selected={selected?.id === client.id} onSelect={() => setSelectedId(client.id)} />)}</div>}
+          {!loading && !error && filtered.length === 0 && <div className="directory-empty"><Users size={26} /><h3>{clients.length ? 'No clients match this search' : 'Start your client list'}</h3><p>{clients.length ? 'Clear the search or add another client.' : 'Add a real household, or explore the complete workflow with a fictional sample.'}</p>{!clients.length && <div className="directory-empty-actions"><button type="button" onClick={handleAddClient}>Add a client</button><button type="button" onClick={addSampleClient}>Explore a sample</button></div>}</div>}
+          {view === 'grid' && filtered.length > 0 && <div className="client-grid">{filtered.map((client, index) => <ClientCard key={client.id} client={client} index={index} selected={selected?.id === client.id} onSelect={() => selectClient(client)} onExport={() => void handleExport(client)} exporting={exporting === client.id} />)}</div>}
+          {view === 'list' && filtered.length > 0 && <div className="client-table"><div className="client-table-head"><span>Client</span><span>Portfolio</span><span>Coverage</span><span>Status</span><span /></div>{filtered.map((client, index) => <ClientRow key={client.id} client={client} index={index} selected={selected?.id === client.id} onSelect={() => selectClient(client)} />)}</div>}
         </section>
         {selected && <aside className="client-action-panel" aria-label={`Actions for ${selected.name}`}><div className="client-action-panel-head"><span className="client-avatar">{initials(selected.name)}</span><div><h2>{selected.name}</h2><p><i /> {selected.status || 'Active'}</p></div></div><div className="client-action-stats"><div><span>Net worth</span><strong>{formatCurrencyCompact(selected.financialSummary.netWorth)}</strong></div><div><span>Investable assets</span><strong>{formatCurrencyCompact(selected.financialSummary.investableAssets)}</strong></div></div><div className="client-action-buttons"><Link to="/ips" onClick={() => openClientWorkspace(selected.id)} className="client-action-primary">Create IPS <ArrowUpRight size={15} /></Link><Link to="/master-plan" onClick={() => openClientWorkspace(selected.id)}>Open client plan <ArrowUpRight size={15} /></Link><Link to="/reports" onClick={() => openClientWorkspace(selected.id)}>Documents & reports <ArrowUpRight size={15} /></Link></div><button className="client-export-button" onClick={() => void handleExport(selected)} disabled={exporting === selected.id}><Download size={15} /> {exporting === selected.id ? 'Preparing export…' : 'Export client file'}</button><p className="client-action-note"><ShieldCheck size={14} /> Changes stay scoped to this client record.</p></aside>}
       </div>
