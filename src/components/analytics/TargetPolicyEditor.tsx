@@ -203,8 +203,8 @@ export const TargetPolicyEditor = ({ drawerOpen, onDrawerOpen, onDrawerClose }: 
 
       {basis === 'manual' && manualAllocationPolicy && (
         <div className="mt-4 grid grid-cols-2 gap-3 rounded-md border border-border-subtle bg-sunken/40 p-3 text-xs">
-          <div><span className="block text-[10px] font-mono uppercase tracking-wider text-faint">Status</span><strong className="mt-1 block capitalize text-ink">{manualAllocationPolicy.status}</strong></div>
-          <div><span className="block text-[10px] font-mono uppercase tracking-wider text-faint">Governance</span><strong className="mt-1 block text-ink">{manualAllocationPolicy.reviewFrequency} · ±{manualAllocationPolicy.rebalanceThreshold}%</strong></div>
+          <div><span className="block text-xs font-medium text-muted">Status</span><strong className="mt-1 block capitalize text-ink">{manualAllocationPolicy.status}</strong></div>
+          <div><span className="block text-xs font-medium text-muted">Governance</span><strong className="mt-1 block text-ink">{manualAllocationPolicy.reviewFrequency} · ±{manualAllocationPolicy.rebalanceThreshold}%</strong></div>
         </div>
       )}
 

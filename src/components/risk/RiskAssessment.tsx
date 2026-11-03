@@ -106,7 +106,7 @@ export const RiskAssessment = ({
                   <fieldset key={question.id} className="min-w-0">
                     <legend className="sr-only">{question.text}</legend>
                     <div className="flex items-baseline justify-between gap-4 mb-2.5">
-                      <div className="eyebrow">{DIMENSION_LABELS[question.dimension]}</div>
+                      <div className="text-xs font-medium text-muted">{DIMENSION_LABELS[question.dimension]}</div>
                       {typeof selected === 'number' && (
                         <Badge tone="accent" dot={false}>
                           Answered

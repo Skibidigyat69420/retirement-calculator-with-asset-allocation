@@ -2,7 +2,6 @@ import type React from 'react';
 import { cn } from '../../lib/utils';
 
 export interface PageHeaderProps {
-  eyebrow?: string;
   title: string;
   description?: string;
   actions?: React.ReactNode;
@@ -16,7 +15,6 @@ const titleStyles = {
 };
 
 export const PageHeader = ({
-  eyebrow,
   title,
   description,
   actions,
@@ -32,7 +30,6 @@ export const PageHeader = ({
     >
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div className="min-w-0">
-          {eyebrow && <div className="eyebrow mb-2">{eyebrow}</div>}
           <h1 className={titleStyles[variant]}>{title}</h1>
           {description && (
             <p className="mt-2 text-sm sm:text-[15px] text-muted max-w-prose leading-relaxed">

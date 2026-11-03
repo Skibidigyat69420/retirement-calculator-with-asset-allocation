@@ -23,6 +23,7 @@ export interface PlanRecommendation {
     | 'increase_sip'
     | 'redirect_sip'
     | 'adjust_retirement_age'
+    | 'adjust_swp_need'
     | 'build_emergency_reserve'
     | 'rebalance_allocation';
   actionPayload: Record<string, any>;
@@ -49,6 +50,15 @@ export function generatePlanRecommendations(
     .reduce((s: number, a: Asset) => s + (a.value || 0), 0);
   const emergencyMonths = monthlyExpense > 0 ? liquidAssets / monthlyExpense : 6;
   const mcSuccess = wealthResult.monteCarlo?.successRate ?? (wealthResult.sustainable ? 0.85 : 0.45);
+
+  const retSnap =
+    wealthResult.snapshots.find((s) => s.age === inputs.retirementAge) ||
+    wealthResult.snapshots.filter((s) => s.phase === 'accumulation').slice(-1)[0];
+  const projectedCorpus = retSnap?.total || wealthResult.netWorth || 0;
+  const yearsToRet = Math.max(0, inputs.retirementAge - inputs.currentAge);
+  const inflatedMonthlyNeed = (inputs.swp?.monthlyNeedToday || 100000) * Math.pow(1 + inputs.inflation / 100, yearsToRet);
+  const grossAnnualSWP = (inflatedMonthlyNeed * 12) / (1 - (inputs.swp?.taxRate || 10) / 100);
+  const withdrawalRate = projectedCorpus > 0 ? (grossAnnualSWP / projectedCorpus) * 100 : 0;
 
   // 1. Retirement Recommendations (Priority 1)
   const retComp = planHealth.components.find((c) => c.id === 'retirement');
@@ -108,6 +118,39 @@ export function generatePlanRecommendations(
         },
         actionLabel: `Set Retirement to Age ${inputs.retirementAge + 2}`,
       });
+    }
+
+    if (withdrawalRate > 5.0 && projectedCorpus > 0) {
+      const safeGrossAnnual = projectedCorpus * 0.045; // 4.5% safe benchmark
+      const safeInflatedMonthly = (safeGrossAnnual * (1 - (inputs.swp?.taxRate || 10) / 100)) / 12;
+      const safeTodayMonthly = Math.max(10000, Math.round((safeInflatedMonthly / Math.pow(1 + inputs.inflation / 100, yearsToRet)) / 5000) * 5000);
+      if (safeTodayMonthly < (inputs.swp?.monthlyNeedToday || 100000)) {
+        recommendations.push({
+          id: 'rec-swp-drawdown-calibrate',
+          priority: 1,
+          category: 'Retirement',
+          title: `Calibrate SWP Drawdown to ${formatCurrencyCompact(safeTodayMonthly)}/mo`,
+          impact: `Brings initial withdrawal rate down from ${withdrawalRate.toFixed(1)}% to ≤4.5%, preserving capital longevity`,
+          reason: `Initial gross retirement withdrawal rate is currently ${withdrawalRate.toFixed(1)}%, exceeding safe decumulation corridors and threatening late-stage corpus solvency.`,
+          confidence: 94,
+          supportingCalculations: [
+            `Current SWP Need: ${formatCurrencyCompact(inputs.swp?.monthlyNeedToday || 100000)}/mo (${withdrawalRate.toFixed(1)}% gross rate)`,
+            `Calibrated Safe Need: ${formatCurrencyCompact(safeTodayMonthly)}/mo (4.50% corridor)`,
+            `Projected Corpus at Age ${inputs.retirementAge}: ${formatCurrencyCompact(projectedCorpus)}`,
+          ],
+          whyExplainer: {
+            current: `${withdrawalRate.toFixed(1)}% initial gross withdrawal rate`,
+            target: '≤ 4.50% institutional safe withdrawal corridor',
+            driver: 'Corpus protection against early-stage sequence of returns risk',
+            benefit: `Ensures living cashflows sustain reliably through age ${inputs.lifeExpectancy}`,
+          },
+          actionType: 'adjust_swp_need',
+          actionPayload: {
+            newMonthlyNeed: safeTodayMonthly,
+          },
+          actionLabel: `Calibrate SWP to ${formatCurrencyCompact(safeTodayMonthly)}/mo`,
+        });
+      }
     }
   }
 

@@ -171,7 +171,7 @@ export const GoalConflictMatrix = () => {
             <tr>
               <th
                 scope="col"
-                className="sticky left-0 bg-surface z-10 p-2.5 text-left font-medium uppercase tracking-[0.08em] text-faint border-b border-border min-w-24"
+                className="sticky left-0 bg-surface z-10 p-2.5 text-left font-medium text-xs text-muted border-b border-border min-w-24"
               >
                 <span className="inline-flex items-center gap-1.5">
                   <Grid3x3 size={12} strokeWidth={1.6} aria-hidden="true" />
@@ -183,7 +183,7 @@ export const GoalConflictMatrix = () => {
                   key={m.id}
                   scope="col"
                   title={m.full}
-                  className="p-2 text-center font-medium uppercase tracking-[0.06em] text-muted border-b border-border min-w-14"
+                  className="p-2 text-center font-medium text-xs text-muted border-b border-border min-w-14"
                 >
                   {m.short}
                 </th>
@@ -196,10 +196,10 @@ export const GoalConflictMatrix = () => {
                 <th
                   scope="row"
                   title={row.full}
-                  className="sticky left-0 bg-surface z-10 p-2.5 text-left font-medium uppercase tracking-[0.06em] text-muted whitespace-nowrap"
+                  className="sticky left-0 bg-surface z-10 p-2.5 text-left font-medium text-xs text-muted whitespace-nowrap"
                 >
                   {row.short}
-                  <span className="block normal-case tracking-normal text-faint">{row.year}</span>
+                  <span className="block text-faint">{row.year}</span>
                 </th>
                 {members.map((col) => {
                   const kind = cellKind(row.id, col.id);

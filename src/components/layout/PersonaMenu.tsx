@@ -63,7 +63,7 @@ export const PersonaMenu = () => {
           className="absolute right-0 top-full mt-1.5 w-[22rem] max-w-[calc(100vw-2rem)] bg-raised border border-border rounded-lg shadow-popover py-1.5 z-50"
         >
           <div className="px-3 pt-1.5 pb-1">
-            <span className="eyebrow">Sample personas</span>
+            <span className="text-xs font-semibold text-ink">Sample personas</span>
             <p className="mt-1 text-[11px] text-muted leading-snug">
               Fully-built demo workspaces — pick one to explore the planner.
             </p>

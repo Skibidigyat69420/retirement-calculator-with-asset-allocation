@@ -67,7 +67,7 @@ export const demoClientInputs = (): MasterPlanInputs => ({
   client: {
     name: 'John Doe',
     email: 'john.doe@example.com',
-    advisor: 'Sound Thesis Wealth Advisory',
+    advisor: 'SoundThesis Capital',
     reviewDate: '2026-09-12',
     notes: 'Primary focus is securing early retirement at age 50 with essential children education funded. Wants to explore aggressive equity growth.',
     maritalStatus: 'Married',
@@ -267,7 +267,7 @@ export const sampleClientInputs = (): MasterPlanInputs => ({
   client: {
     name: 'Sample Household',
     email: 'sharma.family@example.com',
-    advisor: 'Sound Thesis Wealth Advisory',
+    advisor: 'SoundThesis Capital',
     reviewDate: '2026-09-14',
     notes: 'Dual-income nuclear family with two school-going children and one dependent retired parent. Focus on retirement at 60, education funding for both children, and parent healthcare provisioning. Review allocation annually and rebalance SIPs each April.',
     address: '42 Palm Grove Road, Indiranagar, Bengaluru 560038',
@@ -384,7 +384,7 @@ export const aaravClientInputs = (): MasterPlanInputs => ({
   client: {
     name: 'Aarav Mehta',
     email: 'aarav.mehta@example.com',
-    advisor: 'Sound Thesis Wealth Advisory',
+    advisor: 'SoundThesis Capital',
     reviewDate: '2026-09-15',
     notes: 'Single, no dependents, aggressive FIRE aspirant. Wants the FIRE timeline stress-tested and the MBA / sabbatical trip sequenced without denting the corpus.',
     address: 'B-1204, Prestige Towers, Koramangala, Bengaluru 560034',
@@ -463,7 +463,7 @@ export const vikramClientInputs = (): MasterPlanInputs => ({
   client: {
     name: 'Vikram Rao',
     email: 'vikram.rao@example.com',
-    advisor: 'Sound Thesis Wealth Advisory',
+    advisor: 'SoundThesis Capital',
     reviewDate: '2026-09-15',
     notes: 'Started serious saving only at 42; now playing catch-up for retirement at 60 while funding two educations and elder care. Review the legacy ULIP and term cover sizing.',
     address: '14 Marine Crest, Bandra West, Mumbai 400050',
@@ -573,7 +573,7 @@ export const khannaClientInputs = (): MasterPlanInputs => ({
   client: {
     name: 'Sunita & Ashok Khanna',
     email: 'khanna.household@example.com',
-    advisor: 'Sound Thesis Wealth Advisory',
+    advisor: 'SoundThesis Capital',
     reviewDate: '2026-09-15',
     notes: 'Three years from retirement. Core question is how to turn the corpus into a reliable monthly income without taking sequence-of-returns risk. Estate basics (nominations, will) not yet done.',
     address: '8-2-293, Road No. 12, Banjara Hills, Hyderabad 500034',

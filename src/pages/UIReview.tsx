@@ -15,9 +15,8 @@ import { NumberInput } from '../components/ui/NumberInput';
 export const UIReview = () => (
   <div className="space-y-10 pb-12">
     <PageHeader
-      eyebrow="Internal / UI review"
       title="Editorial financial intelligence"
-      description="A compact reference surface for checking the Sound Thesis language across themes, states and density levels."
+      description="A compact reference surface for checking the SoundThesis Capital language across themes, states and density levels."
       actions={<ThemeToggle variant="segmented" />}
     />
 
@@ -74,16 +73,15 @@ export const UIReview = () => (
       <div className="space-y-4">
         <SectionHeader title="Data states" description="The blank state should feel intentional, not broken." />
         <EmptyState
-          eyebrow="No plan yet"
           title="Build the first view of the future"
-          description="Add a client profile, then add the numbers that matter. Sound Thesis will keep the result honest until there is enough information to model."
+          description="Add a client profile, then add the numbers that matter. SoundThesis Capital will keep the result honest until there is enough information to model."
           action={<Button size="sm"><Check size={14} /> Start a plan</Button>}
         />
       </div>
       <div className="space-y-4">
         <SectionHeader title="Dense practice row" description="A client directory uses hairlines and hierarchy instead of a wall of cards." />
         <Card className="p-0 overflow-hidden">
-          <div className="grid grid-cols-[1.4fr_.8fr_.8fr] gap-3 border-b border-border px-4 py-3 eyebrow">
+          <div className="grid grid-cols-[1.4fr_.8fr_.8fr] gap-3 border-b border-border px-4 py-3 text-xs font-medium text-muted">
             <span>Client</span><span>Plan</span><span>Review</span>
           </div>
           {[

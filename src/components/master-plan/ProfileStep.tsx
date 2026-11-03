@@ -103,25 +103,27 @@ export const ProfileStep = ({
   const monthlyIncomeTotal = Math.round(annualIncomeFromSources(incomeSources) / 12);
 
   return (
-    <div className="border-t border-border">
-      <header className="py-4 flex items-start justify-between gap-5 flex-wrap">
+    <div>
+      <div className="py-2.5 pb-4 flex items-center justify-between gap-4 flex-wrap border-b border-border/60 mb-6">
         <div>
-          <div className="eyebrow">Step 01 · Client profile</div>
-          <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">Start with the household</h2>
-          <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
-            Capture the story behind the numbers. These notes stay with the plan so the next review starts with context, not a blank page.
+          <h2 className="text-lg font-semibold text-ink">Client Identity & Household Structure</h2>
+          <p className="text-xs text-muted max-w-prose mt-0.5">
+            Capture family members, timeline horizon, cash inflows, and insurance protection.
           </p>
         </div>
-        <div className="w-full sm:w-44 shrink-0" aria-label={`${completion}% profile captured`}>
-          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-muted">
-            <UserRound size={13} aria-hidden="true" />
-            <span>{completion}% captured</span>
+        <div className="w-full sm:w-48 shrink-0" aria-label={`${completion}% profile captured`}>
+          <div className="flex items-center justify-between text-xs text-muted mb-1 font-medium">
+            <span className="flex items-center gap-1.5">
+              <UserRound size={13} aria-hidden="true" />
+              <span>Profile capture</span>
+            </span>
+            <span className="font-semibold text-ink">{completion}%</span>
           </div>
-          <div className="mt-1.5 h-[3px] rounded-full bg-border overflow-hidden">
+          <div className="h-1.5 rounded-full bg-sunken overflow-hidden border border-border/50">
             <span className="block h-full rounded-full bg-accent transition-[width] duration-200" style={{ width: `${completion}%` }} />
           </div>
         </div>
-      </header>
+      </div>
 
       <FormSection
         index="01"
@@ -142,7 +144,7 @@ export const ProfileStep = ({
             label="Lead advisor"
             value={inputs.client?.advisor || ''}
             onChange={(e) => updateClient({ advisor: e.target.value })}
-            placeholder="e.g. Sound Thesis Private Wealth"
+            placeholder="e.g. SoundThesis Capital"
           />
           <Input
             layout="inline"

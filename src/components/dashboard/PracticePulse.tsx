@@ -40,7 +40,7 @@ export const PracticePulse = () => {
 
       <div className="relative p-6 sm:p-8">
         <div className="flex items-baseline justify-between gap-4 border-b border-border pb-4">
-          <div className="eyebrow">Practice pulse</div>
+          <h3 className="text-sm font-semibold text-ink">Practice pulse</h3>
           <div className="font-mono text-[11px] text-faint tabular-nums">
             {inputs.assets.length} holding{inputs.assets.length === 1 ? '' : 's'}
             {inputs.goals.length > 0 && ` · ${inputs.goals.length} goal${inputs.goals.length === 1 ? '' : 's'}`}

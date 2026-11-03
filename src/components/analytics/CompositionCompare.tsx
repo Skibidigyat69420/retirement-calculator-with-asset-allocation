@@ -40,7 +40,7 @@ const StackedBar = ({
 }) => (
   <div>
     <div className="flex items-baseline justify-between gap-3 mb-1.5">
-      <span className="eyebrow">{label}</span>
+      <span className="text-xs font-semibold text-ink">{label}</span>
       <span className={cn('font-mono text-xs tabular-nums', emphasized ? 'text-ink font-semibold' : 'text-muted')}>
         {amount}
       </span>
@@ -116,7 +116,7 @@ export const CompositionCompare = ({
         <div className="mt-6 overflow-x-auto" tabIndex={0} role="region" aria-label="Allocation by asset class">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-border text-left font-mono text-[10px] uppercase tracking-[0.08em] text-faint">
+              <tr className="border-b border-border text-left text-xs font-medium text-muted">
                 <th className="py-2 pr-4 font-medium">Asset class</th>
                 <th className="py-2 pr-4 text-right font-medium">Current</th>
                 <th className="py-2 pr-4 text-right font-medium">Target</th>
@@ -168,7 +168,7 @@ export const CompositionCompare = ({
         {/* Rebalancing needed — quiet action list */}
         {rebalancingActions.length > 0 && (
           <div className="mt-6 border-t border-border-subtle pt-4">
-            <div className="eyebrow mb-3">Rebalancing needed</div>
+            <div className="text-xs font-semibold text-ink mb-3">Rebalancing needed</div>
             <ul className="divide-y divide-border-subtle">
               {rebalancingActions.map((r) => {
                 const severity = Math.abs(r.currentPct - r.targetPct) > 10 ? 'high' : Math.abs(r.currentPct - r.targetPct) > 5 ? 'medium' : 'low';

@@ -17,7 +17,7 @@ interface DriftMetricProps {
 
 const DriftMetric = ({ label, value, sub, badge }: DriftMetricProps) => (
   <div>
-    <div className="eyebrow">{label}</div>
+    <div className="text-xs font-medium text-muted">{label}</div>
     <div className="mt-1.5 flex items-baseline gap-2 flex-wrap min-h-6">
       <span className="font-mono tabular-nums text-base font-medium text-ink">
         {value ?? '—'}
@@ -145,7 +145,7 @@ export const WhatChangedPanel = () => {
         <div className="flex items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
             <GitCommit size={14} strokeWidth={1.6} className="text-muted" aria-hidden="true" />
-            <span className="eyebrow">Decision diffs</span>
+            <span className="text-xs font-semibold text-ink">Decision diffs</span>
             <span className="font-mono text-[10px] text-faint tabular-nums">
               {decisionHistory.length} recorded
             </span>

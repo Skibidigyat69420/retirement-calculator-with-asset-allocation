@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState, type ComponentType } from 'react';
+import { Suspense, lazy, type ComponentType } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CalculatorProvider } from './context/CalculatorContext';
@@ -8,8 +8,6 @@ import { Layout } from './components/layout/Layout';
 import { Skeleton } from './components/Skeleton';
 
 import { AuthPage } from './pages/AuthPage';
-
-const WORKSPACE_ENTERED_KEY = 'stw.workspace-entered';
 
 function lazyNamed<T extends ComponentType<any>>(
   factory: () => Promise<{ [key: string]: T }>,
@@ -114,6 +112,7 @@ function AnimatedRoutes() {
           <Route path="/practitioner" element={<Practitioner />} />
           <Route path="/style-guide" element={<StyleGuide />} />
           <Route path="/ui-review" element={<UIReview />} />
+          <Route path="/welcome" element={<AuthPage onEnter={() => {}} />} />
           <Route path="/login" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
@@ -123,15 +122,6 @@ function AnimatedRoutes() {
 }
 
 function WorkspaceRoutes() {
-  const [hasEnteredWorkspace, setHasEnteredWorkspace] = useState(() => sessionStorage.getItem(WORKSPACE_ENTERED_KEY) === 'true');
-
-  if (!hasEnteredWorkspace) {
-    return <AuthPage onEnter={() => {
-      sessionStorage.setItem(WORKSPACE_ENTERED_KEY, 'true');
-      setHasEnteredWorkspace(true);
-    }} />;
-  }
-
   return (
     <CalculatorProvider key="local-workspace">
       <Layout>

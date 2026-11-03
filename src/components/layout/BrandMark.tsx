@@ -6,7 +6,7 @@ interface LogoMarkProps {
 }
 
 /**
- * SOUND THESIS monogram — two ascending bars inside a hairline square.
+ * SoundThesis Capital monogram — two ascending bars inside a hairline square.
  * Abstract "thesis/continuity" mark: a first position established, a second
  * rising above it. Token-driven (currentCol + accent/brass) so it works in
  * both themes and inverts on dark accents.
@@ -33,11 +33,11 @@ export const LogoMark = ({ size = 28, className }: LogoMarkProps) => (
   </svg>
 );
 
-/** 'Sound Thesis' wordmark with a quiet WEALTH eyebrow. */
-export const Wordmark = ({ eyebrow = true, className }: { eyebrow?: boolean; className?: string }) => (
+/** 'SoundThesis Capital' wordmark. */
+export const Wordmark = ({ subtitle, className }: { subtitle?: string; className?: string }) => (
   <span className={cn('flex flex-col leading-none min-w-0', className)}>
-    <span className="font-display text-[17px] tracking-tight text-ink whitespace-nowrap">Sound Thesis</span>
-    {eyebrow && <span className="eyebrow mt-1">Wealth</span>}
+    <span className="font-display text-[15px] font-semibold tracking-tight text-ink whitespace-nowrap">SoundThesis Capital</span>
+    {subtitle && <span className="text-[11px] text-muted tracking-wide mt-1">{subtitle}</span>}
   </span>
 );
 

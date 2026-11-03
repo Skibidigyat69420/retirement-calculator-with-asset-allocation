@@ -181,7 +181,7 @@ export const IPSTemplate = () => {
     if (isLinkedToPlan) {
       return {
         name: inputs.client?.name || '',
-        advisor: inputs.client?.advisor || 'Sound Thesis Wealth Advisory',
+        advisor: inputs.client?.advisor || 'SoundThesis Capital',
         reviewDate: inputs.client?.reviewDate || new Date().toISOString().split('T')[0],
         currentAge: inputs.currentAge,
         retirementAge: inputs.retirementAge,
@@ -594,7 +594,6 @@ export const IPSTemplate = () => {
         <SectionTitle
           title="Investment Policy Statement"
           subtitle="Institutional-grade governance charter codifying fiduciary objectives, asset allocation corridors, risk boundaries, and rebalancing protocols for private wealth mandates."
-          badge="Policy Statement"
         />
 
         {/* Dual Mode Switch */}
@@ -639,7 +638,7 @@ export const IPSTemplate = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-accent-strong">
+                    <span className="text-xs font-semibold text-accent-strong">
                       Live Plan Synchronization Active
                     </span>
                     <span className="inline-block w-2 h-2 rounded-full bg-accent-softer0 animate-pulse" />
@@ -674,7 +673,7 @@ export const IPSTemplate = () => {
                   <Unlink size={16} className="text-ink-soft" />
                 </div>
                 <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-ink">
+                  <span className="text-xs font-semibold text-ink">
                     Independent Sandbox Draft Mode
                   </span>
                   <p className="text-xs text-ink-soft mt-0.5">
@@ -709,7 +708,7 @@ export const IPSTemplate = () => {
 
           {/* Client Profile Section */}
           <div className="space-y-3">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-ink flex items-center justify-between">
+            <div className="text-xs font-semibold text-ink flex items-center justify-between">
               <span>Client Identification</span>
               {isLinkedToPlan && (
                 <span className="text-[10px] font-normal text-accent-strong flex items-center gap-1">
@@ -730,7 +729,7 @@ export const IPSTemplate = () => {
               label="Fiduciary Advisor / Firm"
               value={effectiveClient.advisor}
               onChange={(v) => handleClientChange({ advisor: v })}
-              placeholder="e.g. Sound Thesis Wealth Advisory"
+              placeholder="e.g. SoundThesis Capital"
             />
             <LabelledDate
               id={fieldId('reviewDate')}
@@ -776,14 +775,14 @@ export const IPSTemplate = () => {
 
           {/* Investment Objectives & Risk Policy */}
           <div className="space-y-3 pt-3 border-t border-border">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-ink">
+            <div className="text-xs font-semibold text-ink">
               Objectives & Risk Boundaries
             </div>
 
             <div>
               <label
                 htmlFor={fieldId('returnObjective')}
-                className="block text-[11px] font-semibold uppercase tracking-wider text-ink-soft mb-1"
+                className="block text-xs font-medium text-ink mb-1"
               >
                 Return Objective & Hurdle Rate
               </label>
@@ -801,7 +800,7 @@ export const IPSTemplate = () => {
               <div className="flex items-center justify-between mb-1">
                 <label
                   htmlFor={fieldId('riskTolerance')}
-                  className="block text-[11px] font-semibold uppercase tracking-wider text-ink-soft"
+                  className="block text-xs font-medium text-ink"
                 >
                   Behavioral Risk Tolerance
                 </label>
@@ -841,7 +840,7 @@ export const IPSTemplate = () => {
           {/* Strategic Asset Allocation Targets */}
           <div className="space-y-3 pt-3 border-t border-border">
             <div className="flex items-center justify-between">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-ink">
+              <div className="text-xs font-semibold text-ink">
                 Strategic Asset Allocation (SAA)
               </div>
               {isLinkedToPlan && manualTargets && (
@@ -892,7 +891,7 @@ export const IPSTemplate = () => {
           <div className="space-y-3 pt-3 border-t border-border">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-[11px] font-bold uppercase tracking-wider text-ink">
+                <div className="text-xs font-semibold text-ink">
                   Holdings & Asset Inventory
                 </div>
                 <div className="text-[11px] text-muted font-mono">
@@ -913,7 +912,7 @@ export const IPSTemplate = () => {
               {effectiveAssets.map((a) => (
                 <div key={a.id} className="grid grid-cols-12 gap-1.5 items-end bg-surface border border-border rounded-xl p-2 text-xs">
                   <div className="col-span-5">
-                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-muted mb-0.5" htmlFor={`asset-name-${a.id}`}>
+                    <label className="block text-xs font-medium text-muted mb-0.5" htmlFor={`asset-name-${a.id}`}>
                       Holding
                     </label>
                     <input
@@ -926,7 +925,7 @@ export const IPSTemplate = () => {
                     />
                   </div>
                   <div className="col-span-3">
-                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-muted mb-0.5" htmlFor={`asset-category-${a.id}`}>
+                    <label className="block text-xs font-medium text-muted mb-0.5" htmlFor={`asset-category-${a.id}`}>
                       Class
                     </label>
                     <select
@@ -944,7 +943,7 @@ export const IPSTemplate = () => {
                     </select>
                   </div>
                   <div className="col-span-3">
-                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-muted mb-0.5" htmlFor={`asset-value-${a.id}`}>
+                    <label className="block text-xs font-medium text-muted mb-0.5" htmlFor={`asset-value-${a.id}`}>
                       Value (₹)
                     </label>
                     <input
@@ -989,7 +988,7 @@ export const IPSTemplate = () => {
           {/* Goals & Liabilities Section */}
           <div className="space-y-3 pt-3 border-t border-border">
             <div className="flex items-center justify-between">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-ink">
+              <div className="text-xs font-semibold text-ink">
                 Goals & Target Liabilities
               </div>
               <Button
@@ -1006,7 +1005,7 @@ export const IPSTemplate = () => {
               {effectiveGoals.map((g) => (
                 <div key={g.id} className="grid grid-cols-12 gap-1.5 items-end bg-surface border border-border rounded-xl p-2 text-xs">
                   <div className="col-span-4">
-                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-muted mb-0.5" htmlFor={`goal-name-${g.id}`}>
+                    <label className="block text-xs font-medium text-muted mb-0.5" htmlFor={`goal-name-${g.id}`}>
                       Goal
                     </label>
                     <input
@@ -1019,7 +1018,7 @@ export const IPSTemplate = () => {
                     />
                   </div>
                   <div className="col-span-3">
-                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-muted mb-0.5" htmlFor={`goal-priority-${g.id}`}>
+                    <label className="block text-xs font-medium text-muted mb-0.5" htmlFor={`goal-priority-${g.id}`}>
                       Tier
                     </label>
                     <select
@@ -1035,7 +1034,7 @@ export const IPSTemplate = () => {
                     </select>
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-muted mb-0.5" htmlFor={`goal-years-${g.id}`}>
+                    <label className="block text-xs font-medium text-muted mb-0.5" htmlFor={`goal-years-${g.id}`}>
                       Years
                     </label>
                     <input
@@ -1049,7 +1048,7 @@ export const IPSTemplate = () => {
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-[9px] font-semibold uppercase tracking-wider text-muted mb-0.5" htmlFor={`goal-target-${g.id}`}>
+                    <label className="block text-xs font-medium text-muted mb-0.5" htmlFor={`goal-target-${g.id}`}>
                       Target
                     </label>
                     <input
@@ -1082,7 +1081,7 @@ export const IPSTemplate = () => {
 
           {/* Currency Architecture & Hedging */}
           <div className="space-y-3 pt-3 border-t border-border">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-ink">
+            <div className="text-xs font-semibold text-ink">
               Currency & Hedging Architecture
             </div>
             <LabelledInput
@@ -1103,7 +1102,7 @@ export const IPSTemplate = () => {
             <div>
               <label
                 htmlFor={fieldId('hedgePolicy')}
-                className="block text-[11px] font-semibold uppercase tracking-wider text-ink-soft mb-1"
+                className="block text-xs font-medium text-ink mb-1"
               >
                 Hedging Policy Mandate
               </label>
@@ -1119,13 +1118,13 @@ export const IPSTemplate = () => {
 
           {/* Implementation & Governance Rules */}
           <div className="space-y-3 pt-3 border-t border-border">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-ink">
+            <div className="text-xs font-semibold text-ink">
               Rebalancing Protocols & Governance
             </div>
             <div>
               <label
                 htmlFor={fieldId('implementationReview')}
-                className="block text-[11px] font-semibold uppercase tracking-wider text-ink-soft mb-1"
+                className="block text-xs font-medium text-ink mb-1"
               >
                 Rebalancing Trigger Policy
               </label>
@@ -1140,7 +1139,7 @@ export const IPSTemplate = () => {
             <div>
               <label
                 htmlFor={fieldId('notes')}
-                className="block text-[11px] font-semibold uppercase tracking-wider text-ink-soft mb-1"
+                className="block text-xs font-medium text-ink mb-1"
               >
                 Special Covenants & Exclusions
               </label>
@@ -1199,7 +1198,7 @@ export const IPSTemplate = () => {
 
           {/* Saved Documents Drawer */}
           <div className="pt-3 border-t border-border">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-ink flex items-center gap-2 mb-2">
+            <h4 className="text-xs font-semibold text-ink flex items-center gap-2 mb-2">
               <FolderOpen size={14} className="text-ink-soft" /> Saved Policy Documents
             </h4>
             {savedFiles.length === 0 ? (
@@ -1257,8 +1256,8 @@ export const IPSTemplate = () => {
           <div className="space-y-8 max-w-none">
             {/* Institutional Header Banner */}
             <div className="border-b-2 border-ink pb-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs uppercase tracking-widest text-muted font-semibold mb-2">
-                <span>Sound Thesis Wealth Advisory • Private Wealth Management</span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted font-medium mb-2">
+                <span>SoundThesis Capital • Private Wealth Management</span>
                 <span className="font-mono text-ink-soft">
                   REF: IPS-{effectiveClient.reviewDate.replace(/-/g, '')}
                 </span>
@@ -1267,25 +1266,25 @@ export const IPSTemplate = () => {
                 Investment Policy Statement
               </h1>
               <p className="text-sm text-ink-soft mt-1">
-                Sound Thesis Institutional Wealth Policy Standard
+                SoundThesis Capital Institutional Policy Standard
               </p>
 
               {/* Document Meta Row */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-4 border-t border-border text-xs">
                 <div>
-                  <span className="text-muted block text-[10px] font-semibold uppercase tracking-wider">Client Mandate</span>
+                  <span className="text-muted block text-xs font-medium">Client Mandate</span>
                   <span className="font-semibold text-ink">{effectiveClient.name || 'Private Client'}</span>
                 </div>
                 <div>
-                  <span className="text-muted block text-[10px] font-semibold uppercase tracking-wider">Fiduciary Advisor</span>
-                  <span className="font-semibold text-ink">{effectiveClient.advisor || 'Sound Thesis Advisory'}</span>
+                  <span className="text-muted block text-xs font-medium">Fiduciary Advisor</span>
+                  <span className="font-semibold text-ink">{effectiveClient.advisor || 'SoundThesis Capital'}</span>
                 </div>
                 <div>
-                  <span className="text-muted block text-[10px] font-semibold uppercase tracking-wider">Portfolio NAV</span>
+                  <span className="text-muted block text-xs font-medium">Portfolio NAV</span>
                   <span className="font-semibold text-ink font-mono">{formatCurrency(effectiveNetWorth)}</span>
                 </div>
                 <div>
-                  <span className="text-muted block text-[10px] font-semibold uppercase tracking-wider">Ratification Status</span>
+                  <span className="text-muted block text-xs font-medium">Ratification Status</span>
                   <span className="inline-flex items-center gap-1 font-semibold text-accent-strong">
                     <ShieldCheck size={13} /> Active Mandate
                   </span>
@@ -1343,7 +1342,7 @@ export const IPSTemplate = () => {
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
                   <div className="bg-raised border border-border rounded-lg p-2.5">
-                    <span className="text-muted block uppercase font-semibold text-[10px]">Risk Profile</span>
+                    <span className="text-muted block font-medium text-xs">Risk Profile</span>
                     <span className="font-bold text-ink text-sm">
                       {effectiveRiskTolerance.charAt(0).toUpperCase() + effectiveRiskTolerance.slice(1)}
                     </span>
@@ -1354,14 +1353,14 @@ export const IPSTemplate = () => {
                     )}
                   </div>
                   <div className="bg-raised border border-border rounded-lg p-2.5">
-                    <span className="text-muted block uppercase font-semibold text-[10px]">Max Tolerable Drawdown</span>
+                    <span className="text-muted block font-medium text-xs">Max Tolerable Drawdown</span>
                     <span className="font-bold text-ink text-sm font-mono">
                       -{effectiveMaxDrawdown}% (12M Peak-to-Trough)
                     </span>
                     <span className="text-muted block text-[10px] mt-0.5">Rolling stress ceiling</span>
                   </div>
                   <div className="bg-raised border border-border rounded-lg p-2.5">
-                    <span className="text-muted block uppercase font-semibold text-[10px]">Core Inflation Hurdle</span>
+                    <span className="text-muted block font-medium text-xs">Core Inflation Hurdle</span>
                     <span className="font-bold text-ink text-sm font-mono">
                       {effectiveClient.inflation}% Per Annum
                     </span>
@@ -1411,7 +1410,7 @@ export const IPSTemplate = () => {
               </h2>
               <div className="overflow-x-auto rounded-xl border border-border" tabIndex={0} role="region" aria-label="Goals and Liabilities table">
                 <table className="w-full text-left text-xs sm:text-sm">
-                  <thead className="bg-surface text-ink-soft text-[11px] font-semibold uppercase tracking-wider border-b border-border">
+                  <thead className="bg-surface text-muted text-xs font-medium border-b border-border">
                     <tr>
                       <th className="py-2.5 px-3">Goal Objective</th>
                       <th className="py-2.5 px-3">Priority Tier</th>
@@ -1433,7 +1432,7 @@ export const IPSTemplate = () => {
                         <td className="py-2 px-3">
                           <span
                             className={cn(
-                              'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider',
+                              'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
                               g.priority === 'essential'
                                 ? 'bg-inkfill text-on-inkfill'
                                 : g.priority === 'important'
@@ -1477,7 +1476,7 @@ export const IPSTemplate = () => {
 
               <div className="overflow-x-auto rounded-xl border border-border" tabIndex={0} role="region" aria-label="Strategic Asset Allocation table">
                 <table className="w-full text-left text-xs sm:text-sm">
-                  <thead className="bg-surface text-ink-soft text-[11px] font-semibold uppercase tracking-wider border-b border-border">
+                  <thead className="bg-surface text-muted text-xs font-medium border-b border-border">
                     <tr>
                       <th className="py-2.5 px-3">Asset Class</th>
                       <th className="py-2.5 px-3 text-right">Policy Target</th>
@@ -1521,15 +1520,15 @@ export const IPSTemplate = () => {
                           </td>
                           <td className="py-2.5 px-3 text-center">
                             {isTargetMet ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-accent-softer text-accent-strong border border-accent-soft">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent-softer text-accent-strong border border-accent-soft">
                                 Target Met
                               </span>
                             ) : isWithinCorridor ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sunken text-ink border border-border">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-sunken text-ink border border-border">
                                 Within Corridor
                               </span>
                             ) : (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-negative-soft text-negative border border-negative">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-negative-soft text-negative border border-negative">
                                 {drift > 0 ? 'Overweight' : 'Deficit / Rebalance'}
                               </span>
                             )}
@@ -1556,11 +1555,11 @@ export const IPSTemplate = () => {
                       </td>
                       <td className="py-2.5 px-3 text-center">
                         {hasCorridorBreach ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-negative-soft text-negative border border-negative">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-negative-soft text-negative border border-negative">
                             Action Triggered
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-accent-softer text-accent-strong border border-accent-soft">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent-softer text-accent-strong border border-accent-soft">
                             Compliant
                           </span>
                         )}
@@ -1579,7 +1578,7 @@ export const IPSTemplate = () => {
               </h2>
               <div className="overflow-x-auto rounded-xl border border-border" tabIndex={0} role="region" aria-label="Current Holdings table">
                 <table className="w-full text-left text-xs sm:text-sm">
-                  <thead className="bg-surface text-ink-soft text-[11px] font-semibold uppercase tracking-wider border-b border-border">
+                  <thead className="bg-surface text-muted text-xs font-medium border-b border-border">
                     <tr>
                       <th className="py-2.5 px-3">Instrument / Asset Name</th>
                       <th className="py-2.5 px-3">Asset Category</th>
@@ -1633,11 +1632,11 @@ export const IPSTemplate = () => {
               <div className="bg-surface/70 border border-border rounded-xl p-4 space-y-2 text-sm text-ink leading-relaxed">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-2 border-b border-border text-xs">
                   <div>
-                    <span className="text-muted block uppercase font-semibold text-[10px]">Base Reporting Currency</span>
+                    <span className="text-muted block font-medium text-xs">Base Reporting Currency</span>
                     <span className="font-bold text-ink text-sm">{effectiveState.baseCurrency || 'INR'}</span>
                   </div>
                   <div>
-                    <span className="text-muted block uppercase font-semibold text-[10px]">Offshore Exposure Cap</span>
+                    <span className="text-muted block font-medium text-xs">Offshore Exposure Cap</span>
                     <span className="font-bold text-ink text-sm font-mono">{effectiveState.foreignExposure}% Maximum</span>
                   </div>
                 </div>
@@ -1706,7 +1705,7 @@ export const IPSTemplate = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-4">
                 <div className="space-y-5 bg-surface/50 border border-border rounded-xl p-4">
                   <div className="border-b border-border pb-2">
-                    <span className="text-[10px] uppercase font-bold text-muted block">Primary Client</span>
+                    <span className="text-xs font-medium text-muted block">Primary Client</span>
                     <span className="font-semibold text-ink text-sm">
                       {effectiveClient.name || 'Client Name(s)'}
                     </span>
@@ -1722,9 +1721,9 @@ export const IPSTemplate = () => {
 
                 <div className="space-y-5 bg-surface/50 border border-border rounded-xl p-4">
                   <div className="border-b border-border pb-2">
-                    <span className="text-[10px] uppercase font-bold text-muted block">Fiduciary Advisor</span>
+                    <span className="text-xs font-medium text-muted block">Fiduciary Advisor</span>
                     <span className="font-semibold text-ink text-sm">
-                      {effectiveClient.advisor || 'Sound Thesis Wealth Advisory'}
+                      {effectiveClient.advisor || 'SoundThesis Capital'}
                     </span>
                   </div>
                   <div className="h-10 flex items-end">
@@ -1767,7 +1766,7 @@ function LabelledInput({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-[11px] font-semibold uppercase tracking-wider text-ink-soft mb-1">
+      <label htmlFor={id} className="block text-xs font-medium text-ink mb-1">
         {label}
       </label>
       <input
@@ -1795,7 +1794,7 @@ function LabelledDate({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-[11px] font-semibold uppercase tracking-wider text-ink-soft mb-1">
+      <label htmlFor={id} className="block text-xs font-medium text-ink mb-1">
         {label}
       </label>
       <input

@@ -6,34 +6,13 @@ import { useCalculator } from '../context/CalculatorContext';
 import { ApiRequestError, exportClientBundle, listClients, createClient, type ClientSummary } from '../lib/api';
 import { formatCurrencyCompact } from '../lib/formatters';
 
-const LOCAL_CLIENTS_KEY = 'stw.local-client-directory';
+import { getCRMClients, getActiveCRMClient, setActiveCRMClient, saveCRMClient, createCRMClient } from '../lib/crm';
+
 const initials = (name: string) => name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
-
-const createSampleClient = (): ClientSummary => ({
-  id: `local-sample-${Date.now()}`,
-  name: 'Rhea and Karan Shah',
-  status: 'Active',
-  householdId: 'local-sample-household',
-  assignedPractitioners: [{ userId: 'local-adviser', fullName: 'Local workspace', assignmentRole: 'Primary' }],
-  financialSummary: { netWorth: 18500000, investableAssets: 13200000, totalAssets: 20100000, totalLiabilities: 1600000 },
-});
-
-function readLocalClients(): ClientSummary[] {
-  try {
-    const saved = localStorage.getItem(LOCAL_CLIENTS_KEY);
-    return saved ? JSON.parse(saved) as ClientSummary[] : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeLocalClients(clients: ClientSummary[]) {
-  localStorage.setItem(LOCAL_CLIENTS_KEY, JSON.stringify(clients));
-}
 
 export function PractitionerPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { ready, user, organizationName } = useAuth();
+  const { ready, user } = useAuth();
   const { updateClient } = useCalculator();
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -56,9 +35,10 @@ export function PractitionerPage() {
   const loadClients = useCallback(async () => {
     setLoading(true); setError(null);
     if (!user) {
-      const localClients = readLocalClients();
+      const localClients = getCRMClients();
       setClients(localClients);
-      setSelectedId((current) => current ?? localClients[0]?.id ?? null);
+      const active = getActiveCRMClient();
+      setSelectedId((current) => current ?? active?.id ?? localClients[0]?.id ?? null);
       setLoading(false);
       return;
     }
@@ -89,15 +69,14 @@ export function PractitionerPage() {
 
   const selectClient = (client: ClientSummary) => {
     setSelectedId(client.id);
+    setActiveCRMClient(client.id);
     if (!user) updateClient({ name: client.name });
   };
 
   const addSampleClient = () => {
-    const sample = createSampleClient();
-    const nextClients = [...clients, sample];
-    writeLocalClients(nextClients);
-    setClients(nextClients);
-    selectClient(sample);
+    const localClients = getCRMClients();
+    setClients(localClients);
+    if (localClients[0]) selectClient(localClients[0]);
   };
 
   const submitNewClient = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -107,18 +86,15 @@ export function PractitionerPage() {
     setError(null);
     try {
       if (!user) {
-        const created: ClientSummary = {
-          id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        const created = createCRMClient({
           name: `${newClient.firstName.trim()} ${newClient.lastName.trim()}`,
-          status: 'Active',
-          householdId: 'local-household',
-          assignedPractitioners: [{ userId: 'local-adviser', fullName: 'Local workspace', assignmentRole: 'Primary' }],
-          financialSummary: { netWorth: 0, investableAssets: 0, totalAssets: 0, totalLiabilities: 0 },
-        };
-        const nextClients = [...clients, created];
-        writeLocalClients(nextClients);
-        setClients(nextClients);
-        setSelectedId(created.id);
+          email: newClient.email.trim() || undefined,
+          phone: newClient.phone.trim() || undefined,
+        });
+        saveCRMClient(created);
+        const updated = getCRMClients();
+        setClients(updated);
+        selectClient(created);
         setNewClient({ firstName: '', lastName: '', email: '', phone: '' });
         setAddOpen(false);
         return;
@@ -143,8 +119,7 @@ export function PractitionerPage() {
   const openClientWorkspace = (clientId: string) => {
     const client = clients.find((item) => item.id === clientId);
     if (client) selectClient(client);
-    localStorage.setItem('stw.activeClientId', clientId);
-    window.dispatchEvent(new Event('stw:active-client-changed'));
+    setActiveCRMClient(clientId);
   };
 
   if (!ready) return <div className="directory-loading">Restoring your practice desk…</div>;
@@ -153,7 +128,6 @@ export function PractitionerPage() {
     <div className="directory-page">
       <header className="directory-hero">
         <div>
-          <div className="directory-kicker">{organizationName ?? 'Local workspace'} <span className="slash">/</span> Clients</div>
           <h1>Clients</h1>
           <p>Select a client, create an IPS, and return here for the next review.</p>
         </div>
@@ -223,7 +197,7 @@ export function PractitionerPage() {
 
       {addOpen && <div className="client-create-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !creating) setAddOpen(false); }}>
         <section className="client-create-dialog" role="dialog" aria-modal="true" aria-labelledby="create-client-title">
-          <header><div><span className="eyebrow">NEW RELATIONSHIP / 001</span><h2 id="create-client-title">Add client</h2></div><button type="button" onClick={() => setAddOpen(false)} disabled={creating} aria-label="Close add client form"><X size={18} /></button></header>
+          <header><div><h2 id="create-client-title">Add client</h2></div><button type="button" onClick={() => setAddOpen(false)} disabled={creating} aria-label="Close add client form"><X size={18} /></button></header>
           <p className="client-create-intro">Create the household record and its first master plan. Financial data can be added next inside the planning workspace.</p>
           <form onSubmit={submitNewClient}>
             <label><span>First name *</span><input autoFocus required value={newClient.firstName} onChange={(event) => setNewClient((value) => ({ ...value, firstName: event.target.value }))} placeholder="Aarav" /></label>

@@ -28,7 +28,7 @@ export const AllocationComparisonBars = ({ current, target, ariaLabel, className
 
   const bar = (weights: Record<AssetCategory, number>, label: string) => (
     <div className="flex items-center gap-3">
-      <span className="w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted">{label}</span>
+      <span className="w-14 shrink-0 text-xs font-medium text-muted">{label}</span>
       <div
         className="flex-1 h-6 rounded-md border border-border overflow-hidden flex"
         role="img"

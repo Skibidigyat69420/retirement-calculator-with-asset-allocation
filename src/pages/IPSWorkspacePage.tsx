@@ -242,7 +242,7 @@ export function IPSWorkspacePage() {
       notes: interactionForm.notes.trim(),
       nextAction: interactionForm.nextAction.trim() || undefined,
       actionCompleted: false,
-      advisorName: inputs.client.advisor || 'Sound Thesis Wealth Advisory',
+      advisorName: inputs.client.advisor || 'SoundThesis Capital',
     });
 
     setInteractionModalOpen(false);
@@ -311,7 +311,7 @@ export function IPSWorkspacePage() {
       ...base,
       client: {
         name: inputs.client.name || activeClient?.name || 'Private Client',
-        advisor: inputs.client.advisor || 'Sound Thesis Wealth Advisory',
+        advisor: inputs.client.advisor || 'SoundThesis Capital',
         reviewDate: inputs.client.reviewDate || activeClient?.reviewDate || new Date().toISOString().slice(0, 10),
         currentAge: inputs.currentAge,
         retirementAge: inputs.retirementAge,
@@ -406,10 +406,10 @@ export function IPSWorkspacePage() {
       date: today,
       type: 'review',
       title: 'Investment Policy Statement Ratified',
-      notes: `Institutional IPS ratified by client and ${inputs.client.advisor || 'Sound Thesis Wealth Advisory'}. Mandate is active.`,
+      notes: `Institutional IPS ratified by client and ${inputs.client.advisor || 'SoundThesis Capital'}. Mandate is active.`,
       nextAction: 'Schedule 6-month portfolio rebalancing check',
       actionCompleted: false,
-      advisorName: inputs.client.advisor || 'Sound Thesis Wealth Advisory',
+      advisorName: inputs.client.advisor || 'SoundThesis Capital',
     });
     refreshClientList();
     showToast('IPS officially ratified! Client stage updated to Active Mandate.', 'success');
@@ -455,11 +455,6 @@ export function IPSWorkspacePage() {
       <header className="border-b border-border pb-6 mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="min-w-0">
-            <div className="flex items-center gap-2 text-xs text-muted mb-1 font-mono uppercase tracking-wider">
-              <span>Wealth Advisory CRM</span>
-              <span>/</span>
-              <span>Investment Policy Studio</span>
-            </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ink">
               Client Mandate & Investment Policy
             </h1>
@@ -968,7 +963,7 @@ export function IPSWorkspacePage() {
                     >
                       <div className="space-y-1 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase font-mono bg-accent-soft text-accent">
+                          <span className="px-2 py-0.5 rounded text-xs font-medium font-mono bg-accent-soft text-accent capitalize">
                             {int.type}
                           </span>
                           <strong className="text-ink font-semibold">{int.title}</strong>
@@ -992,7 +987,7 @@ export function IPSWorkspacePage() {
                             )}
                           </button>
                           <div className="min-w-0">
-                            <span className="text-[10px] text-faint uppercase font-bold block">Follow-up Task</span>
+                            <span className="text-xs font-medium text-muted block">Follow-up Task</span>
                             <span className={`text-xs ${int.actionCompleted ? 'line-through text-muted' : 'text-ink font-medium'}`}>
                               {int.nextAction}
                             </span>
@@ -1414,7 +1409,7 @@ export function IPSWorkspacePage() {
                       {inputs.client.name || activeClient?.name || 'Client'} — Investment Policy Statement
                     </h2>
                     {activeClient?.ratifiedDate && (
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono bg-positive-soft text-positive border border-positive/30">
+                      <span className="px-2 py-0.5 rounded-md text-xs font-medium font-mono bg-positive-soft text-positive border border-positive/30">
                         Ratified
                       </span>
                     )}
@@ -1422,7 +1417,7 @@ export function IPSWorkspacePage() {
                   <p className="text-xs text-muted mt-0.5">
                     Governing fiduciary charter formulated on{' '}
                     {activeClient?.reviewDate || new Date().toISOString().slice(0, 10)} by{' '}
-                    {inputs.client.advisor || 'Sound Thesis Wealth Advisory'}
+                    {inputs.client.advisor || 'SoundThesis Capital'}
                   </p>
                 </div>
               </div>
@@ -1497,7 +1492,7 @@ export function IPSWorkspacePage() {
               <div className="bg-surface border border-border rounded-2xl p-8 sm:p-12 shadow-card max-w-4xl mx-auto space-y-8 font-sans">
                 {/* Formal Document Title Block */}
                 <div className="border-b-2 border-border pb-6 space-y-2">
-                  <div className="text-[11px] font-mono uppercase tracking-widest text-muted">
+                  <div className="text-xs font-medium text-muted">
                     Institutional Wealth Charter • Private Mandate
                   </div>
                   <h1 className="text-3xl font-bold tracking-tight text-ink">
@@ -1511,7 +1506,7 @@ export function IPSWorkspacePage() {
 
                 {/* Section 1: Executive Profile */}
                 <section className="space-y-3">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-accent font-mono">
+                  <h3 className="text-sm font-semibold text-ink">
                     01. Mandate & Household Demographics
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl border border-border bg-raised/50 text-xs">
@@ -1536,7 +1531,7 @@ export function IPSWorkspacePage() {
                     <div>
                       <span className="text-muted block text-[11px]">Lead Adviser</span>
                       <strong className="text-ink font-semibold mt-0.5 block">
-                        {inputs.client.advisor || 'Sound Thesis Wealth Advisory'}
+                        {inputs.client.advisor || 'SoundThesis Capital'}
                       </strong>
                     </div>
                   </div>
@@ -1544,13 +1539,13 @@ export function IPSWorkspacePage() {
 
                 {/* Section 2: Strategic Asset Allocation Table */}
                 <section className="space-y-3">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-accent font-mono">
+                  <h3 className="text-sm font-semibold text-ink">
                     02. Strategic Asset Allocation Corridors
                   </h3>
                   <div className="border border-border rounded-xl overflow-hidden">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr className="bg-sunken border-b border-border text-muted font-mono uppercase text-[10px]">
+                        <tr className="bg-sunken border-b border-border text-muted text-xs font-medium">
                           <th className="py-2.5 px-4">Asset Class</th>
                           <th className="py-2.5 px-4 text-right">Target Weight</th>
                           <th className="py-2.5 px-4 text-right">Current Position</th>
@@ -1585,7 +1580,7 @@ export function IPSWorkspacePage() {
 
                 {/* Section 3: Rebalancing Protocol */}
                 <section className="space-y-3 text-xs leading-relaxed text-muted">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-accent font-mono">
+                  <h3 className="text-sm font-semibold text-ink">
                     03. Governance & Rebalancing Protocol
                   </h3>
                   <div className="p-4 rounded-xl border border-border bg-raised/50 space-y-2">
@@ -1612,7 +1607,7 @@ export function IPSWorkspacePage() {
 
                 {/* Sign-off & Ratification Block */}
                 <section className="border-t-2 border-border pt-6 space-y-6">
-                  <div className="flex items-center justify-between text-xs font-semibold text-muted font-mono uppercase">
+                  <div className="flex items-center justify-between text-xs font-semibold text-muted font-mono">
                     <span>Ratification & Signatures</span>
                     <span>Date: {activeClient?.ratifiedDate || activeClient?.reviewDate || 'Pending'}</span>
                   </div>
@@ -1623,7 +1618,7 @@ export function IPSWorkspacePage() {
                       <span className="text-muted text-[11px]">Client / Authorized Household Trustee</span>
                     </div>
                     <div className="border-t border-border pt-2 text-xs">
-                      <strong className="block text-ink">{inputs.client.advisor || 'Sound Thesis Wealth Advisory'}</strong>
+                      <strong className="block text-ink">{inputs.client.advisor || 'SoundThesis Capital'}</strong>
                       <span className="text-muted text-[11px]">Fiduciary Wealth Adviser</span>
                     </div>
                   </div>

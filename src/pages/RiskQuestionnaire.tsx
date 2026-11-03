@@ -53,7 +53,6 @@ export const RiskQuestionnaire = () => {
     return (
       <div className="space-y-6 pb-8">
         <PageHeader
-          eyebrow="Risk Assessment"
           title="Risk Profile"
           variant="hero"
           description="The risk profile anchors the strategic asset allocation, MVO constraints and goal success thresholds. It is established through a structured questionnaire — never assumed."
@@ -62,7 +61,6 @@ export const RiskQuestionnaire = () => {
         <EmptyState
           display
           icon={ClipboardList}
-          eyebrow="No assessment yet"
           title="No assessment yet"
           description="Answer the questionnaire to establish the client's risk profile — fourteen questions across eight dimensions, grouped by ability, attitude and experience."
           action={
@@ -82,7 +80,7 @@ export const RiskQuestionnaire = () => {
             <div key={group.id} className="py-5 border-t border-border">
               <div className="flex items-center gap-2 mb-2">
                 <Icon size={15} strokeWidth={1.7} className="text-accent" aria-hidden="true" />
-                <span className="eyebrow">
+                <span className="text-xs font-semibold text-ink">
                   {group.index}. {group.title}
                 </span>
               </div>
@@ -102,7 +100,6 @@ export const RiskQuestionnaire = () => {
     return (
       <div className="space-y-6 pb-8">
         <PageHeader
-          eyebrow="Risk Assessment"
           title="Risk Questionnaire"
           description="Fourteen questions across eight dimensions. Answers persist with the workspace; a completed profile feeds the strategic allocation, MVO constraints and goal success thresholds."
           actions={
@@ -131,7 +128,7 @@ export const RiskQuestionnaire = () => {
   return (
     <div className="space-y-6 pb-8">
       <div className="flex items-center justify-between gap-4">
-        <div className="eyebrow">Risk Profile · Assessment Report</div>
+        <div className="text-xs font-semibold text-ink">Risk Profile · Assessment Report</div>
         <div className="text-xs text-faint font-mono tabular-nums">
           {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
         </div>

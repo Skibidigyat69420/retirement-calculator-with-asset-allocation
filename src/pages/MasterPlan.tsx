@@ -1,12 +1,15 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { SlidersHorizontal, Save, FileDown, Activity, X } from 'lucide-react';
+import { SlidersHorizontal, Save, FileDown, Activity, X, FileText } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useCalculator } from '../context/CalculatorContext';
 import { planStatus } from '../lib/planState';
 import { SaveIndicator } from '../components/ui/SaveIndicator';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { Button } from '../components/ui/Button';
+import { Avatar } from '../components/ui/Avatar';
+import { formatCurrencyCompact } from '../lib/formatters';
+import { cn } from '../lib/utils';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import { PlanningAssumptionsModal } from '../components/analytics/PlanningAssumptionsModal';
 import { PLAN_STEPS } from '../components/master-plan/MasterPlanSidebar';
@@ -84,7 +87,7 @@ const OutlookDock = ({
             className="absolute bottom-14 right-0 w-[min(340px,calc(100vw-2rem))] max-h-[70vh] overflow-y-auto rounded-xl border border-border bg-surface shadow-popover"
           >
             <div className="sticky top-0 z-10 flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border bg-surface/95 backdrop-blur">
-              <span className="eyebrow">Plan outlook</span>
+              <span className="text-xs font-semibold text-ink">Plan outlook</span>
               <button
                 type="button"
                 onClick={close}
@@ -212,25 +215,77 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
 
   return (
     <div className="pb-8">
-      {/* Studio header — editable plan title, save state, plan status */}
-      <header className="border-b border-border pb-5 mb-8">
+      {/* Studio header — household identity, key metrics, actions */}
+      <header className="border-b border-border pb-5 mb-6">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="eyebrow">Planning studio · {activeStep === 'profile' ? 'Client profile' : activeStep === 'financials' ? 'Balance sheet' : 'Master plan'}</span>
+            <div className="flex items-center gap-2.5 flex-wrap mb-1.5">
+              <span className="text-xs font-medium text-muted">Master Plan Studio</span>
+              <span className="text-muted text-xs">•</span>
               <StatusBadge status={planStatus(inputs)} />
             </div>
-            <input
-              type="text"
-              value={inputs.client?.name || ''}
-              onChange={(e) => updateClient({ name: e.target.value })}
-              placeholder="Untitled plan — client name"
-              aria-label="Plan title (client name)"
-              className="mt-2 w-full max-w-xl bg-transparent border-b border-transparent hover:border-border focus:border-accent focus:outline-none font-display text-3xl sm:text-4xl text-ink placeholder:text-faint transition-colors rounded-none pb-1"
-            />
-            <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
-              {activeStep === 'profile' ? 'Capture the person, household context, and planning horizon.' : activeStep === 'financials' ? 'Record assets, property, liabilities, and the household net position.' : 'Build the decision record from cashflow through outlook.'}
-            </p>
+
+            <div className="flex items-center gap-3">
+              <Avatar
+                name={inputs.client?.name || 'Household'}
+                id={inputs.client?.email}
+                size="md"
+              />
+              <div className="min-w-0 flex-1">
+                <input
+                  type="text"
+                  value={inputs.client?.name || ''}
+                  onChange={(e) => updateClient({ name: e.target.value })}
+                  placeholder="Household name (e.g. Sharma Family)"
+                  aria-label="Plan title (client name)"
+                  className="w-full max-w-xl bg-transparent border-b border-transparent hover:border-border focus:border-accent focus:outline-none font-display text-2xl sm:text-3xl text-ink font-semibold placeholder:text-faint transition-colors rounded-none pb-0.5"
+                />
+              </div>
+            </div>
+
+            {/* Quick KPI Strip */}
+            <div className="flex items-center gap-3 mt-3 text-xs text-muted flex-wrap">
+              {wealthResult.isConfigured && (
+                <div className="flex items-center gap-1.5 bg-sunken px-2.5 py-1 rounded-md border border-border">
+                  <span className="text-muted text-xs font-medium">Net Worth:</span>
+                  <strong className="font-mono text-ink font-semibold text-xs">
+                    {formatCurrencyCompact(wealthResult.netWorth)}
+                  </strong>
+                </div>
+              )}
+              {inputs.currentAge > 0 && inputs.retirementAge > 0 && (
+                <div className="flex items-center gap-1.5 bg-sunken px-2.5 py-1 rounded-md border border-border">
+                  <span className="text-muted text-xs font-medium">Horizon:</span>
+                  <strong className="text-ink font-medium">
+                    {inputs.currentAge} → {inputs.retirementAge} yrs ({Math.max(0, inputs.retirementAge - inputs.currentAge)}y to ret)
+                  </strong>
+                </div>
+              )}
+              {inputs.annualIncome > 0 && (
+                <div className="flex items-center gap-1.5 bg-sunken px-2.5 py-1 rounded-md border border-border">
+                  <span className="text-muted text-xs font-medium">Income:</span>
+                  <strong className="font-mono text-ink font-semibold">
+                    {formatCurrencyCompact(inputs.annualIncome)}/yr
+                  </strong>
+                </div>
+              )}
+              {inputs.swp.monthlyNeedToday > 0 && (
+                <div className="flex items-center gap-1.5 bg-sunken px-2.5 py-1 rounded-md border border-border">
+                  <span className="text-muted text-xs font-medium">Target SWP:</span>
+                  <strong className="tabular-nums text-ink font-semibold">
+                    {formatCurrencyCompact(inputs.swp.monthlyNeedToday)}/mo
+                  </strong>
+                </div>
+              )}
+              {wealthResult.isConfigured && inputs.swp.monthlyNeedToday > 0 && (
+                <div className="flex items-center gap-1.5 bg-sunken px-2.5 py-1 rounded-md border border-border">
+                  <span className="text-muted text-xs font-medium">SWP Status:</span>
+                  <strong className={cn('text-xs font-semibold', wealthResult.sustainable ? 'text-positive' : 'text-warning-strong')}>
+                    {wealthResult.sustainable ? 'Sustainable' : `Depletes at ${wealthResult.depletionAge}`}
+                  </strong>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
@@ -252,6 +307,13 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
               <Save size={14} aria-hidden="true" />
               <span>{saveStatus === 'saving' ? 'Saving…' : 'Save plan'}</span>
             </Button>
+            <Link
+              to="/ips"
+              className="inline-flex items-center gap-1.5 px-3 min-h-8 py-1.5 text-xs font-semibold rounded-md bg-accent text-on-inkfill hover:bg-accent-strong transition-colors shadow-xs"
+            >
+              <FileText size={14} aria-hidden="true" />
+              <span>Create IPS</span>
+            </Link>
             <Link
               to="/dossier?autoPrint=true"
               className="inline-flex items-center gap-1.5 px-3 min-h-8 py-1.5 text-xs font-medium rounded-md border border-border-strong text-ink hover:border-ink hover:bg-surface transition-colors"

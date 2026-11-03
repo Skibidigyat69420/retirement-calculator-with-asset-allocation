@@ -5,7 +5,7 @@
 
 @theme {
   /* ─────────────────────────────────────────────────────────────
-     SOUND THESIS — Modern, Simple & Clean Design System
+     SOUNDTHESIS CAPITAL — Modern, Simple & Clean Design System
      Clean zinc/slate neutrals, crisp typography (Inter UI & headings,
      JetBrains Mono data figures), modern blue accent.
      ───────────────────────────────────────────────────────────── */
@@ -67,11 +67,11 @@
   --color-textMain: var(--color-ink);
   --color-textMuted: var(--color-muted);
 
-  /* Typography — Clean Inter for UI & headings, JetBrains Mono figures */
+  /* Typography — Single font (Inter) across the entire application */
   --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-serif: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
   /* Radius — clean, modern */
   --radius-xs: 4px;
@@ -303,10 +303,10 @@
     border-bottom: 1px solid var(--color-border-strong);
     color: var(--color-muted);
     font-family: var(--font-sans);
-    font-size: 0.6875rem;
-    font-weight: 600;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: normal;
+    text-transform: none;
     text-align: left;
     white-space: nowrap;
   }
@@ -440,14 +440,14 @@
     line-height: 1.05;
   }
 
-  /* Eyebrow — tiny section label, mono editorial */
+  /* Eyebrow — clean muted label */
   .eyebrow {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--color-faint);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--color-muted);
   }
 }
 
@@ -472,9 +472,9 @@
     background: var(--color-raised);
     padding: 0.45rem 0.75rem;
     color: var(--color-muted);
-    font: 600 0.68rem/1 var(--font-sans);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font: 500 0.75rem/1 var(--font-sans);
+    letter-spacing: normal;
+    text-transform: none;
   }
 
   .metric-strip {
@@ -557,31 +557,20 @@
   color: var(--color-brass);
 }
 
-/* Dark feature hero — dashboard orbit card */
+/* Institutional feature card */
 .hero-orbit {
-  border-radius: var(--radius-2xl);
-  background:
-    radial-gradient(circle at 78% 18%, rgba(142, 168, 137, 0.16), transparent 16rem),
-    radial-gradient(circle at 94% 92%, rgba(197, 166, 109, 0.14), transparent 20rem),
-    #12150F;
-  color: #F1F1EA;
-  box-shadow: var(--shadow-elevated);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-card);
 }
 .hero-orbit::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: 0.1;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.16) 1px, transparent 1px);
-  background-size: 36px 36px;
-  mask-image: linear-gradient(120deg, black, transparent 78%);
-  pointer-events: none;
+  display: none;
 }
-.hero-orbit .hero-kicker { color: #C5A66D; }
-.hero-orbit .hero-title { color: #F1F1EA; }
-.hero-orbit .hero-copy { color: #C9CCC2; }
+.hero-orbit .hero-kicker { color: var(--color-accent); }
+.hero-orbit .hero-title { color: var(--color-ink); }
+.hero-orbit .hero-copy { color: var(--color-muted); }
 
 /* Non-inverting charcoal panel — both themes */
 .ink-panel {
@@ -794,9 +783,9 @@ button:not(:disabled):active {
   gap: 1.5rem;
   color: var(--color-muted);
   font-size: 0.75rem;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-family: var(--font-sans);
+  text-transform: none;
+  letter-spacing: normal;
 }
 .auth-proof-line { display: flex; align-items: center; gap: 0.6rem; }
 .auth-proof-dot {
@@ -824,7 +813,7 @@ button:not(:disabled):active {
   font-size: 0.72rem;
 }
 .auth-mobile-brand { display: none; align-items: center; gap: 0.5rem; color: var(--color-ink); font-weight: 650; }
-.auth-top-note { text-transform: uppercase; font: 600 0.65rem var(--font-mono); letter-spacing: 0.12em; }
+.auth-top-note { text-transform: none; font: 500 0.75rem var(--font-sans); letter-spacing: normal; }
 .auth-form-wrap { width: min(100%, 420px); margin: auto; }
 .auth-form-heading .eyebrow { color: var(--color-accent); }
 .auth-form-heading h2 {
@@ -1052,7 +1041,7 @@ button:not(:disabled):active {
 .auth-page { display: flex; min-height: 100vh; flex-direction: column; background: var(--color-canvas); color: var(--color-ink); }
 .auth-simple-header, .auth-simple-layout, .auth-simple-footer { width: min(100% - 3rem, 1120px); margin-inline: auto; }
 .auth-simple-header { display: flex; min-height: 5.25rem; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--color-border); }
-.auth-simple-header > span, .auth-simple-footer { color: var(--color-muted); font: 600 0.64rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+.auth-simple-header > span, .auth-simple-footer { color: var(--color-muted); font: 500 0.75rem var(--font-sans); letter-spacing: normal; text-transform: none; }
 .auth-brand { color: var(--color-ink); font-size: 0.95rem; }
 .auth-brand:hover { color: var(--color-ink); transform: none; }
 .auth-simple-layout { display: grid; grid-template-columns: minmax(0, 1fr) 390px; flex: 1; align-items: center; }
@@ -1107,9 +1096,9 @@ button:not(:disabled):active {
   align-items: center;
   gap: 0.55rem;
   color: var(--color-muted);
-  font: 600 0.67rem var(--font-mono);
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
+  font: 500 0.75rem var(--font-sans);
+  letter-spacing: normal;
+  text-transform: none;
 }
 .directory-kicker .slash { color: var(--color-border-strong); }
 .live-dot {
@@ -1372,9 +1361,9 @@ button:not(:disabled):active {
   align-items: center;
   gap: 0.35rem;
   color: var(--color-positive);
-  font: 600 0.64rem var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font: 500 0.75rem var(--font-sans);
+  text-transform: none;
+  letter-spacing: normal;
 }
 .client-status i { display: block; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 .client-card h3 { margin-top: 1.35rem; font-size: 1.05rem; letter-spacing: -0.02em; }
@@ -1422,10 +1411,10 @@ button:not(:disabled):active {
 .client-table-head {
   padding: 0.8rem 1.2rem;
   border-bottom: 1px solid var(--color-border);
-  color: var(--color-faint);
-  font: 600 0.63rem var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  color: var(--color-muted);
+  font: 500 0.75rem var(--font-sans);
+  text-transform: none;
+  letter-spacing: normal;
 }
 .client-row {
   width: 100%;
@@ -1698,9 +1687,9 @@ button:not(:disabled):active {
 .desk-focus-map span {
   margin-top: auto;
   color: var(--color-muted);
-  font: 600 0.62rem var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font: 500 0.75rem var(--font-sans);
+  text-transform: none;
+  letter-spacing: normal;
 }
 .desk-focus-map strong { margin-top: 0.35rem; color: var(--color-ink); font: 650 1rem var(--font-mono); letter-spacing: -0.04em; }
 .desk-focus-map small { margin-top: 0.25rem; color: var(--color-faint); font-size: 0.65rem; }
@@ -2023,10 +2012,10 @@ button:not(:disabled):active {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  text-transform: none;
+  letter-spacing: normal;
   color: var(--color-muted);
 }
 .dossier-back {
@@ -2089,10 +2078,10 @@ button:not(:disabled):active {
   justify-content: space-between;
   padding-top: 0.6rem;
   border-top: 1px solid var(--deck-rule);
-  font-family: var(--font-mono);
-  font-size: 0.55rem;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  letter-spacing: normal;
+  text-transform: none;
   color: #8A93A3;
 }
 .dossier-cover {
@@ -2120,11 +2109,11 @@ button:not(:disabled):active {
 .dossier-wordmark strong { font-size: 0.82rem; }
 .dossier-classification {
   text-align: right;
-  font-family: var(--font-mono);
-  font-size: 0.55rem;
-  line-height: 1.6;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  line-height: 1.5;
+  text-transform: none;
+  letter-spacing: normal;
 }
 .dossier-cover-main { max-width: 72%; margin: auto 0; }
 .dossier-cover-main h1,
@@ -2164,21 +2153,15 @@ button:not(:disabled):active {
 .dossier-cover-grid span,
 .dossier-cover-grid strong { display: block; }
 .dossier-cover-grid span {
-  font-family: var(--font-mono);
-  font-size: 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  text-transform: none;
+  letter-spacing: normal;
   color: #8A93A3;
 }
 .dossier-cover-grid strong { margin-top: 0.35rem; font-size: 0.68rem; }
 .dossier-section-kicker {
-  padding-bottom: 0.65rem;
-  border-bottom: 1px solid var(--deck-rule);
-  color: #6F7B90;
-  font-family: var(--font-mono);
-  font-size: 0.55rem;
-  text-transform: uppercase;
-  letter-spacing: 0.11em;
+  display: none;
 }
 .dossier-contents-layout {
   display: grid;
@@ -2272,10 +2255,11 @@ button:not(:disabled):active {
 .dossier-signatures { display: grid; grid-template-columns: 1fr 1fr 0.5fr; gap: 1.5rem; margin-top: 2rem; }
 .dossier-signatures span {
   display: block;
-  font-family: var(--font-mono);
-  font-size: 0.52rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
   color: #8A93A3;
 }
 .dossier-signatures i { display: block; height: 2.2rem; border-bottom: 1px solid var(--deck-rule); }
@@ -2297,11 +2281,11 @@ button:not(:disabled):active {
 .dossier-policy-note > span,
 .dossier-risk-hero > span {
   display: block;
-  font: 600 0.52rem/1.2 var(--font-mono);
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
+  font: 500 0.75rem/1.2 var(--font-sans);
+  letter-spacing: normal;
+  text-transform: none;
 }
-.dossier-signal-header strong { display: block; margin-top: 0.45rem; font-size: clamp(1rem, 2vw, 1.55rem); text-transform: uppercase; }
+.dossier-signal-header strong { display: block; margin-top: 0.45rem; font-size: clamp(1rem, 2vw, 1.55rem); text-transform: none; }
 .dossier-signal-score strong { font: 700 clamp(1.8rem, 4vw, 3.4rem)/0.9 var(--font-mono); }
 .dossier-metric-matrix {
   display: grid;
@@ -2324,7 +2308,7 @@ button:not(:disabled):active {
   margin-top: 0.6rem;
   font: 700 clamp(1.15rem, 2.2vw, 1.85rem)/1 var(--font-mono);
   letter-spacing: -0.05em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 .dossier-metric-matrix small { display: block; margin-top: 0.55rem; font: 500 0.56rem/1.35 var(--font-mono); color: #6E7788; }
 
@@ -2338,7 +2322,7 @@ button:not(:disabled):active {
 }
 .dossier-allocation-lead > div { padding: 0.75rem; border-right: 1px solid #E3E8F0; }
 .dossier-allocation-lead > div:last-child { border-right: 0; }
-.dossier-allocation-lead strong { display: block; margin-top: 0.45rem; font: 700 0.8rem/1.2 var(--font-mono); text-transform: uppercase; }
+.dossier-allocation-lead strong { display: block; margin-top: 0.45rem; font: 700 0.8rem/1.2 var(--font-mono); text-transform: none; }
 .dossier-allocation-table {
   margin-top: 1rem;
   border: 1px solid #D2DCEB;
@@ -2361,7 +2345,7 @@ button:not(:disabled):active {
   font: 500 0.58rem/1.2 var(--font-mono);
 }
 .dossier-allocation-row > span:last-child { border-right: 0; font-weight: 700; }
-.dossier-allocation-row > span:first-child { font-family: var(--font-sans); font-weight: 700; text-transform: uppercase; }
+.dossier-allocation-row > span:first-child { font-family: var(--font-sans); font-weight: 600; text-transform: none; }
 .dossier-allocation-row > span > i { margin-right: 0.55rem; font: 500 0.48rem/1 var(--font-mono); color: #8A93A3; }
 .dossier-allocation-row > span > b {
   position: absolute;
@@ -2371,9 +2355,9 @@ button:not(:disabled):active {
 }
 .dossier-allocation-head { min-height: 1.85rem; background: #1D2433; color: #ffffff; }
 .dossier-allocation-head > span {
-  font: 600 0.47rem/1 var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font: 500 0.65rem/1 var(--font-sans);
+  letter-spacing: normal;
+  text-transform: none;
   border-color: rgba(255, 255, 255, 0.2);
 }
 .dossier-policy-note {
@@ -2394,7 +2378,7 @@ button:not(:disabled):active {
   background: #1D2433;
   color: #ffffff;
 }
-.dossier-risk-hero > strong { display: block; margin-top: 0.9rem; font-size: clamp(1.9rem, 4vw, 3.9rem); line-height: 0.95; text-transform: uppercase; }
+.dossier-risk-hero > strong { display: block; margin-top: 0.9rem; font-size: clamp(1.9rem, 4vw, 3.9rem); line-height: 0.95; text-transform: none; }
 .dossier-risk-number { margin-top: 1.4rem; font: 700 clamp(3rem, 7vw, 6rem)/0.9 var(--font-mono); }
 .dossier-risk-number small { font-size: 0.85rem; }
 .dossier-risk-track {
@@ -2417,7 +2401,7 @@ button:not(:disabled):active {
   border-bottom: 1px solid #E3E8F0;
 }
 .dossier-risk-register i { font: 500 0.48rem/1 var(--font-mono); color: #8A93A3; }
-.dossier-risk-register span { font: 500 0.58rem/1.2 var(--font-mono); text-transform: uppercase; }
+.dossier-risk-register span { font: 500 0.68rem/1.2 var(--font-sans); text-transform: none; }
 .dossier-risk-register strong { font-size: 0.64rem; line-height: 1.25; text-align: right; }
 
 .dossier-report-content > .plan-report-pages { display: contents; }
@@ -2428,16 +2412,7 @@ button:not(:disabled):active {
   padding: clamp(1.5rem, 3vw, 3rem);
 }
 .dossier-report-content > .plan-report-pages > *::before {
-  content: "Sound Thesis / Analysis exhibit";
-  display: block;
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.55rem;
-  border-bottom: 1px solid var(--deck-rule);
-  font-family: var(--font-mono);
-  font-size: 0.52rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #8A93A3;
+  display: none;
 }
 .dossier-report-content .glass-bento { background: #ffffff; border-color: #E3E8F0; box-shadow: none; }
 .dossier-report-content .grid > .glass-bento,

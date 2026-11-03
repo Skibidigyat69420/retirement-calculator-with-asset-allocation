@@ -57,10 +57,10 @@ export const MetricCard = ({
     <div className={cn('rounded-lg p-4 sm:p-5 print:break-inside-avoid', variants[variant], className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className={cn('eyebrow truncate', labelColors[variant])}>{label}</div>
+          <div className={cn('text-xs font-medium truncate', labelColors[variant])}>{label}</div>
           <div
             className={cn(
-              'mt-2 font-mono text-2xl leading-tight tracking-tight tabular-nums truncate',
+              'mt-2 text-2xl font-semibold leading-tight tracking-tight tabular-nums truncate',
               valueColors[variant],
             )}
           >

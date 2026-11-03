@@ -78,7 +78,7 @@ export const PlanVsReality = () => {
 
           return (
             <div key={cat} className="p-3 rounded-xl border border-border/80 bg-surface/50 space-y-1">
-              <span className="text-[10px] uppercase font-bold text-muted block truncate">
+              <span className="text-xs font-medium text-muted block truncate">
                 {ASSET_LABELS[cat] || cat}
               </span>
               <div className="flex items-baseline justify-between">

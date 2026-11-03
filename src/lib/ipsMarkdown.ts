@@ -52,7 +52,7 @@ export function defaultState(): IPSState {
   return {
     client: {
       name: 'Vikram & Ananya Sharma',
-      advisor: 'Sound Thesis Wealth Advisory',
+      advisor: 'SoundThesis Capital',
       reviewDate: new Date().toISOString().split('T')[0],
       currentAge: 38,
       retirementAge: 60,
@@ -122,7 +122,7 @@ export function generateIPSMarkdown(state: IPSState, netWorth: number): string {
           .join('\n');
 
   return `# Investment Policy Statement
-_Sound Thesis Institutional Wealth Policy Standard_
+_SoundThesis Capital Institutional Policy Standard_
 
 ## 1. Client Identification & Governance Scope
 
@@ -144,6 +144,7 @@ _Sound Thesis Institutional Wealth Policy Standard_
 
 - **Liquidity:** Current total investable valuation is ₹${netWorth.toLocaleString('en-IN')}.
 - **Planning Horizons:** ${Math.max(0, state.client.retirementAge - state.client.currentAge)} years accumulation phase; ${Math.max(0, state.client.lifeExpectancy - state.client.retirementAge)} years distribution phase.
+- **Systematic Withdrawal Plan (SWP) Directive:** Decumulation drawdown commencing at age ${state.client.retirementAge} through age ${state.client.lifeExpectancy} with inflation indexing and sequence-of-returns mitigation via dedicated liquid and short-duration fixed-income reserves.
 - **Tax Governance:** Asset location and tax-loss harvesting reviewed systematically prior to fiscal year-end.
 
 ## 4. Priority-Tiered Goals & Liabilities

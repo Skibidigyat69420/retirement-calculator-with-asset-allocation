@@ -63,7 +63,7 @@ export const Badge = ({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 px-2 py-[3px] rounded-sm border font-mono text-[10px] font-medium uppercase tracking-[0.08em] leading-none transition-colors',
+        'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm border text-xs font-medium leading-none transition-colors',
         toneStyles[resolvedTone],
         isOutline && 'bg-transparent',
         className,

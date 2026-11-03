@@ -225,7 +225,6 @@ export const AngelData = () => {
       <SectionTitle
         title="Angel One Data Dump"
         subtitle="A SELECT * view of your Angel One account: profile, funds, holdings, positions, orders, and trades. Load the latest local snapshot or refresh live."
-        badge="Live Broker Data"
       />
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -321,7 +320,7 @@ export const AngelData = () => {
           <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="w-full min-w-[540px] text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-ink-soft">
+                <tr className="border-b border-border text-left text-xs font-medium text-muted">
                   <th className="py-2 pr-4">Symbol</th>
                   <th className="py-2 pr-4 text-right">Qty</th>
                   <th className="py-2 pr-4 text-right">Avg Price</th>
@@ -468,7 +467,7 @@ export const AngelData = () => {
           <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="w-full min-w-[540px] text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-ink-soft">
+                <tr className="border-b border-border text-left text-xs font-medium text-muted">
                   <th className="py-2 pr-4">Symbol</th>
                   <th className="py-2 pr-4 text-right">Exchange</th>
                   <th className="py-2 pr-4 text-right">Buy Qty</th>
@@ -508,7 +507,7 @@ export const AngelData = () => {
           <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="w-full min-w-[480px] text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-ink-soft">
+                <tr className="border-b border-border text-left text-xs font-medium text-muted">
                   <th className="py-2 pr-4">Order ID</th>
                   <th className="py-2 pr-4">Symbol</th>
                   <th className="py-2 pr-4 text-right">Side</th>
@@ -546,7 +545,7 @@ export const AngelData = () => {
           <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="w-full min-w-[420px] text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-ink-soft">
+                <tr className="border-b border-border text-left text-xs font-medium text-muted">
                   <th className="py-2 pr-4">Time</th>
                   <th className="py-2 pr-4">Symbol</th>
                   <th className="py-2 pr-4 text-right">Side</th>

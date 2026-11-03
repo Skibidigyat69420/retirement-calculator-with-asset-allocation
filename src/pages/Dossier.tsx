@@ -104,7 +104,7 @@ export const Dossier = () => {
         <div className="flex items-center gap-3">
           <button className="dossier-back" onClick={() => navigate(-1)} aria-label="Go back"><ArrowLeft size={15} /> Back</button>
           <div className="hidden sm:block">
-            <div className="eyebrow">Deliver / Client dossier</div>
+            <div className="text-xs font-medium text-muted">Client dossier</div>
             <h1>{inputs.client?.name || 'Client Report'}</h1>
           </div>
         </div>
@@ -124,24 +124,23 @@ export const Dossier = () => {
       <div className="dossier-deck" id="dossier-deck">
         <section className="dossier-print-page dossier-cover">
           <div className="dossier-cover-top">
-            <div className="dossier-wordmark"><span>ST</span><strong>Sound Thesis</strong></div>
+            <div className="dossier-wordmark"><span>ST</span><strong>SoundThesis Capital</strong></div>
             <div className="dossier-classification">Private & confidential<br />Prepared {printDate}</div>
           </div>
           <div className="dossier-cover-main">
-            <div className="eyebrow">Comprehensive financial plan / 2026</div>
+            <div className="text-xs font-medium text-muted mb-1">Comprehensive financial plan / 2026</div>
             <h1>{inputs.client?.name || 'Private Client'}<br /><em>Wealth Dossier</em></h1>
             <p>An integrated view of the balance sheet, risk capacity, goal funding, asset allocation, tax position and retirement longevity.</p>
           </div>
           <div className="dossier-cover-grid">
             <div><span>Mandate</span><strong>{wealthResult.goalResults.length || '—'} mapped goals</strong></div>
             <div><span>Plan horizon</span><strong>Age {inputs.currentAge}—{inputs.lifeExpectancy}</strong></div>
-            <div><span>Prepared by</span><strong>{inputs.client?.advisor || 'Sound Thesis Wealth'}</strong></div>
+            <div><span>Prepared by</span><strong>{inputs.client?.advisor || 'SoundThesis Capital'}</strong></div>
           </div>
-          <div className="dossier-folio"><span>Sound Thesis / Advisory Intelligence</span><span>01</span></div>
+          <div className="dossier-folio"><span>SoundThesis Capital / Advisory Intelligence</span><span>01</span></div>
         </section>
 
         <section className="dossier-print-page dossier-contents">
-          <div className="dossier-section-kicker">How to read this dossier</div>
           <div className="dossier-contents-layout">
             <div>
               <h2>One decision system.<br /><em>Every relevant signal.</em></h2>
@@ -172,7 +171,6 @@ export const Dossier = () => {
         </section>
 
         <section className="dossier-print-page dossier-data-note">
-          <div className="dossier-section-kicker">Data report / Method</div>
           <div className="dossier-data-grid">
             <div className="dossier-data-lead">
               <Database size={24} />
@@ -195,7 +193,6 @@ export const Dossier = () => {
         </section>
 
         <section className="dossier-print-page dossier-signal-page">
-          <div className="dossier-section-kicker">Executive signal board / Full-plan snapshot</div>
           <div className="dossier-signal-header">
             <div>
               <span>Plan status</span>
@@ -218,7 +215,7 @@ export const Dossier = () => {
               ['Terminal corpus', formatCurrencyCompact(wealthResult.terminalValue), `Real CAGR ${formatPercent(wealthResult.cagrReal)}`],
               ['Goals mapped', String(wealthResult.goalResults.length), `${wealthResult.goalsAtRisk.length} currently at risk`],
               ['Risk profile', riskProfile.label, `${riskScore}/100 assessed score`],
-              ['Retirement window', `${inputs.retirementAge}—${inputs.lifeExpectancy}`, `${Math.max(0, inputs.retirementAge - inputs.currentAge)} years to retirement`],
+              ['Retirement & SWP', `${formatCurrencyCompact(inputs.swp.monthlyNeedToday)}/mo`, `Age ${inputs.retirementAge}–${inputs.lifeExpectancy} · ${wealthResult.sustainable ? 'Sustainable' : `Depletes age ${wealthResult.depletionAge}`}`],
               ['Data coverage', `${dataCoverage}/8`, `${inputs.assets.length} assets · ${inputs.goals.length} goals`],
             ].map(([label, value, detail]) => (
               <div key={label}><span>{label}</span><strong>{value}</strong><small>{detail}</small></div>
@@ -228,7 +225,6 @@ export const Dossier = () => {
         </section>
 
         <section className="dossier-print-page dossier-allocation-page">
-          <div className="dossier-section-kicker">Allocation X-ray / Policy, drift and implementation</div>
           <div className="dossier-allocation-lead">
             <div><span>Policy basis</span><strong>{manualTargets ? 'Advisor-authored mandate' : `${riskProfile.label} model`}</strong></div>
             <div><span>Expected return</span><strong>{formatPercent(targetReturn * 100)}</strong></div>
@@ -261,7 +257,6 @@ export const Dossier = () => {
         </section>
 
         <section className="dossier-print-page dossier-risk-page">
-          <div className="dossier-section-kicker">Risk anatomy / Willingness, capacity and plan limits</div>
           <div className="dossier-risk-layout">
             <div className="dossier-risk-hero">
               <span>Assessed profile</span>
@@ -296,7 +291,6 @@ export const Dossier = () => {
         </div>
 
         <section className="dossier-print-page dossier-close">
-          <div className="dossier-section-kicker">Advice record / Acknowledgement</div>
           <div className="dossier-close-grid">
             <div>
               <ShieldCheck size={25} />
@@ -305,7 +299,7 @@ export const Dossier = () => {
             </div>
             <div className="dossier-close-details">
               <div><span>Client</span><strong>{inputs.client?.name || 'Private Client'}</strong></div>
-              <div><span>Advisor</span><strong>{inputs.client?.advisor || 'Sound Thesis Wealth'}</strong></div>
+              <div><span>Advisor</span><strong>{inputs.client?.advisor || 'SoundThesis Capital'}</strong></div>
               <div><span>Policy status</span><strong className="capitalize">{manualAllocationPolicy?.status || 'Model allocation'}</strong></div>
               <div><span>Review cadence</span><strong className="capitalize">{manualAllocationPolicy?.reviewFrequency || 'Annual'}</strong></div>
               <div><span>Effective / review date</span><strong>{manualAllocationPolicy?.effectiveDate || inputs.client?.reviewDate || 'To be agreed'}</strong></div>

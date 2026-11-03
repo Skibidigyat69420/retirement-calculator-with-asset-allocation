@@ -213,7 +213,6 @@ export const AngelConnect = () => {
         <SectionTitle
           title="Angel One SmartAPI Integration"
           subtitle="Configure live broker API authentication, network endpoints, and automated TOTP generation."
-          badge="Live Market Data & Portfolio"
         />
 
         <div className="flex items-center gap-2">
@@ -309,7 +308,7 @@ export const AngelConnect = () => {
             <form onSubmit={handleConnect} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-ink-soft mb-1">
+                  <label className="block text-xs font-medium text-ink mb-1">
                     API Key <span className="text-negative">*</span>
                   </label>
                   <input
@@ -324,7 +323,7 @@ export const AngelConnect = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-ink-soft mb-1">
+                  <label className="block text-xs font-medium text-ink mb-1">
                     Angel One Client Code (User ID) <span className="text-negative">*</span>
                   </label>
                   <input
@@ -341,7 +340,7 @@ export const AngelConnect = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-ink-soft mb-1">
+                  <label className="block text-xs font-medium text-ink mb-1">
                     MPIN / Password <span className="text-negative">*</span>
                   </label>
                   <input
@@ -358,7 +357,7 @@ export const AngelConnect = () => {
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-ink-soft">
+                    <label className="block text-xs font-medium text-ink">
                       TOTP Secret Key (QR Token)
                     </label>
                     <a
@@ -389,7 +388,7 @@ export const AngelConnect = () => {
                       <Clock size={16} />
                     </div>
                     <div>
-                      <div className="text-[11px] uppercase tracking-wider text-ink-soft">Live Generated TOTP</div>
+                      <div className="text-xs font-medium text-muted">Live Generated TOTP</div>
                       <div className="text-base font-mono font-bold text-ink tracking-widest">
                         {activeTotp || '------'}
                       </div>
@@ -412,7 +411,7 @@ export const AngelConnect = () => {
                 <button
                   type="button"
                   onClick={() => setShowAdvancedNetwork(!showAdvancedNetwork)}
-                  className="w-full flex items-center justify-between text-xs font-semibold text-ink uppercase tracking-wider"
+                  className="w-full flex items-center justify-between text-xs font-semibold text-ink"
                 >
                   <span className="flex items-center gap-2">
                     <Sliders size={14} className="text-muted" /> System Network Headers (Auto-Detected)
@@ -764,7 +763,7 @@ export const AngelConnect = () => {
             ) : (
               <table className="w-full min-w-[540px] text-left text-xs">
                 <thead>
-                  <tr className="border-b border-border text-ink-soft uppercase tracking-wider text-[10px]">
+                  <tr className="border-b border-border text-muted text-xs font-medium">
                     <th className="pb-3 font-semibold">Stock / Symbol</th>
                     <th className="pb-3 font-semibold text-right">Quantity</th>
                     <th className="pb-3 font-semibold text-right">Avg Price</th>

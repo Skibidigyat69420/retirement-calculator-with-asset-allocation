@@ -8,7 +8,6 @@ export const AdvancedPortfolioPage = () => {
       <SectionTitle
         title="Advanced Portfolio Engineering Lab"
         subtitle="Institutional multi-model asset allocation engine combining Strategic Policy (Black-Litterman, Risk Parity) with Tactical Overlays."
-        badge="Institutional Suite"
       />
 
       <AdvancedPortfolioLab />

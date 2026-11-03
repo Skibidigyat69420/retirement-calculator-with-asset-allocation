@@ -60,7 +60,7 @@ export const ChartFrame = ({
 export const DetailTable = ({ head, children }: { head: ReactNode; children: ReactNode }) => (
   <table className="w-full text-sm min-w-[480px]">
     <thead>
-      <tr className="border-b-2 border-ink text-left text-[11px] uppercase tracking-wider text-ink font-bold">
+      <tr className="border-b-2 border-ink text-left text-xs text-ink font-semibold">
         {head}
       </tr>
     </thead>

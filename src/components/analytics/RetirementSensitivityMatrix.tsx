@@ -126,7 +126,7 @@ export const RetirementSensitivityMatrix = () => {
         <table className="w-full text-xs text-center border-collapse">
           <thead>
             <tr>
-              <th className="p-2.5 text-left font-bold text-muted uppercase tracking-wider bg-surface/80 border border-border">
+              <th className="p-2.5 text-left font-semibold text-muted text-xs bg-surface/80 border border-border">
                 Retirement Age
               </th>
               {EXPENSE_MULTIPLIERS.map((m) => (
@@ -159,7 +159,7 @@ export const RetirementSensitivityMatrix = () => {
                     <div className="flex items-center justify-between gap-1">
                       <span>Age {retAge}</span>
                       {isBaseAge && (
-                        <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-info-soft text-info">
+                        <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-info-soft text-info">
                           Target
                         </span>
                       )}

@@ -201,20 +201,21 @@ export const FinancialsStep = ({
   ];
 
   return (
-    <div className="border-t border-border">
-      <header className="py-4">
-        <div className="eyebrow">Step 02 · Balance sheet</div>
-        <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">Household balance sheet</h2>
-        <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
-          Investable assets, properties, and outstanding loans. EMIs amortize automatically and feed the household net balance sheet.
-        </p>
-      </header>
+    <div>
+      <div className="py-2.5 pb-4 flex items-center justify-between gap-4 flex-wrap border-b border-border/60 mb-6">
+        <div>
+          <h2 className="text-lg font-semibold text-ink">Household Balance Sheet & Net Worth</h2>
+          <p className="text-xs text-muted max-w-prose mt-0.5">
+            Investable assets, properties, and outstanding liabilities. EMIs amortize automatically into household cashflow.
+          </p>
+        </div>
+      </div>
 
       {/* Balance sheet summary — horizontal metric strip */}
       <div className="metric-strip rounded-xl px-4 py-4 grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
         {summaryRows.map((row) => (
           <div key={row.label} className="min-w-0">
-            <span className="eyebrow block">{row.label}</span>
+            <span className="text-xs font-medium text-muted block truncate">{row.label}</span>
             <span className="block mt-1 font-mono text-sm tabular-nums text-ink truncate">{row.value}</span>
             {row.note && <span className="block mt-0.5 text-[11px] text-faint">{row.note}</span>}
           </div>

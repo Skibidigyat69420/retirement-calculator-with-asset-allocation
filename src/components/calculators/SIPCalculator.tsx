@@ -115,7 +115,7 @@ export const SIPCalculator = () => {
     >
       <div className="mt-6 rounded-lg border border-border bg-raised">
         <div className="px-5 pt-4 pb-3 border-b border-border-subtle">
-          <div className="eyebrow">Growth Curve</div>
+          <div className="text-sm font-semibold text-ink">Growth curve</div>
         </div>
         <div className="p-5">
           <p className="text-[13px] text-muted leading-relaxed mb-4">

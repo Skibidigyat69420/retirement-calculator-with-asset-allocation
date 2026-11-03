@@ -121,7 +121,7 @@ export const MobileNav = () => {
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
               <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-surface border-b border-border-subtle">
-                <span className="eyebrow">Navigate</span>
+                <span className="text-sm font-semibold text-ink">Navigation</span>
                 <button
                   ref={closeRef}
                   type="button"
@@ -136,7 +136,7 @@ export const MobileNav = () => {
                 {groupBySection(remainingItems).map(([section, items]) => (
                   <div key={section} className="mt-3 first:mt-0">
                     <div className="px-3 mb-1">
-                      <span className="eyebrow">{section}</span>
+                      <span className="text-xs font-medium text-muted">{section}</span>
                     </div>
                     <ul className="space-y-px">
                       {items.map((item) => (

@@ -100,7 +100,7 @@ export const TaxBreakdownChart = ({ taxSummary, annualIncome }: TaxBreakdownChar
             <text x="100" y="88" textAnchor="middle" className="fill-ink" style={{ fontSize: 26, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
               {formatPercent(rate)}
             </text>
-            <text x="100" y="108" textAnchor="middle" className="fill-muted" style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <text x="100" y="108" textAnchor="middle" className="fill-muted" style={{ fontSize: 11, fontWeight: 500 }}>
               Effective tax rate
             </text>
           </svg>

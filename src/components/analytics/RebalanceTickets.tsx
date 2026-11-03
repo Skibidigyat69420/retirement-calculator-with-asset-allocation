@@ -55,7 +55,7 @@ export const RebalanceTickets = ({
       <div className="overflow-x-auto -mx-5 md:-mx-6 px-5 md:px-6" tabIndex={0} role="region" aria-label="Scrollable rebalancing tickets table">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-border text-left font-mono text-[10px] uppercase tracking-[0.08em] text-faint">
+            <tr className="border-b border-border text-left text-xs font-medium text-muted">
               <th className="py-2 pr-4 font-medium">Asset class</th>
               <th className="py-2 pr-4 text-right font-medium">Current value</th>
               <th className="py-2 pr-4 text-right font-medium">Current %</th>

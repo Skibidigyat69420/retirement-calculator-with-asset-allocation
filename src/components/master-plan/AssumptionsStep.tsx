@@ -29,14 +29,15 @@ export const AssumptionsStep = ({
   ];
 
   return (
-    <div className="border-t border-border">
-      <header className="py-4">
-        <div className="eyebrow">Step 06 · Assumptions</div>
-        <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">Market assumptions</h2>
-        <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
-          Forward-looking expected returns and long-term purchasing-power erosion (inflation) applied across the wealth engine.
-        </p>
-      </header>
+    <div>
+      <div className="py-2.5 pb-4 flex items-center justify-between gap-4 flex-wrap border-b border-border/60 mb-6">
+        <div>
+          <h2 className="text-lg font-semibold text-ink">Economic Assumptions & Market Regimes</h2>
+          <p className="text-xs text-muted max-w-prose mt-0.5">
+            Forward-looking expected returns and long-term purchasing-power erosion (inflation) applied across the wealth engine.
+          </p>
+        </div>
+      </div>
 
       {/* Preset regimes */}
       <FormSection
@@ -99,7 +100,7 @@ export const AssumptionsStep = ({
           />
 
           <div className="border border-border rounded-md bg-sunken px-4 py-3.5">
-            <span className="eyebrow block">Purchasing power rule</span>
+            <span className="text-xs font-semibold text-ink block">Purchasing power rule</span>
             <p className="mt-2 text-xs text-muted leading-relaxed">
               At{' '}
               <span className="font-mono tabular-nums text-ink">

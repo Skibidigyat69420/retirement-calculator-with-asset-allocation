@@ -84,7 +84,6 @@ export const ReportsPage = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Deliver"
         title="Reports & Dossier"
         description="Generate and manage client-ready plan reports and the 16:9 wealth dossier deck."
         actions={

@@ -4,10 +4,10 @@ import { ChevronDown } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 export interface FormSectionProps {
-  /** Section ordinal, e.g. "01". Rendered as `01 · TITLE` in the eyebrow. */
+  /** Section ordinal, e.g. "01". Rendered as `01 · TITLE` in the header. */
   index?: string;
   title: string;
-  /** One sentence of context, rendered muted under the eyebrow. */
+  /** One sentence of context, rendered muted under the title. */
   description?: string;
   /** Right-aligned mono summary, e.g. "2 members". */
   meta?: string;
@@ -39,17 +39,21 @@ export const FormSection = ({
   const [open, setOpen] = useState(defaultOpen);
   const reduceMotion = useReducedMotion();
 
-  const eyebrow = (
-    <span className="eyebrow">
-      {index ? `${index} · ` : ''}
-      {title}
-    </span>
+  const sectionTitle = (
+    <h3 className="text-sm font-semibold text-ink tracking-tight flex items-center gap-2">
+      {index && (
+        <span className="text-[11px] font-semibold text-accent px-1.5 py-0.5 rounded bg-accent-soft border border-accent/20">
+          {index}
+        </span>
+      )}
+      <span>{title}</span>
+    </h3>
   );
 
   const headerInner = (
     <>
       <div className="min-w-0">
-        {eyebrow}
+        {sectionTitle}
         {description && <p className="mt-1 text-xs text-muted leading-relaxed">{description}</p>}
       </div>
       <div className="flex items-center gap-2.5 shrink-0 pt-0.5">

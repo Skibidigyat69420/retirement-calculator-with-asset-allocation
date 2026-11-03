@@ -59,19 +59,19 @@ export const ResultsStep = ({
   const mcRate = guardNumber(wealthResult.monteCarlo.successRate * 100);
 
   return (
-    <div className="space-y-8">
-      <header>
-        <div className="eyebrow">Step 07 · Outlook</div>
-        <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">Projections & scenario lab</h2>
-        <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
-          Stochastic simulation paths, asset-class evolution, purchasing-power preservation, and interactive what-if modeling.
-        </p>
-      </header>
+    <div className="space-y-6">
+      <div className="py-2.5 pb-4 flex items-center justify-between gap-4 flex-wrap border-b border-border/60">
+        <div>
+          <h2 className="text-lg font-semibold text-ink">Wealth Projections & Scenario Stress Testing</h2>
+          <p className="text-xs text-muted max-w-prose mt-0.5">
+            Stochastic simulation paths, asset-class evolution, purchasing-power preservation, and interactive what-if modeling.
+          </p>
+        </div>
+      </div>
 
       {/* Zero state — a blank plan must never present fabricated outcomes */}
       {!configured && (
         <EmptyState
-          eyebrow="Plan outlook"
           title="The plan needs a foundation"
           description="Add a client profile, assets, and cashflows before projections can be computed. Nothing here is estimated until the plan is configured."
           display
@@ -271,7 +271,7 @@ export const ResultsStep = ({
               <div className="overflow-x-auto mt-3" tabIndex={0} role="region" aria-label="Scrollable rebalancing table">
                 <table className="w-full min-w-[420px] text-xs">
                   <thead>
-                    <tr className="border-b border-border text-left eyebrow">
+                    <tr className="border-b border-border text-left text-xs font-medium text-muted">
                       <th className="py-2.5 pr-3 font-medium">Asset class</th>
                       <th className="py-2.5 pr-3 text-right font-medium">Current</th>
                       <th className="py-2.5 pr-3 text-right font-medium">Target</th>
@@ -334,7 +334,7 @@ export const ResultsStep = ({
             <div className="overflow-x-auto max-h-96 mt-3 border border-border rounded-md" tabIndex={0} role="region" aria-label="Scrollable schedule table">
               <table className="w-full min-w-[620px] text-xs">
                 <thead className="sticky top-0 bg-surface border-b border-border z-10">
-                  <tr className="text-left eyebrow">
+                  <tr className="text-left text-xs font-medium text-muted">
                     <th className="py-2.5 pr-3 font-medium">Year</th>
                     <th className="py-2.5 pr-3 font-medium">Age</th>
                     <th className="py-2.5 pr-3 font-medium">Phase</th>

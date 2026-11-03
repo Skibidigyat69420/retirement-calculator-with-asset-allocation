@@ -127,10 +127,10 @@ export const PlanReportBody = () => {
         <Card className="print:border-none print:shadow-none print:p-0">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <div className="eyebrow">Institutional Wealth Plan</div>
+              <div className="text-xs font-medium text-muted">Institutional Wealth Plan</div>
               <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">{inputs.client?.name || 'Private Client Plan'}</h2>
               <p className="text-xs text-muted mt-1.5">
-                Advisor: <span className="text-ink-soft font-medium">{inputs.client?.advisor || 'Sound Thesis Wealth Advisory'}</span>
+                Advisor: <span className="text-ink-soft font-medium">{inputs.client?.advisor || 'SoundThesis Capital'}</span>
                 {' · '}Review Date: <span className="font-mono text-ink-soft">{inputs.client?.reviewDate || new Date().toISOString().split('T')[0]}</span>
               </p>
             </div>
@@ -204,14 +204,14 @@ export const PlanReportBody = () => {
               ['Investment philosophy', inputs.client.investmentPhilosophy],
             ].map(([label, value]) => (
               <div key={label} className="rounded-md border border-border-subtle bg-sunken/40 p-3">
-                <div className="eyebrow">{label}</div>
+                <div className="text-xs font-medium text-muted">{label}</div>
                 <p className="mt-1 text-xs leading-relaxed text-ink-soft">{value || 'Not recorded'}</p>
               </div>
             ))}
           </div>
         </div>
         <div className="mt-5 border-t border-border-subtle pt-4">
-          <div className="eyebrow mb-3">Household members</div>
+          <div className="text-xs font-medium text-muted mb-3">Household members</div>
           {(inputs.client.familyMembers || []).length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {(inputs.client.familyMembers || []).map((member) => (
@@ -237,15 +237,15 @@ export const PlanReportBody = () => {
             ['Liabilities', formatCurrency(totalLiabilities)],
             ['Net worth', formatCurrency(wealthResult.netWorth)],
             ['Liquid reserve', `${liquidityMonths.toFixed(1)} months`],
-          ].map(([label, value]) => <div key={label} className="rounded-md border border-border bg-sunken/40 p-3"><div className="eyebrow">{label}</div><div className="mt-1 font-mono text-sm font-semibold text-ink">{value}</div></div>)}
+          ].map(([label, value]) => <div key={label} className="rounded-md border border-border bg-sunken/40 p-3"><div className="text-xs font-medium text-muted">{label}</div><div className="mt-1 font-mono text-sm font-semibold text-ink">{value}</div></div>)}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
-            <thead><tr className="border-b border-border-strong text-left eyebrow"><th className="py-2 pr-3">Asset / owner</th><th className="py-2 pr-3">Class</th><th className="py-2 pr-3">Currency</th><th className="py-2 pr-3 text-right">Expected return</th><th className="py-2 text-right">Value</th></tr></thead>
+            <thead><tr className="border-b border-border-strong text-left text-xs font-medium text-muted"><th className="py-2 pr-3">Asset / owner</th><th className="py-2 pr-3">Class</th><th className="py-2 pr-3">Currency</th><th className="py-2 pr-3 text-right">Expected return</th><th className="py-2 text-right">Value</th></tr></thead>
             <tbody className="divide-y divide-border-subtle">{inputs.assets.map((asset) => <tr key={asset.id}><td className="py-2 pr-3 font-medium text-ink">{asset.name}<span className="block text-[10px] font-normal text-faint">{asset.ownerMemberIds?.length ? `${asset.ownerMemberIds.length} designated owner(s)` : 'Household / joint'}</span></td><td className="py-2 pr-3 text-muted">{ASSET_LABELS[asset.category]}</td><td className="py-2 pr-3 font-mono text-muted">{asset.currency}</td><td className="py-2 pr-3 text-right font-mono">{formatPercent(asset.returnRate)}</td><td className="py-2 text-right font-mono font-semibold">{formatCurrency(asset.value)}</td></tr>)}</tbody>
           </table>
         </div>
-        {inputs.liabilities.length > 0 && <div className="mt-5 overflow-x-auto"><div className="eyebrow mb-2">Liability register</div><table className="w-full text-xs"><thead><tr className="border-b border-border-strong text-left eyebrow"><th className="py-2 pr-3">Liability / lender</th><th className="py-2 pr-3 text-right">Rate</th><th className="py-2 pr-3 text-right">Tenure</th><th className="py-2 pr-3 text-right">Monthly payment</th><th className="py-2 text-right">Outstanding</th></tr></thead><tbody className="divide-y divide-border-subtle">{inputs.liabilities.map((liability) => <tr key={liability.id}><td className="py-2 pr-3 font-medium text-ink">{liability.name}<span className="block text-[10px] font-normal text-faint">{liability.lender || 'Lender not recorded'}</span></td><td className="py-2 pr-3 text-right font-mono">{formatPercent(liability.rate)}</td><td className="py-2 pr-3 text-right font-mono">{liability.tenureYears} yrs</td><td className="py-2 pr-3 text-right font-mono">{liability.monthlyPayment ? formatCurrency(liability.monthlyPayment) : 'Modelled'}</td><td className="py-2 text-right font-mono font-semibold">{formatCurrency(liability.principal)}</td></tr>)}</tbody></table></div>}
+        {inputs.liabilities.length > 0 && <div className="mt-5 overflow-x-auto"><div className="text-xs font-medium text-muted mb-2">Liability register</div><table className="w-full text-xs"><thead><tr className="border-b border-border-strong text-left text-xs font-medium text-muted"><th className="py-2 pr-3">Liability / lender</th><th className="py-2 pr-3 text-right">Rate</th><th className="py-2 pr-3 text-right">Tenure</th><th className="py-2 pr-3 text-right">Monthly payment</th><th className="py-2 text-right">Outstanding</th></tr></thead><tbody className="divide-y divide-border-subtle">{inputs.liabilities.map((liability) => <tr key={liability.id}><td className="py-2 pr-3 font-medium text-ink">{liability.name}<span className="block text-[10px] font-normal text-faint">{liability.lender || 'Lender not recorded'}</span></td><td className="py-2 pr-3 text-right font-mono">{formatPercent(liability.rate)}</td><td className="py-2 pr-3 text-right font-mono">{liability.tenureYears} yrs</td><td className="py-2 pr-3 text-right font-mono">{liability.monthlyPayment ? formatCurrency(liability.monthlyPayment) : 'Modelled'}</td><td className="py-2 text-right font-mono font-semibold">{formatCurrency(liability.principal)}</td></tr>)}</tbody></table></div>}
       </Card>
 
       <Card>
@@ -254,18 +254,18 @@ export const PlanReportBody = () => {
         </h3>
         <p className="text-xs text-muted mb-5">The recommended policy mix, permitted ranges and the trades required to align the current portfolio.</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-          <div className="rounded-md border border-border bg-sunken/40 p-3"><div className="eyebrow">Policy basis</div><div className="mt-1 text-xs font-semibold text-ink">{manualTargets ? 'Advisor manual allocation' : `${riskProfile.label} risk profile`}</div></div>
-          <div className="rounded-md border border-border bg-sunken/40 p-3"><div className="eyebrow">Expected return</div><div className="mt-1 font-mono text-sm font-semibold text-ink">{formatPercent(targetReturn * 100)}</div></div>
-          <div className="rounded-md border border-border bg-sunken/40 p-3"><div className="eyebrow">Expected volatility</div><div className="mt-1 font-mono text-sm font-semibold text-ink">{formatPercent(targetVolatility * 100)}</div></div>
-          <div className="rounded-md border border-border bg-sunken/40 p-3"><div className="eyebrow">Policy status</div><div className="mt-1 text-xs font-semibold capitalize text-ink">{manualAllocationPolicy?.status || (manualTargets ? 'Draft' : 'Model policy')}</div></div>
+          <div className="rounded-md border border-border bg-sunken/40 p-3"><div className="text-xs font-medium text-muted">Policy basis</div><div className="mt-1 text-xs font-semibold text-ink">{manualTargets ? 'Advisor manual allocation' : `${riskProfile.label} risk profile`}</div></div>
+          <div className="rounded-md border border-border bg-sunken/40 p-3"><div className="text-xs font-medium text-muted">Expected return</div><div className="mt-1 font-mono text-sm font-semibold text-ink">{formatPercent(targetReturn * 100)}</div></div>
+          <div className="rounded-md border border-border bg-sunken/40 p-3"><div className="text-xs font-medium text-muted">Expected volatility</div><div className="mt-1 font-mono text-sm font-semibold text-ink">{formatPercent(targetVolatility * 100)}</div></div>
+          <div className="rounded-md border border-border bg-sunken/40 p-3"><div className="text-xs font-medium text-muted">Policy status</div><div className="mt-1 text-xs font-semibold capitalize text-ink">{manualAllocationPolicy?.status || (manualTargets ? 'Draft' : 'Model policy')}</div></div>
         </div>
-        <div className="overflow-x-auto"><table className="w-full text-xs"><thead><tr className="border-b border-border-strong text-left eyebrow"><th className="py-2 pr-3">Asset class</th><th className="py-2 pr-3 text-right">Current</th><th className="py-2 pr-3 text-right">Target</th><th className="py-2 pr-3 text-right">Permitted range</th><th className="py-2 pr-3 text-right">Target value</th><th className="py-2 text-right">Action</th></tr></thead><tbody className="divide-y divide-border-subtle">{CATEGORIES.map((cat) => {
+        <div className="overflow-x-auto"><table className="w-full text-xs"><thead><tr className="border-b border-border-strong text-left text-xs font-medium text-muted"><th className="py-2 pr-3">Asset class</th><th className="py-2 pr-3 text-right">Current</th><th className="py-2 pr-3 text-right">Target</th><th className="py-2 pr-3 text-right">Permitted range</th><th className="py-2 pr-3 text-right">Target value</th><th className="py-2 text-right">Action</th></tr></thead><tbody className="divide-y divide-border-subtle">{CATEGORIES.map((cat) => {
           const current = wealthResult.currentAllocation[cat] * 100;
           const trade = wealthResult.netWorth * ((targets[cat] - current) / 100);
           const range = manualAllocationPolicy?.ranges?.[cat];
           return <tr key={cat}><td className="py-2 pr-3 font-medium text-ink"><span className="mr-2 inline-block h-2 w-2 rounded-full" style={{ backgroundColor: ASSET_COLORS[cat] }} />{ASSET_LABELS[cat]}</td><td className="py-2 pr-3 text-right font-mono">{formatPercent(current)}</td><td className="py-2 pr-3 text-right font-mono font-semibold">{formatPercent(targets[cat])}</td><td className="py-2 pr-3 text-right font-mono text-muted">{range ? `${range.min}%–${range.max}%` : '—'}</td><td className="py-2 pr-3 text-right font-mono">{formatCurrency(wealthResult.netWorth * targets[cat] / 100)}</td><td className={`py-2 text-right font-mono font-semibold ${trade > 0 ? 'text-positive' : trade < 0 ? 'text-negative' : 'text-muted'}`}>{Math.abs(trade) < wealthResult.netWorth * 0.005 ? 'Hold' : `${trade > 0 ? 'Buy' : 'Reduce'} ${formatCurrencyCompact(Math.abs(trade))}`}</td></tr>;
         })}</tbody></table></div>
-        {manualAllocationPolicy && <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3"><div className="rounded-md border border-border-subtle bg-sunken/40 p-3"><div className="eyebrow">Mandate / rationale</div><p className="mt-1 text-xs leading-relaxed text-ink-soft">{manualAllocationPolicy.objective || '—'}</p><p className="mt-2 text-[11px] leading-relaxed text-muted">{manualAllocationPolicy.rationale || 'Advisor rationale not yet recorded.'}</p></div><div className="rounded-md border border-border-subtle bg-sunken/40 p-3"><div className="eyebrow">Governance</div><p className="mt-1 text-xs text-ink-soft">Review {manualAllocationPolicy.reviewFrequency} · rebalance at ±{manualAllocationPolicy.rebalanceThreshold}% drift</p><p className="mt-2 text-[11px] leading-relaxed text-muted">{manualAllocationPolicy.constraints || 'No additional constraints recorded.'}</p><p className="mt-2 text-[10px] font-mono text-faint">Effective {manualAllocationPolicy.effectiveDate || '—'} · Approved by {manualAllocationPolicy.approvedBy || 'Pending'}</p></div></div>}
+        {manualAllocationPolicy && <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3"><div className="rounded-md border border-border-subtle bg-sunken/40 p-3"><div className="text-xs font-medium text-muted">Mandate / rationale</div><p className="mt-1 text-xs leading-relaxed text-ink-soft">{manualAllocationPolicy.objective || '—'}</p><p className="mt-2 text-[11px] leading-relaxed text-muted">{manualAllocationPolicy.rationale || 'Advisor rationale not yet recorded.'}</p></div><div className="rounded-md border border-border-subtle bg-sunken/40 p-3"><div className="text-xs font-medium text-muted">Governance</div><p className="mt-1 text-xs text-ink-soft">Review {manualAllocationPolicy.reviewFrequency} · rebalance at ±{manualAllocationPolicy.rebalanceThreshold}% drift</p><p className="mt-2 text-[11px] leading-relaxed text-muted">{manualAllocationPolicy.constraints || 'No additional constraints recorded.'}</p><p className="mt-2 text-[10px] font-mono text-faint">Effective {manualAllocationPolicy.effectiveDate || '—'} · Approved by {manualAllocationPolicy.approvedBy || 'Pending'}</p></div></div>}
       </Card>
 
       <Card>
@@ -278,8 +278,8 @@ export const PlanReportBody = () => {
           <div>{row('Retirement age', inputs.retirementAge)}{row('Years to retirement', Math.max(0, inputs.retirementAge - inputs.currentAge))}{row('Retirement need today', `${formatCurrency(inputs.swp.monthlyNeedToday)} / month`)}{row('Withdrawal horizon', `Age ${inputs.swp.startAge}–${inputs.swp.endAge}`)}{row('Post-retirement return', formatPercent(inputs.swp.postRetirementReturn))}{row('Withdrawal tax rate', formatPercent(inputs.swp.taxRate))}{row('Plan longevity', wealthResult.sustainable ? `Sustains through age ${inputs.lifeExpectancy}` : `Potential depletion age ${wealthResult.depletionAge}`)}</div>
         </div>
         <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><div className="eyebrow mb-2">Income sources</div>{(inputs.client.incomeSources || []).length ? (inputs.client.incomeSources || []).map((source) => <div key={source.id} className="flex justify-between gap-3 border-b border-border-subtle py-2 text-xs"><span className="text-ink">{source.name}<span className="ml-1 text-faint">({source.frequency})</span></span><span className="font-mono">{source.currency} {source.amount.toLocaleString('en-IN')}</span></div>) : <p className="text-xs text-muted">No itemised income sources recorded.</p>}</div>
-          <div><div className="eyebrow mb-2">Insurance &amp; protection</div>{(inputs.client.insurancePolicies || []).length ? (inputs.client.insurancePolicies || []).map((policy) => <div key={policy.id} className="flex justify-between gap-3 border-b border-border-subtle py-2 text-xs"><span className="text-ink">{policy.type}<span className="block text-[10px] text-faint">{policy.provider || 'Provider not recorded'}</span></span><span className="font-mono text-right">{policy.coverage || 'Coverage —'}<span className="block text-[10px] text-faint">{policy.premium ? `${formatCurrency(policy.premium)} ${policy.premiumFrequency || ''}` : 'Premium —'}</span></span></div>) : <p className="text-xs text-muted">No insurance policies recorded. Protection adequacy requires adviser review.</p>}</div>
+          <div><div className="text-xs font-medium text-muted mb-2">Income sources</div>{(inputs.client.incomeSources || []).length ? (inputs.client.incomeSources || []).map((source) => <div key={source.id} className="flex justify-between gap-3 border-b border-border-subtle py-2 text-xs"><span className="text-ink">{source.name}<span className="ml-1 text-faint">({source.frequency})</span></span><span className="font-mono">{source.currency} {source.amount.toLocaleString('en-IN')}</span></div>) : <p className="text-xs text-muted">No itemised income sources recorded.</p>}</div>
+          <div><div className="text-xs font-medium text-muted mb-2">Insurance &amp; protection</div>{(inputs.client.insurancePolicies || []).length ? (inputs.client.insurancePolicies || []).map((policy) => <div key={policy.id} className="flex justify-between gap-3 border-b border-border-subtle py-2 text-xs"><span className="text-ink">{policy.type}<span className="block text-[10px] text-faint">{policy.provider || 'Provider not recorded'}</span></span><span className="font-mono text-right">{policy.coverage || 'Coverage —'}<span className="block text-[10px] text-faint">{policy.premium ? `${formatCurrency(policy.premium)} ${policy.premiumFrequency || ''}` : 'Premium —'}</span></span></div>) : <p className="text-xs text-muted">No insurance policies recorded. Protection adequacy requires adviser review.</p>}</div>
         </div>
       </Card>
 
@@ -288,8 +288,8 @@ export const PlanReportBody = () => {
           <BookOpenCheck size={16} strokeWidth={1.6} className="text-muted" /> Capital-Market Assumptions &amp; Methodology
         </h3>
         <p className="text-xs text-muted mb-5">Forward-looking inputs used by deterministic projections, Monte Carlo simulation and allocation analytics.</p>
-        <div className="overflow-x-auto"><table className="w-full text-xs"><thead><tr className="border-b border-border-strong text-left eyebrow"><th className="py-2 pr-3">Asset class</th><th className="py-2 pr-3 text-right">Expected return</th><th className="py-2 pr-3 text-right">Volatility</th><th className="py-2 text-right">Target contribution</th></tr></thead><tbody className="divide-y divide-border-subtle">{CATEGORIES.map((cat) => <tr key={cat}><td className="py-2 pr-3 font-medium text-ink">{ASSET_LABELS[cat]}</td><td className="py-2 pr-3 text-right font-mono">{formatPercent(assumptions.categories[cat].mean * 100)}</td><td className="py-2 pr-3 text-right font-mono">{formatPercent(assumptions.categories[cat].std * 100)}</td><td className="py-2 text-right font-mono">{formatPercent(targets[cat] * assumptions.categories[cat].mean)}</td></tr>)}</tbody></table></div>
-        <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3"><div className="rounded-md border border-border bg-sunken/40 p-3"><div className="eyebrow">Assumption source</div><p className="mt-1 text-xs text-ink-soft">{activeAssumptionSourceLabel}</p><p className="mt-1 text-[10px] font-mono text-faint">Data timestamp {assumptions.fetchedAt ? new Date(assumptions.fetchedAt).toLocaleDateString('en-IN') : '—'}</p></div><div className="rounded-md border border-border bg-sunken/40 p-3"><div className="eyebrow">Simulation</div><p className="mt-1 text-xs text-ink-soft">{riskProfile.monteCarloSimulations.toLocaleString('en-IN')} correlated paths, including goal withdrawals, tax and sequence risk.</p></div><div className="rounded-md border border-border bg-sunken/40 p-3"><div className="eyebrow">Interpretation</div><p className="mt-1 text-xs text-ink-soft">Estimates are probabilistic, not guarantees. Returns, inflation, tax and client circumstances require periodic review.</p></div></div>
+        <div className="overflow-x-auto"><table className="w-full text-xs"><thead><tr className="border-b border-border-strong text-left text-xs font-medium text-muted"><th className="py-2 pr-3">Asset class</th><th className="py-2 pr-3 text-right">Expected return</th><th className="py-2 pr-3 text-right">Volatility</th><th className="py-2 text-right">Target contribution</th></tr></thead><tbody className="divide-y divide-border-subtle">{CATEGORIES.map((cat) => <tr key={cat}><td className="py-2 pr-3 font-medium text-ink">{ASSET_LABELS[cat]}</td><td className="py-2 pr-3 text-right font-mono">{formatPercent(assumptions.categories[cat].mean * 100)}</td><td className="py-2 pr-3 text-right font-mono">{formatPercent(assumptions.categories[cat].std * 100)}</td><td className="py-2 text-right font-mono">{formatPercent(targets[cat] * assumptions.categories[cat].mean)}</td></tr>)}</tbody></table></div>
+        <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3"><div className="rounded-md border border-border bg-sunken/40 p-3"><div className="text-xs font-medium text-muted">Assumption source</div><p className="mt-1 text-xs text-ink-soft">{activeAssumptionSourceLabel}</p><p className="mt-1 text-[10px] font-mono text-faint">Data timestamp {assumptions.fetchedAt ? new Date(assumptions.fetchedAt).toLocaleDateString('en-IN') : '—'}</p></div><div className="rounded-md border border-border bg-sunken/40 p-3"><div className="text-xs font-medium text-muted">Simulation</div><p className="mt-1 text-xs text-ink-soft">{riskProfile.monteCarloSimulations.toLocaleString('en-IN')} correlated paths, including goal withdrawals, tax and sequence risk.</p></div><div className="rounded-md border border-border bg-sunken/40 p-3"><div className="text-xs font-medium text-muted">Interpretation</div><p className="mt-1 text-xs text-ink-soft">Estimates are probabilistic, not guarantees. Returns, inflation, tax and client circumstances require periodic review.</p></div></div>
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -329,7 +329,7 @@ export const PlanReportBody = () => {
               ['Max drawdown prob', fmtOrDash(wealthResult.maxDrawdownProbability * 100, formatPercent)],
             ].map(([label, value]) => (
               <div key={label} className="p-3 bg-sunken border border-border-subtle rounded-md">
-                <div className="eyebrow">{label}</div>
+                <div className="text-xs font-medium text-muted">{label}</div>
                 <div className="font-mono tabular-nums text-ink mt-1 text-sm">{value}</div>
               </div>
             ))}
@@ -420,7 +420,7 @@ export const PlanReportBody = () => {
             },
           ].map((g) => (
             <div key={g.label} className="p-4 bg-sunken rounded-md border border-border-subtle">
-              <div className="eyebrow">{g.label}</div>
+              <div className="text-xs font-medium text-muted">{g.label}</div>
               <div className="num-hero text-3xl text-ink mt-1">{fmtOrDash(g.value, (v) => formatPercent(v))}</div>
               <div className="text-xs text-muted mt-1">{g.count} goals</div>
             </div>
@@ -429,7 +429,7 @@ export const PlanReportBody = () => {
         <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
           <table className="w-full min-w-[900px] text-sm">
             <thead>
-              <tr className="border-b border-border-strong text-left eyebrow">
+              <tr className="border-b border-border-strong text-left text-xs font-medium text-muted">
                 <th className="py-2.5 pr-4 font-medium">Goal</th>
                 <th className="py-2.5 pr-4 font-medium">Priority</th>
                 <th className="py-2.5 pr-4 text-right font-medium">Target</th>
@@ -512,15 +512,15 @@ export const PlanReportBody = () => {
               <p className="text-[11px] text-muted leading-snug">{p.tagline}</p>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="p-2 bg-raised rounded-md border border-border-subtle">
-                  <div className="text-[10px] uppercase tracking-wide text-muted eyebrow">Required SIP</div>
+                  <div className="text-[11px] font-medium text-muted">Required SIP</div>
                   <div className="text-xs font-mono tabular-nums font-semibold text-ink mt-1">{formatCurrencyCompact(p.requiredSipMonthly)}</div>
                 </div>
                 <div className="p-2 bg-raised rounded-md border border-border-subtle">
-                  <div className="text-[10px] uppercase tracking-wide text-muted eyebrow">Retire At</div>
+                  <div className="text-[11px] font-medium text-muted">Retire at</div>
                   <div className="text-xs font-mono tabular-nums font-semibold text-ink mt-1">Age {p.projectedRetirementAge}</div>
                 </div>
                 <div className="p-2 bg-raised rounded-md border border-border-subtle">
-                  <div className="text-[10px] uppercase tracking-wide text-muted eyebrow">Spend / Mo</div>
+                  <div className="text-[11px] font-medium text-muted">Spend / mo</div>
                   <div className="text-xs font-mono tabular-nums font-semibold text-ink mt-1">{formatCurrencyCompact(p.monthlyRetirementSpending)}</div>
                 </div>
               </div>

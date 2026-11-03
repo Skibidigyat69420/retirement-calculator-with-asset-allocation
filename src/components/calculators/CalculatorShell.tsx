@@ -24,7 +24,6 @@ export const CalculatorShell = ({
       <div className="lg:col-span-4">
         <div className="lg:sticky lg:top-6">
           <div className="pb-4 border-b border-border">
-            <div className="eyebrow mb-1.5">Calculator</div>
             <h2 className="text-xl font-semibold tracking-tight text-ink">{title}</h2>
             {description && (
               <p className="mt-1.5 text-[13px] text-muted leading-relaxed">{description}</p>
@@ -40,7 +39,7 @@ export const CalculatorShell = ({
           <>
             <div className="rounded-lg border border-border bg-surface">
               <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-border-subtle">
-                <span className="eyebrow">Projection</span>
+                <span className="text-xs font-semibold text-ink">Projection</span>
                 <ArrowLeftRight size={14} strokeWidth={1.6} className="text-faint" aria-hidden="true" />
               </div>
               <div className="p-5">{results}</div>
@@ -50,7 +49,7 @@ export const CalculatorShell = ({
         ) : (
           <div className="rounded-lg border border-border bg-surface">
             <div className="px-5 pt-4 pb-3 border-b border-border-subtle">
-              <span className="eyebrow">Projection</span>
+              <span className="text-xs font-semibold text-ink">Projection</span>
             </div>
             <div className="relative overflow-hidden">
               <div className="absolute inset-x-0 top-0 h-24 grid-motif opacity-60 pointer-events-none" aria-hidden="true" />

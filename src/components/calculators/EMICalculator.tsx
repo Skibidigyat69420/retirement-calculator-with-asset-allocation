@@ -92,7 +92,7 @@ export const EMICalculator = () => {
     >
       <div className="mt-5 rounded-lg border border-border bg-raised">
         <div className="px-5 pt-4 pb-3 border-b border-border-subtle">
-          <div className="eyebrow">Yearly Amortisation</div>
+          <div className="text-sm font-semibold text-ink">Yearly amortisation</div>
         </div>
         <div className="p-5">
           <p className="text-[13px] text-muted leading-relaxed mb-4">
@@ -145,7 +145,7 @@ export const EMICalculator = () => {
 
       <div className="mt-5 rounded-lg border border-border bg-raised">
         <div className="px-5 pt-4 pb-3 border-b border-border-subtle">
-          <div className="eyebrow">Outstanding Balance Curve</div>
+          <div className="text-sm font-semibold text-ink">Outstanding balance curve</div>
         </div>
         <div className="p-5">
           <p className="text-[13px] text-muted leading-relaxed mb-4">

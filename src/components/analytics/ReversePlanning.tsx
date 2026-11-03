@@ -181,7 +181,6 @@ export const ReversePlanning = () => {
   if (!wealthResult.isConfigured) {
     return (
       <EmptyState
-        eyebrow="Reverse planning"
         title="Configure a plan before solving backwards"
         description="Add the client's profile, current position and planning horizon first. Reverse planning will then solve the exact savings or timing needed to reach a target."
         action={<a href="/master-plan" className="text-sm font-semibold text-accent-strong underline underline-offset-4">Open Master Plan</a>}
@@ -202,7 +201,7 @@ export const ReversePlanning = () => {
               <h3 className="text-xl font-sans font-bold text-ink tracking-tight">
                 Reverse Planning & Target Milestone Solver
               </h3>
-              <Badge variant="navy" className="text-[10px] uppercase font-mono">
+              <Badge variant="navy" className="text-xs font-medium font-mono">
                 Milestone Solver
               </Badge>
             </div>
@@ -279,7 +278,7 @@ export const ReversePlanning = () => {
         {/* 1-Click Solver Action Cards */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-ink-soft flex items-center gap-1.5">
+            <h4 className="text-xs font-semibold text-ink flex items-center gap-1.5">
               <Layers size={14} className="text-ink-soft" />
               Target Solver Diagnostics & 1-Click Plan Actions
             </h4>
@@ -290,7 +289,7 @@ export const ReversePlanning = () => {
             {/* Lever 1: Required Monthly SIP */}
             <div className="bg-raised p-4 rounded-2xl border border-border shadow-2xs flex flex-col justify-between space-y-3">
               <div>
-                <div className="flex items-center justify-between gap-1 text-[10px] uppercase font-bold tracking-wider text-muted mb-1">
+                <div className="flex items-center justify-between gap-1 text-xs font-medium text-muted mb-1">
                   <span>Required Monthly SIP</span>
                   <TrendingUp size={14} className="text-ink-soft" />
                 </div>
@@ -325,7 +324,7 @@ export const ReversePlanning = () => {
             {/* Lever 2: Feasible Retirement Age */}
             <div className="bg-raised p-4 rounded-2xl border border-border shadow-2xs flex flex-col justify-between space-y-3">
               <div>
-                <div className="flex items-center justify-between gap-1 text-[10px] uppercase font-bold tracking-wider text-muted mb-1">
+                <div className="flex items-center justify-between gap-1 text-xs font-medium text-muted mb-1">
                   <span>Feasible Retirement Age</span>
                   <Clock size={14} className="text-ink-soft" />
                 </div>
@@ -360,7 +359,7 @@ export const ReversePlanning = () => {
             {/* Lever 3: Max Sustainable Spend */}
             <div className="bg-raised p-4 rounded-2xl border border-border shadow-2xs flex flex-col justify-between space-y-3">
               <div>
-                <div className="flex items-center justify-between gap-1 text-[10px] uppercase font-bold tracking-wider text-muted mb-1">
+                <div className="flex items-center justify-between gap-1 text-xs font-medium text-muted mb-1">
                   <span>Max Sustainable Spend</span>
                   <ShieldCheck size={14} className="text-accent-strong" />
                 </div>
@@ -395,7 +394,7 @@ export const ReversePlanning = () => {
             {/* Lever 4: Required Capital Today */}
             <div className="bg-raised p-4 rounded-2xl border border-border shadow-2xs flex flex-col justify-between space-y-3">
               <div>
-                <div className="flex items-center justify-between gap-1 text-[10px] uppercase font-bold tracking-wider text-muted mb-1">
+                <div className="flex items-center justify-between gap-1 text-xs font-medium text-muted mb-1">
                   <span>Required Capital Today</span>
                   <DollarSign size={14} className="text-ink-soft" />
                 </div>
@@ -590,7 +589,7 @@ export const ReversePlanning = () => {
                 <div className="space-y-3.5">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-muted">
+                      <span className="text-xs font-medium text-muted">
                         {p.tagline}
                       </span>
                       <h4 className="text-base font-bold text-ink mt-0.5">{p.name}</h4>
@@ -609,15 +608,15 @@ export const ReversePlanning = () => {
 
                   <div className="grid grid-cols-3 gap-2 text-xs">
                     <div className="p-2.5 bg-raised rounded-xl border border-border">
-                      <span className="text-[10px] text-muted uppercase font-bold block">Monthly SIP</span>
+                      <span className="text-xs font-medium text-muted block">Monthly SIP</span>
                       <span className="font-bold font-mono text-ink">{formatCurrency(p.requiredSipMonthly)}</span>
                     </div>
                     <div className="p-2.5 bg-raised rounded-xl border border-border">
-                      <span className="text-[10px] text-muted uppercase font-bold block">Retirement Age</span>
+                      <span className="text-xs font-medium text-muted block">Retirement Age</span>
                       <span className="font-bold font-mono text-ink">Age {p.projectedRetirementAge}</span>
                     </div>
                     <div className="p-2.5 bg-raised rounded-xl border border-border">
-                      <span className="text-[10px] text-muted uppercase font-bold block">Post-Ret Spend</span>
+                      <span className="text-xs font-medium text-muted block">Post-Ret Spend</span>
                       <span className="font-bold font-mono text-ink">{formatCurrency(p.monthlyRetirementSpending)}/mo</span>
                     </div>
                   </div>

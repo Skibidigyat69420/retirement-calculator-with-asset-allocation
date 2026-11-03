@@ -94,7 +94,7 @@ export const StressTestSimulator = () => {
             <h3 className="text-xl font-bold text-ink tracking-tight">
               Crisis & Macro Stress Testing Simulator
             </h3>
-            <Badge variant="gold" className="text-[10px] tracking-wider uppercase font-semibold">
+            <Badge variant="gold" className="text-xs font-medium">
               Live Shock Engine
             </Badge>
           </div>
@@ -147,7 +147,7 @@ export const StressTestSimulator = () => {
         </div>
         <div className="flex items-center gap-2 self-start md:self-center shrink-0">
           <div className="text-right">
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-muted block">
+            <span className="text-xs font-medium text-muted block">
               Resilience Score
             </span>
             <span
@@ -169,7 +169,7 @@ export const StressTestSimulator = () => {
       {isCustom && (
         <div className="p-4 rounded-xl border border-info-soft bg-info-soft/40 space-y-4 animate-in fade-in duration-150">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-ink flex items-center gap-1.5">
+            <h4 className="text-xs font-semibold text-ink flex items-center gap-1.5">
               <Sliders size={14} className="text-info" />
               Adjust Shock Magnitude & Inflation Delta
             </h4>
@@ -198,7 +198,7 @@ export const StressTestSimulator = () => {
       {/* Topline Stress KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl border border-border bg-raised space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
+          <span className="text-xs font-medium text-muted block">
             Shocked Portfolio Value
           </span>
           <div className="flex items-baseline gap-2">
@@ -213,7 +213,7 @@ export const StressTestSimulator = () => {
         </div>
 
         <div className="p-4 rounded-xl border border-border bg-raised space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
+          <span className="text-xs font-medium text-muted block">
             Crisis Drawdown
           </span>
           <div className="flex items-baseline gap-1.5">
@@ -233,7 +233,7 @@ export const StressTestSimulator = () => {
         </div>
 
         <div className="p-4 rounded-xl border border-border bg-raised space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
+          <span className="text-xs font-medium text-muted block">
             Retirement Corpus at Age {inputs.retirementAge}
           </span>
           <div className="flex items-baseline gap-2">
@@ -251,7 +251,7 @@ export const StressTestSimulator = () => {
         </div>
 
         <div className="p-4 rounded-xl border border-border bg-raised space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
+          <span className="text-xs font-medium text-muted block">
             Longevity Verdict
           </span>
           <div className="flex items-center gap-1.5 mt-0.5">
@@ -279,13 +279,13 @@ export const StressTestSimulator = () => {
 
       {/* Asset Class Shock Breakdown Table */}
       <div className="space-y-3">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+        <h4 className="text-xs font-semibold text-ink">
           Asset Class Drawdown & Buffer Contribution
         </h4>
 
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border border-border rounded-lg overflow-hidden">
-            <thead className="bg-surface text-ink-soft font-semibold border-b border-border uppercase tracking-wider">
+            <thead className="bg-surface text-muted font-medium text-xs border-b border-border">
               <tr>
                 <th className="p-3">Asset Category</th>
                 <th className="p-3 text-right">Pre-Shock Value</th>
@@ -363,7 +363,7 @@ export const StressTestSimulator = () => {
 
       {/* Institutional Action Plan */}
       <div className="p-4 rounded-xl border border-border bg-surface/70 space-y-2">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-ink-soft flex items-center gap-1.5">
+        <h4 className="text-xs font-semibold text-ink flex items-center gap-1.5">
           <Award size={14} className="text-ink-soft" />
           Institutional Crisis Mitigation Playbook
         </h4>

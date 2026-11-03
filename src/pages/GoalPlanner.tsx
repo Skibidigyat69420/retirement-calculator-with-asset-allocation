@@ -192,7 +192,6 @@ export const GoalPlanner = () => {
     <div className="pb-10">
       <PageHeader
         variant="hero"
-        eyebrow="Goals"
         title="Every milestone, on one timeline."
         description="Lay each financial goal on the horizon, fund it in priority order, and see where the capital claims collide."
         actions={
@@ -206,7 +205,6 @@ export const GoalPlanner = () => {
       {inputs.goals.length === 0 ? (
         <EmptyState
           icon={Plus}
-          eyebrow="Goals"
           title="No goals yet"
           description="Add the first financial goal for this client."
           action={
@@ -313,7 +311,7 @@ export const GoalPlanner = () => {
                       <div className="font-mono tabular-nums text-sm text-ink">
                         {row.year ?? '—'}
                       </div>
-                      <div className="font-mono text-[10px] uppercase tracking-[0.08em] text-faint mt-0.5">
+                      <div className="text-xs text-muted mt-0.5">
                         {row.yearsAway !== null ? `${row.yearsAway}y out` : 'Set horizon'}
                       </div>
                     </div>
@@ -357,7 +355,7 @@ export const GoalPlanner = () => {
                           <div className="font-mono tabular-nums text-base text-ink">
                             {row.goal.targetAmount > 0 ? formatCurrencyCompact(row.goal.targetAmount) : '—'}
                           </div>
-                          <div className="text-[10px] uppercase tracking-[0.08em] text-faint">
+                          <div className="text-xs text-muted">
                             Target (today's ₹)
                           </div>
                         </div>

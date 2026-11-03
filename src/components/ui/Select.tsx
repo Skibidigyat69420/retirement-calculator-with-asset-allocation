@@ -44,7 +44,6 @@ export const Select = ({
       htmlFor={selectId}
       layout={layout}
       helper={helper}
-      labelClassName="block text-[11px] font-semibold uppercase tracking-wider text-muted"
       className={className}
     >
       <div className={cn('relative', inline && 'flex-1 min-w-[8rem] basis-36')}>

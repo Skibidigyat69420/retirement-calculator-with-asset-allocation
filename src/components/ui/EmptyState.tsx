@@ -3,7 +3,6 @@ import type { LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 export interface EmptyStateProps {
-  eyebrow?: string;
   title: string;
   description?: string;
   action?: React.ReactNode;
@@ -14,7 +13,6 @@ export interface EmptyStateProps {
 }
 
 export const EmptyState = ({
-  eyebrow,
   title,
   description,
   action,
@@ -34,7 +32,6 @@ export const EmptyState = ({
             <Icon size={22} strokeWidth={1.6} aria-hidden="true" />
           </div>
         )}
-        {eyebrow && <div className="eyebrow mb-2">{eyebrow}</div>}
         <h2
           className={cn(
             'text-ink',

@@ -44,7 +44,7 @@ export const Field = ({
           htmlFor={htmlFor ?? generatedId}
           className={cn(
             inline
-              ? 'w-24 sm:w-28 shrink-0 text-[10px] font-mono uppercase tracking-wider text-muted leading-tight'
+              ? 'w-28 sm:w-36 shrink-0 text-xs font-medium text-ink-soft leading-snug'
               : 'field-label block text-xs font-medium tracking-normal text-ink-soft',
             !inline && labelClassName,
           )}
@@ -57,11 +57,11 @@ export const Field = ({
         <div
           className={cn(
             'flex items-start gap-1.5 pt-0.5',
-            inline && 'basis-full pl-[6.75rem] sm:pl-[7.75rem]',
+            inline && 'basis-full pl-0 sm:pl-[9.75rem]',
           )}
         >
           {hasError && <AlertCircle size={13} strokeWidth={1.8} className="text-negative mt-0.5 shrink-0" />}
-          <p className={cn('text-xs leading-relaxed', hasError ? 'text-negative' : 'text-faint')}>
+          <p className={cn('text-xs leading-relaxed', hasError ? 'text-negative' : 'text-muted')}>
             {error ?? helper}
           </p>
         </div>

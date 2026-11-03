@@ -50,7 +50,7 @@ export const PlanHealthRadial = ({ health, ariaLabel, className }: PlanHealthRad
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-3xl font-sans font-bold text-ink leading-none">{health.overallScore}</span>
-          <span className="text-[10px] uppercase tracking-wider text-muted mt-1">/ 100</span>
+          <span className="text-xs text-muted font-medium mt-0.5">/ 100</span>
         </div>
       </div>
 
@@ -63,7 +63,7 @@ export const PlanHealthRadial = ({ health, ariaLabel, className }: PlanHealthRad
               <div className={cn('h-full rounded-full', barTone(c.score))} style={{ width: `${c.score}%` }} />
             </div>
             <span className="w-8 text-right font-mono font-semibold text-ink">{c.score}</span>
-            <span className="w-14 text-right text-[10px] uppercase tracking-wide text-muted shrink-0">{c.status}</span>
+            <span className="w-16 text-right text-xs capitalize text-muted shrink-0">{c.status}</span>
           </div>
         ))}
       </div>

@@ -30,7 +30,7 @@ export function OnboardingPage({ invitationOnly = false }: { invitationOnly?: bo
   };
   return <main className="min-h-screen bg-surface text-ink px-6 py-16">
     <section className="max-w-lg mx-auto space-y-6">
-      <div className="flex items-center gap-3"><LogoMark size={32} /><strong>Sound Thesis</strong></div>
+      <div className="flex items-center gap-3"><LogoMark size={32} /><strong>SoundThesis Capital</strong></div>
       <div><h1 className="text-3xl font-semibold mb-2">{mode === 'create' ? 'Set up your practice' : 'Join your practice'}</h1>
         <p className="text-ink-muted">{mode === 'create' ? 'Create a private workspace for your clients and team.' : 'Use an invitation from your administrator. Sign in with the email address they invited.'}</p></div>
       {!invitationOnly && <div className="flex gap-3">

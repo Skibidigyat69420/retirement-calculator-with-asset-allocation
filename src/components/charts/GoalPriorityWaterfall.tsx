@@ -61,7 +61,7 @@ export const GoalPriorityWaterfall = ({
                   <span className="font-semibold text-ink truncate">{g.name}</span>
                   <span
                     className={cn(
-                      'text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border shrink-0',
+                      'text-xs font-medium px-1.5 py-0.5 rounded border shrink-0',
                       STATUS_STYLES[g.fundedStatus],
                     )}
                   >

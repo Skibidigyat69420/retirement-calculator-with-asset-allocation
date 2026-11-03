@@ -25,7 +25,6 @@ export const GoalsAndSimulation = () => {
         <SectionHeader title="Goals" description="Define financial milestones to anchor the planning process." />
         <EmptyState
           icon={Target}
-          eyebrow="No goals"
           title="No goals defined"
           description="Add goals in the Master Plan to track funding status and timeline."
         />

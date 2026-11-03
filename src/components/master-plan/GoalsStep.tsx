@@ -81,14 +81,15 @@ export const GoalsStep = ({
   }, 0);
 
   return (
-    <div className="border-t border-border">
-      <header className="py-4">
-        <div className="eyebrow">Step 04 · Goals</div>
-        <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">Goals & milestones</h2>
-        <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
-          Major family outlays — education, property, sabbaticals. Costs index by inflation and flow into the Goal Conflict Resolver.
-        </p>
-      </header>
+    <div>
+      <div className="py-2.5 pb-4 flex items-center justify-between gap-4 flex-wrap border-b border-border/60 mb-6">
+        <div>
+          <h2 className="text-lg font-semibold text-ink">Goals, Milestones & Capital Outlays</h2>
+          <p className="text-xs text-muted max-w-prose mt-0.5">
+            Major family outlays — education, property, sabbaticals. Costs index by inflation and flow into the Goal Conflict Resolver.
+          </p>
+        </div>
+      </div>
 
       <FormSection
         index="01"
@@ -113,7 +114,7 @@ export const GoalsStep = ({
           renderSummary={(goal) => (
             <span className="flex items-baseline gap-3 min-w-0 text-sm">
               <span className="truncate font-medium text-ink">{goal.name || 'Unnamed goal'}</span>
-              <span className={`text-[10px] uppercase tracking-[0.08em] font-mono shrink-0 ${PRIORITY_TONE[goal.priority] ?? 'text-muted'}`}>
+              <span className={`text-xs capitalize font-medium shrink-0 ${PRIORITY_TONE[goal.priority] ?? 'text-muted'}`}>
                 {goal.priority}
               </span>
               <span className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted">

@@ -185,7 +185,6 @@ export const PortfolioReturnProjectionCalculator = () => {
       {/* Top Headline & Presets */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-border">
         <div className="max-w-2xl">
-          <div className="eyebrow mb-1.5">Calculator</div>
           <h2 className="text-xl font-semibold tracking-tight text-ink flex items-center gap-2">
             <Layers size={18} strokeWidth={1.6} className="text-accent-strong" aria-hidden="true" />
             Multi-Asset Portfolio Return & Wealth Projection
@@ -213,12 +212,12 @@ export const PortfolioReturnProjectionCalculator = () => {
           {/* Topline Metrics — hairline result panel with tabular figures */}
           <div className="rounded-lg border border-border bg-surface">
             <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-border-subtle">
-              <span className="eyebrow">Projection</span>
+              <span className="text-xs font-semibold text-ink">Projection</span>
               <span className="font-mono tabular-nums text-[11px] text-faint">Horizon: {years} yrs</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-border-subtle">
               <div className="p-5 space-y-1.5">
-                <div className="eyebrow">Blended Portfolio Return</div>
+                <div className="text-xs font-medium text-muted">Blended portfolio return</div>
                 <div className="flex items-baseline gap-2 flex-wrap">
                   <span className="font-mono tabular-nums text-2xl font-semibold tracking-tight text-ink">
                     {formatPercent(projection.blendedNominalReturn)}
@@ -231,7 +230,7 @@ export const PortfolioReturnProjectionCalculator = () => {
               </div>
 
               <div className="p-5 space-y-1.5">
-                <div className="eyebrow">Terminal Nominal Corpus (Yr {years})</div>
+                <div className="text-xs font-medium text-muted">Terminal nominal corpus (Yr {years})</div>
                 <div className="flex items-baseline gap-2 flex-wrap">
                   <span className="font-mono tabular-nums text-2xl font-semibold tracking-tight text-ink">
                     {formatCurrencyCompact(projection.terminalNominalWealth)}
@@ -242,7 +241,7 @@ export const PortfolioReturnProjectionCalculator = () => {
               </div>
 
               <div className="p-5 space-y-1.5">
-                <div className="eyebrow">Terminal Real Purchasing Power</div>
+                <div className="text-xs font-medium text-muted">Terminal real purchasing power</div>
                 <div className="flex items-baseline gap-2 flex-wrap">
                   <span className="font-mono tabular-nums text-2xl font-semibold tracking-tight text-positive">
                     {formatCurrencyCompact(projection.terminalRealWealth)}
@@ -253,7 +252,7 @@ export const PortfolioReturnProjectionCalculator = () => {
               </div>
 
               <div className="p-5 space-y-1.5">
-                <div className="eyebrow">Capital Contribution & Gain</div>
+                <div className="text-xs font-medium text-muted">Capital contribution & gain</div>
                 <div className="text-sm font-medium text-ink">
                   Invested: <span className="font-mono tabular-nums">{formatCurrencyCompact(projection.totalInvested)}</span>
                 </div>
@@ -270,7 +269,7 @@ export const PortfolioReturnProjectionCalculator = () => {
       ) : (
         <div className="rounded-lg border border-border bg-surface">
           <div className="px-5 pt-4 pb-3 border-b border-border-subtle">
-            <span className="eyebrow">Projection</span>
+            <span className="text-xs font-semibold text-ink">Projection</span>
           </div>
           <div className="relative overflow-hidden">
             <div className="absolute inset-x-0 top-0 h-24 grid-motif opacity-60 pointer-events-none" aria-hidden="true" />
@@ -297,7 +296,7 @@ export const PortfolioReturnProjectionCalculator = () => {
           <div className="rounded-lg border border-border bg-raised p-5 space-y-5">
             <div className="flex items-center gap-2 pb-3 border-b border-border-subtle">
               <Sliders size={15} strokeWidth={1.6} className="text-accent-strong" aria-hidden="true" />
-              <span className="eyebrow">Global Projection Levers</span>
+              <span className="text-xs font-semibold text-ink">Global projection levers</span>
             </div>
 
             <NumberInput
@@ -349,7 +348,7 @@ export const PortfolioReturnProjectionCalculator = () => {
             />
 
             <div className="pt-3 border-t border-border-subtle">
-              <div className="eyebrow mb-2">Portfolio Rebalancing</div>
+              <div className="text-xs font-medium text-muted mb-2">Portfolio rebalancing</div>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <button
                   type="button"
@@ -572,7 +571,7 @@ export const PortfolioReturnProjectionCalculator = () => {
           {/* Year-by-Year Growth Table */}
           <div className="rounded-lg border border-border bg-raised">
             <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-border-subtle">
-              <div className="eyebrow">Year-by-Year Growth & Purchasing Power Schedule</div>
+              <div className="text-sm font-semibold text-ink">Year-by-year growth & purchasing power schedule</div>
               {projection.snapshots.length > 10 && (
                 <Button
                   variant="outline"
@@ -588,7 +587,7 @@ export const PortfolioReturnProjectionCalculator = () => {
             <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Year-by-year growth schedule">
               <table className="w-full text-xs text-left">
                 <thead>
-                  <tr className="border-b border-border text-muted uppercase tracking-wider text-[10px]">
+                  <tr className="border-b border-border text-muted text-xs font-medium">
                     <th className="py-2.5 pl-5 pr-4 font-semibold">Year</th>
                     <th className="py-2.5 pr-4 text-right font-semibold">Cumulative Invested</th>
                     <th className="py-2.5 pr-4 text-right font-semibold">Nominal Corpus</th>

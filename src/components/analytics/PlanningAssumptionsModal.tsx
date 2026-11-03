@@ -140,7 +140,7 @@ export const PlanningAssumptionsModal = ({ isOpen, onClose }: PlanningAssumption
         {/* Manual Overrides Grid if Override Selected */}
         {selectedMode === 'override' && (
           <div className="p-3.5 bg-surface rounded-xl border border-border space-y-3">
-            <span className="text-[10px] uppercase font-bold text-ink-soft block">
+            <span className="text-xs font-semibold text-ink block">
               Custom Category Return Rates (% p.a.):
             </span>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">

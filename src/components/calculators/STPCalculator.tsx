@@ -124,7 +124,7 @@ export const STPCalculator = () => {
     >
       <div className="mt-5 rounded-lg border border-border bg-raised">
         <div className="px-5 pt-4 pb-3 border-b border-border-subtle">
-          <div className="eyebrow">Deployment Summary</div>
+          <div className="text-sm font-semibold text-ink">Deployment summary</div>
         </div>
         <div className="p-5">
           <dl className="divide-y divide-border-subtle text-sm">
@@ -140,7 +140,7 @@ export const STPCalculator = () => {
 
       <div className="mt-5 rounded-lg border border-border bg-raised">
         <div className="px-5 pt-4 pb-3 border-b border-border-subtle">
-          <div className="eyebrow">Capital Deployment Schedule</div>
+          <div className="text-sm font-semibold text-ink">Capital deployment schedule</div>
         </div>
         <div className="p-5">
           <p className="text-[13px] text-muted leading-relaxed mb-4">

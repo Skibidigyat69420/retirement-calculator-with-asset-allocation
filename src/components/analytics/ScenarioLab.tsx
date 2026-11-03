@@ -244,7 +244,6 @@ export const ScenarioLab = () => {
     return (
       <EmptyState
         icon={FlaskConical}
-        eyebrow="SCENARIO LAB"
         title="Scenarios need a configured plan"
         description="Set up the client's profile, retirement target and financial position on the master plan before running scenario comparisons."
         action={
@@ -271,8 +270,7 @@ export const ScenarioLab = () => {
     <section className="space-y-6">
       {/* Header */}
       <div className="border-b border-border pb-5">
-        <div className="eyebrow">SCENARIO LAB</div>
-        <h3 className="font-display text-3xl sm:text-4xl text-ink mt-2">
+        <h3 className="font-display text-3xl sm:text-4xl text-ink">
           Explore the futures your client could face.
         </h3>
         <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
@@ -375,7 +373,7 @@ export const ScenarioLab = () => {
           {/* Projection chart */}
           <div className="rounded-lg border border-border bg-surface p-4">
             <div className="flex items-center justify-between gap-3 px-1 pb-2">
-              <span className="eyebrow">Projection</span>
+              <span className="text-xs font-semibold text-ink">Projection</span>
               <span className="flex items-center gap-4 text-[11px] text-muted font-mono">
                 <span className="flex items-center gap-2">
                   <span className="w-5 h-0.5 bg-accent inline-block" /> Scenario
@@ -478,8 +476,8 @@ export const ScenarioLab = () => {
             <div className="rounded-lg border border-border bg-surface p-5 space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <div className="eyebrow">Assumptions</div>
-                  <p className="text-xs text-muted mt-1">Every change re-runs the full projection engine live.</p>
+                  <div className="text-sm font-semibold text-ink">Assumptions</div>
+                  <p className="text-xs text-muted mt-0.5">Every change re-runs the full projection engine live.</p>
                 </div>
                 <SegmentedControl
                   ariaLabel="Assumption presets"
@@ -556,13 +554,13 @@ export const ScenarioLab = () => {
       {/* Comparison table — deltas live in their own column */}
       <div className="rounded-lg border border-border bg-surface overflow-hidden">
         <div className="px-5 pt-4 pb-3 border-b border-border-subtle">
-          <div className="eyebrow">Comparison</div>
-          <p className="text-xs text-muted mt-1">All scenarios measured against the base plan.</p>
+          <div className="text-sm font-semibold text-ink">Comparison</div>
+          <p className="text-xs text-muted mt-0.5">All scenarios measured against the base plan.</p>
         </div>
         <div className="overflow-x-auto" role="region" aria-label="Scenario comparison table" tabIndex={0}>
           <table className="w-full text-sm min-w-[640px]">
             <thead>
-              <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-muted">
+              <tr className="border-b border-border text-left text-xs font-medium text-muted">
                 <th className="py-2.5 pl-5 pr-4 font-medium">Scenario</th>
                 <th className="py-2.5 pr-4 font-medium text-right">Corpus at retirement</th>
                 <th className="py-2.5 pr-4 font-medium text-right">Δ Corpus</th>
@@ -589,7 +587,7 @@ export const ScenarioLab = () => {
                   >
                     <td className="py-2.5 pl-5 pr-4">
                       <span className="font-medium text-ink">{entry.label}</span>
-                      {isBase && <span className="ml-2 text-[10px] font-mono uppercase tracking-wider text-faint">Base</span>}
+                      {isBase && <span className="ml-2 text-xs text-muted font-medium">Base</span>}
                     </td>
                     <td className="py-2.5 pr-4 text-right font-mono tabular-nums text-ink">
                       {m.corpus === null ? '—' : formatCurrencyCompact(m.corpus)}

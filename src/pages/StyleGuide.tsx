@@ -140,15 +140,14 @@ export const StyleGuide = () => {
   return (
     <div className="max-w-[1200px] mx-auto py-10 px-4 sm:px-6 space-y-16">
       <PageHeader
-        eyebrow="Internal reference"
         title="Design system"
-        description="Every token, type style, component, and motif in the SOUND THESIS interface. Not linked in navigation — visit at /style-guide. See docs/UI_SYSTEM.md for the written contract."
+        description="Every token, type style, component, and motif in the SoundThesis Capital interface. Not linked in navigation — visit at /style-guide. See docs/UI_SYSTEM.md for the written contract."
         variant="hero"
       />
 
       {/* ── Theme ── */}
       <section className="space-y-6">
-        <SectionTitle eyebrow="Appearance" title="Theme" subtitle="Dark is the default — a private study. Light is the parchment companion. System follows the OS. The preference persists in localStorage and is applied before first paint." />
+        <SectionTitle title="Theme" subtitle="Dark is the default — a private study. Light is the parchment companion. System follows the OS. The preference persists in localStorage and is applied before first paint." />
         <div className="flex flex-wrap items-center gap-4">
           <ThemeToggle variant="segmented" />
           <ThemeToggle variant="icon" />
@@ -160,7 +159,7 @@ export const StyleGuide = () => {
 
       {/* ── Color ── */}
       <section className="space-y-8">
-        <SectionTitle eyebrow="Tokens" title="Color" subtitle="Semantic tokens only — never raw hex in product code. Light values shown; the dark set mirrors them as the private study. Brass marks reference, never action." />
+        <SectionTitle title="Color" subtitle="Semantic tokens only — never raw hex in product code. Light values shown; the dark set mirrors them as the private study. Brass marks reference, never action." />
         <SwatchGrid title="Surfaces" items={SURFACES} />
         <SwatchGrid title="Hairlines" items={HAIRLINES} />
         <SwatchGrid title="Ink" items={INKS} />
@@ -170,29 +169,29 @@ export const StyleGuide = () => {
 
       {/* ── Typography ── */}
       <section className="space-y-6">
-        <SectionTitle eyebrow="Type" title="Typography" subtitle="Inter carries the UI and headings with clean, modern hierarchy. JetBrains Mono with tabular figures aligns every amount." />
+        <SectionTitle title="Typography" subtitle="Inter carries the entire system — UI, headings, labels, and tabular figures for numerical amounts." />
         <div className="border border-border rounded-lg divide-y divide-border">
           <div className="p-6">
-            <p className="eyebrow mb-2">num-hero · system display · 48–72</p>
+            <p className="text-xs font-medium text-muted mb-2">num-hero · system display · 48–72</p>
             <p className="num-hero text-ink text-5xl sm:text-6xl">₹5.32 Cr</p>
           </div>
           <div className="p-6">
-            <p className="eyebrow mb-2">Page title · semibold · 34–42</p>
+            <p className="text-xs font-medium text-muted mb-2">Page title · semibold · 34–42</p>
             <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-ink">Retirement &amp; SWP</h2>
           </div>
           <div className="p-6">
-            <p className="eyebrow mb-2">Section · semibold · 21–26</p>
+            <p className="text-xs font-medium text-muted mb-2">Section · semibold · 21–26</p>
             <h3 className="text-xl md:text-2xl font-semibold tracking-tight text-ink">Corpus longevity</h3>
           </div>
           <div className="p-6">
-            <p className="eyebrow mb-2">Body · 14–16</p>
+            <p className="text-xs font-medium text-muted mb-2">Body · 14–16</p>
             <p className="text-sm sm:text-[15px] text-muted max-w-prose leading-relaxed">
               We use your current expenditure to estimate the monthly income the corpus
               must replace. Inflation assumptions can be reviewed in the scenario panel.
             </p>
           </div>
           <div className="p-6 space-y-3">
-            <p className="eyebrow">Mono tabular · all amounts</p>
+            <p className="text-xs font-medium text-muted">Mono tabular · all amounts</p>
             <div className="font-mono tabular-nums text-sm text-ink space-y-1 max-w-xs">
               <div className="flex justify-between border-b border-border-subtle pb-1"><span>Corpus</span><span>₹5,32,00,000</span></div>
               <div className="flex justify-between border-b border-border-subtle pb-1"><span>Required</span><span>₹2,85,00,000</span></div>
@@ -200,7 +199,7 @@ export const StyleGuide = () => {
             </div>
           </div>
           <div className="p-6">
-            <p className="eyebrow mb-2">Metadata · 12–13</p>
+            <p className="text-xs font-medium text-muted mb-2">Metadata · 12–13</p>
             <p className="text-xs text-faint">Last reviewed 04 Sep 2026 · Advisor notes synced</p>
           </div>
         </div>
@@ -208,11 +207,11 @@ export const StyleGuide = () => {
 
       {/* ── Buttons & controls ── */}
       <section className="space-y-8">
-        <SectionTitle eyebrow="Actions" title="Buttons & status" subtitle="Verbs name the object: Create client, Save scenario, Generate report. Never Submit or OK." />
+        <SectionTitle title="Buttons & status" subtitle="Verbs name the object: Create client, Save scenario, Generate report. Never Submit or OK." />
         <div className="space-y-6">
           {(['primary', 'secondary', 'outline', 'ghost', 'danger'] as const).map((variant) => (
             <div key={variant} className="flex flex-wrap items-center gap-3">
-              <span className="eyebrow w-20 shrink-0">{variant}</span>
+              <span className="text-xs font-medium text-muted w-20 shrink-0">{variant}</span>
               {(['sm', 'md', 'lg'] as const).map((size) => (
                 <Button key={size} variant={variant} size={size}>
                   {variant === 'danger' ? 'Delete scenario' : 'Save scenario'}
@@ -247,7 +246,7 @@ export const StyleGuide = () => {
 
       {/* ── Inputs ── */}
       <section className="space-y-6">
-        <SectionTitle eyebrow="Forms" title="Inputs" subtitle="Zeros are real zeros. Errors are sentence-case. Helpers explain why we ask." />
+        <SectionTitle title="Inputs" subtitle="Zeros are real zeros. Errors are sentence-case. Helpers explain why we ask." />
         <div className="border border-border rounded-lg p-5 md:p-6 grid sm:grid-cols-2 gap-6">
           <Input label="Client name" helper="Used on the cover of every generated report." placeholder="e.g. Meera Krishnan" />
           <Input label="Email address" error="That email address doesn’t look complete." defaultValue="meera@" />
@@ -288,7 +287,7 @@ export const StyleGuide = () => {
 
       {/* ── Fields ── */}
       <section className="space-y-6">
-        <SectionTitle eyebrow="Forms" title="Fields" subtitle="Field owns the label, helper, error, and hint slots; FieldGrid owns the responsive grid. NumberInput with kind=&quot;currency&quot; replaces the old CurrencyInput." />
+        <SectionTitle title="Fields" subtitle="Field owns the label, helper, error, and hint slots; FieldGrid owns the responsive grid. NumberInput with kind=&quot;currency&quot; replaces the old CurrencyInput." />
         <div className="border border-border rounded-lg p-5 md:p-6 space-y-8">
           <FieldGrid cols={{ sm: 2 }}>
             <Field
@@ -360,7 +359,7 @@ export const StyleGuide = () => {
 
       {/* ── Feedback ── */}
       <section className="space-y-6">
-        <SectionTitle eyebrow="System voice" title="Feedback" subtitle="Human errors, short successes. Amber means stale or drifting, red means a real problem." />
+        <SectionTitle title="Feedback" subtitle="Human errors, short successes. Amber means stale or drifting, red means a real problem." />
         <div className="grid gap-3">
           <Alert variant="info">Market data refreshes every trading day after 4 PM IST.</Alert>
           <Alert variant="success">Scenario saved. It will appear in the report.</Alert>
@@ -393,14 +392,14 @@ export const StyleGuide = () => {
           <div className="flex items-center gap-3">
             <Avatar name="Meera Krishnan" size="lg" />
             <Avatar name="Arjun Bhat" size="md" />
-            <Avatar name="Sound Thesis" size="sm" />
+            <Avatar name="SoundThesis Capital" size="sm" />
           </div>
         </div>
       </section>
 
       {/* ── Surfaces ── */}
       <section className="space-y-6">
-        <SectionTitle eyebrow="Depth" title="Surfaces & motifs" subtitle="Hairlines carry structure; shadows are for floating layers only. Cards are a decision, not a default." />
+        <SectionTitle title="Surfaces & motifs" subtitle="Hairlines carry structure; shadows are for floating layers only. Cards are a decision, not a default." />
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card>
             <SectionHeader title="Card · default" description="Raised surface, hairline, quiet shadow." />
@@ -431,7 +430,7 @@ export const StyleGuide = () => {
 
       {/* ── Overlay ── */}
       <section className="space-y-6">
-        <SectionTitle eyebrow="Floating layers" title="Overlay" subtitle="Drawers and dialogs sit on the overlay scrim with popover shadow — the only heavy shadow in the system." />
+        <SectionTitle title="Overlay" subtitle="Drawers and dialogs sit on the overlay scrim with popover shadow — the only heavy shadow in the system." />
         <div className="flex flex-wrap gap-3">
           <Button variant="secondary" onClick={() => setDrawerOpen(true)}>Open drawer</Button>
           <Button variant="outline" onClick={() => setConfirmOpen(true)}>Delete scenario…</Button>
@@ -458,9 +457,8 @@ export const StyleGuide = () => {
 
       {/* ── Empty states ── */}
       <section className="space-y-6">
-        <SectionTitle eyebrow="Zero state" title="Empty states" subtitle="A blank workspace is dignified. Never demo data, never fake health — always a next action." />
+        <SectionTitle title="Empty states" subtitle="A blank workspace is dignified. Never demo data, never fake health — always a next action." />
         <EmptyState
-          eyebrow="Discover"
           title="No clients yet"
           description="Create your first client to start a plan. Their balance sheet, goals, and risk profile live here."
           icon={PieChart}
@@ -475,7 +473,7 @@ export const StyleGuide = () => {
 
       {/* ── Charts ── */}
       <section className="space-y-6">
-        <SectionTitle eyebrow="Data" title="Charts" subtitle="Moss is the primary series; brass dashes mark the required corpus. Every color comes from getChartTheme() — light/dark switching is automatic." />
+        <SectionTitle title="Charts" subtitle="Moss is the primary series; brass dashes mark the required corpus. Every color comes from getChartTheme() — light/dark switching is automatic." />
         <div className="border border-border rounded-lg p-5 md:p-6">
           <div className="flex flex-wrap items-center gap-4 mb-4 text-xs text-muted">
             <span className="inline-flex items-center gap-1.5">
@@ -522,7 +520,7 @@ export const StyleGuide = () => {
       </section>
 
       <footer className="border-t border-border pt-6 flex flex-wrap items-center justify-between gap-3">
-        <p className="eyebrow">Sound Thesis · Editorial Financial Intelligence</p>
+        <p className="text-xs font-medium text-muted">SoundThesis Capital · Editorial Financial Intelligence</p>
         <p className="text-xs text-faint">Contract: docs/UI_SYSTEM.md · Audit: docs/UI_AUDIT.md</p>
       </footer>
     </div>

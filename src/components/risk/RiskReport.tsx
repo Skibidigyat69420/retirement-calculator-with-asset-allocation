@@ -111,8 +111,7 @@ export const RiskReport = ({
       >
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 items-end">
           <div className="min-w-0">
-            <div className="eyebrow">Risk Profile</div>
-            <h1 className="font-display text-5xl sm:text-6xl text-ink mt-3">{riskProfile.label}</h1>
+            <h1 className="font-display text-5xl sm:text-6xl text-ink">{riskProfile.label}</h1>
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <Badge tone="accent">{scoreBand(score)}</Badge>
               <Badge tone="neutral">{Object.keys(riskAnswers).length} of 14 questions</Badge>
@@ -126,7 +125,7 @@ export const RiskReport = ({
               {formatOrDash(score, (n) => String(n))}
               <span className="text-2xl sm:text-3xl text-faint">/100</span>
             </div>
-            <div className="eyebrow mt-2">Composite risk score</div>
+            <div className="text-xs font-medium text-muted mt-2">Composite risk score</div>
             <div className="flex lg:justify-end gap-2 mt-5">
               <Button variant="outline" size="sm" onClick={onEdit}>
                 <PencilLine size={14} strokeWidth={1.7} className="mr-1" aria-hidden="true" />
@@ -177,7 +176,7 @@ export const RiskReport = ({
 
           <div className="mt-auto pt-6">
             <div className="flex items-baseline justify-between gap-3 mb-2">
-              <div className="eyebrow">Target strategic allocation</div>
+              <div className="text-xs font-semibold text-ink">Target strategic allocation</div>
               <div className="text-xs text-faint font-mono tabular-nums">
                 {formatPercent(riskProfile.targets.equity)} equity core
               </div>
@@ -385,7 +384,7 @@ export const RiskReport = ({
             {riskProfile.persona}
           </p>
           <div className="mt-5 p-4 rounded-md bg-brass-soft border border-brass/25">
-            <div className="eyebrow mb-1.5">Recommended approach</div>
+            <div className="text-xs font-semibold text-ink mb-1.5">Recommended approach</div>
             <p className="text-sm text-ink leading-relaxed">{riskProfile.recommendedApproach}</p>
           </div>
         </div>

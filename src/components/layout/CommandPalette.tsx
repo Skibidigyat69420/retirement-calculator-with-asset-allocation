@@ -214,7 +214,7 @@ export const CommandPalette = ({ open, onClose, onRequestReset }: CommandPalette
                   return (
                     <div key={group} className="pt-1.5 first:pt-0">
                       <div className="px-2.5 pb-1">
-                        <span className="eyebrow">{group}</span>
+                        <span className="text-xs font-medium text-muted">{group}</span>
                       </div>
                       {items.map((entry) => {
                         flatIndex += 1;

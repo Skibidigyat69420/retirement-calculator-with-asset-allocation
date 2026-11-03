@@ -92,7 +92,7 @@ export const ImplementationTransitionPlan = () => {
             <h3 className="text-lg font-bold text-ink tracking-tight">
               Portfolio Transition & Implementation Plan
             </h3>
-            <Badge variant="navy" className="text-[10px] tracking-wider uppercase font-semibold">
+            <Badge variant="navy" className="text-xs font-medium">
               Trade Execution
             </Badge>
           </div>
@@ -116,7 +116,7 @@ export const ImplementationTransitionPlan = () => {
       <div className="overflow-x-auto">
         <table className="w-full text-xs text-left">
           <thead>
-            <tr className="border-b border-border text-muted uppercase tracking-wider text-[10px]">
+            <tr className="border-b border-border text-muted text-xs font-medium">
               <th className="pb-2">Asset Class</th>
               <th className="pb-2 text-right">Current Value</th>
               <th className="pb-2 text-right">Current %</th>
@@ -169,7 +169,7 @@ export const ImplementationTransitionPlan = () => {
       {/* Execution Friction Summary */}
       <div className="p-4 rounded-xl bg-surface border border-border/80 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
         <div>
-          <span className="text-[10px] uppercase font-bold text-faint block">Total Rebalance Volume</span>
+          <span className="text-xs font-medium text-muted block">Total Rebalance Volume</span>
           <span className="text-sm font-bold font-mono text-ink">
             {formatCurrency(totalSellVolume)}
           </span>
@@ -177,7 +177,7 @@ export const ImplementationTransitionPlan = () => {
         </div>
 
         <div>
-          <span className="text-[10px] uppercase font-bold text-faint block">Estimated LTCG Tax Drag</span>
+          <span className="text-xs font-medium text-muted block">Estimated LTCG Tax Drag</span>
           <span className="text-sm font-bold font-mono text-ink-soft">
             {formatCurrency(estimatedTaxDrag)}
           </span>
@@ -185,7 +185,7 @@ export const ImplementationTransitionPlan = () => {
         </div>
 
         <div>
-          <span className="text-[10px] uppercase font-bold text-faint block">Est. Transaction Costs</span>
+          <span className="text-xs font-medium text-muted block">Est. Transaction Costs</span>
           <span className="text-sm font-bold font-mono text-ink">
             {formatCurrency(estimatedTransactionCosts)}
           </span>

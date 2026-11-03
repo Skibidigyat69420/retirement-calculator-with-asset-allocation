@@ -21,7 +21,7 @@ export const StressMatrixTable = ({ results, className }: StressMatrixTableProps
   return (
     <div className={cn('overflow-x-auto avoid-break', className)}>
       <table className="w-full text-xs text-left border border-border rounded-md overflow-hidden">
-        <thead className="bg-sunken text-muted font-semibold border-b border-border uppercase tracking-wider">
+        <thead className="bg-sunken text-muted font-medium text-xs border-b border-border">
           <tr>
             <th className="p-3">Crisis Scenario</th>
             <th className="p-3 text-center">Resilience</th>

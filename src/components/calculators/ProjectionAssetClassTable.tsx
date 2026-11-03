@@ -41,7 +41,7 @@ export const ProjectionAssetClassTable = ({
     <div className="rounded-lg border border-border bg-raised">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 pt-4 pb-3 border-b border-border-subtle">
         <div className="flex items-center gap-2.5">
-          <div className="eyebrow">Asset Classes & Currency Modeling</div>
+          <div className="text-sm font-semibold text-ink">Asset classes & currency modeling</div>
           <Badge tone={isWeight100 ? 'positive' : 'warning'} dot={false}>
             Total Weight: {totalWeight.toFixed(1)}%
           </Badge>
@@ -74,7 +74,7 @@ export const ProjectionAssetClassTable = ({
       <div className="overflow-x-auto">
         <table className="w-full text-xs text-left">
           <thead>
-            <tr className="border-b border-border text-muted uppercase tracking-wider text-[10px]">
+            <tr className="border-b border-border text-muted text-xs font-medium">
               <th className="py-2.5 pl-5 pr-2 font-semibold">Asset Class Name</th>
               <th className="py-2.5 px-2 w-20 text-right font-semibold">Weight %</th>
               <th className="py-2.5 px-2 w-24 text-right font-semibold">Local Return</th>

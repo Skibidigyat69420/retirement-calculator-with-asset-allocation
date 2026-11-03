@@ -213,7 +213,6 @@ export const Allocation = () => {
   return (
     <div className="space-y-8 pb-8">
       <PageHeader
-        eyebrow="Step 4 · Strategic Allocation"
         title="Strategic Asset Allocation & Rebalancing"
         description="Current holdings versus strategic policy target, projected glide path, rebalancing tickets, and multi-model optimization."
         actions={
@@ -325,7 +324,7 @@ export const Allocation = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {wealthResult.currencyExposure.map((ce) => (
                   <div key={ce.currency} className="rounded-md border border-border bg-surface p-3">
-                    <div className="font-mono text-[10px] uppercase tracking-[0.08em] text-faint">{ce.currency}</div>
+                    <div className="font-mono text-xs font-medium text-muted">{ce.currency}</div>
                     <div className="font-mono text-lg tabular-nums font-semibold text-ink mt-1">{formatPercent(ce.percentage, 0)}</div>
                     <div className="font-mono text-xs tabular-nums text-muted mt-0.5">{formatCurrency(ce.amount)}</div>
                   </div>
@@ -392,7 +391,7 @@ export const Allocation = () => {
                 const glide = getTargetGlideAllocation(point.age, inputs.retirementAge);
                 return (
                   <div key={point.label} className="rounded-md border border-border bg-surface p-4">
-                    <div className="eyebrow">{point.label}</div>
+                    <div className="text-xs font-semibold text-ink">{point.label}</div>
                     <div className="font-mono text-xs tabular-nums text-muted mt-0.5">Age {point.age}</div>
                     <dl className="mt-2.5 space-y-1.5 text-xs">
                       <div className="flex justify-between"><dt className="text-muted">Equity</dt><dd className="font-mono tabular-nums font-semibold text-ink">{formatPercent(glide.equity * 100, 0)}</dd></div>

@@ -78,8 +78,8 @@ export const MonteCarloFailureAnalysis = () => {
       {/* Probability Headline Banner */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="p-4 rounded-xl bg-accent-softer/70 border border-accent-soft/80 space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-accent-strong">
-            Probability of Retirement Success
+          <span className="text-xs font-semibold text-accent-strong block">
+            Probability of retirement success
           </span>
           <div className="text-3xl font-black font-mono text-accent-strong">
             {successRate}%
@@ -90,8 +90,8 @@ export const MonteCarloFailureAnalysis = () => {
         </div>
 
         <div className="p-4 rounded-xl bg-negative-soft/70 border border-negative/80 space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-negative">
-            Tail-Risk Shortfall Probability
+          <span className="text-xs font-semibold text-negative block">
+            Tail-risk shortfall probability
           </span>
           <div className="text-3xl font-black font-mono text-negative">
             {failureRate}%
@@ -104,7 +104,7 @@ export const MonteCarloFailureAnalysis = () => {
 
       {/* Root-Cause Failure Attribution */}
       <div className="space-y-3">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-muted">
+        <h4 className="text-xs font-semibold text-ink">
           Root Causes Driving the {failureRate}% Shortfall Trials:
         </h4>
 
@@ -145,7 +145,7 @@ export const MonteCarloFailureAnalysis = () => {
 
       {/* Actionable Risk Mitigation Pathways */}
       <div className="space-y-3 pt-2">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-muted">
+        <h4 className="text-xs font-semibold text-ink">
           Algorithmic Pathways to De-Risk and Reach &gt;95% Confidence:
         </h4>
 

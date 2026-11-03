@@ -63,14 +63,15 @@ export const RiskStep = ({
   const answered = hasRiskAnswers !== false;
 
   return (
-    <div className="border-t border-border">
-      <header className="py-4">
-        <div className="eyebrow">Step 05 · Risk</div>
-        <h2 className="font-display text-2xl sm:text-3xl text-ink mt-1">Risk & allocation</h2>
-        <p className="mt-2 text-sm text-muted max-w-prose leading-relaxed">
-          Risk tolerance, policy asset-allocation targets, tolerable drawdown, and the equity glidepath into retirement.
-        </p>
-      </header>
+    <div>
+      <div className="py-2.5 pb-4 flex items-center justify-between gap-4 flex-wrap border-b border-border/60 mb-6">
+        <div>
+          <h2 className="text-lg font-semibold text-ink">Risk Profile & Strategic Asset Allocation</h2>
+          <p className="text-xs text-muted max-w-prose mt-0.5">
+            Psychometric risk tolerance, policy allocation corridors, tolerable drawdowns, and glidepath calibration.
+          </p>
+        </div>
+      </div>
 
       {/* Risk profile — or questionnaire guidance when unanswered */}
       <FormSection
@@ -112,7 +113,7 @@ export const RiskStep = ({
                 { label: 'Equity at retirement', value: `${riskProfile.equityAtRetirement}%` },
               ].map((p) => (
                 <div key={p.label} className="py-4 px-4 first:pl-0">
-                  <span className="eyebrow block">{p.label}</span>
+                  <span className="text-xs font-medium text-muted block">{p.label}</span>
                   <span className="block mt-1.5 font-mono text-lg tabular-nums text-ink">
                     {p.value}
                   </span>
@@ -159,7 +160,7 @@ export const RiskStep = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
           <div>
-            <span className="eyebrow">Policy targets</span>
+            <span className="text-xs font-semibold text-ink">Policy targets</span>
             <div className="h-44 mt-3">
               <DonutChart data={targetChartData} />
             </div>
@@ -174,7 +175,7 @@ export const RiskStep = ({
           </div>
 
           <div>
-            <span className="eyebrow">Current portfolio</span>
+            <span className="text-xs font-semibold text-ink">Current portfolio</span>
             {actualChartData.length > 0 ? (
               <>
                 <div className="h-44 mt-3">

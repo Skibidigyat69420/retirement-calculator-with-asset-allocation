@@ -79,7 +79,7 @@ export const NetWorthTrajectory = ({ snapshots }: NetWorthTrajectoryProps) => {
                 <td className="py-2 pr-4 font-mono text-ink">{row.age}</td>
                 <td className="py-2 pr-4">
                   <span
-                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                    className={`px-2 py-0.5 rounded text-xs font-medium ${
                       distributionStart !== null && row.age >= distributionStart
                         ? 'bg-warning-soft text-warning'
                         : 'bg-positive-soft text-positive'

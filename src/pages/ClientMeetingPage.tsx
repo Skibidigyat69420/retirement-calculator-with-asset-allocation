@@ -42,7 +42,6 @@ export const ClientMeetingPage = () => {
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Advisor OS · Engagement"
         title="Client Meeting Workflow"
         description="A focused command center for the four-meeting engagement — stage agendas, live checklists, qualitative notes, and the next actions that keep the plan moving."
       />

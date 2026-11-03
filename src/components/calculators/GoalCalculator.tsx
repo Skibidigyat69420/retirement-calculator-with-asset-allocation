@@ -409,7 +409,7 @@ export const GoalCalculator = () => {
     >
       <div className="mt-5 rounded-lg border border-border bg-raised">
         <div className="px-5 pt-4 pb-3 border-b border-border-subtle flex items-center justify-between">
-          <div className="eyebrow">Goal Funding Options</div>
+          <div className="text-sm font-semibold text-ink">Goal funding options</div>
           {activePlanGoal && (
             <Badge tone="positive">Connected to {activePlanGoal.name}</Badge>
           )}
@@ -428,7 +428,7 @@ export const GoalCalculator = () => {
 
       <div className="mt-5 rounded-lg border border-border bg-raised">
         <div className="px-5 pt-4 pb-3 border-b border-border-subtle">
-          <div className="eyebrow">Funding Trajectory</div>
+          <div className="text-sm font-semibold text-ink">Funding trajectory</div>
         </div>
         <div className="p-5">
           <p className="text-[13px] text-muted leading-relaxed mb-4">

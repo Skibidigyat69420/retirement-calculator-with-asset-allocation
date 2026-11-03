@@ -330,7 +330,6 @@ export const Retirement = () => {
     <div className="space-y-8">
       <PageHeader
         variant="hero"
-        eyebrow="RETIREMENT"
         title="What does financial independence look like for this client?"
       />
 
@@ -373,8 +372,8 @@ export const Retirement = () => {
           <div className="rounded-lg border border-border bg-surface overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-4 pb-2">
               <div>
-                <div className="eyebrow">Projection</div>
-                <p className="mt-1 text-sm text-muted">
+                <div className="text-sm font-semibold text-ink">Projection</div>
+                <p className="mt-0.5 text-sm text-muted">
                   Corpus trajectory from age {inputs.currentAge} to {inputs.lifeExpectancy}
                 </p>
               </div>
@@ -400,7 +399,6 @@ export const Retirement = () => {
         <EmptyState
           icon={Compass}
           display
-          eyebrow="NO PROJECTION YET"
           title="Retirement plan not configured"
           description="Add the client's age, retirement target and current financial position to generate a projection."
           action={
@@ -425,7 +423,35 @@ export const Retirement = () => {
             <NumberInput label="Retirement Age" value={inputs.retirementAge} onChange={v => updateInputs({ retirementAge: v })} />
             <NumberInput label="Life Expectancy" value={inputs.lifeExpectancy} onChange={v => updateInputs({ lifeExpectancy: v })} />
             <NumberInput label="Monthly Expenditure" value={inputs.monthlyExpenditure} onChange={v => updateInputs({ monthlyExpenditure: v })} helper="Current lifestyle spend" />
-            <NumberInput label="Monthly Need at Retirement" value={inputs.swp.monthlyNeedToday} onChange={v => updateSWP({ monthlyNeedToday: v })} helper="Target retirement drawdown" />
+            <div>
+              <NumberInput
+                label="Monthly Need at Retirement"
+                value={inputs.swp.monthlyNeedToday}
+                onChange={v => updateSWP({ monthlyNeedToday: v })}
+                helper="Target retirement drawdown"
+              />
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <span className="text-[11px] text-muted">Benchmark vs lifestyle:</span>
+                {[
+                  { label: '100%', ratio: 1.0 },
+                  { label: '80%', ratio: 0.8 },
+                  { label: '70%', ratio: 0.7 },
+                ].map((b) => (
+                  <button
+                    key={b.label}
+                    type="button"
+                    onClick={() => {
+                      const base = inputs.monthlyExpenditure || 100000;
+                      updateSWP({ monthlyNeedToday: Math.round(base * b.ratio) });
+                    }}
+                    className="px-2 py-0.5 text-[11px] font-medium rounded border border-border-subtle bg-surface hover:bg-sunken text-ink transition-colors cursor-pointer"
+                    title={`Set to ${b.label} of current living expenses`}
+                  >
+                    {b.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <NumberInput label="Monthly SIP" value={inputs.sip.amount} onChange={v => updateSIP({ amount: v })} />
             <NumberInput label="Inflation" value={inputs.inflation} onChange={v => updateInputs({ inflation: v })} suffix="%" />
             <NumberInput label="Post-Retirement Return" value={inputs.swp.postRetirementReturn} onChange={v => updateSWP({ postRetirementReturn: v })} suffix="%" />
@@ -492,7 +518,7 @@ export const Retirement = () => {
                   ].map(lever => (
                     <div key={lever.title} className="bg-raised border border-border rounded-md p-4 flex flex-col justify-between gap-3 shadow-card">
                       <div>
-                        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-ink mb-1.5">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-ink mb-1.5">
                           <lever.icon size={13} strokeWidth={1.7} className="text-muted" /> {lever.title}
                         </div>
                         <p className="text-xs text-muted leading-relaxed">{lever.body}</p>
@@ -568,7 +594,7 @@ export const Retirement = () => {
                   },
                 ].map(tile => (
                   <div key={tile.label} className="p-3.5 rounded-md bg-sunken/60 border border-border-subtle">
-                    <div className="text-[10px] uppercase tracking-wider font-semibold text-muted">{tile.label}</div>
+                    <div className="text-xs font-medium text-muted">{tile.label}</div>
                     <div className={cn('text-lg font-mono text-ink mt-1 tabular-nums', tile.tone)}>{tile.value}</div>
                     <div className="text-[11px] text-muted mt-0.5">{tile.sub}</div>
                   </div>
@@ -849,7 +875,7 @@ export const Retirement = () => {
                   </div>
 
                   <div className="space-y-1.5 pt-1">
-                    <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">Benchmarks</div>
+                    <div className="text-xs font-semibold text-ink">Benchmarks</div>
                     <div className="flex items-center justify-between gap-4 p-2 rounded-sm bg-sunken/60 border border-border-subtle">
                       <span className="text-muted">Trinity study rule (30-yr baseline)</span>
                       <span className="font-mono text-ink">4.00%</span>
@@ -956,7 +982,7 @@ export const Retirement = () => {
             <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable SWP schedule table">
               <table className="w-full text-sm min-w-[520px]">
                 <thead>
-                  <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-muted">
+                  <tr className="border-b border-border text-left text-xs font-medium text-muted">
                     <th className="py-2 pr-4 font-medium">Year</th>
                     <th className="py-2 pr-4 font-medium">Age</th>
                     <th className="py-2 pr-4 font-medium text-right">Monthly SWP</th>

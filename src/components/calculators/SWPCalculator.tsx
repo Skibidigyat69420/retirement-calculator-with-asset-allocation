@@ -34,12 +34,21 @@ import {
 export const SWPCalculator = () => {
   const { inputs, wealthResult, updateSWP, updateInputs, showToast } = useCalculator();
 
-  const [corpus, setCorpus] = useState(1_00_00_000);
-  const [monthlyWithdrawal, setMonthlyWithdrawal] = useState(inputs.swp.monthlyNeedToday);
+  const retirementSnapshot =
+    wealthResult.snapshots.find((s) => s.age === inputs.retirementAge) ||
+    wealthResult.snapshots.filter((s) => s.phase === 'accumulation').slice(-1)[0];
+  const defaultCorpus = Math.round(retirementSnapshot?.total || wealthResult.netWorth || 1_00_00_000);
+  const defaultHorizon = Math.max(
+    10,
+    (inputs.swp.endAge && inputs.swp.startAge ? inputs.swp.endAge - inputs.swp.startAge : inputs.lifeExpectancy - inputs.retirementAge) || 30,
+  );
+
+  const [corpus, setCorpus] = useState(defaultCorpus);
+  const [monthlyWithdrawal, setMonthlyWithdrawal] = useState(inputs.swp.monthlyNeedToday || inputs.monthlyExpenditure || 1_00_000);
   const [returnRate, setReturnRate] = useState(inputs.swp.postRetirementReturn);
   const [inflation, setInflation] = useState(inputs.inflation);
   const [taxRate, setTaxRate] = useState(inputs.swp.taxRate);
-  const [horizonYears, setHorizonYears] = useState(30);
+  const [horizonYears, setHorizonYears] = useState(defaultHorizon);
   const [viewMode, setViewMode] = useState<'both' | 'chart' | 'table'>('both');
   const [showAllYears, setShowAllYears] = useState(false);
 
@@ -77,22 +86,26 @@ export const SWPCalculator = () => {
       monthlyNeedToday: monthlyWithdrawal,
       postRetirementReturn: returnRate,
       taxRate,
+      startAge: inputs.retirementAge,
+      endAge: inputs.retirementAge + horizonYears,
     });
     updateInputs({ inflation });
     showToast('Withdrawal settings applied to Master Plan & Retirement.', 'success');
   };
 
   const handleSyncFromPlan = () => {
-    const retirementSnapshot =
+    const snap =
       wealthResult.snapshots.find((s) => s.age === inputs.retirementAge) ||
       wealthResult.snapshots.filter((s) => s.phase === 'accumulation').slice(-1)[0];
-    const projectedCorpus = Math.round(retirementSnapshot?.total || wealthResult.netWorth);
+    const projectedCorpus = Math.round(snap?.total || wealthResult.netWorth);
     if (projectedCorpus > 0) setCorpus(projectedCorpus);
-    setMonthlyWithdrawal(inputs.swp.monthlyNeedToday);
+    setMonthlyWithdrawal(inputs.swp.monthlyNeedToday || inputs.monthlyExpenditure || 1_00_000);
     setReturnRate(inputs.swp.postRetirementReturn);
     setInflation(inputs.inflation);
     setTaxRate(inputs.swp.taxRate);
-    const horizon = Math.max(10, inputs.lifeExpectancy - inputs.retirementAge);
+    const horizon = inputs.swp.endAge && inputs.swp.startAge
+      ? (inputs.swp.endAge - inputs.swp.startAge)
+      : Math.max(10, inputs.lifeExpectancy - inputs.retirementAge);
     if (horizon > 0) setHorizonYears(horizon);
     showToast(
       `Loaded retirement parameters (Corpus: ${formatCurrency(projectedCorpus)}, Horizon: ${horizon} yrs) from Master Plan!`,
@@ -117,6 +130,13 @@ export const SWPCalculator = () => {
       setMonthlyWithdrawal(ruleMonthly);
       showToast(`Applied 4% Rule benchmark: ${formatCurrency(ruleMonthly)}/mo`, 'info');
     }
+  };
+
+  const handleApplyReplacementRatio = (ratio: number) => {
+    const baseline = inputs.monthlyExpenditure || 1_00_000;
+    const val = Math.round(baseline * ratio);
+    setMonthlyWithdrawal(val);
+    showToast(`Set monthly withdrawal to ${Math.round(ratio * 100)}% of living expenses (${formatCurrency(val)}/mo)`, 'info');
   };
 
   const theme = getChartTheme();
@@ -166,7 +186,7 @@ export const SWPCalculator = () => {
           />
 
           <div className="pt-2 space-y-2">
-            <div className="eyebrow">Advisory Quick Levers</div>
+            <div className="text-xs font-medium text-muted">Advisory quick levers</div>
             <div className="grid grid-cols-2 gap-2">
               <Button onClick={handleApplySustainable} variant="outline" size="sm" className="text-xs">
                 <Sparkles size={14} strokeWidth={1.6} className="mr-1" /> Safe Rate
@@ -174,6 +194,26 @@ export const SWPCalculator = () => {
               <Button onClick={handleApplyRuleOfFour} variant="outline" size="sm" className="text-xs">
                 <Percent size={14} strokeWidth={1.6} className="mr-1" /> 4% Rule
               </Button>
+            </div>
+            <div className="space-y-1 pt-1">
+              <span className="text-[11px] text-muted">Living Expense Benchmarks:</span>
+              <div className="grid grid-cols-3 gap-1.5">
+                {[
+                  { label: '100% Exp', ratio: 1.0 },
+                  { label: '80% Exp', ratio: 0.8 },
+                  { label: '70% Exp', ratio: 0.7 },
+                ].map((b) => (
+                  <button
+                    key={b.label}
+                    type="button"
+                    onClick={() => handleApplyReplacementRatio(b.ratio)}
+                    className="px-2 py-1 text-[11px] font-medium rounded border border-border-subtle bg-surface hover:bg-sunken text-ink transition-colors cursor-pointer"
+                    title={`Set to ${b.label} of lifestyle expenses`}
+                  >
+                    {b.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -239,7 +279,7 @@ export const SWPCalculator = () => {
 
           {/* View toggle header */}
           <div className="flex items-center justify-between">
-            <span className="eyebrow">Decumulation Trajectory & Schedule</span>
+            <span className="text-sm font-semibold text-ink">Decumulation trajectory & schedule</span>
             <div className="flex items-center gap-1 border border-border rounded-md p-0.5 text-xs bg-sunken/50">
               <button
                 type="button"
@@ -379,7 +419,7 @@ export const SWPCalculator = () => {
           <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="SWP schedule table">
             <table className="w-full text-sm min-w-[500px]">
               <thead>
-                <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-muted">
+                <tr className="border-b border-border text-left text-xs font-medium text-muted">
                   <th className="py-2.5 pl-5 pr-4 font-semibold">Year</th>
                   <th className="py-2.5 pr-4 text-right font-semibold">Monthly SWP</th>
                   <th className="py-2.5 pr-4 text-right font-semibold">Annual Outflow</th>
@@ -397,10 +437,10 @@ export const SWPCalculator = () => {
                       }`}
                     >
                       <td className="py-2.5 pl-5 pr-4 font-medium text-ink">Year {d.year}</td>
-                      <td className="py-2.5 pr-4 text-right font-mono tabular-nums text-ink-soft">{formatCurrency(d.monthlyNeed)}</td>
-                      <td className="py-2.5 pr-4 text-right font-mono tabular-nums text-ink-soft">{formatCurrency(d.withdrawn)}</td>
+                      <td className="py-2.5 pr-4 text-right tabular-nums text-ink-soft">{formatCurrency(d.monthlyNeed)}</td>
+                      <td className="py-2.5 pr-4 text-right tabular-nums text-ink-soft">{formatCurrency(d.withdrawn)}</td>
                       <td
-                        className={`py-2.5 pr-5 text-right font-mono tabular-nums font-semibold ${
+                        className={`py-2.5 pr-5 text-right tabular-nums font-semibold ${
                           isDepleted ? 'text-negative' : 'text-ink'
                         }`}
                       >

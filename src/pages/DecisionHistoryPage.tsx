@@ -69,7 +69,6 @@ export const DecisionHistoryPage = () => {
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Governance · Audit Trail"
         title="Decision History"
         description="A chronological record of every strategic calibration — what changed, why it changed, and the projected impact — with the ability to revert."
       />

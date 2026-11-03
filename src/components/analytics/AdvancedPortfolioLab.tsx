@@ -180,7 +180,7 @@ export const AdvancedPortfolioLab = () => {
               <h3 className="text-xl font-sans font-bold text-ink tracking-tight">
                 Advanced Portfolio Engineering Lab
               </h3>
-              <Badge variant="navy" className="text-[10px] uppercase font-mono">
+              <Badge variant="navy" className="text-xs font-medium font-mono">
                 SAA + TAA Architecture
               </Badge>
             </div>
@@ -197,7 +197,7 @@ export const AdvancedPortfolioLab = () => {
         {/* Strategic Model Selection Tabs */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+            <span className="text-xs font-semibold text-ink">
               1. Strategic Asset Allocation (SAA) Foundation:
             </span>
             <span className="text-xs text-muted">Long-Term Equilibrium Policy</span>
@@ -256,7 +256,7 @@ export const AdvancedPortfolioLab = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles size={16} className="text-ink-soft" />
-                <span className="text-xs font-bold text-ink uppercase tracking-wider">
+                <span className="text-xs font-semibold text-ink">
                   Advisory Forward Views &amp; Confidence Matrix:
                 </span>
               </div>
@@ -342,7 +342,7 @@ export const AdvancedPortfolioLab = () => {
         <div className="overflow-x-auto pt-2" tabIndex={0} role="region" aria-label="Strategic and tactical execution weights table">
           <table className="w-full text-xs text-left">
             <thead>
-              <tr className="border-b border-border text-muted uppercase tracking-wider text-[10px]">
+              <tr className="border-b border-border text-muted text-xs font-medium">
                 <th className="pb-2">Asset Class</th>
                 <th className="pb-2 text-right">Strategic Policy (SAA)</th>
                 <th className="pb-2 text-right">Tactical Overlay (TAA)</th>
@@ -427,7 +427,7 @@ export const AdvancedPortfolioLab = () => {
         <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Strategic model weights table">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-muted font-semibold">
+              <tr className="border-b border-border text-left text-xs text-muted font-medium">
                 <th className="py-2 pr-4">Asset Class</th>
                 <th className="py-2 pr-4 text-right">Black-Litterman</th>
                 <th className="py-2 pr-4 text-right">Max-Sharpe MVO</th>

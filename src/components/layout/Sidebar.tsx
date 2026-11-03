@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
+import { ChevronDown, PanelLeftClose, PanelLeftOpen, X, ArrowLeftRight } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/utils';
 import { navItems, type NavItem } from './navItems';
@@ -7,7 +7,9 @@ import { Lockup, LogoMark } from './BrandMark';
 import { Avatar } from '../ui/Avatar';
 import { StatusBadge } from '../ui/StatusBadge';
 import { useCalculator } from '../../context/CalculatorContext';
-import { isProfileConfigured, planStatus } from '../../lib/planState';
+import { planStatus } from '../../lib/planState';
+import { getActiveCRMClient } from '../../lib/crm';
+import { formatCurrencyCompact } from '../../lib/formatters';
 
 const NAV_STORAGE_KEY = 'soundthesis_nav';
 const EXPANDED_WIDTH = 248;
@@ -61,31 +63,38 @@ const NavLink = ({ item, collapsed, onClick }: NavLinkProps) => {
   return link;
 };
 
-const PRIMARY_PATHS = ['/', '/ips', '/master-plan', '/reports'];
+const PRIMARY_PATHS = ['/overview', '/', '/master-plan', '/ips', '/meeting-workflow', '/reports'];
 
 const TOOL_GROUPS: { id: string; label: string; paths: string[] }[] = [
-  { id: 'details', label: 'Client details', paths: ['/client-profile', '/balance-sheet', '/goal', '/risk', '/retirement', '/reverse-planning'] },
-  { id: 'portfolio', label: 'Portfolio & policy', paths: ['/allocation', '/advanced-portfolio', '/ips/editor'] },
-  { id: 'review', label: 'Review & delivery', paths: ['/overview', '/meeting-workflow', '/decision-history'] },
-  { id: 'utilities', label: 'Utilities & market data', paths: ['/calculators', '/angel-connect', '/angel-data'] },
+  {
+    id: 'analytics',
+    label: 'Analytics & Labs',
+    paths: ['/allocation', '/advanced-portfolio', '/retirement', '/goal', '/reverse-planning', '/decision-history'],
+  },
+  {
+    id: 'utilities',
+    label: 'Calculators & Feeds',
+    paths: ['/calculators', '/angel-connect', '/angel-data'],
+  },
 ];
 
 const NavSections = ({ collapsed, onClick }: { collapsed?: boolean; onClick?: () => void }) => {
   const location = useLocation();
   const [openGroups, setOpenGroups] = useState<string[]>(() => {
     const current = TOOL_GROUPS.find((group) => group.paths.includes(location.pathname));
-    return current ? [current.id] : [];
+    return current ? [current.id] : ['analytics'];
   });
   const primary = navItems.filter((item) => PRIMARY_PATHS.includes(item.path));
+  // Sort primary according to PRIMARY_PATHS order
+  const sortedPrimary = [...primary].sort((a, b) => PRIMARY_PATHS.indexOf(a.path) - PRIMARY_PATHS.indexOf(b.path));
   const toggleGroup = (id: string) => setOpenGroups((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
 
   return (
     <nav aria-label="Primary" className="flex-1 overflow-y-auto py-2" style={{ scrollbarWidth: 'none' }}>
-      {!collapsed && <div className="px-3 mb-1.5"><span className="eyebrow">Workspace</span></div>}
       <ul className={cn('space-y-px', collapsed && 'space-y-1')}>
-        {primary.map((item) => <li key={item.path}><NavLink item={item} collapsed={collapsed} onClick={onClick} /></li>)}
+        {sortedPrimary.map((item) => <li key={item.path}><NavLink item={item} collapsed={collapsed} onClick={onClick} /></li>)}
       </ul>
-      <div className="mt-5 pt-4 border-t border-border-subtle space-y-1">
+      <div className="mt-4 pt-3 border-t border-border-subtle space-y-1">
         {TOOL_GROUPS.map((group) => {
           const items = navItems.filter((item) => group.paths.includes(item.path));
           const groupActive = group.paths.includes(location.pathname);
@@ -118,9 +127,10 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
-  const { inputs } = useCalculator();
+  const { inputs, wealthResult } = useCalculator();
   const [collapsed, setCollapsed] = useState(loadCollapsed);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const activeCRM = getActiveCRMClient();
 
   const toggleCollapsed = useCallback(() => {
     setCollapsed((prev) => {
@@ -153,39 +163,44 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
     };
   }, [mobileOpen, onClose]);
 
-  const configured = isProfileConfigured(inputs);
+  const displayName = inputs.client.name?.trim() || activeCRM?.name || 'Sharma Family';
+  const displayEmail = inputs.client.email || activeCRM?.email;
+  const netWorth = wealthResult.isConfigured ? wealthResult.netWorth : (activeCRM?.financialSummary?.netWorth || 0);
 
   const clientContext = collapsed ? (
-    configured ? (
-      <div className="flex justify-center pt-3 border-t border-border-subtle" title={inputs.client.name}>
-        <Avatar name={inputs.client.name} id={inputs.client.email} size="sm" />
-      </div>
-    ) : null
+    <div className="flex justify-center pt-3 border-t border-border-subtle" title={`${displayName} · ${formatCurrencyCompact(netWorth)}`}>
+      <Link to="/master-plan" aria-label={`View plan for ${displayName}`}>
+        <Avatar name={displayName} id={displayEmail} size="sm" />
+      </Link>
+    </div>
   ) : (
     <div className="pt-3 border-t border-border-subtle">
-      {configured ? (
+      <div className="flex items-center justify-between gap-1 px-1 mb-1.5">
+        <span className="text-xs font-medium text-muted">Active household</span>
         <Link
-          to="/master-plan"
-          className="flex items-center gap-2.5 p-2 rounded-md hover:bg-sunken transition-colors group"
+          to="/"
+          title="Switch client household"
+          className="p-1 rounded text-muted hover:text-ink hover:bg-sunken transition-colors flex items-center gap-1 text-xs"
         >
-          <Avatar name={inputs.client.name} id={inputs.client.email} size="sm" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-[13px] font-medium text-ink truncate group-hover:text-accent-strong transition-colors">
-              {inputs.client.name}
-            </span>
-            <span className="block mt-0.5">
-              <StatusBadge status={planStatus(inputs)} />
-            </span>
+          <ArrowLeftRight size={12} />
+          <span>Switch</span>
+        </Link>
+      </div>
+      <Link
+        to="/master-plan"
+        className="flex items-center gap-2.5 p-2 rounded-lg bg-surface/50 border border-border/60 hover:bg-sunken hover:border-border transition-all group"
+      >
+        <Avatar name={displayName} id={displayEmail} size="sm" />
+        <span className="min-w-0 flex-1">
+          <span className="block text-[13px] font-semibold text-ink truncate group-hover:text-accent-strong transition-colors">
+            {displayName}
           </span>
-        </Link>
-      ) : (
-        <Link
-          to="/master-plan"
-          className="block px-2 py-1.5 text-xs text-muted hover:text-ink transition-colors"
-        >
-          No client selected
-        </Link>
-      )}
+          <span className="flex items-center justify-between mt-0.5 text-xs text-muted">
+            <span className="font-mono font-medium text-ink">{formatCurrencyCompact(netWorth)}</span>
+            <StatusBadge status={planStatus(inputs)} />
+          </span>
+        </span>
+      </Link>
     </div>
   );
 
@@ -201,7 +216,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
           <Link
             to="/"
             className={cn('block', collapsed ? 'px-0' : 'px-1')}
-            aria-label="Sound Thesis home"
+            aria-label="SoundThesis Capital home"
           >
             {collapsed ? <LogoMark size={28} /> : <Lockup />}
           </Link>
@@ -242,7 +257,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
             className="brand-rail fixed inset-y-0 left-0 w-[280px] flex flex-col px-4 py-4 shadow-popover animate-drawer-in z-10 border-r text-ink"
           >
             <div className="flex items-center justify-between pb-3 mb-2 border-b border-border-subtle">
-              <Link to="/" onClick={onClose} aria-label="Sound Thesis home">
+              <Link to="/" onClick={onClose} aria-label="SoundThesis Capital home">
                 <Lockup />
               </Link>
               <button

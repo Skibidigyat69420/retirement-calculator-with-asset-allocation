@@ -93,8 +93,8 @@ export const MasterPlanSummary = ({
   return (
     <div className="space-y-0 border-l border-border pl-5">
       <div className="flex items-baseline justify-between gap-3">
-        <span className="eyebrow">Plan Outlook</span>
-        <span className="font-mono text-[10px] text-faint tabular-nums">
+        <span className="text-xs font-semibold text-ink">Plan outlook</span>
+        <span className="font-mono text-xs text-muted tabular-nums">
           {new Date().getFullYear()}
         </span>
       </div>

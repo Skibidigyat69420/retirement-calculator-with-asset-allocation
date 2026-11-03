@@ -125,7 +125,7 @@ export const RetirementCorpusCalculator = () => {
     >
       <div className="mt-5 rounded-lg border border-border bg-raised">
         <div className="px-5 pt-4 pb-3 border-b border-border-subtle">
-          <div className="eyebrow">Retirement Math</div>
+          <div className="text-sm font-semibold text-ink">Retirement math</div>
         </div>
         <div className="p-5">
           <dl className="divide-y divide-border-subtle text-sm">
@@ -143,7 +143,7 @@ export const RetirementCorpusCalculator = () => {
 
       <div className="mt-5 rounded-lg border border-border bg-raised">
         <div className="px-5 pt-4 pb-3 border-b border-border-subtle">
-          <div className="eyebrow">Withdrawal Need Escalation</div>
+          <div className="text-sm font-semibold text-ink">Withdrawal need escalation</div>
         </div>
         <div className="p-5">
           <p className="text-[13px] text-muted leading-relaxed mb-4">

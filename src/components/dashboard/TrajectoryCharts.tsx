@@ -100,10 +100,10 @@ export const TrajectoryCharts = () => {
             />
             <p className="text-xs text-muted border-t border-border-subtle pt-3 mt-4 leading-relaxed">
               Corpus reaches <strong className="text-ink font-medium">{retirementSnapshot ? formatCurrencyCompact(retirementSnapshot.total) : '—'}</strong> at
-              retirement (age {inputs.retirementAge}) and{' '}
+              retirement (age {inputs.retirementAge}) supporting a post-retirement SWP drawdown of{' '}
+              <strong className="text-ink font-medium">{formatCurrencyCompact(inputs.swp?.monthlyNeedToday || 100000)}/mo</strong>, reaching a terminal value of{' '}
               <strong className="text-ink font-medium">{terminalSnapshot ? formatCurrencyCompact(terminalSnapshot.total) : '—'}</strong> by age{' '}
-              {inputs.lifeExpectancy} — in today's money that is{' '}
-              <strong className="text-ink font-medium">{terminalSnapshot ? formatCurrencyCompact(terminalSnapshot.realTotal) : '—'}</strong> after inflation.
+              {inputs.lifeExpectancy} ({terminalSnapshot ? formatCurrencyCompact(terminalSnapshot.realTotal) : '—'} in today's purchasing power).
             </p>
           </Card>
 

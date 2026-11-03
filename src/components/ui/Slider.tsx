@@ -57,7 +57,7 @@ export const Slider = ({
   return (
     <div className={cn('space-y-2', className)}>
       <div className="flex justify-between items-baseline gap-3">
-        <label className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+        <label className="text-xs font-medium text-ink">
           {label}
         </label>
         <span className="text-xs text-ink tabular-nums font-mono shrink-0">

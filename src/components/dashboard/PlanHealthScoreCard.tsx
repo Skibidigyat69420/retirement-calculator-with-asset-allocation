@@ -106,12 +106,12 @@ export const PlanHealthScoreCard = ({ health }: PlanHealthScoreCardProps) => {
       {health.keyAttentionItems.length > 0 && (
         <Alert variant="warning" className="mt-5">
           <div className="space-y-1">
-            <div className="flex items-center gap-1.5 font-semibold text-xs uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 font-semibold text-xs text-ink">
               <AlertTriangle size={13} strokeWidth={1.8} aria-hidden="true" />
               {health.keyAttentionItems.length} observation
               {health.keyAttentionItems.length > 1 ? 's' : ''} requiring review
             </div>
-            <ul className="list-disc list-inside space-y-0.5 normal-case font-normal tracking-normal text-xs">
+            <ul className="list-disc list-inside space-y-0.5 text-xs text-muted">
               {health.keyAttentionItems.map((item, idx) => (
                 <li key={idx}>{item}</li>
               ))}
@@ -131,7 +131,7 @@ export const PlanHealthScoreCard = ({ health }: PlanHealthScoreCardProps) => {
         <div className="mt-4 overflow-x-auto rounded-md border border-border bg-raised">
           <table className="w-full text-xs text-left">
             <thead>
-              <tr className="border-b border-border text-faint uppercase tracking-wider text-[10px] font-mono">
+              <tr className="border-b border-border text-muted text-xs font-medium">
                 <th className="py-2.5 px-3">Planning area</th>
                 <th className="py-2.5 px-3 text-right">Score</th>
                 <th className="py-2.5 px-3 text-right">Weight</th>

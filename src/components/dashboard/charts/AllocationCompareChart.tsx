@@ -43,7 +43,7 @@ export const AllocationCompareChart = ({ current, target, ariaLabel, summary }: 
         {rows.map((row) => (
           <div key={row.label} className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-muted">{row.label}</span>
+              <span className="text-xs font-semibold text-ink">{row.label}</span>
             </div>
             <div className="flex h-10 w-full overflow-hidden rounded-xl border border-border bg-surface shadow-2xs">
               {categories.map((c) => {
@@ -81,7 +81,7 @@ export const AllocationCompareChart = ({ current, target, ariaLabel, summary }: 
       <div className="overflow-x-auto rounded-xl border border-border/80">
         <table className="w-full text-xs text-left">
           <thead>
-            <tr className="border-b border-border bg-surface/80 text-muted uppercase tracking-wider text-[10px]">
+            <tr className="border-b border-border bg-surface/80 text-muted text-xs font-medium">
               <th className="py-2 px-3">Asset Class</th>
               <th className="py-2 px-3 text-right">Current</th>
               <th className="py-2 px-3 text-right">Target</th>

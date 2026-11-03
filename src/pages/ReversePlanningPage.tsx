@@ -8,7 +8,6 @@ export const ReversePlanningPage = () => {
       <SectionTitle
         title="Reverse Planning & Target Solver"
         subtitle="Instead of asking 'what happens with my current inputs?', solve for 'what exact actions are required to hit my target wealth milestone?'"
-        badge="Decision Layer"
       />
 
       <ReversePlanning />

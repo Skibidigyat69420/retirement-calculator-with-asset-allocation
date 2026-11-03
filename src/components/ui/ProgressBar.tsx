@@ -14,7 +14,7 @@ export const ProgressBar = ({ value, max = 100, label, showValue = false }: Prog
     <div>
       {(label || showValue) && (
         <div className="flex items-baseline justify-between gap-3 mb-1.5">
-          {label && <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">{label}</span>}
+          {label && <span className="text-xs font-medium text-ink">{label}</span>}
           {showValue && (
             <span className="text-xs text-ink font-mono tabular-nums">{Math.round(pct)}%</span>
           )}

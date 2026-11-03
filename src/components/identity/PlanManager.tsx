@@ -56,7 +56,7 @@ export const PlanManager = () => {
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <span className="eyebrow">Local plans</span>
+          <span className="text-xs font-semibold text-ink">Saved plans</span>
           <button
             onClick={() => refreshSavedPlans()}
             className="text-xs text-muted hover:text-ink hover:underline cursor-pointer disabled:opacity-50"

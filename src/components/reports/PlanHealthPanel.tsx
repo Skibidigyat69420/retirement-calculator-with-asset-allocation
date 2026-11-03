@@ -29,7 +29,7 @@ export const PlanHealthPanel = ({ health, recommendations, detailed = false, cla
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <Badge variant={statusVariant(health.status)}>{health.status}</Badge>
-            <span className="eyebrow">Composite Plan Health</span>
+            <span className="text-xs font-semibold text-ink">Composite Plan Health</span>
           </div>
           <p className="text-xs text-muted mt-1.5 leading-relaxed">{health.headline}</p>
         </div>
@@ -39,7 +39,7 @@ export const PlanHealthPanel = ({ health, recommendations, detailed = false, cla
       {detailed ? (
         <div className="overflow-x-auto avoid-break">
           <table className="w-full text-xs text-left border border-border rounded-md overflow-hidden">
-            <thead className="bg-sunken text-muted font-semibold border-b border-border uppercase tracking-wider">
+            <thead className="bg-sunken text-muted font-medium text-xs border-b border-border">
               <tr>
                 <th className="p-3">Component</th>
                 <th className="p-3 text-center">Weight</th>
@@ -83,7 +83,7 @@ export const PlanHealthPanel = ({ health, recommendations, detailed = false, cla
                 <div className={cn('h-full rounded-full', scoreBarTone(c.score))} style={{ width: `${c.score}%` }} />
               </div>
               <span className="w-8 text-right font-mono tabular-nums font-semibold text-ink">{c.score}</span>
-              <span className="w-24 text-right text-[10px] uppercase tracking-wide text-faint shrink-0">{c.status}</span>
+              <span className="w-24 text-right text-xs capitalize text-muted shrink-0">{c.status}</span>
             </div>
           ))}
         </div>

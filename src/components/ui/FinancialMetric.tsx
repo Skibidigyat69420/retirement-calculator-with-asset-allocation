@@ -41,7 +41,7 @@ export const FinancialMetric = ({
 
   return (
     <div>
-      <div className="eyebrow">{label}</div>
+      <div className="text-xs font-medium text-muted">{label}</div>
       <div
         className={cn(
           'mt-1.5 text-ink tabular-nums leading-tight flex items-baseline gap-1 flex-wrap',

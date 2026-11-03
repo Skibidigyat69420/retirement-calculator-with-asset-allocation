@@ -131,11 +131,11 @@ export const ReportListTable = ({
         <table className="w-full min-w-[760px] text-sm">
           <thead>
             <tr className="border-b border-border bg-sunken/60">
-              <th className="text-left py-3 pl-5 pr-4 eyebrow font-medium">Report</th>
-              <th className="text-left py-3 pr-4 eyebrow font-medium">Client</th>
-              <th className="text-left py-3 pr-4 eyebrow font-medium">Version</th>
-              <th className="text-left py-3 pr-4 eyebrow font-medium">Created</th>
-              <th className="text-left py-3 pr-4 eyebrow font-medium">Status</th>
+              <th className="text-left py-3 pl-5 pr-4 text-xs font-medium text-muted">Report</th>
+              <th className="text-left py-3 pr-4 text-xs font-medium text-muted">Client</th>
+              <th className="text-left py-3 pr-4 text-xs font-medium text-muted">Version</th>
+              <th className="text-left py-3 pr-4 text-xs font-medium text-muted">Created</th>
+              <th className="text-left py-3 pr-4 text-xs font-medium text-muted">Status</th>
               <th className="w-12" aria-label="Actions" />
             </tr>
           </thead>

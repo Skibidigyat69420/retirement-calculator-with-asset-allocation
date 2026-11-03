@@ -39,7 +39,7 @@ const CATEGORY_OPTIONS: { value: string; label: string }[] = [
   { value: 'mvo', label: 'MVO Optimizer' },
 ];
 
-/** '15 SEP 2026' — the notebook's dated editorial record eyebrow. */
+/** '15 SEP 2026' — the notebook's dated editorial record date. */
 const notebookDate = (timestamp: string): string => {
   const date = new Date(timestamp);
   if (Number.isNaN(date.getTime())) return '';
@@ -137,7 +137,6 @@ export const DecisionHistoryPanel = () => {
 
       {decisionHistory.length === 0 ? (
         <EmptyState
-          eyebrow="Audit Trail"
           title="No decisions recorded yet."
           description="Plan updates, allocation changes, and scenario approvals you log will appear here as a dated, reversible record of the advisory reasoning."
           icon={NotebookPen}
@@ -154,9 +153,9 @@ export const DecisionHistoryPanel = () => {
               <li key={entry.id} className="relative px-5 md:px-6 py-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    {/* Date eyebrow + category */}
+                    {/* Date label + category */}
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      <span className="eyebrow">{notebookDate(entry.timestamp) || entry.dateFormatted}</span>
+                      <span className="text-xs font-medium text-muted font-mono">{notebookDate(entry.timestamp) || entry.dateFormatted}</span>
                       <Badge tone={CATEGORY_TONE[entry.category]}>{entry.category}</Badge>
                       <span className="text-[11px] text-faint">by {entry.author}</span>
                     </div>
@@ -282,7 +281,7 @@ export const DecisionHistoryPanel = () => {
             helper="A short measurable consequence shown on the notebook entry."
           />
           <div className="space-y-1.5">
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted" htmlFor="decision-rationale">
+            <label className="block text-xs font-medium text-ink" htmlFor="decision-rationale">
               Advisory rationale
             </label>
             <textarea

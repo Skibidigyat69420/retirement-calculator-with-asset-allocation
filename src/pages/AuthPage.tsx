@@ -11,10 +11,9 @@ export function AuthPage({ onEnter }: { onEnter: () => void }) {
 
   return (
     <main className="auth-page">
-      <header className="auth-simple-header"><Link to="/" className="auth-brand"><LogoMark size={30} /><span>Sound Thesis</span></Link><span>Advisor workspace</span></header>
+      <header className="auth-simple-header"><Link to="/" className="auth-brand"><LogoMark size={30} /><span>SoundThesis Capital</span></Link><span>Advisor workspace</span></header>
       <section className="auth-simple-layout">
         <aside className="auth-simple-intro">
-          <span className="eyebrow">A practical client workspace</span>
           <h1>Make client work easier to run.</h1>
           <p>Start with the client, create a clear Investment Policy Statement, and keep every decision in one place.</p>
           <ul className="auth-product-list">
@@ -25,13 +24,13 @@ export function AuthPage({ onEnter }: { onEnter: () => void }) {
         </aside>
         <section className="auth-panel">
           <div className="auth-form-wrap">
-            <div className="auth-form-heading"><span className="eyebrow">Advisor workspace</span><h2>Ready when you are.</h2><p>No account, password, or setup sequence. Open the workspace and start with a client.</p></div>
+            <div className="auth-form-heading"><h2>Ready when you are.</h2><p>No account, password, or setup sequence. Open the workspace and start with a client.</p></div>
             <button className="auth-submit" type="button" onClick={enterWorkspace}>Enter workspace <ArrowRight size={17} /></button>
             <div className="auth-security"><ShieldCheck size={14} /><span>Your plan stays in this browser until you choose to connect a data source.</span></div>
           </div>
         </section>
       </section>
-      <footer className="auth-simple-footer"><span>© 2026 Sound Thesis</span><span>Private practice software</span></footer>
+      <footer className="auth-simple-footer"><span>© 2026 SoundThesis Capital</span><span>Private practice software</span></footer>
     </main>
   );
 }

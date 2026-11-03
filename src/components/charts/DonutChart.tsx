@@ -71,7 +71,7 @@ export const DonutChart = ({ data, innerRadius = 60, outerRadius = 90, className
       </ResponsiveContainer>
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ bottom: 48 }}>
         <div className="text-center">
-          <div className="text-[10px] uppercase tracking-wider text-muted">Total</div>
+          <div className="text-xs font-medium text-muted">Total</div>
           <div className="text-sm font-mono tabular-nums text-ink">{formatCurrencyCompact(total)}</div>
         </div>
       </div>

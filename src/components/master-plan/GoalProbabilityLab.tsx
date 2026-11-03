@@ -112,7 +112,7 @@ export const GoalProbabilityLab = () => {
           />
         </div>
         <div className="md:col-span-3">
-          <span className="text-[11px] uppercase tracking-[0.08em] text-faint">Confidence target</span>
+          <span className="text-xs font-medium text-muted block">Confidence target</span>
           <div className="flex gap-1 mt-1.5">
             {CONFIDENCE_OPTIONS.map((c) => (
               <button
@@ -133,7 +133,7 @@ export const GoalProbabilityLab = () => {
           </div>
         </div>
         <div className="md:col-span-3">
-          <span className="text-[11px] uppercase tracking-[0.08em] text-faint">Simulation paths</span>
+          <span className="text-xs font-medium text-muted block">Simulation paths</span>
           <div className="flex gap-1 mt-1.5">
             {SIM_OPTIONS.map((s) => (
               <button
@@ -168,14 +168,14 @@ export const GoalProbabilityLab = () => {
       {/* KPI strip */}
       <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-px rounded-xl border border-border bg-border overflow-hidden">
         <div className="bg-surface px-4 py-3">
-          <div className="eyebrow">Plan success</div>
+          <div className="text-xs font-medium text-muted">Plan success</div>
           <div className={cn('mt-1 font-display text-2xl tabular-nums', onTrack ? 'text-positive' : 'text-negative')}>
             {pct(result.planSuccessRate)}
           </div>
           <div className="text-[11px] text-muted mt-0.5">all goals funded in {pct(result.planSuccessRate)} of paths</div>
         </div>
         <div className="bg-surface px-4 py-3">
-          <div className="eyebrow">Goals at {pct(confidence)}</div>
+          <div className="text-xs font-medium text-muted">Goals at {pct(confidence)}</div>
           <div className="mt-1 font-display text-2xl tabular-nums text-ink">
             {result.fundedGoalCount}
             <span className="text-muted text-lg"> / {result.goals.length}</span>
@@ -183,7 +183,7 @@ export const GoalProbabilityLab = () => {
           <div className="text-[11px] text-muted mt-0.5">meet the confidence target</div>
         </div>
         <div className="bg-surface px-4 py-3">
-          <div className="eyebrow">Required SIP</div>
+          <div className="text-xs font-medium text-muted">Required SIP</div>
           <div className="mt-1 font-display text-2xl tabular-nums text-ink">
             {formatCurrencyCompact(result.requiredSIP)}
             <span className="text-muted text-sm font-sans"> /mo</span>
@@ -200,7 +200,7 @@ export const GoalProbabilityLab = () => {
           </div>
         </div>
         <div className="bg-surface px-4 py-3">
-          <div className="eyebrow">Total goal cost</div>
+          <div className="text-xs font-medium text-muted">Total goal cost</div>
           <div className="mt-1 font-display text-2xl tabular-nums text-ink">
             {formatCurrencyCompact(result.totalCostAtFinalHorizon)}
           </div>
@@ -240,8 +240,8 @@ export const GoalProbabilityLab = () => {
             <div key={g.goalId} className="grid grid-cols-12 gap-x-4 items-center py-3 border-b border-border">
               <div className="col-span-12 sm:col-span-4 min-w-0">
                 <div className="truncate text-sm font-medium text-ink">{g.name}</div>
-                <div className={cn('text-[10px] uppercase tracking-[0.08em] font-mono mt-0.5', PRIORITY_TONE[g.priority] ?? 'text-muted')}>
-                  {g.priority} · year {g.horizonYear}
+                <div className={cn('text-xs font-medium mt-0.5', PRIORITY_TONE[g.priority] ?? 'text-muted')}>
+                  <span className="capitalize">{g.priority}</span> · Year {g.horizonYear}
                 </div>
               </div>
               <div className="col-span-5 sm:col-span-3">

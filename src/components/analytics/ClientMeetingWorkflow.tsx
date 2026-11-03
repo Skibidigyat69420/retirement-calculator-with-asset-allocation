@@ -160,7 +160,6 @@ export const ClientMeetingWorkflow = () => {
   if (!configured) {
     return (
       <EmptyState
-        eyebrow="Meeting Workflow"
         title="Set up the client profile first"
         description="The meeting workspace opens once a client is configured. Add the client's name, age, and horizon on the Master Plan page, then return here to run the four-meeting engagement."
         icon={UserRound}
@@ -184,7 +183,7 @@ export const ClientMeetingWorkflow = () => {
             <UserRound size={18} strokeWidth={1.6} aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <div className="eyebrow">In session</div>
+            <div className="text-xs font-medium text-muted">In session</div>
             <div className="flex items-center gap-2.5 mt-0.5 flex-wrap">
               <h2 className="text-base font-semibold tracking-tight text-ink truncate">
                 {clientName || <span className="text-faint font-normal">No client selected</span>}
@@ -195,7 +194,7 @@ export const ClientMeetingWorkflow = () => {
         </div>
         <div className="flex items-center gap-4 shrink-0">
           <div className="text-right">
-            <span className="eyebrow block">Engagement progress</span>
+            <span className="text-xs font-medium text-muted block">Engagement progress</span>
             <span className="font-mono text-sm tabular-nums text-ink">{progressPercent}%</span>
           </div>
           <div className="w-24 h-1 rounded-full bg-sunken overflow-hidden" role="progressbar" aria-valuenow={progressPercent} aria-valuemin={0} aria-valuemax={100} aria-label="Checklist completion across all meetings">
@@ -226,7 +225,7 @@ export const ClientMeetingWorkflow = () => {
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className={cn('font-mono text-[10px] uppercase tracking-[0.12em]', isSelected ? 'text-accent' : 'text-faint')}>
+                  <span className={cn('text-xs font-medium', isSelected ? 'text-accent' : 'text-muted')}>
                     {stage.name}
                   </span>
                   {complete ? (
@@ -266,7 +265,7 @@ export const ClientMeetingWorkflow = () => {
         <div className="lg:col-span-2 rounded-lg border border-border bg-raised shadow-card">
           <div className="flex items-start justify-between gap-3 px-5 md:px-6 pt-5 pb-4 border-b border-border">
             <div className="min-w-0">
-              <div className="eyebrow">{activeStage.name} agenda</div>
+              <div className="text-xs font-medium text-muted">{activeStage.name} agenda</div>
               <h3 className="mt-1 text-base font-semibold tracking-tight text-ink">{activeStage.title}</h3>
               <p className="mt-1 text-xs text-muted leading-relaxed max-w-prose">{activeStage.description}</p>
             </div>
@@ -312,7 +311,7 @@ export const ClientMeetingWorkflow = () => {
           </ul>
 
           <div className="px-5 md:px-6 py-4 border-t border-border">
-            <div className="eyebrow mb-2.5">Deliverables produced</div>
+            <div className="text-xs font-medium text-muted mb-2.5">Deliverables produced</div>
             <div className="flex flex-wrap gap-2">
               {activeStage.keyOutputs.map((out) => (
                 <span key={out} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-sunken border border-border text-xs font-medium text-ink-soft">
@@ -368,7 +367,7 @@ export const ClientMeetingWorkflow = () => {
                 <FileText size={15} strokeWidth={1.6} className="text-muted" aria-hidden="true" />
                 Meeting notes
               </h4>
-              <span className="eyebrow">{activeStage.name}</span>
+              <span className="text-xs font-medium text-muted">{activeStage.name}</span>
             </div>
             <textarea
               value={currentNote}
@@ -413,7 +412,7 @@ export const ClientMeetingWorkflow = () => {
                   to={action.route}
                   className="group flex items-center gap-3 py-2.5 text-sm text-ink-soft hover:text-ink transition-colors"
                 >
-                  <span className="eyebrow shrink-0 w-20">{action.stageName}</span>
+                  <span className="text-xs font-medium text-muted shrink-0 w-20">{action.stageName}</span>
                   <span className="flex-1 min-w-0 truncate">{action.label}</span>
                   <ArrowUpRight size={13} strokeWidth={1.6} className="shrink-0 text-faint group-hover:text-ink transition-colors" />
                 </Link>

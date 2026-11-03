@@ -47,7 +47,7 @@ export function MasterPlanHorizontalStepper({
           Step {activeIndex + 1} of {PLAN_STEPS.length}:{' '}
           <strong className="text-ink">{PLAN_STEPS[activeIndex]?.label}</strong>
         </span>
-        <span className="font-mono text-[11px]">
+        <span className="font-mono text-xs font-medium text-muted">
           {completedCount}/{PLAN_STEPS.length} Completed ({progressPercent}%)
         </span>
       </div>
@@ -63,9 +63,9 @@ export function MasterPlanHorizontalStepper({
       {/* Horizontal step buttons */}
       <nav
         aria-label="Master Plan Progress"
-        className="w-full overflow-x-auto pb-2 scrollbar-none border border-border rounded-xl bg-surface/80 shadow-xs"
+        className="w-full overflow-x-auto pb-1 scrollbar-none border border-border rounded-xl bg-surface/90 shadow-card"
       >
-        <ol className="flex items-stretch min-w-[760px] divide-x divide-border">
+        <ol className="flex items-stretch min-w-[760px] divide-x divide-border/70">
           {PLAN_STEPS.map((step) => {
             const isActive = activeStep === step.id;
             const complete = isStepComplete(step.id);
@@ -78,34 +78,40 @@ export function MasterPlanHorizontalStepper({
                   onClick={() => onSelectStep(step.id)}
                   aria-current={isActive ? 'step' : undefined}
                   className={cn(
-                    'w-full h-full text-left p-3 flex flex-col justify-between transition-colors duration-150 cursor-pointer group',
+                    'w-full h-full text-left p-3.5 flex flex-col justify-between transition-all duration-150 cursor-pointer group relative',
                     isActive
-                      ? 'bg-accent-soft/30 border-b-2 border-accent text-ink'
+                      ? 'bg-accent-soft/40 text-ink shadow-inner'
                       : 'hover:bg-sunken text-muted hover:text-ink',
                   )}
                 >
-                  <div className="flex items-center justify-between gap-1 mb-1.5">
+                  {/* Active top accent bar */}
+                  {isActive && (
+                    <span className="absolute top-0 left-0 right-0 h-0.5 bg-accent" />
+                  )}
+
+                  <div className="flex items-center justify-between gap-1 mb-2">
                     <span
                       className={cn(
-                        'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono font-semibold border transition-colors',
+                        'w-5 h-5 rounded-full flex items-center justify-center text-xs font-mono font-semibold border transition-colors',
                         complete && !isActive
-                          ? 'bg-positive-soft border-positive/50 text-positive'
+                          ? 'bg-positive-soft border-positive/40 text-positive'
                           : isActive
-                            ? 'bg-accent text-white border-accent'
-                            : 'bg-raised border-border text-faint group-hover:border-muted',
+                            ? 'bg-accent text-white border-accent shadow-xs'
+                            : 'bg-sunken border-border text-muted group-hover:border-border-strong group-hover:text-ink',
                       )}
                     >
                       {complete && !isActive ? (
-                        <Check size={11} strokeWidth={2.5} />
+                        <Check size={11} strokeWidth={2.6} />
                       ) : (
                         step.stepNumber
                       )}
                     </span>
                     <Icon
-                      size={14}
+                      size={15}
+                      strokeWidth={isActive ? 2 : 1.6}
                       className={cn(
                         'shrink-0 transition-colors',
-                        isActive ? 'text-accent' : 'text-faint group-hover:text-muted',
+                        isActive ? 'text-accent-strong' : 'text-faint group-hover:text-muted',
                       )}
                     />
                   </div>
@@ -114,12 +120,12 @@ export function MasterPlanHorizontalStepper({
                     <span
                       className={cn(
                         'block text-xs leading-tight truncate',
-                        isActive ? 'font-semibold text-ink' : 'font-medium',
+                        isActive ? 'font-semibold text-accent-strong' : 'font-medium text-ink/90',
                       )}
                     >
                       {step.label}
                     </span>
-                    <span className="block text-[10px] text-faint truncate mt-0.5">
+                    <span className="block text-xs text-muted truncate mt-0.5">
                       {step.subtitle}
                     </span>
                   </div>

@@ -51,6 +51,15 @@ export const RecommendationsList = ({ recommendations }: RecommendationsListProp
         retirementAge: rec.actionPayload.newRetirementAge,
       });
       showToast(`Applied: Retirement age adjusted to ${rec.actionPayload.newRetirementAge}`, 'success');
+    } else if (rec.actionType === 'adjust_swp_need') {
+      prevState.swp = { ...inputs.swp };
+      updateInputs({
+        swp: {
+          ...inputs.swp,
+          monthlyNeedToday: rec.actionPayload.newMonthlyNeed,
+        },
+      });
+      showToast(`Applied: Target SWP drawdown calibrated to ₹${rec.actionPayload.newMonthlyNeed.toLocaleString('en-IN')}/mo`, 'success');
     } else if (rec.actionType === 'rebalance_allocation') {
       prevState.manualTargets = null;
       showToast('Applied: Strategic asset allocation targets rebalanced', 'success');
@@ -193,23 +202,23 @@ export const RecommendationsList = ({ recommendations }: RecommendationsListProp
                   {isWhyOpen && (
                     <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 rounded-md border border-border-subtle bg-sunken p-4 text-xs">
                       <div className="space-y-1">
-                        <span className="eyebrow">Current</span>
+                        <span className="text-[11px] font-medium text-muted block">Current</span>
                         <span className="block font-mono tabular-nums text-ink bg-raised border border-border rounded-sm px-2 py-1">
                           {rec.whyExplainer.current}
                         </span>
                       </div>
                       <div className="space-y-1">
-                        <span className="eyebrow">Target</span>
+                        <span className="text-[11px] font-medium text-muted block">Target</span>
                         <span className="block font-mono tabular-nums text-positive bg-positive-soft border border-positive/25 rounded-sm px-2 py-1">
                           {rec.whyExplainer.target}
                         </span>
                       </div>
                       <div className="space-y-1">
-                        <span className="eyebrow">Driver</span>
+                        <span className="text-[11px] font-medium text-muted block">Driver</span>
                         <span className="block text-ink-soft leading-relaxed">{rec.whyExplainer.driver}</span>
                       </div>
                       <div className="space-y-1">
-                        <span className="eyebrow">Benefit</span>
+                        <span className="text-[11px] font-medium text-muted block">Benefit</span>
                         <span className="block text-positive leading-relaxed">{rec.whyExplainer.benefit}</span>
                       </div>
                     </div>

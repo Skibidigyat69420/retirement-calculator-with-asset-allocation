@@ -12,6 +12,8 @@ import { useCalculator } from '../../context/CalculatorContext';
 import { formatCurrencyCompact } from '../../lib/formatters';
 import { useAuth } from '../../context/AuthContext';
 
+import { ClientQuickSwitcher } from './ClientQuickSwitcher';
+
 interface TopBarProps {
   onMenuClick: () => void;
   mobileOpen?: boolean;
@@ -135,25 +137,30 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
             >
               <Menu size={18} strokeWidth={1.7} />
             </button>
-            <Link to="/" aria-label="Sound Thesis home" className="shrink-0 text-ink">
+            <Link to="/" aria-label="SoundThesis Capital home" className="shrink-0 text-ink">
               <LogoMark size={24} />
             </Link>
             <span className="text-[13px] font-medium text-ink truncate">{label}</span>
           </div>
 
           {/* Desktop: breadcrumb */}
-          <div className="hidden lg:flex items-baseline gap-2 min-w-0">
-            <span className="eyebrow">{section}</span>
+          <div className="hidden lg:flex items-center gap-1.5 min-w-0">
+            <Link to="/overview" className="text-xs font-medium text-muted hover:text-ink transition-colors">Workspace</Link>
+            <span className="text-muted text-xs" aria-hidden="true">/</span>
+            <span className="text-xs text-muted font-medium">{section}</span>
             <span className="text-muted text-xs" aria-hidden="true">/</span>
             <span className="text-sm font-semibold text-ink tracking-tight truncate">{label}</span>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-2.5 ml-auto shrink-0 min-w-0">
+            {/* Active household switcher */}
+            <ClientQuickSwitcher />
+
             {/* Command palette trigger — quiet search pill */}
             <button
               type="button"
               onClick={() => setPaletteOpen(true)}
-              className="hidden md:flex items-center gap-2 pl-3 pr-2 py-1.5 min-h-8 w-52 rounded-lg border border-border bg-surface/80 text-muted hover:text-ink hover:border-border-strong hover:bg-raised transition-colors"
+              className="hidden md:flex items-center gap-2 pl-3 pr-2 py-1.5 min-h-8 w-44 lg:w-48 rounded-lg border border-border bg-surface/80 text-muted hover:text-ink hover:border-border-strong hover:bg-raised transition-colors"
               aria-label="Open search (Command K)"
             >
               <Search size={14} strokeWidth={1.7} className="shrink-0" />
@@ -205,7 +212,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
                 aria-label="Workspace menu"
                 className="flex items-center rounded-md transition-colors hover:bg-sunken"
               >
-                <Avatar name={user?.fullName || inputs.client.advisor || 'Sound Thesis'} id={user?.email || inputs.client.email} size="sm" />
+                <Avatar name={user?.fullName || inputs.client.advisor || 'SoundThesis Capital'} id={user?.email || inputs.client.email} size="sm" />
                 <ChevronDown
                   size={13}
                   strokeWidth={1.7}

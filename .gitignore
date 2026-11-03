@@ -38,6 +38,7 @@ data/live_feed.csv
 # QA artifacts
 qa-results.xml
 qa-screenshots/
+qa-screenshots-redesign/
 *.pdf
 
 # Local throwaway PostgreSQL data dir (tests/dev)

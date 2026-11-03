@@ -59,7 +59,7 @@ export const StressImpactBars = ({ results, ariaLabel, className }: StressImpact
           </div>
         );
       })}
-      <div className="flex justify-between text-[9px] uppercase tracking-wider text-muted pl-47">
+      <div className="flex justify-between text-xs font-medium text-muted pl-47">
         <span>← Corpus reduction vs baseline</span>
         <span>Increase →</span>
       </div>
