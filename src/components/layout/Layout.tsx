@@ -14,7 +14,7 @@ export const Layout = ({ children }: LayoutProps) => {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="app-canvas min-h-screen flex relative selection:bg-accent selection:text-on-inkfill text-ink">
+      <div className="app-canvas h-screen w-screen overflow-hidden flex relative selection:bg-accent selection:text-on-inkfill text-ink">
         <a href="#main-content" className="skip-to-content sr-only focus:not-sr-only">
           <span className="inline-flex items-center rounded-md bg-accent text-on-inkfill px-4 py-2.5 shadow-lg font-medium text-xs">
             Skip to main content
@@ -22,20 +22,22 @@ export const Layout = ({ children }: LayoutProps) => {
         </a>
         <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
           <TopBar onMenuClick={() => setMobileOpen(true)} mobileOpen={mobileOpen} />
-          <motion.main
-            id="main-content"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="flex-1 w-full px-4 sm:px-6 lg:px-10 py-6 lg:py-10 pb-24 lg:pb-10"
-          >
-            <div className="max-w-[1440px] mx-auto w-full flex flex-col flex-1">
-              {children}
-            </div>
-          </motion.main>
-          <Footer />
+          <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
+            <motion.main
+              id="main-content"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="flex-1 w-full px-4 sm:px-6 lg:px-10 py-6 lg:py-8 pb-20 lg:pb-8"
+            >
+              <div className="max-w-[1440px] mx-auto w-full flex flex-col flex-1">
+                {children}
+              </div>
+            </motion.main>
+            <Footer />
+          </div>
         </div>
 
         <MobileNav />

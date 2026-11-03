@@ -453,7 +453,6 @@
 
 @layer components {
   .app-canvas {
-    overflow-x: hidden;
     background: var(--color-canvas);
   }
 

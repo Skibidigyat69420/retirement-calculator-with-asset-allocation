@@ -168,38 +168,45 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
   const netWorth = wealthResult.isConfigured ? wealthResult.netWorth : (activeCRM?.financialSummary?.netWorth || 0);
 
   const clientContext = collapsed ? (
-    <div className="flex justify-center pt-3 border-t border-border-subtle" title={`${displayName} · ${formatCurrencyCompact(netWorth)}`}>
-      <Link to="/master-plan" aria-label={`View plan for ${displayName}`}>
+    <div className="flex justify-center py-2 mb-2 border-b border-border-subtle" title={`${displayName} · ${formatCurrencyCompact(netWorth)}`}>
+      <Link to="/master-plan" aria-label={`View plan for ${displayName}`} className="p-1 rounded-md hover:bg-sunken transition-colors">
         <Avatar name={displayName} id={displayEmail} size="sm" />
       </Link>
     </div>
   ) : (
-    <div className="pt-3 border-t border-border-subtle">
+    <div className="pb-3 mb-2 border-b border-border-subtle">
       <div className="flex items-center justify-between gap-1 px-1 mb-1.5">
-        <span className="text-xs font-medium text-muted">Active household</span>
+        <span className="text-[11px] font-medium text-muted">Active household</span>
         <Link
           to="/"
           title="Switch client household"
-          className="p-1 rounded text-muted hover:text-ink hover:bg-sunken transition-colors flex items-center gap-1 text-xs"
+          className="p-0.5 rounded text-muted hover:text-ink hover:bg-sunken transition-colors flex items-center gap-1 text-[11px]"
         >
-          <ArrowLeftRight size={12} />
+          <ArrowLeftRight size={11} />
           <span>Switch</span>
         </Link>
       </div>
       <Link
         to="/master-plan"
-        className="flex items-center gap-2.5 p-2 rounded-lg bg-surface/50 border border-border/60 hover:bg-sunken hover:border-border transition-all group"
+        className="block p-2 rounded-lg bg-surface/60 border border-border/80 hover:bg-sunken hover:border-border transition-all group overflow-hidden"
       >
-        <Avatar name={displayName} id={displayEmail} size="sm" />
-        <span className="min-w-0 flex-1">
-          <span className="block text-[13px] font-semibold text-ink truncate group-hover:text-accent-strong transition-colors">
-            {displayName}
-          </span>
-          <span className="flex items-center justify-between mt-0.5 text-xs text-muted">
-            <span className="font-mono font-medium text-ink">{formatCurrencyCompact(netWorth)}</span>
+        <div className="flex items-center gap-2 min-w-0">
+          <Avatar name={displayName} id={displayEmail} size="sm" />
+          <div className="min-w-0 flex-1">
+            <span className="block text-xs font-semibold text-ink truncate group-hover:text-accent-strong transition-colors">
+              {displayName}
+            </span>
+            <span className="block text-[11px] font-mono text-muted truncate mt-0.5">
+              {formatCurrencyCompact(netWorth)}
+            </span>
+          </div>
+        </div>
+        <div className="mt-1.5 pt-1.5 border-t border-border/40 flex items-center justify-between gap-1 min-w-0">
+          <span className="text-[10px] text-faint shrink-0">Plan status</span>
+          <div className="shrink-0 max-w-[120px] truncate">
             <StatusBadge status={planStatus(inputs)} />
-          </span>
-        </span>
+          </div>
+        </div>
       </Link>
     </div>
   );
@@ -212,7 +219,8 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
         style={{ width: collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH }}
         aria-label="Sidebar navigation"
       >
-        <div className={cn('mb-4 flex items-center', collapsed ? 'justify-center' : 'justify-between gap-2 px-1')}>
+        {/* Brand header */}
+        <div className={cn('mb-3 flex items-center', collapsed ? 'justify-center' : 'justify-between gap-2 px-1')}>
           <Link
             to="/"
             className={cn('block', collapsed ? 'px-0' : 'px-1')}
@@ -227,19 +235,34 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
               aria-label="Collapse sidebar"
               aria-expanded="true"
               title="Collapse sidebar"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-ink transition-colors"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-ink transition-colors cursor-pointer"
             >
               <PanelLeftClose size={17} strokeWidth={1.7} />
             </button>
           )}
         </div>
 
+        {/* Active household context — pinned at top */}
+        {clientContext}
+
+        {/* Scrollable navigation sections */}
         <NavSections collapsed={collapsed} />
 
-        <div className="mt-2 space-y-1">
-          {clientContext}
-          {collapsed && <button type="button" onClick={toggleCollapsed} aria-label="Expand sidebar" aria-expanded="false" title="Expand sidebar" className="flex min-h-9 w-full items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-ink transition-colors"><PanelLeftOpen size={17} strokeWidth={1.7} /></button>}
-        </div>
+        {/* Bottom rail actions — collapse toggle when collapsed */}
+        {collapsed && (
+          <div className="pt-2 mt-auto border-t border-border-subtle">
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              aria-label="Expand sidebar"
+              aria-expanded="false"
+              title="Expand sidebar"
+              className="flex min-h-9 w-full items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-ink transition-colors cursor-pointer"
+            >
+              <PanelLeftOpen size={17} strokeWidth={1.7} />
+            </button>
+          </div>
+        )}
       </aside>
 
       {/* Mobile drawer */}
@@ -270,9 +293,10 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
               </button>
             </div>
 
-            <NavSections onClick={onClose} />
+            {/* Active household at top */}
+            {clientContext}
 
-            <div className="pt-3 mt-1 border-t border-border-subtle">{clientContext}</div>
+            <NavSections onClick={onClose} />
           </div>
         </div>
       )}
