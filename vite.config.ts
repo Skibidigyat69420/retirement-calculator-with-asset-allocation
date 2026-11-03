@@ -13,11 +13,6 @@ function localApiPlugin() {
     configureServer(server: ViteDevServer) {
       const projectRoot = server.config.root
       server.middlewares.use('/api', (req: any, res: any, next: any) => {
-        // Skip Angel One proxy (handled by server.proxy)
-        if (req.url?.startsWith('/angelone')) {
-          return next()
-        }
-
         if (req.url?.startsWith('/market-data') || req.url?.startsWith('/market-status')) {
           const filePath = resolve(projectRoot, 'public', 'data', 'market-data.json')
           if (existsSync(filePath)) {
@@ -46,12 +41,6 @@ export default defineConfig({
       '/api/v1': {
         target: 'http://localhost:4000',
         changeOrigin: true,
-      },
-      '/api/angelone': {
-        target: 'https://apiconnect.angelone.in',
-        changeOrigin: true,
-        secure: true,
-        rewrite: (path) => path.replace(/^\/api\/angelone/, ''),
       },
     },
   },

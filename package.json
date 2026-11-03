@@ -12,13 +12,8 @@
     "preview": "vite preview",
     "test:qa": "node scripts/headless-qa.js",
     "test:unit": "npx tsx --test tests/**/*.test.ts",
-    "test:angel": "node scripts/test-smartapi.js",
-    "fetch:data": ".venv/bin/python scripts/fetch_angel_historical.py",
+    "fetch:data": ".venv/bin/python scripts/fetch_historical.py",
     "fetch:yahoo": ".venv/bin/python scripts/fetch_historical.py",
-    "fetch:angel": ".venv/bin/python scripts/fetch_angel_historical.py",
-    "fetch:angel:all": ".venv/bin/python scripts/fetch_angel_all.py",
-    "build:market-db": ".venv/bin/python scripts/build_market_database.py",
-    "live:angel": ".venv/bin/python scripts/angel_live_feed.py",
     "test:onboarding:ui": "node scripts/test-onboarding-ui.mjs"
   },
   "dependencies": {
@@ -30,7 +25,6 @@
     "fastify": "^5.12.5",
     "framer-motion": "^13.1.1",
     "lucide-react": "^1.35.0",
-    "otpauth": "^9.5.1",
     "postcss": "^8.5.26",
     "postgres": "^3.4.9",
     "react": "^19.2.8",

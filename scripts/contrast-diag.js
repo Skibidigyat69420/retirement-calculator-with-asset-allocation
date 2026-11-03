@@ -30,7 +30,7 @@ async function run(){
   const browser=await puppeteer.launch({executablePath:CHROMIUM,headless:true,args:['--no-sandbox','--disable-setuid-sandbox']});
   const page=await browser.newPage();
   await page.setViewport({width:1280,height:800});
-  for (const route of ['/', '/master-plan', '/goal', '/retirement', '/allocation', '/mvo', '/reports', '/calculators', '/ips', '/angel-connect', '/angel-data']) {
+  for (const route of ['/', '/master-plan', '/goal', '/retirement', '/allocation', '/reports', '/calculators', '/ips']) {
     await page.goto(`${BASE_URL}${route}`,{waitUntil:'networkidle2'});
     await wait(1200);
     const results=await new AxePuppeteer(page, axeCoreSource).analyze();

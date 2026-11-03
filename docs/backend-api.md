@@ -111,5 +111,5 @@ Next milestones:
 
 1. Move calculation inputs fully to saved backend state.
 2. Add server-side PDF rendering/storage for report records.
-3. Add document upload URLs and market/Angel routes through authenticated backend endpoints.
+3. Add document upload URLs and market data routes through authenticated backend endpoints.
 4. Add automated integration tests against a throwaway Postgres database.

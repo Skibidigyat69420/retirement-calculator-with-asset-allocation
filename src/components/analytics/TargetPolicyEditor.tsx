@@ -50,7 +50,7 @@ export const TargetPolicyEditor = ({ drawerOpen, onDrawerOpen, onDrawerClose }: 
   const targets = manualTargets || riskProfile.targets;
   const [basis, setBasis] = useState<'profile' | 'manual'>(manualTargets ? 'manual' : 'profile');
 
-  // External writes (MVO apply, lab apply) flip the basis to manual.
+  // External writes flip the basis to manual.
   useEffect(() => {
     if (manualTargets) setBasis('manual');
   }, [manualTargets]);

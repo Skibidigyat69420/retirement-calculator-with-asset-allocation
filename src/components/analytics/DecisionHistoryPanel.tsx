@@ -26,7 +26,6 @@ const CATEGORY_TONE: Record<DecisionLogEntry['category'], BadgeTone> = {
   goal: 'info',
   risk: 'warning',
   scenario: 'neutral',
-  mvo: 'brass',
 };
 
 const CATEGORY_OPTIONS: { value: string; label: string }[] = [
@@ -36,7 +35,6 @@ const CATEGORY_OPTIONS: { value: string; label: string }[] = [
   { value: 'swp', label: 'SWP / Drawdown' },
   { value: 'goal', label: 'Goal Funding' },
   { value: 'risk', label: 'Risk Profile' },
-  { value: 'mvo', label: 'MVO Optimizer' },
 ];
 
 /** '15 SEP 2026' — the notebook's dated editorial record date. */

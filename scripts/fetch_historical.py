@@ -52,7 +52,7 @@ INSTRUMENTS = [
     {"symbol": "AGG", "name": "iShares Core U.S. Aggregate Bond ETF", "exchange": "NYSE", "token": "", "category": "debt", "yahoo": "AGG"},
 ]
 
-# Default MVO basket optimized for the longest available common history.
+# Default allocation basket optimized for the longest available common history.
 DEFAULT_ALLOCATION_SYMBOLS = ["NIFTY50", "NIFTY500", "BANKNIFTY", "GOLDBEES", "LIQUIDBEES"]
 RISK_FREE_RATE = 0.06
 TRADING_DAYS = 252

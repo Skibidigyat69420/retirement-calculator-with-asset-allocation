@@ -3,10 +3,6 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/api/angelone/:path*",
-      "destination": "https://apiconnect.angelone.in/:path*"
-    },
-    {
       "source": "/api/market-data",
       "destination": "/data/market-data.json"
     },

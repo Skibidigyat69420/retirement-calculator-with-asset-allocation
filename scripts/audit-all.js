@@ -29,7 +29,6 @@ async function main() {
     { url: 'http://localhost:5173/retirement', name: 'audit_retirement.png' },
     { url: 'http://localhost:5173/allocation', name: 'audit_allocation.png' },
     { url: 'http://localhost:5173/goal', name: 'audit_goals.png' },
-    { url: 'http://localhost:5173/mvo', name: 'audit_mvo.png' },
     { url: 'http://localhost:5173/risk', name: 'audit_risk.png' },
     { url: 'http://localhost:5173/reports', name: 'audit_reports.png' },
     { url: 'http://localhost:5173/calculators', name: 'audit_calculators.png' },

@@ -1,6 +1,4 @@
-import { fetchCandleData, type SmartApiCredentials, type SmartApiSession } from './smartapi';
-import { getInstrument, type Instrument } from './instruments';
-import { getCachedPrices, setCachedPrices, type Candle } from './priceCache';
+import { type Instrument } from './instruments';
 import {
   alignSeries,
   buildReturnsMatrix,
@@ -23,70 +21,11 @@ export interface MarketDataSet {
   defaultSymbols: string[];
   defaultDateRange?: { from: string; to: string };
   fetchedAt: string;
-  source: 'angel' | 'yahoo' | 'default';
-}
-
-export interface FetchProgress {
-  completed: number;
-  total: number;
-  currentSymbol: string;
-}
-
-function formatSmartApiDate(dateStr: string): string {
-  return `${dateStr} 09:15`;
-}
-
-function parseCandleData(raw: Array<[string, number, number, number, number, number]>): Candle[] {
-  return raw
-    .map((row) => ({
-      date: String(row[0]).split(' ')[0],
-      open: Number(row[1]),
-      high: Number(row[2]),
-      low: Number(row[3]),
-      close: Number(row[4]),
-      volume: Number(row[5]),
-    }))
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-}
-
-export async function fetchSymbolHistory(
-  symbol: string,
-  from: string,
-  to: string,
-  creds: SmartApiCredentials,
-  session: SmartApiSession,
-): Promise<Candle[]> {
-  const instrument = getInstrument(symbol);
-  if (!instrument) {
-    throw new Error(`Unknown symbol: ${symbol}`);
-  }
-  if (!instrument.token) {
-    throw new Error(`Instrument ${symbol} has no token (e.g. US ETF), cannot fetch via SmartAPI.`);
-  }
-
-  const cached = getCachedPrices(symbol, instrument.exchange, from, to);
-  if (cached) return cached;
-
-  const res = await fetchCandleData(creds, session.jwtToken, {
-    exchange: instrument.exchange,
-    symboltoken: instrument.token,
-    interval: 'ONE_DAY',
-    fromdate: formatSmartApiDate(from),
-    todate: formatSmartApiDate(to),
-  });
-
-  if (!res.success || !res.data) {
-    throw new Error(res.message || `Failed to fetch ${symbol}`);
-  }
-
-  const candles = parseCandleData(res.data);
-  setCachedPrices(symbol, instrument.exchange, from, to, candles);
-  return candles;
+  source: 'market' | 'yahoo' | 'default';
 }
 
 /**
- * Load the pre-built market-data bundle from the backend /api/market-data endpoint.
- * This does not require an Angel One login and is the default data source.
+ * Load the pre-built market-data bundle from the backend /api/market-data endpoint or static bundle.
  */
 export async function fetchMarketDataFromBackend(
   symbols?: string[],
@@ -115,8 +54,6 @@ export async function fetchMarketDataFromBackend(
         continue;
       }
       const data: MarketDataSet = await response.json();
-      // The bundle now stores full per-symbol histories. Align to the requested/default
-      // symbol set so callers always receive a consistent MarketDataSet.
       return alignMarketData(data, symbols || data.defaultSymbols);
     } catch (err: any) {
       lastError = err?.message || lastError;
@@ -168,65 +105,6 @@ export function alignMarketData(data: MarketDataSet, symbols: string[]): MarketD
     defaultDateRange: data.defaultDateRange,
     fetchedAt: data.fetchedAt,
     source: data.source,
-  };
-}
-
-export async function fetchMarketData(
-  symbols: string[],
-  from: string,
-  to: string,
-  creds: SmartApiCredentials,
-  session: SmartApiSession,
-  onProgress?: (p: FetchProgress) => void,
-): Promise<MarketDataSet> {
-  const prices: PriceSeries[] = [];
-  const instruments: Instrument[] = [];
-
-  for (let i = 0; i < symbols.length; i++) {
-    const symbol = symbols[i];
-    onProgress?.({ completed: i, total: symbols.length, currentSymbol: symbol });
-    try {
-      const candles = await fetchSymbolHistory(symbol, from, to, creds, session);
-      if (candles.length > 0) {
-        prices.push({
-          symbol,
-          dates: candles.map((c) => c.date),
-          closes: candles.map((c) => c.close),
-        });
-        const inst = getInstrument(symbol);
-        if (inst) instruments.push(inst);
-      }
-    } catch (err: any) {
-      console.warn(`Skipping ${symbol}: ${err?.message}`);
-    }
-  }
-
-  onProgress?.({ completed: symbols.length, total: symbols.length, currentSymbol: '' });
-
-  const { dates, matrix } = alignSeries(prices);
-  const alignedPrices = prices.map((p, idx) => ({
-    symbol: p.symbol,
-    dates,
-    closes: matrix[idx],
-  }));
-
-  const returnsMatrix = buildReturnsMatrix(matrix);
-  const covariance = computeCovarianceMatrix(returnsMatrix);
-  const correlation = computeCorrelationMatrix(covariance);
-  const stats = alignedPrices.map((p) => computeReturnStats(p.symbol, p.closes));
-
-  return {
-    symbols,
-    instruments,
-    prices: alignedPrices,
-    returnsMatrix,
-    covariance,
-    correlation,
-    stats,
-    dateRange: { from: dates[0] || from, to: dates[dates.length - 1] || to },
-    defaultSymbols: [],
-    fetchedAt: new Date().toISOString(),
-    source: 'angel',
   };
 }
 

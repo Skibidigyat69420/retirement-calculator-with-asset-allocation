@@ -8,7 +8,7 @@ export interface Asset {
   category: AssetCategory;
   currency: string; // e.g. INR, USD
   liquidateAtRetirement: boolean;
-  source?: string; // e.g. 'mvo' for optimizer-imported proxy assets
+  source?: string; // optional origin identifier
   /** Household members who own the asset. Absent or empty = joint/whole-household. */
   ownerMemberIds?: string[];
 }
@@ -480,7 +480,7 @@ export interface CategoryAssumption {
 export interface AllocationScenario {
   id: string;
   name: string;
-  source: 'current' | 'risk-profile' | 'mvo-max-sharpe' | 'mvo-min-variance' | 'risk-parity' | 'glide-path' | 'custom';
+  source: 'current' | 'risk-profile' | 'risk-parity' | 'glide-path' | 'custom';
   targets: Record<AssetCategory, number>; // percentages 0-100
   assumptions: {
     useMasterPlanAssumptions: boolean;
@@ -502,7 +502,7 @@ export interface DecisionLogEntry {
   id: string;
   timestamp: string; // ISO string
   dateFormatted: string;
-  category: 'retirement' | 'allocation' | 'sip' | 'swp' | 'goal' | 'risk' | 'scenario' | 'mvo';
+  category: 'retirement' | 'allocation' | 'sip' | 'swp' | 'goal' | 'risk' | 'scenario';
   actionTitle: string;
   summary: string;
   previousValue?: string;
@@ -582,9 +582,6 @@ export interface ReversePlanningResult {
   pathways: ReversePathway[];
 }
 
-// MVO Apply Destination
-export type MvoApplyDestination = 'portfolio' | 'sip' | 'stp' | 'investment' | 'targets';
-
 // Market and Category Return Assumptions
 export interface CategoryAssumptions {
   mean: number; // annualized decimal return
@@ -603,5 +600,5 @@ export interface AssumptionSet {
   correlation: Record<AssetCategory, Record<AssetCategory, number>>;
   fx: Record<string, FXAssumption>;
   fetchedAt: string;
-  source: 'angel' | 'default';
+  source: 'market' | 'default';
 }

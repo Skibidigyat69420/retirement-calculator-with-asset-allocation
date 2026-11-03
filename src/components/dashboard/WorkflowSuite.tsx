@@ -10,7 +10,6 @@ import {
   TrendingUp,
   PiggyBank,
   Compass,
-  Layers,
   Briefcase,
   History,
   type LucideIcon,
@@ -32,23 +31,22 @@ const workflowTools: SuiteTool[] = [
   { step: '04', path: '/retirement', label: 'Retirement & SWP', desc: 'Corpus longevity & withdrawal plan', icon: PiggyBank },
   { step: '05', path: '/reverse-planning', label: 'Reverse Planning', desc: 'Target solver (SIP, corpus, age)', icon: Compass },
   { step: '06', path: '/allocation', label: 'Asset Allocation', desc: 'Strategic rebalancing & drift limits', icon: PieChart },
-  { step: '07', path: '/advanced-portfolio', label: 'Portfolio Lab', desc: 'Black-Litterman, Risk Parity & TAA', icon: Layers },
-  { step: '08', path: '/meeting-workflow', label: 'Client Meeting', desc: '4-stage agenda & audit tracker', icon: Briefcase },
-  { step: '09', path: '/decision-history', label: 'Decision Audit', desc: 'Immutable log & 1-click revert', icon: History },
-  { step: '10', path: '/reports', label: 'Executive Report', desc: 'Comprehensive plan & print summary', icon: BarChart3 },
-  { step: '11', path: '/ips', label: 'IPS Document', desc: 'Investment Policy Statement', icon: FileText },
-  { step: '12', path: '/calculators', label: 'Calculators', desc: 'SIP, SWP, lumpsum & retirement tools', icon: TrendingUp },
+  { step: '07', path: '/meeting-workflow', label: 'Client Meeting', desc: '4-stage agenda & audit tracker', icon: Briefcase },
+  { step: '08', path: '/decision-history', label: 'Decision Audit', desc: 'Immutable log & 1-click revert', icon: History },
+  { step: '09', path: '/reports', label: 'Executive Report', desc: 'Comprehensive plan & print summary', icon: BarChart3 },
+  { step: '10', path: '/ips', label: 'IPS Document', desc: 'Investment Policy Statement', icon: FileText },
+  { step: '11', path: '/calculators', label: 'Calculators', desc: 'SIP, SWP, lumpsum & retirement tools', icon: TrendingUp },
 ];
 
 /**
- * ADVISORY SUITE — the twelve-module workflow as a quiet editorial index.
+ * ADVISORY SUITE — the eleven-module workflow as a quiet editorial index.
  * Hairlines carry the structure; step numbers sit in tabular mono.
  */
 export const WorkflowSuite = () => (
   <div>
     <SectionHeader
       title="Advisory suite"
-      description="Twelve integrated modules from behavioural risk profiling to the investment policy statement."
+      description="Eleven integrated modules from behavioural risk profiling to the investment policy statement."
       hairline
     />
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">

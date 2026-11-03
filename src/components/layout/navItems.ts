@@ -9,11 +9,8 @@ import {
   PiggyBank,
   Printer,
   Compass,
-  Layers,
   Briefcase,
   History,
-  Zap,
-  Database,
   Users,
   UserRound,
   ClipboardList,
@@ -28,7 +25,7 @@ export interface NavItem {
   description?: string;
 }
 
-export const SECTION_ORDER = ['Workspace', 'Plan', 'Portfolio', 'Deliver', 'Practice', 'Tools & Feed'] as const;
+export const SECTION_ORDER = ['Workspace', 'Plan', 'Portfolio', 'Deliver', 'Practice', 'Tools'] as const;
 
 export const navItems: NavItem[] = [
   {
@@ -105,13 +102,6 @@ export const navItems: NavItem[] = [
     section: 'Portfolio',
     description: 'Current vs target rebalancing & trade orders',
   },
-  {
-    path: '/advanced-portfolio',
-    label: 'Portfolio Lab · MVO',
-    icon: Layers,
-    section: 'Portfolio',
-    description: 'MVO, Black-Litterman, risk parity & glide paths',
-  },
 
   // Deliver
   {
@@ -159,27 +149,13 @@ export const navItems: NavItem[] = [
     description: 'Live backend clients, plans & calculations',
   },
 
-  // Tools & Feed
+  // Tools
   {
     path: '/calculators',
     label: 'Calculators',
     icon: Calculator,
-    section: 'Tools & Feed',
+    section: 'Tools',
     description: 'SIP, SWP, STP, EMI & lumpsum utilities',
-  },
-  {
-    path: '/angel-connect',
-    label: 'Angel One Connect',
-    icon: Zap,
-    section: 'Tools & Feed',
-    description: 'SmartAPI credentials, TOTP & authentication',
-  },
-  {
-    path: '/angel-data',
-    label: 'Angel Market Data',
-    icon: Database,
-    section: 'Tools & Feed',
-    description: 'Live tick feeds & real-time quotes',
   },
 ];
 

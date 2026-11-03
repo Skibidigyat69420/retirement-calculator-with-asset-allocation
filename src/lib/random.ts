@@ -2,7 +2,7 @@
  * Deterministic random number generators.
  *
  * The app uses unseeded Math.random() by default so UI outputs vary between
- * runs. Passing an explicit `seed` makes Monte Carlo and MVO reproducible,
+ * runs. Passing an explicit `seed` makes Monte Carlo simulations reproducible,
  * which is required for regression tests, support, and audit trails.
  */
 

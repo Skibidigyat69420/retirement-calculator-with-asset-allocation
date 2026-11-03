@@ -52,11 +52,10 @@ const STAGES: ClientMeetingStageInfo[] = [
     id: 3,
     name: 'Meeting 03',
     title: 'Recommendation & Strategy Architecture',
-    description: 'Formulate strategic policy allocation, cash surplus waterfall, portfolio optimization lab, and transition plan.',
+    description: 'Formulate strategic policy allocation, cash surplus waterfall, and transition plan.',
     checklist: [
       { id: 'm3-allocation', label: 'Strategic Asset Allocation Targets (SAA)', completed: false, route: '/allocation' },
       { id: 'm3-waterfall', label: 'Household Cash Surplus Funding Waterfall', completed: false, route: '/goal' },
-      { id: 'm3-rebalance', label: 'Portfolio Engineering Lab (Risk Parity & Black-Litterman)', completed: false, route: '/advanced-portfolio' },
       { id: 'm3-transition', label: 'Portfolio Transition & Tax Drag Calculation', completed: false, route: '/allocation' },
     ],
     keyOutputs: ['Target Policy Allocation', 'Funding Waterfall Plan', 'Trade Execution Ticket Sheet'],

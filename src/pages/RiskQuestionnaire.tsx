@@ -55,7 +55,7 @@ export const RiskQuestionnaire = () => {
         <PageHeader
           title="Risk Profile"
           variant="hero"
-          description="The risk profile anchors the strategic asset allocation, MVO constraints and goal success thresholds. It is established through a structured questionnaire — never assumed."
+          description="The risk profile anchors the strategic asset allocation, volatility constraints, and goal success thresholds. It is established through a structured questionnaire — never assumed."
         />
 
         <EmptyState
@@ -101,7 +101,7 @@ export const RiskQuestionnaire = () => {
       <div className="space-y-6 pb-8">
         <PageHeader
           title="Risk Questionnaire"
-          description="Fourteen questions across eight dimensions. Answers persist with the workspace; a completed profile feeds the strategic allocation, MVO constraints and goal success thresholds."
+          description="Fourteen questions across eight dimensions. Answers persist with the workspace; a completed profile feeds the strategic allocation, volatility constraints, and goal success thresholds."
           actions={
             <Button
               variant="outline"

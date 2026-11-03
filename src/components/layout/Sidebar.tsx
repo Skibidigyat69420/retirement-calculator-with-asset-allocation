@@ -63,18 +63,13 @@ const NavLink = ({ item, collapsed, onClick }: NavLinkProps) => {
   return link;
 };
 
-const PRIMARY_PATHS = ['/overview', '/', '/master-plan', '/ips', '/meeting-workflow', '/reports'];
+const PRIMARY_PATHS = ['/overview', '/', '/master-plan', '/ips', '/meeting-workflow', '/reports', '/calculators'];
 
 const TOOL_GROUPS: { id: string; label: string; paths: string[] }[] = [
   {
     id: 'analytics',
-    label: 'Analytics & Labs',
-    paths: ['/allocation', '/advanced-portfolio', '/retirement', '/goal', '/reverse-planning', '/decision-history'],
-  },
-  {
-    id: 'utilities',
-    label: 'Calculators & Feeds',
-    paths: ['/calculators', '/angel-connect', '/angel-data'],
+    label: 'Analytics & Strategy',
+    paths: ['/allocation', '/retirement', '/goal', '/reverse-planning', '/decision-history'],
   },
 ];
 

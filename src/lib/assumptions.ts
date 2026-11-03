@@ -110,7 +110,7 @@ export function buildAssumptionsFromMarketData(marketData: MarketDataSet): Assum
     correlation,
     fx: { ...FX_ASSUMPTIONS },
     fetchedAt: marketData.fetchedAt,
-    source: 'angel',
+    source: 'market',
   };
 }
 
@@ -142,7 +142,7 @@ export function getDefaultAssumptions(): AssumptionSet {
     },
     fx: { ...FX_ASSUMPTIONS },
     fetchedAt: new Date().toISOString(),
-    source: 'angel',
+    source: 'market',
   };
 }
 

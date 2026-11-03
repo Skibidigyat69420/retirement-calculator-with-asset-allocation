@@ -14,7 +14,6 @@ dist-ssr
 .env
 .env*.local
 .venv/
-data/angel_one/
 __pycache__/
 *.pyc
 
@@ -33,7 +32,6 @@ ips/*
 !ips/.gitkeep
 !ips/Smoke_Test.md
 !ips/Test_Client_IPS.md
-data/live_feed.csv
 
 # QA artifacts
 qa-results.xml

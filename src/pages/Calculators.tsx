@@ -269,7 +269,7 @@ export const Calculators = () => {
 
       <WorkflowFooter
         prev={{ path: '/ips', label: 'Investment Policy' }}
-        next={{ path: '/angel-connect', label: 'SmartAPI Connect' }}
+        next={{ path: '/reports', label: 'Documents & Reports' }}
         stepIndicator="Financial Calculators & Modeling"
       />
     </div>

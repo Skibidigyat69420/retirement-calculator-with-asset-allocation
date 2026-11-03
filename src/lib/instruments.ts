@@ -24,9 +24,7 @@ export interface Instrument {
 }
 
 /**
- * Pre-loaded instrument master for Angel One SmartAPI.
- * Tokens are the official Angel One symbol tokens. Verify against the latest
- * instrument master file if a fetch fails; tokens can change after corporate actions.
+ * Pre-loaded instrument universe for market benchmarks and ETF proxies.
  */
 export const INSTRUMENTS: Instrument[] = [
   // Indian equity benchmarks
@@ -83,7 +81,7 @@ export function getInstrumentsByCategory(category: Instrument['category']): Inst
   return INSTRUMENTS.filter((i) => i.category === category);
 }
 
-// Default MVO basket optimized for the longest available common history while
+// Default allocation basket optimized for the longest available common history while
 // covering large-cap equity, broad equity, banking sector, gold, and liquid debt.
 export const DEFAULT_ALLOCATION_SYMBOLS = ['NIFTY50', 'NIFTY500', 'BANKNIFTY', 'GOLDBEES', 'LIQUIDBEES'];
 

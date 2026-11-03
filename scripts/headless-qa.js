@@ -36,16 +36,12 @@ const routes = [
   '/goal',
   '/retirement',
   '/allocation',
-  '/mvo',
   '/reports',
   '/reverse-planning',
-  '/advanced-portfolio',
   '/meeting-workflow',
   '/decision-history',
   '/calculators',
   '/ips',
-  '/angel-connect',
-  '/angel-data',
 ];
 
 const viewports = [

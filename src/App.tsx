@@ -37,7 +37,6 @@ const MasterPlan = lazyNamed(() => import('./pages/MasterPlan'), 'MasterPlan');
 const Allocation = lazyNamed(() => import('./pages/Allocation'), 'Allocation');
 const GoalPlanner = lazyNamed(() => import('./pages/GoalPlanner'), 'GoalPlanner');
 const Retirement = lazyNamed(() => import('./pages/Retirement'), 'Retirement');
-const AngelConnect = lazyNamed(() => import('./pages/AngelConnect'), 'AngelConnect');
 const IPSTemplate = lazy(async () => {
   const mod = await import('./pages/IPSTemplate');
   return { default: mod.IPSTemplate };
@@ -46,10 +45,8 @@ const IPSWorkspace = lazyNamed(() => import('./pages/IPSWorkspacePage'), 'IPSWor
 const RiskQuestionnaire = lazyNamed(() => import('./pages/RiskQuestionnaire'), 'RiskQuestionnaire');
 const Dossier = lazyNamed(() => import('./pages/Dossier'), 'Dossier');
 const ReportsPage = lazyNamed(() => import('./pages/ReportsPage'), 'ReportsPage');
-const AngelData = lazyNamed(() => import('./pages/AngelData'), 'AngelData');
 const Calculators = lazyNamed(() => import('./pages/Calculators'), 'Calculators');
 const ReversePlanning = lazyNamed(() => import('./pages/ReversePlanningPage'), 'ReversePlanningPage');
-const AdvancedPortfolio = lazyNamed(() => import('./pages/AdvancedPortfolioPage'), 'AdvancedPortfolioPage');
 const ClientMeeting = lazyNamed(() => import('./pages/ClientMeetingPage'), 'ClientMeetingPage');
 const DecisionHistory = lazyNamed(() => import('./pages/DecisionHistoryPage'), 'DecisionHistoryPage');
 const PracticeTeam = lazyNamed(() => import('./pages/PracticeTeamPage'), 'PracticeTeamPage');
@@ -98,7 +95,6 @@ function AnimatedRoutes() {
           <Route path="/retirement" element={<Retirement />} />
           <Route path="/reverse-planning" element={<ReversePlanning />} />
           <Route path="/allocation" element={<Allocation />} />
-          <Route path="/advanced-portfolio" element={<AdvancedPortfolio />} />
           <Route path="/meeting-workflow" element={<ClientMeeting />} />
           <Route path="/decision-history" element={<DecisionHistory />} />
           <Route path="/reports" element={<ReportsPage />} />
@@ -106,8 +102,6 @@ function AnimatedRoutes() {
           <Route path="/calculators" element={<Calculators />} />
           <Route path="/ips" element={<IPSWorkspace />} />
           <Route path="/ips/editor" element={<IPSTemplate />} />
-          <Route path="/angel-connect" element={<AngelConnect />} />
-          <Route path="/angel-data" element={<AngelData />} />
           <Route path="/team" element={<PracticeTeam />} />
           <Route path="/practitioner" element={<Practitioner />} />
           <Route path="/style-guide" element={<StyleGuide />} />

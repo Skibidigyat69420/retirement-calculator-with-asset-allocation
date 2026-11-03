@@ -490,8 +490,8 @@ export const RiskReport = ({
             },
             {
               icon: BarChart3,
-              title: 'MVO',
-              body: `Risk-free rate and portfolio constraints align with the ${formatPercent(riskProfile.targetVolatility)} volatility target.`,
+              title: 'Risk Budget',
+              body: `Capital preservation and portfolio constraints align with the ${formatPercent(riskProfile.targetVolatility)} volatility target.`,
             },
             {
               icon: Target,
