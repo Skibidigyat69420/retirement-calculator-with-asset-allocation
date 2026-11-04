@@ -38,18 +38,27 @@ export function loadClientData(): MasterPlanInputs | null {
     const parsed = JSON.parse(raw) as Partial<StoredClientData> | null;
     if (!parsed || typeof parsed !== 'object') return null;
     if (parsed._version !== CLIENT_DATA_VERSION) return null;
-    const { _version: _ignored, sip, stp, swp, assets, goals, client, ...scalars } = parsed;
+    const { _version: _ignored, sip, stp, swp, assets, liabilities, goals, client, ...scalars } = parsed;
     const defaults = defaultClientInputs();
     // JSON round-trips never contain `undefined`, so spreading persisted
     // scalars over defaults only overrides keys that were actually saved.
     return {
       ...defaults,
       ...scalars,
-      client: client ? { ...defaults.client, ...client } : defaults.client,
+      client: client
+        ? {
+            ...defaults.client,
+            ...client,
+            incomeSources: Array.isArray(client.incomeSources) ? client.incomeSources : defaults.client.incomeSources,
+            familyMembers: Array.isArray(client.familyMembers) ? client.familyMembers : defaults.client.familyMembers,
+            insurancePolicies: Array.isArray(client.insurancePolicies) ? client.insurancePolicies : defaults.client.insurancePolicies,
+          }
+        : defaults.client,
       sip: { ...defaults.sip, ...sip },
       stp: { ...defaults.stp, ...stp },
       swp: { ...defaults.swp, ...swp },
       assets: Array.isArray(assets) ? assets : defaults.assets,
+      liabilities: Array.isArray(liabilities) ? liabilities : defaults.liabilities,
       goals: Array.isArray(goals) ? goals : defaults.goals,
     } as MasterPlanInputs;
   } catch {

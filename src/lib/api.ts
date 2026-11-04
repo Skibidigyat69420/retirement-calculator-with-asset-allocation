@@ -278,7 +278,7 @@ export function patchFinancialResource(clientId: string, resource: FinancialReso
   return request<Record<string, unknown>>(`/clients/${clientId}/${resource}/${id}`, { method: 'PATCH', body });
 }
 
-export function archiveFinancialResource(clientId: string, resource: 'assets' | 'liabilities', id: string): Promise<Record<string, unknown>> {
+export function archiveFinancialResource(clientId: string, resource: FinancialResource, id: string): Promise<Record<string, unknown>> {
   return request<Record<string, unknown>>(`/clients/${clientId}/${resource}/${id}/archive`, { method: 'POST' });
 }
 

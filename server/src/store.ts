@@ -34,7 +34,7 @@ export interface AppStore {
   getProfile(organizationId: string, clientId: string): Promise<Profile | null>;
   createResource(organizationId: string, clientId: string, resource: ResourceType, data: Record<string, unknown>): Promise<Record<string, unknown> | null>;
   updateResource(organizationId: string, clientId: string, resource: ResourceType, id: string, data: Record<string, unknown>): Promise<Record<string, unknown> | null>;
-  archiveResource(organizationId: string, clientId: string, resource: 'assets' | 'liabilities', id: string): Promise<Record<string, unknown> | null>;
+  archiveResource(organizationId: string, clientId: string, resource: ResourceType, id: string): Promise<Record<string, unknown> | null>;
   listPlans(organizationId: string, clientId: string): Promise<Plan[]>;
   createPlan(organizationId: string, clientId: string, name: string): Promise<Plan | null>;
   getPlan(organizationId: string, planId: string): Promise<Plan | null>;
@@ -216,7 +216,7 @@ class MemoryStore implements AppStore {
     return record;
   }
 
-  async archiveResource(organizationId: string, clientId: string, resource: 'assets' | 'liabilities', id: string) {
+  async archiveResource(organizationId: string, clientId: string, resource: ResourceType, id: string) {
     return this.updateResource(organizationId, clientId, resource, id, { status: 'archived' });
   }
 
@@ -487,7 +487,7 @@ class PostgresStore implements AppStore {
     return rows[0] ? { id: rows[0].id, status: rows[0].status, ...rows[0].data } : null;
   }
 
-  async archiveResource(organizationId: string, clientId: string, resource: 'assets' | 'liabilities', id: string) {
+  async archiveResource(organizationId: string, clientId: string, resource: ResourceType, id: string) {
     const rows = await this.sql`
       update financial_resources set status = 'archived', updated_at = now()
       where organization_id = ${organizationId} and client_id = ${clientId} and resource_type = ${resource} and id = ${id}

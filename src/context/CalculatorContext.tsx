@@ -36,6 +36,7 @@ import { useAuth } from './AuthContext';
 import {
   archiveFinancialResource,
   createFinancialResource,
+  createPlan,
   createPlanVersion,
   getClient,
   getClientProfile,
@@ -358,10 +359,23 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
           getClientProfile(activeClientId),
           listBackendPlans(activeClientId),
         ]);
-        const plan = plans.data[0] ? await getPlan(plans.data[0].id) : null;
+        let plan = plans.data[0] ? await getPlan(plans.data[0].id) : null;
+        if (!plan && backendEnabled) {
+          try {
+            const newPlan = await createPlan(activeClientId, {
+              name: `${client.preferredName || client.firstName || 'Client'}'s Master Plan`,
+            });
+            plan = await getPlan(newPlan.id);
+          } catch (e) {
+            console.warn('Could not auto-initialize client plan on backend:', e);
+          }
+        }
         if (cancelled) return;
         backendPlanIdRef.current = plan?.id ?? null;
-        const snapshot = (plan?.currentVersion?.inputSnapshot || {}) as Partial<MasterPlanInputs> & {
+        const rawSnapshot = (plan?.currentVersion?.inputSnapshot || {}) as Record<string, any>;
+        const snapshot = (rawSnapshot.inputs && typeof rawSnapshot.inputs === 'object'
+          ? { ...rawSnapshot.inputs, ...rawSnapshot }
+          : rawSnapshot) as Partial<MasterPlanInputs> & {
           manualTargets?: Record<AssetCategory, number> | null;
           manualAllocationPolicy?: ManualAllocationPolicy | null;
         };
@@ -372,19 +386,36 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
           const rule = profile.cashflows.find((row) => row.type === type);
           if (rule?.id) backendCashflowIdsRef.current[type] = String(rule.id);
         }
+
+        const hydratedAssets = profile.assets.length > 0
+          ? profile.assets.map(mapServerAsset)
+          : Array.isArray(snapshot.assets) && snapshot.assets.length > 0
+            ? snapshot.assets
+            : [];
+        const hydratedLiabilities = profile.liabilities.length > 0
+          ? profile.liabilities.map(mapServerLiability)
+          : Array.isArray(snapshot.liabilities) && snapshot.liabilities.length > 0
+            ? snapshot.liabilities
+            : [];
+        const hydratedGoals = profile.goals.length > 0
+          ? profile.goals.map(mapServerGoal)
+          : Array.isArray(snapshot.goals) && snapshot.goals.length > 0
+            ? snapshot.goals
+            : [];
+
         setInputs(normalizePlan({
           ...snapshot,
           client: {
             ...defaultClientInputs().client,
             ...(snapshot.client || {}),
-            name: [client.firstName, client.lastName].filter(Boolean).join(' '),
+            name: [client.firstName, client.lastName].filter(Boolean).join(' ') || client.preferredName || '',
             email: client.email || '', phone: client.phone || '', notes: client.notes || '',
           },
           annualIncome: incomeRule ? numberValue(incomeRule.annualAmount) : snapshot.annualIncome,
           monthlyLivingExpenses: expenseRule ? numberValue(expenseRule.monthlyAmount) : snapshot.monthlyLivingExpenses,
-          assets: profile.assets.map(mapServerAsset),
-          liabilities: profile.liabilities.map(mapServerLiability),
-          goals: profile.goals.map(mapServerGoal),
+          assets: hydratedAssets,
+          liabilities: hydratedLiabilities,
+          goals: hydratedGoals,
           sip: { ...defaultClientInputs().sip, ...(snapshot.sip || {}), amount: sipRule ? numberValue(sipRule.monthlyAmount) : numberValue(snapshot.sip?.amount) },
         }));
         setManualTargetsState(snapshot.manualTargets ?? null);
@@ -493,28 +524,33 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     });
   }, []);
 
-  // Debounced persistence for client inputs
+  // Debounced persistence for client inputs (always keeps local storage resilient as offline backup)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => {
-    if (activeClientId && backendEnabled) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => saveClientData(inputs), 500);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
-  }, [inputs, activeClientId, backendEnabled]);
+  }, [inputs]);
 
-  // The database is authoritative for an advisor-selected client. Scalar
-  // planning assumptions are versioned on the plan; row-shaped financial
-  // records are written through their table endpoints above.
+  // The database is authoritative for an advisor-selected client. Full
+  // planning state is versioned on the plan, and row-shaped financial
+  // records are synchronized through table endpoints.
   useEffect(() => {
     if (!backendEnabled || !activeClientId || !backendLoadedRef.current || backendHydratingRef.current || !backendPlanIdRef.current) return;
     const timer = setTimeout(() => {
-      const { assets: _assets, liabilities: _liabilities, goals: _goals, monthlyExpenditure: _total, ...scalarSnapshot } = inputs;
-      const versionSnapshot = { ...scalarSnapshot, manualTargets, manualAllocationPolicy };
+      const { monthlyExpenditure: _total, ...fullSnapshot } = inputs;
+      const versionSnapshot = {
+        ...fullSnapshot,
+        inputs: fullSnapshot,
+        manualTargets,
+        manualAllocationPolicy,
+        riskAnswers,
+      };
       void createPlanVersion(backendPlanIdRef.current as string, versionSnapshot as unknown as Record<string, unknown>)
         .catch((error) => console.warn('Plan version save failed:', error));
     }, 700);
     return () => clearTimeout(timer);
-  }, [activeClientId, backendEnabled, inputs, manualTargets, manualAllocationPolicy]);
+  }, [activeClientId, backendEnabled, inputs, manualTargets, manualAllocationPolicy, riskAnswers]);
 
   // Auto-calibrate assumptions using extracted historical market-data CSV bundle
   useEffect(() => {
@@ -959,39 +995,70 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
   }, [syncCashflowRule]);
 
   const addGoal = useCallback((goal?: Partial<Goal>) => {
-    const id = goal?.id || generateId('goal');
-    setInputs((prev) => {
-      const newGoal: Goal = {
-        name: 'New Goal',
-        targetAmount: 0,
-        yearsToGoal: 0,
-        priority: 'important',
-        inflation: 0,
-        recurring: false,
-        ...goal,
-        id,
-      };
-      return {
-        ...prev,
-        goals: [...prev.goals, newGoal],
-      };
-    });
-    return id;
-  }, []);
+    const localGoal: Goal = {
+      name: 'New Goal',
+      targetAmount: 0,
+      yearsToGoal: 0,
+      priority: 'important',
+      inflation: 0,
+      recurring: false,
+      ...goal,
+      id: goal?.id || generateId('goal'),
+    };
+    setInputs((prev) => ({
+      ...prev,
+      goals: [...prev.goals, localGoal],
+    }));
+    if (backendEnabled && activeClientId) {
+      void createFinancialResource(activeClientId, 'goals', {
+        name: localGoal.name,
+        targetAmount: localGoal.targetAmount,
+        yearsToGoal: localGoal.yearsToGoal,
+        priority: localGoal.priority,
+        inflationRate: localGoal.inflation,
+        recurring: localGoal.recurring,
+      })
+        .then((row) =>
+          setInputs((prev) => ({
+            ...prev,
+            goals: prev.goals.map((item) => (item.id === localGoal.id ? mapServerGoal(row) : item)),
+          })),
+        )
+        .catch((error) => console.warn('Goal create failed:', error));
+    }
+    return localGoal.id;
+  }, [activeClientId, backendEnabled]);
 
   const updateGoal = useCallback((id: string, patch: Partial<Goal>) => {
     setInputs((prev) => ({
       ...prev,
       goals: prev.goals.map((g) => (g.id === id ? { ...g, ...patch, id: g.id } : g)),
     }));
-  }, []);
+    if (backendEnabled && activeClientId && id.length > 20) {
+      const apiPatch: Record<string, unknown> = {};
+      if (patch.name !== undefined) apiPatch.name = patch.name;
+      if (patch.targetAmount !== undefined) apiPatch.targetAmount = patch.targetAmount;
+      if (patch.yearsToGoal !== undefined) apiPatch.yearsToGoal = patch.yearsToGoal;
+      if (patch.priority !== undefined) apiPatch.priority = patch.priority;
+      if (patch.inflation !== undefined) apiPatch.inflationRate = patch.inflation;
+      if (patch.recurring !== undefined) apiPatch.recurring = patch.recurring;
+      void patchFinancialResource(activeClientId, 'goals', id, apiPatch).catch((error) =>
+        console.warn('Goal save failed:', error),
+      );
+    }
+  }, [activeClientId, backendEnabled]);
 
   const removeGoal = useCallback((id: string) => {
     setInputs((prev) => ({
       ...prev,
       goals: prev.goals.filter((g) => g.id !== id),
     }));
-  }, []);
+    if (backendEnabled && activeClientId && id.length > 20) {
+      void archiveFinancialResource(activeClientId, 'goals', id).catch((error) =>
+        console.warn('Goal archive failed:', error),
+      );
+    }
+  }, [activeClientId, backendEnabled]);
 
   // Defer the heavy Monte Carlo recomputation so keystrokes stay responsive.
   // Memoize the profile object first so useDeferredValue can actually defer it.

@@ -14,11 +14,13 @@ function readPlans(): Record<string, StoredPlan> {
   }
 }
 
-function writePlans(plans: Record<string, StoredPlan>): void {
+function writePlans(plans: Record<string, StoredPlan>): boolean {
   try {
     localStorage.setItem(PLANS_KEY, JSON.stringify(plans));
-  } catch {
-    // storage full or unavailable
+    return true;
+  } catch (err) {
+    console.warn('Failed to write plans to localStorage:', err);
+    return false;
   }
 }
 
@@ -51,7 +53,10 @@ export const localStorageStore: DataStore = {
   async savePlan(plan) {
     const plans = readPlans();
     plans[plan.id] = { ...plan, updatedAt: new Date().toISOString() };
-    writePlans(plans);
+    const ok = writePlans(plans);
+    if (!ok) {
+      return { success: false, error: 'Browser storage is full or unavailable.' };
+    }
     return { success: true };
   },
 

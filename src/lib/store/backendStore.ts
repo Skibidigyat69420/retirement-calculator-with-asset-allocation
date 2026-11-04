@@ -43,18 +43,25 @@ export const backendStore: DataStore = {
     try {
       const p = await getPlan(id);
       
-      const inputSnapshot = p.currentVersion?.inputSnapshot || {};
-      const assumptionsSnapshot = p.currentVersion?.assumptionsSnapshot || {};
+      const rawSnapshot = (p.currentVersion?.inputSnapshot || {}) as Record<string, any>;
+      const assumptionsSnapshot = (p.currentVersion?.assumptionsSnapshot || {}) as Record<string, any>;
+
+      // Support both nested { inputs: ... } and flat { currentAge: ... } snapshots
+      const inputs = (rawSnapshot.inputs && typeof rawSnapshot.inputs === 'object') ? rawSnapshot.inputs : rawSnapshot;
+      const riskAnswers = rawSnapshot.riskAnswers || inputs.riskAnswers || {};
+      const manualTargets = rawSnapshot.manualTargets ?? inputs.manualTargets ?? null;
+      const manualAllocationPolicy = rawSnapshot.manualAllocationPolicy ?? inputs.manualAllocationPolicy ?? null;
+      const ipsState = rawSnapshot.ipsState ?? inputs.ipsState ?? {};
       
       return {
         id: p.id,
         name: p.name,
-        inputs: inputSnapshot.inputs || {},
+        inputs: inputs || {},
         assumptions: assumptionsSnapshot || {},
-        riskAnswers: inputSnapshot.riskAnswers || {},
-        manualTargets: inputSnapshot.manualTargets || null,
-        manualAllocationPolicy: inputSnapshot.manualAllocationPolicy || null,
-        ipsState: inputSnapshot.ipsState || {},
+        riskAnswers,
+        manualTargets,
+        manualAllocationPolicy,
+        ipsState,
         updatedAt: p.currentVersion ? new Date().toISOString() : new Date().toISOString(),
       } as StoredPlan;
     } catch (err) {
@@ -69,8 +76,10 @@ export const backendStore: DataStore = {
     try {
       let planId = plan.id;
       
-      // We group the store plan payload to match snapshot structure
+      // Store payload in a dual format: top-level scalars + nested inputs for 100% interoperability
+      const inputObject = (typeof plan.inputs === 'object' && plan.inputs !== null ? plan.inputs : {}) as Record<string, unknown>;
       const inputSnapshot = {
+        ...inputObject,
         inputs: plan.inputs,
         riskAnswers: plan.riskAnswers,
         manualTargets: plan.manualTargets,

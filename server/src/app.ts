@@ -32,7 +32,7 @@ function error(reply: FastifyReply, status: number, code: string, message: strin
 }
 
 function amount(value: Record<string, unknown>): number {
-  const raw = value.currentValue ?? value.amount ?? value.balance ?? 0;
+  const raw = value.currentValue ?? value.amount ?? value.balance ?? value.outstandingAmount ?? value.principal ?? 0;
   return typeof raw === 'number' && Number.isFinite(raw) ? raw : 0;
 }
 
@@ -239,7 +239,6 @@ export async function buildApp(store: AppStore = createStore()) {
   app.get('/api/v1/clients/:clientId', async (request, reply) => {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
-    if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
     const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
     const client = await store.getClient(scoped.organizationId, clientId);
     if (!client) return error(reply, 404, 'CLIENT_NOT_FOUND', 'Client was not found.');
@@ -287,7 +286,7 @@ export async function buildApp(store: AppStore = createStore()) {
     });
   }
 
-  for (const resource of ['assets', 'liabilities'] as const) {
+  for (const resource of ['assets', 'liabilities', 'cashflows', 'goals'] as const) {
     app.post(`/api/v1/clients/:clientId/${resource}/:id/archive`, async (request, reply) => {
       const scoped = await requireOrganization(store, request, reply);
       if (!scoped) return;
@@ -302,7 +301,6 @@ export async function buildApp(store: AppStore = createStore()) {
   app.get('/api/v1/clients/:clientId/plans', async (request, reply) => {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
-    if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
     const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
     const rows = await store.listPlans(scoped.organizationId, clientId);
     return { data: rows.map((plan) => ({ id: plan.id, clientId: plan.clientId, name: plan.name, status: plan.status })) };
@@ -376,7 +374,6 @@ export async function buildApp(store: AppStore = createStore()) {
   app.get('/api/v1/plans/:planId', async (request, reply) => {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
-    if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
     const { planId } = z.object({ planId: z.string() }).parse(request.params);
     const plan = await store.getPlan(scoped.organizationId, planId);
     if (!plan) return error(reply, 404, 'PLAN_NOT_FOUND', 'Plan was not found.');
