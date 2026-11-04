@@ -34,7 +34,7 @@ export interface AppStore {
   createClient(organizationId: string, actor: UserRecord, input: Partial<ClientRecord> & { firstName: string; lastName: string }): Promise<ClientRecord>;
   ensureClientDraftSamples(organizationId: string): Promise<void>;
   listClientDrafts(organizationId: string): Promise<ClientDraft[]>;
-  createClientDraft(organizationId: string, input: { name: string; data: Record<string, unknown>; isSample?: boolean }): Promise<ClientDraft>;
+  createClientDraft(organizationId: string, input: { name: string; data: Record<string, unknown>; isSample?: boolean; sampleKey?: string }): Promise<ClientDraft>;
   updateClientDraft(organizationId: string, id: string, patch: { name?: string; data?: Record<string, unknown>; status?: 'active' | 'archived' }): Promise<ClientDraft | null>;
   getClient(organizationId: string, clientId: string): Promise<ClientRecord | null>;
   updateClient(organizationId: string, clientId: string, patch: Partial<ClientRecord>): Promise<ClientRecord | null>;
@@ -82,12 +82,12 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-function defaultClientDrafts(): { name: string; data: Record<string, unknown> }[] {
+function defaultClientDrafts(): { name: string; sampleKey: string; data: Record<string, unknown> }[] {
   return [
-    { name: 'Rhea and Karan Shah', data: { tier: 'HNI', stage: 'IPS Draft', tags: ['Tech Founder', 'Retirement 2035'], financialSummary: { netWorth: 48500000, investableAssets: 38200000, totalAssets: 52000000, totalLiabilities: 3500000, assetCount: 8 } } },
-    { name: 'Vikram & Ananya Malhotra', data: { tier: 'Ultra HNI', stage: 'Discovery', tags: ['Estate Succession', 'NRI Compliance'], financialSummary: { netWorth: 124000000, investableAssets: 95000000, totalAssets: 130000000, totalLiabilities: 6000000, assetCount: 14 } } },
-    { name: 'Sharma Family', data: { tier: 'HNI', stage: 'Active Mandate', tags: ['Multi-Gen', 'Higher Education'], financialSummary: { netWorth: 24700000, investableAssets: 18200000, totalAssets: 34400000, totalLiabilities: 9700000, assetCount: 6 } } },
-    { name: 'Aarav Mehta', data: { tier: 'Affluent', stage: 'Risk Profiling', tags: ['FIRE 45', 'Aggressive Growth'], financialSummary: { netWorth: 8200000, investableAssets: 7800000, totalAssets: 8200000, totalLiabilities: 0, assetCount: 4 } } },
+    { name: 'Rhea and Karan Shah', sampleKey: 'shah', data: { tier: 'HNI', stage: 'IPS Draft', tags: ['Tech Founder', 'Retirement 2035'], financialSummary: { netWorth: 48500000, investableAssets: 38200000, totalAssets: 52000000, totalLiabilities: 3500000, assetCount: 8 } } },
+    { name: 'Vikram & Ananya Malhotra', sampleKey: 'malhotra', data: { tier: 'Ultra HNI', stage: 'Discovery', tags: ['Estate Succession', 'NRI Compliance'], financialSummary: { netWorth: 124000000, investableAssets: 95000000, totalAssets: 130000000, totalLiabilities: 6000000, assetCount: 14 } } },
+    { name: 'Sharma Family', sampleKey: 'sharma', data: { tier: 'HNI', stage: 'Active Mandate', tags: ['Multi-Gen', 'Higher Education'], financialSummary: { netWorth: 24700000, investableAssets: 18200000, totalAssets: 34400000, totalLiabilities: 9700000, assetCount: 6 } } },
+    { name: 'Aarav Mehta', sampleKey: 'mehta', data: { tier: 'Affluent', stage: 'Risk Profiling', tags: ['FIRE 45', 'Aggressive Growth'], financialSummary: { netWorth: 8200000, investableAssets: 7800000, totalAssets: 8200000, totalLiabilities: 0, assetCount: 4 } } },
   ];
 }
 
@@ -216,8 +216,8 @@ class MemoryStore implements AppStore {
     for (const sample of defaultClientDrafts()) await this.createClientDraft(organizationId, { ...sample, isSample: true });
   }
   async listClientDrafts(organizationId: string) { return Array.from(this.clientDrafts.values()).filter((draft) => draft.organizationId === organizationId && draft.status === 'active'); }
-  async createClientDraft(organizationId: string, input: { name: string; data: Record<string, unknown>; isSample?: boolean }) {
-    const now = new Date().toISOString(); const draft = { id: randomUUID(), organizationId, name: input.name, data: input.data, isSample: input.isSample ?? false, status: 'active' as const, createdAt: now, updatedAt: now };
+  async createClientDraft(organizationId: string, input: { name: string; data: Record<string, unknown>; isSample?: boolean; sampleKey?: string }) {
+    const now = new Date().toISOString(); const draft = { id: randomUUID(), organizationId, name: input.name, data: input.data, isSample: input.isSample ?? false, sampleKey: input.sampleKey ?? null, status: 'active' as const, createdAt: now, updatedAt: now };
     this.clientDrafts.set(draft.id, draft); return draft;
   }
   async updateClientDraft(organizationId: string, id: string, patch: { name?: string; data?: Record<string, unknown>; status?: 'active' | 'archived' }) {
@@ -543,7 +543,7 @@ class PostgresStore implements AppStore {
     await this.withOrganization(organizationId, async (query) => {
       const rows = await query`select id from client_drafts where organization_id = ${organizationId} and is_sample = true limit 1`;
       if (rows[0]) return;
-      for (const sample of defaultClientDrafts()) await query`insert into client_drafts (organization_id, name, data, is_sample) values (${organizationId}, ${sample.name}, ${query.json(sample.data as any)}, true)`;
+      for (const sample of defaultClientDrafts()) await query`insert into client_drafts (organization_id, name, data, is_sample, sample_key) values (${organizationId}, ${sample.name}, ${query.json(sample.data as any)}, true, ${sample.sampleKey}) on conflict (organization_id, sample_key) where sample_key is not null do nothing`;
     });
   }
   async listClientDrafts(organizationId: string) {
@@ -552,8 +552,8 @@ class PostgresStore implements AppStore {
       return rows.map(mapClientDraft).filter((draft): draft is ClientDraft => draft !== null);
     });
   }
-  async createClientDraft(organizationId: string, input: { name: string; data: Record<string, unknown>; isSample?: boolean }) {
-    return this.withOrganization(organizationId, async (query) => mapClientDraft((await query`insert into client_drafts (organization_id, name, data, is_sample) values (${organizationId}, ${input.name}, ${query.json(input.data as any)}, ${input.isSample ?? false}) returning *`)[0])!);
+  async createClientDraft(organizationId: string, input: { name: string; data: Record<string, unknown>; isSample?: boolean; sampleKey?: string }) {
+    return this.withOrganization(organizationId, async (query) => mapClientDraft((await query`insert into client_drafts (organization_id, name, data, is_sample, sample_key) values (${organizationId}, ${input.name}, ${query.json(input.data as any)}, ${input.isSample ?? false}, ${input.sampleKey ?? null}) returning *`)[0])!);
   }
   async updateClientDraft(organizationId: string, id: string, patch: { name?: string; data?: Record<string, unknown>; status?: 'active' | 'archived' }) {
     return this.withOrganization(organizationId, async (query) => {
@@ -887,7 +887,7 @@ function mapUser(row: any): UserRecord | null {
 
 function mapClientDraft(row: any): ClientDraft | null {
   if (!row) return null;
-  return { id: row.id, name: row.name, status: row.status, isSample: row.is_sample, data: row.data ?? {}, createdAt: row.created_at, updatedAt: row.updated_at };
+  return { id: row.id, name: row.name, status: row.status, isSample: row.is_sample, sampleKey: row.sample_key ?? null, data: row.data ?? {}, createdAt: row.created_at, updatedAt: row.updated_at };
 }
 
 function mapMembership(row: any): Membership {

@@ -78,6 +78,7 @@ export type ClientDraft = {
   name: string;
   status: 'active' | 'archived';
   isSample: boolean;
+  sampleKey: string | null;
   data: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
