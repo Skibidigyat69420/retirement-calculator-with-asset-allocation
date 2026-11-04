@@ -83,13 +83,15 @@ Errors use this envelope:
 | `PATCH` | `/api/v1/plans/:planId` | Update plan metadata or archive the plan. |
 | `DELETE` | `/api/v1/plans/:planId` | Archive a plan. |
 | `POST` | `/api/v1/plans/:planId/versions` | Create an immutable plan input snapshot. |
-| `POST` | `/api/v1/plans/:planId/calculate` | Calculate from saved plan/client state. |
+| `POST` | `/api/v1/plans/:planId/calculate` | Run the deterministic backend calculation from the current saved plan version and financial profile. |
+| `GET` | `/api/v1/plans/:planId/calculations/latest` | Retrieve the latest persisted calculation run for the plan. |
 
 ## Shared Data
 
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `GET` | `/api/v1/fx/rates` | Return INR conversion rates. |
+| `GET` | `/api/v1/audit-events?limit=50` | List tenant-scoped audit history for the active practice. |
 
 ## Reports
 
@@ -109,7 +111,7 @@ For local Postgres demo testing only, set `SEED_DEMO_WORKSPACE=true` before star
 
 Next milestones:
 
-1. Move calculation inputs fully to saved backend state.
+1. Extract the remaining shared calculation utilities into server-safe modules and expand persisted result metadata as needed.
 2. Add server-side PDF rendering/storage for report records.
 3. Add document upload URLs and market data routes through authenticated backend endpoints.
 4. Add automated integration tests against a throwaway Postgres database.

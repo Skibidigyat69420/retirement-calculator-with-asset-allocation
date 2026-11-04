@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import postgres, { type Sql } from 'postgres';
 import type {
+  AuditEvent,
+  CalculationRun,
   ClientRecord,
   Invitation,
   InviteRole,
@@ -40,6 +42,10 @@ export interface AppStore {
   getPlan(organizationId: string, planId: string): Promise<Plan | null>;
   updatePlan(organizationId: string, planId: string, patch: Pick<Partial<Plan>, 'name' | 'status'>): Promise<Plan | null>;
   createPlanVersion(organizationId: string, planId: string, inputSnapshot: Record<string, unknown>, assumptionsSnapshot: Record<string, unknown>): Promise<PlanVersion | null>;
+  createCalculationRun(input: { organizationId: string; planId: string; planVersionId: string; engineVersion: string; seed: string | null; result: Record<string, unknown> }): Promise<CalculationRun | null>;
+  getLatestCalculationRun(organizationId: string, planId: string): Promise<CalculationRun | null>;
+  recordAuditEvent(input: Omit<AuditEvent, 'id' | 'createdAt'>): Promise<AuditEvent>;
+  listAuditEvents(organizationId: string, limit: number): Promise<AuditEvent[]>;
   findInvitationByTokenHash(tokenHash: string): Promise<Invitation | null>;
   createInvitation(input: { organizationId: string; tokenHash: string; email: string; role: InviteRole; expiresAt: string }): Promise<Invitation>;
   listInvitations(organizationId: string): Promise<Invitation[]>;
@@ -59,6 +65,11 @@ export function createStore(): AppStore {
   if (databaseUrl) {
     return new PostgresStore(postgres(databaseUrl, { max: 10, prepare: false }));
   }
+  return createInMemoryStore();
+}
+
+/** A deterministic store for local development and API contract tests. */
+export function createInMemoryStore(): AppStore {
   return new MemoryStore();
 }
 
@@ -88,6 +99,8 @@ class MemoryStore implements AppStore {
   private plans = new Map<string, Plan & { organizationId: string }>();
   private invitations = new Map<string, Invitation>();
   private reports = new Map<string, ReportRecord & { organizationId: string }>();
+  private calculationRuns = new Map<string, CalculationRun & { organizationId: string }>();
+  private auditEvents: AuditEvent[] = [];
 
   constructor() {
     const org = { id: 'demo-practice', name: 'Sound Thesis Demo Practice' };
@@ -252,6 +265,33 @@ class MemoryStore implements AppStore {
     return version;
   }
 
+  async createCalculationRun(input: { organizationId: string; planId: string; planVersionId: string; engineVersion: string; seed: string | null; result: Record<string, unknown> }) {
+    const plan = await this.getPlan(input.organizationId, input.planId);
+    if (!plan || !plan.versions.some((version) => version.id === input.planVersionId)) return null;
+    const run = { id: randomUUID(), ...input, createdAt: new Date().toISOString() };
+    this.calculationRuns.set(run.id, run);
+    return run;
+  }
+
+  async getLatestCalculationRun(organizationId: string, planId: string) {
+    return Array.from(this.calculationRuns.values())
+      .filter((run) => run.organizationId === organizationId && run.planId === planId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ?? null;
+  }
+
+  async recordAuditEvent(input: Omit<AuditEvent, 'id' | 'createdAt'>) {
+    const event = { id: randomUUID(), ...input, createdAt: new Date().toISOString() };
+    this.auditEvents.push(event);
+    return event;
+  }
+
+  async listAuditEvents(organizationId: string, limit: number) {
+    return this.auditEvents
+      .filter((event) => event.organizationId === organizationId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, limit);
+  }
+
   async findInvitationByTokenHash(tokenHash: string) {
     return this.invitations.get(tokenHash) ?? null;
   }
@@ -324,6 +364,30 @@ class PostgresStore implements AppStore {
     await this.sql.end();
   }
 
+  private async withAuthUser<T>(authUserId: string, fn: (query: Sql) => Promise<T>): Promise<T> {
+    const result = await this.sql.begin(async (tx) => {
+      await tx`select set_config('app.auth_user_id', ${authUserId}, true)`;
+      return fn(tx as unknown as Sql);
+    });
+    return result as T;
+  }
+
+  private async withAppUser<T>(userId: string, fn: (query: Sql) => Promise<T>): Promise<T> {
+    const result = await this.sql.begin(async (tx) => {
+      await tx`select set_config('app.user_id', ${userId}, true)`;
+      return fn(tx as unknown as Sql);
+    });
+    return result as T;
+  }
+
+  private async withOrganization<T>(organizationId: string, fn: (query: Sql) => Promise<T>): Promise<T> {
+    const result = await this.sql.begin(async (tx) => {
+      await tx`select set_config('app.organization_id', ${organizationId}, true)`;
+      return fn(tx as unknown as Sql);
+    });
+    return result as T;
+  }
+
   async ensureDevelopmentSeed() {
     if (process.env.NODE_ENV === 'production' || process.env.SEED_DEMO_WORKSPACE !== 'true') return;
     const existing = await this.findUserByAuthId('demo-user');
@@ -361,13 +425,17 @@ class PostgresStore implements AppStore {
   }
 
   async getOrganization(organizationId: string) {
-    const rows = await this.sql`select id, name from organizations where id = ${organizationId} limit 1`;
-    return rows[0] ? { id: rows[0].id, name: rows[0].name } : null;
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = await query`select id, name from organizations where id = ${organizationId} limit 1`;
+      return rows[0] ? { id: rows[0].id, name: rows[0].name } : null;
+    });
   }
 
   async findUserByAuthId(authUserId: string) {
-    const rows = await this.sql`select id, auth_user_id, email, full_name from users where auth_user_id = ${authUserId} limit 1`;
-    return mapUser(rows[0]);
+    return this.withAuthUser(authUserId, async (query) => {
+      const rows = await query`select id, auth_user_id, email, full_name from users where auth_user_id = ${authUserId} limit 1`;
+      return mapUser(rows[0]);
+    });
   }
 
   async findUserByEmail(email: string) {
@@ -376,25 +444,29 @@ class PostgresStore implements AppStore {
   }
 
   async upsertUser(input: { authUserId: string; email: string; fullName: string | null }) {
-    const rows = await this.sql`
-      insert into users (auth_user_id, email, full_name)
-      values (${input.authUserId}, ${normalizeEmail(input.email)}, ${input.fullName})
-      on conflict (auth_user_id)
-      do update set email = excluded.email, full_name = coalesce(excluded.full_name, users.full_name), updated_at = now()
-      returning id, auth_user_id, email, full_name
-    `;
-    return mapUser(rows[0])!;
+    return this.withAuthUser(input.authUserId, async (query) => {
+      const rows = await query`
+        insert into users (auth_user_id, email, full_name)
+        values (${input.authUserId}, ${normalizeEmail(input.email)}, ${input.fullName})
+        on conflict (auth_user_id)
+        do update set email = excluded.email, full_name = coalesce(excluded.full_name, users.full_name), updated_at = now()
+        returning id, auth_user_id, email, full_name
+      `;
+      return mapUser(rows[0])!;
+    });
   }
 
   async listMemberships(userId: string) {
-    const rows = await this.sql`
-      select m.organization_id, o.name as organization_name, m.role
-      from organization_memberships m
-      join organizations o on o.id = m.organization_id
-      where m.user_id = ${userId} and m.status = 'active'
-      order by o.created_at asc
-    `;
-    return rows.map(mapMembership);
+    return this.withAppUser(userId, async (query) => {
+      const rows = await query`
+        select m.organization_id, o.name as organization_name, m.role
+        from organization_memberships m
+        join organizations o on o.id = m.organization_id
+        where m.user_id = ${userId} and m.status = 'active'
+        order by o.created_at asc
+      `;
+      return rows.map(mapMembership);
+    });
   }
 
   async createOrganizationForUser(input: { user: UserRecord; practiceName: string; role: Role }) {
@@ -419,146 +491,234 @@ class PostgresStore implements AppStore {
   }
 
   async listClients(organizationId: string) {
-    const rows = await this.sql`select * from clients where organization_id = ${organizationId} and status = 'active' order by updated_at desc`;
-    return Promise.all(rows.map((row) => this.mapClient(row)));
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = await query`select * from clients where organization_id = ${organizationId} and status = 'active' order by updated_at desc`;
+      return Promise.all(rows.map((row) => this.mapClient(row, query)));
+    });
   }
 
   async createClient(organizationId: string, actor: UserRecord, input: Partial<ClientRecord> & { firstName: string; lastName: string }) {
-    return this.sql.begin(async (tx) => {
+    return this.withOrganization(organizationId, async (query) => {
       const p = clientNameParts(input);
-      const rows = await tx`
+      const rows = await query`
         insert into clients (organization_id, first_name, last_name, preferred_name, email, phone, date_of_birth, marital_status, notes)
         values (${organizationId}, ${p.firstName}, ${p.lastName}, ${p.preferredName}, ${p.email}, ${p.phone}, ${p.dateOfBirth}, ${p.maritalStatus}, ${p.notes})
         returning *
       `;
-      await tx`insert into client_assignments (client_id, user_id, assignment_role) values (${rows[0].id}, ${actor.id}, 'lead') on conflict do nothing`;
-      return this.mapClient(rows[0], tx as unknown as Sql);
+      await query`insert into client_assignments (client_id, user_id, assignment_role) values (${rows[0].id}, ${actor.id}, 'lead') on conflict do nothing`;
+      return this.mapClient(rows[0], query);
     });
   }
 
   async getClient(organizationId: string, clientId: string) {
-    const rows = await this.sql`select * from clients where organization_id = ${organizationId} and id = ${clientId} limit 1`;
-    return rows[0] ? this.mapClient(rows[0]) : null;
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = await query`select * from clients where organization_id = ${organizationId} and id = ${clientId} limit 1`;
+      return rows[0] ? this.mapClient(rows[0], query) : null;
+    });
   }
 
   async updateClient(organizationId: string, clientId: string, patch: Partial<ClientRecord>) {
-    const current = await this.getClient(organizationId, clientId);
-    if (!current) return null;
-    const next = { ...current, ...patch };
-    const rows = await this.sql`
-      update clients
-      set first_name = ${next.firstName}, last_name = ${next.lastName}, preferred_name = ${next.preferredName},
-          email = ${next.email}, phone = ${next.phone}, date_of_birth = ${next.dateOfBirth},
-          marital_status = ${next.maritalStatus}, notes = ${next.notes}, updated_at = now()
-      where organization_id = ${organizationId} and id = ${clientId}
-      returning *
-    `;
-    return this.mapClient(rows[0]);
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = await query`select * from clients where organization_id = ${organizationId} and id = ${clientId} limit 1`;
+      if (!rows[0]) return null;
+      const current = await this.mapClient(rows[0], query);
+      const next = { ...current, ...patch };
+      const updatedRows = await query`
+        update clients
+        set first_name = ${next.firstName}, last_name = ${next.lastName}, preferred_name = ${next.preferredName},
+            email = ${next.email}, phone = ${next.phone}, date_of_birth = ${next.dateOfBirth},
+            marital_status = ${next.maritalStatus}, notes = ${next.notes}, updated_at = now()
+        where organization_id = ${organizationId} and id = ${clientId}
+        returning *
+      `;
+      return this.mapClient(updatedRows[0], query);
+    });
   }
 
   async getProfile(organizationId: string, clientId: string) {
-    if (!(await this.getClient(organizationId, clientId))) return null;
-    const rows = await this.sql`select id, resource_type, data, status from financial_resources where organization_id = ${organizationId} and client_id = ${clientId}`;
-    const profile = emptyProfile();
-    for (const row of rows) {
-      const resource = row.resource_type as ResourceType;
-      profile[resource].push({ id: row.id, status: row.status, ...row.data });
-    }
-    return profile;
+    return this.withOrganization(organizationId, async (query) => {
+      const clientRows = await query`select id from clients where organization_id = ${organizationId} and id = ${clientId} limit 1`;
+      if (!clientRows[0]) return null;
+      const rows = await query`select id, resource_type, data, status from financial_resources where organization_id = ${organizationId} and client_id = ${clientId}`;
+      const profile = emptyProfile();
+      for (const row of rows) {
+        const resource = row.resource_type as ResourceType;
+        profile[resource].push({ id: row.id, status: row.status, ...row.data });
+      }
+      return profile;
+    });
   }
 
   async createResource(organizationId: string, clientId: string, resource: ResourceType, data: Record<string, unknown>) {
-    if (!(await this.getClient(organizationId, clientId))) return null;
-    const rows = await this.sql`
-      insert into financial_resources (organization_id, client_id, resource_type, data)
-      values (${organizationId}, ${clientId}, ${resource}, ${this.sql.json(data as any)})
-      returning id, data, status
-    `;
-    return { id: rows[0].id, status: rows[0].status, ...rows[0].data };
+    return this.withOrganization(organizationId, async (query) => {
+      const clientRows = await query`select id from clients where organization_id = ${organizationId} and id = ${clientId} limit 1`;
+      if (!clientRows[0]) return null;
+      const rows = await query`
+        insert into financial_resources (organization_id, client_id, resource_type, data)
+        values (${organizationId}, ${clientId}, ${resource}, ${query.json(data as any)})
+        returning id, data, status
+      `;
+      return { id: rows[0].id, status: rows[0].status, ...rows[0].data };
+    });
   }
 
   async updateResource(organizationId: string, clientId: string, resource: ResourceType, id: string, data: Record<string, unknown>) {
-    const rows = await this.sql`
-      update financial_resources
-      set data = data || ${this.sql.json(data as any)}::jsonb, updated_at = now()
-      where organization_id = ${organizationId} and client_id = ${clientId} and resource_type = ${resource} and id = ${id}
-      returning id, data, status
-    `;
-    return rows[0] ? { id: rows[0].id, status: rows[0].status, ...rows[0].data } : null;
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = await query`
+        update financial_resources
+        set data = data || ${query.json(data as any)}::jsonb, updated_at = now()
+        where organization_id = ${organizationId} and client_id = ${clientId} and resource_type = ${resource} and id = ${id}
+        returning id, data, status
+      `;
+      return rows[0] ? { id: rows[0].id, status: rows[0].status, ...rows[0].data } : null;
+    });
   }
 
   async archiveResource(organizationId: string, clientId: string, resource: ResourceType, id: string) {
-    const rows = await this.sql`
-      update financial_resources set status = 'archived', updated_at = now()
-      where organization_id = ${organizationId} and client_id = ${clientId} and resource_type = ${resource} and id = ${id}
-      returning id, data, status
-    `;
-    return rows[0] ? { id: rows[0].id, status: rows[0].status, ...rows[0].data } : null;
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = await query`
+        update financial_resources set status = 'archived', updated_at = now()
+        where organization_id = ${organizationId} and client_id = ${clientId} and resource_type = ${resource} and id = ${id}
+        returning id, data, status
+      `;
+      return rows[0] ? { id: rows[0].id, status: rows[0].status, ...rows[0].data } : null;
+    });
   }
 
   async listPlans(organizationId: string, clientId: string) {
-    const rows = await this.sql`select * from plans where organization_id = ${organizationId} and client_id = ${clientId} and status <> 'archived' order by updated_at desc`;
-    return Promise.all(rows.map((row) => this.mapPlan(row)));
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = await query`select * from plans where organization_id = ${organizationId} and client_id = ${clientId} and status <> 'archived' order by updated_at desc`;
+      return Promise.all(rows.map((row) => this.mapPlan(row, query)));
+    });
   }
 
   async createPlan(organizationId: string, clientId: string, name: string) {
-    if (!(await this.getClient(organizationId, clientId))) return null;
-    const rows = await this.sql`insert into plans (organization_id, client_id, name) values (${organizationId}, ${clientId}, ${name}) returning *`;
-    return this.mapPlan(rows[0]);
+    return this.withOrganization(organizationId, async (query) => {
+      const clientRows = await query`select id from clients where organization_id = ${organizationId} and id = ${clientId} limit 1`;
+      if (!clientRows[0]) return null;
+      const rows = await query`insert into plans (organization_id, client_id, name) values (${organizationId}, ${clientId}, ${name}) returning *`;
+      return this.mapPlan(rows[0], query);
+    });
   }
 
   async getPlan(organizationId: string, planId: string) {
-    const rows = await this.sql`select * from plans where organization_id = ${organizationId} and id = ${planId} limit 1`;
-    return rows[0] ? this.mapPlan(rows[0]) : null;
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = await query`select * from plans where organization_id = ${organizationId} and id = ${planId} limit 1`;
+      return rows[0] ? this.mapPlan(rows[0], query) : null;
+    });
   }
 
   async updatePlan(organizationId: string, planId: string, patch: Pick<Partial<Plan>, 'name' | 'status'>) {
-    const current = await this.getPlan(organizationId, planId);
-    if (!current) return null;
-    const rows = await this.sql`
-      update plans set name = ${patch.name ?? current.name}, status = ${patch.status ?? current.status}, updated_at = now()
-      where organization_id = ${organizationId} and id = ${planId}
-      returning *
-    `;
-    return this.mapPlan(rows[0]);
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = await query`select * from plans where organization_id = ${organizationId} and id = ${planId} limit 1`;
+      if (!rows[0]) return null;
+      const current = await this.mapPlan(rows[0], query);
+      const updatedRows = await query`
+        update plans set name = ${patch.name ?? current.name}, status = ${patch.status ?? current.status}, updated_at = now()
+        where organization_id = ${organizationId} and id = ${planId}
+        returning *
+      `;
+      return this.mapPlan(updatedRows[0], query);
+    });
   }
 
   async createPlanVersion(organizationId: string, planId: string, inputSnapshot: Record<string, unknown>, assumptionsSnapshot: Record<string, unknown>) {
-    const plan = await this.getPlan(organizationId, planId);
-    if (!plan) return null;
-    return this.sql.begin(async (tx) => {
-      const rows = await tx`
+    return this.withOrganization(organizationId, async (query) => {
+      const planRows = await query`select * from plans where organization_id = ${organizationId} and id = ${planId} limit 1`;
+      if (!planRows[0]) return null;
+      const plan = await this.mapPlan(planRows[0], query);
+      const rows = await query`
         insert into plan_versions (plan_id, version_number, input_snapshot, assumptions_snapshot)
-        values (${planId}, ${plan.versions.length + 1}, ${tx.json(inputSnapshot as any)}, ${tx.json(assumptionsSnapshot as any)})
+        values (${planId}, ${plan.versions.length + 1}, ${query.json(inputSnapshot as any)}, ${query.json(assumptionsSnapshot as any)})
         returning id, version_number, input_snapshot, assumptions_snapshot
       `;
-      await tx`update plans set current_version_id = ${rows[0].id}, updated_at = now() where id = ${planId}`;
+      await query`update plans set current_version_id = ${rows[0].id}, updated_at = now() where id = ${planId}`;
       return mapPlanVersion(rows[0]);
     });
   }
 
+  async createCalculationRun(input: { organizationId: string; planId: string; planVersionId: string; engineVersion: string; seed: string | null; result: Record<string, unknown> }) {
+    return this.withOrganization(input.organizationId, async (query) => {
+      const planRows = await query`
+        select id from plans where organization_id = ${input.organizationId} and id = ${input.planId} limit 1
+      `;
+      if (!planRows[0]) return null;
+      const versionRows = await query`
+        select id from plan_versions where plan_id = ${input.planId} and id = ${input.planVersionId} limit 1
+      `;
+      if (!versionRows[0]) return null;
+      const rows = await query`
+        insert into calculation_runs (organization_id, plan_id, plan_version_id, engine_version, seed, result)
+        values (${input.organizationId}, ${input.planId}, ${input.planVersionId}, ${input.engineVersion}, ${input.seed}, ${query.json(input.result as any)})
+        returning *
+      `;
+      return mapCalculationRun(rows[0]);
+    });
+  }
+
+  async getLatestCalculationRun(organizationId: string, planId: string) {
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = await query`
+        select * from calculation_runs
+        where organization_id = ${organizationId} and plan_id = ${planId}
+        order by created_at desc
+        limit 1
+      `;
+      return mapCalculationRun(rows[0]);
+    });
+  }
+
+  async recordAuditEvent(input: Omit<AuditEvent, 'id' | 'createdAt'>) {
+    return this.withOrganization(input.organizationId, async (query) => {
+      const rows = await query`
+        insert into audit_events (organization_id, actor_user_id, event_type, subject_type, subject_id, metadata)
+        values (${input.organizationId}, ${input.actorUserId}, ${input.eventType}, ${input.subjectType}, ${input.subjectId}, ${query.json(input.metadata as any)})
+        returning *
+      `;
+      return mapAuditEvent(rows[0])!;
+    });
+  }
+
+  async listAuditEvents(organizationId: string, limit: number) {
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = await query`
+        select * from audit_events
+        where organization_id = ${organizationId}
+        order by created_at desc
+        limit ${limit}
+      `;
+      return rows.map((row) => mapAuditEvent(row)!);
+    });
+  }
+
   async findInvitationByTokenHash(tokenHash: string) {
-    const rows = await this.sql`select * from practice_invitations where token_hash = ${tokenHash} limit 1`;
+    const rows = await this.sql`select * from practice_invitations where token_hash = ${tokenHash} and status = 'pending' and expires_at > now() limit 1`;
     return mapInvitation(rows[0]);
   }
 
   async createInvitation(input: { organizationId: string; tokenHash: string; email: string; role: InviteRole; expiresAt: string }) {
-    const rows = await this.sql`
-      insert into practice_invitations (organization_id, token_hash, email, role, expires_at)
-      values (${input.organizationId}, ${input.tokenHash}, ${normalizeEmail(input.email)}, ${input.role}, ${input.expiresAt})
-      returning *
-    `;
-    return mapInvitation(rows[0])!;
+    return this.withOrganization(input.organizationId, async (query) => {
+      const rows = await query`
+        insert into practice_invitations (organization_id, token_hash, email, role, expires_at)
+        values (${input.organizationId}, ${input.tokenHash}, ${normalizeEmail(input.email)}, ${input.role}, ${input.expiresAt})
+        returning *
+      `;
+      return mapInvitation(rows[0])!;
+    });
   }
 
   async listInvitations(organizationId: string) {
-    const rows = await this.sql`select * from practice_invitations where organization_id = ${organizationId} order by created_at desc`;
-    return rows.map((row) => mapInvitation(row)!);
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = await query`select * from practice_invitations where organization_id = ${organizationId} order by created_at desc`;
+      return rows.map((row) => mapInvitation(row)!);
+    });
   }
 
   async revokeInvitation(organizationId: string, id: string) {
-    const rows = await this.sql`update practice_invitations set status = 'revoked', updated_at = now() where organization_id = ${organizationId} and id = ${id} returning id`;
-    return rows.length > 0;
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = await query`update practice_invitations set status = 'revoked', updated_at = now() where organization_id = ${organizationId} and id = ${id} returning id`;
+      return rows.length > 0;
+    });
   }
 
   async markInvitationAccepted(id: string) {
@@ -566,57 +726,63 @@ class PostgresStore implements AppStore {
   }
 
   async listReports(organizationId: string, clientId?: string) {
-    const rows = clientId
-      ? await this.sql`
-          select r.*, c.first_name, c.last_name, c.preferred_name
-          from reports r
-          join clients c on c.id = r.client_id
-          where r.organization_id = ${organizationId} and r.client_id = ${clientId}
-          order by r.created_at desc
-        `
-      : await this.sql`
-          select r.*, c.first_name, c.last_name, c.preferred_name
-          from reports r
-          join clients c on c.id = r.client_id
-          where r.organization_id = ${organizationId}
-          order by r.created_at desc
-        `;
-    return rows.map(mapReport);
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = clientId
+        ? await query`
+            select r.*, c.first_name, c.last_name, c.preferred_name
+            from reports r
+            join clients c on c.id = r.client_id
+            where r.organization_id = ${organizationId} and r.client_id = ${clientId}
+            order by r.created_at desc
+          `
+        : await query`
+            select r.*, c.first_name, c.last_name, c.preferred_name
+            from reports r
+            join clients c on c.id = r.client_id
+            where r.organization_id = ${organizationId}
+            order by r.created_at desc
+          `;
+      return rows.map(mapReport);
+    });
   }
 
   async createReport(organizationId: string, clientId: string, kind: ReportKind, name?: string) {
-    const client = await this.getClient(organizationId, clientId);
-    if (!client) return null;
-    const versionRows = await this.sql`
-      select coalesce(max(version), 0)::int + 1 as next_version
-      from reports
-      where organization_id = ${organizationId} and client_id = ${clientId} and kind = ${kind}
-    `;
-    const rows = await this.sql`
-      insert into reports (organization_id, client_id, kind, name, version, status)
-      values (${organizationId}, ${clientId}, ${kind}, ${name || (kind === 'dossier' ? 'Wealth Dossier' : 'Plan Report')}, ${versionRows[0].next_version}, 'review')
-      returning *
-    `;
-    return mapReport({
-      ...rows[0],
-      first_name: client.firstName,
-      last_name: client.lastName,
-      preferred_name: client.preferredName,
+    return this.withOrganization(organizationId, async (query) => {
+      const clientRows = await query`select * from clients where organization_id = ${organizationId} and id = ${clientId} limit 1`;
+      if (!clientRows[0]) return null;
+      const client = await this.mapClient(clientRows[0], query);
+      const versionRows = await query`
+        select coalesce(max(version), 0)::int + 1 as next_version
+        from reports
+        where organization_id = ${organizationId} and client_id = ${clientId} and kind = ${kind}
+      `;
+      const rows = await query`
+        insert into reports (organization_id, client_id, kind, name, version, status)
+        values (${organizationId}, ${clientId}, ${kind}, ${name || (kind === 'dossier' ? 'Wealth Dossier' : 'Plan Report')}, ${versionRows[0].next_version}, 'review')
+        returning *
+      `;
+      return mapReport({
+        ...rows[0],
+        first_name: client.firstName,
+        last_name: client.lastName,
+        preferred_name: client.preferredName,
+      });
     });
   }
 
   async updateReportStatus(organizationId: string, id: string, status: ReportStatus) {
-    const rows = await this.sql`
-      update reports
-      set status = ${status}, updated_at = now()
-      where organization_id = ${organizationId} and id = ${id}
-      returning *
-    `;
-    if (!rows[0]) return null;
-    const clientRows = await this.sql`select first_name, last_name, preferred_name from clients where id = ${rows[0].client_id}`;
-    return mapReport({ ...rows[0], ...clientRows[0] });
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = await query`
+        update reports
+        set status = ${status}, updated_at = now()
+        where organization_id = ${organizationId} and id = ${id}
+        returning *
+      `;
+      if (!rows[0]) return null;
+      const clientRows = await query`select first_name, last_name, preferred_name from clients where id = ${rows[0].client_id}`;
+      return mapReport({ ...rows[0], ...clientRows[0] });
+    });
   }
-
   private async mapClient(row: any, query: Sql = this.sql): Promise<ClientRecord> {
     const assignments = await query`
       select ca.user_id, u.full_name, ca.assignment_role
@@ -644,8 +810,8 @@ class PostgresStore implements AppStore {
     };
   }
 
-  private async mapPlan(row: any): Promise<Plan> {
-    const versions = await this.sql`
+  private async mapPlan(row: any, query: Sql = this.sql): Promise<Plan> {
+    const versions = await query`
       select id, version_number, input_snapshot, assumptions_snapshot
       from plan_versions
       where plan_id = ${row.id}
@@ -705,4 +871,33 @@ function mapReport(row: any): ReportRecord {
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
   };
+}
+
+function mapCalculationRun(row: any): CalculationRun | null {
+  return row
+    ? {
+        id: row.id,
+        planId: row.plan_id,
+        planVersionId: row.plan_version_id,
+        engineVersion: row.engine_version,
+        seed: row.seed,
+        result: row.result ?? {},
+        createdAt: new Date(row.created_at).toISOString(),
+      }
+    : null;
+}
+
+function mapAuditEvent(row: any): AuditEvent | null {
+  return row
+    ? {
+        id: row.id,
+        organizationId: row.organization_id,
+        actorUserId: row.actor_user_id,
+        eventType: row.event_type,
+        subjectType: row.subject_type,
+        subjectId: row.subject_id,
+        metadata: row.metadata ?? {},
+        createdAt: new Date(row.created_at).toISOString(),
+      }
+    : null;
 }

@@ -24,9 +24,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const app = await getApp();
     app.server.emit('request', req, res);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Internal Server Error';
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message } });
+  } catch (cause: unknown) {
+    // Keep initialization diagnostics in Vercel logs without exposing
+    // connection strings or internal implementation details to callers.
+    console.error('Unable to initialize Sound Thesis API.', cause);
+    res.status(500).json({
+      error: { code: 'INITIALIZATION_FAILED', message: 'The API could not be initialized.' },
+    });
   }
 }
 

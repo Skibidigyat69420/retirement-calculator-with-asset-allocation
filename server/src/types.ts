@@ -63,4 +63,25 @@ export type ReportRecord = {
   updatedAt: string;
 };
 
+export type CalculationRun = {
+  id: string;
+  planId: string;
+  planVersionId: string;
+  engineVersion: string;
+  seed: string | null;
+  result: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type AuditEvent = {
+  id: string;
+  organizationId: string;
+  actorUserId: string | null;
+  eventType: string;
+  subjectType: string | null;
+  subjectId: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+};
+
 export type Actor = { user: UserRecord; memberships: Membership[]; organizationId: string | null };
