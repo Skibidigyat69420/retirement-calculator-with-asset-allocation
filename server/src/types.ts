@@ -73,6 +73,16 @@ export type CalculationRun = {
   createdAt: string;
 };
 
+export type ClientDraft = {
+  id: string;
+  name: string;
+  status: 'active' | 'archived';
+  isSample: boolean;
+  data: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type AuditEvent = {
   id: string;
   organizationId: string;

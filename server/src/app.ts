@@ -248,6 +248,32 @@ export async function buildApp(store: AppStore = createStore()) {
     return { data: await Promise.all(rows.map(async (client) => toClientSummary(client, (await store.getProfile(scoped.organizationId, client.id)) ?? emptyProfile()))) };
   });
 
+  app.get('/api/v1/client-drafts', async (request, reply) => {
+    const scoped = await requireOrganization(store, request, reply);
+    if (!scoped) return;
+    await store.ensureClientDraftSamples(scoped.organizationId);
+    return { data: await store.listClientDrafts(scoped.organizationId) };
+  });
+
+  app.post('/api/v1/client-drafts', async (request, reply) => {
+    const scoped = await requireOrganization(store, request, reply);
+    if (!scoped || !requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
+    const body = z.object({ name: z.string().trim().min(1), data: z.record(z.string(), z.unknown()).default({}) }).parse(request.body);
+    const draft = await store.createClientDraft(scoped.organizationId, body);
+    await audit(store, scoped.actor, scoped.organizationId, 'client_draft.created', 'client_draft', draft.id, { name: draft.name });
+    return reply.status(201).send(draft);
+  });
+
+  app.patch('/api/v1/client-drafts/:draftId', async (request, reply) => {
+    const scoped = await requireOrganization(store, request, reply);
+    if (!scoped || !requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
+    const { draftId } = z.object({ draftId: z.string().uuid() }).parse(request.params);
+    const body = z.object({ name: z.string().trim().min(1).optional(), data: z.record(z.string(), z.unknown()).optional(), status: z.enum(['active', 'archived']).optional() }).parse(request.body);
+    const draft = await store.updateClientDraft(scoped.organizationId, draftId, body);
+    if (!draft) return error(reply, 404, 'CLIENT_DRAFT_NOT_FOUND', 'Client draft was not found.');
+    return draft;
+  });
+
   app.post('/api/v1/clients', async (request, reply) => {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;

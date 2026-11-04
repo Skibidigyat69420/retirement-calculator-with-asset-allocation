@@ -3,10 +3,10 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowUpRight, ChevronRight, Download, LayoutGrid, List, RefreshCw, Search, Sparkles, UserPlus, Users, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCalculator } from '../context/CalculatorContext';
-import { ApiRequestError, exportClientBundle, listClients, createClient, type ClientSummary } from '../lib/api';
+import { ApiRequestError, exportClientBundle, listClients, listClientDrafts, createClient, type ClientSummary } from '../lib/api';
 import { formatCurrencyCompact } from '../lib/formatters';
 
-import { getCRMClients, getActiveCRMClient, setActiveCRMClient, saveCRMClient, createCRMClient } from '../lib/crm';
+import { setActiveCRMClient } from '../lib/crm';
 
 const initials = (name: string) => name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
 
@@ -34,19 +34,13 @@ export function PractitionerPage() {
 
   const loadClients = useCallback(async () => {
     setLoading(true); setError(null);
-    if (!user) {
-      const localClients = getCRMClients();
-      setClients(localClients);
-      const active = getActiveCRMClient();
-      setSelectedId((current) => current ?? active?.id ?? localClients[0]?.id ?? null);
-      setLoading(false);
-      return;
-    }
     try {
-      const response = await listClients();
+      const [response, draftResponse] = await Promise.all([listClients(), listClientDrafts()]);
       const assigned = response.data.filter((client) => client.assignedPractitioners.some((advisor) => advisor.userId === user?.id));
-      setClients(assigned);
-      setSelectedId((current) => current ?? assigned[0]?.id ?? null);
+      const drafts = draftResponse.data.map((draft): ClientSummary => ({ id: draft.id, name: draft.name, status: 'Draft', householdId: draft.id, assignedPractitioners: [], financialSummary: (draft.data.financialSummary as ClientSummary['financialSummary'] | undefined) ?? { netWorth: 0, investableAssets: 0, totalAssets: 0, totalLiabilities: 0, assetCount: 0 } }));
+      const directory = [...assigned, ...drafts];
+      setClients(directory);
+      setSelectedId((current) => current ?? directory[0]?.id ?? null);
     } catch (cause) {
       setError(cause instanceof ApiRequestError ? cause.message : 'Could not load the client database.');
     } finally { setLoading(false); }
@@ -73,11 +67,7 @@ export function PractitionerPage() {
     if (!user) updateClient({ name: client.name });
   };
 
-  const addSampleClient = () => {
-    const localClients = getCRMClients();
-    setClients(localClients);
-    if (localClients[0]) selectClient(localClients[0]);
-  };
+  const addSampleClient = () => { void loadClients(); };
 
   const submitNewClient = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -85,20 +75,6 @@ export function PractitionerPage() {
     setCreating(true);
     setError(null);
     try {
-      if (!user) {
-        const created = createCRMClient({
-          name: `${newClient.firstName.trim()} ${newClient.lastName.trim()}`,
-          email: newClient.email.trim() || undefined,
-          phone: newClient.phone.trim() || undefined,
-        });
-        saveCRMClient(created);
-        const updated = getCRMClients();
-        setClients(updated);
-        selectClient(created);
-        setNewClient({ firstName: '', lastName: '', email: '', phone: '' });
-        setAddOpen(false);
-        return;
-      }
       const created = await createClient({
         firstName: newClient.firstName.trim(),
         lastName: newClient.lastName.trim(),

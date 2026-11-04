@@ -46,6 +46,16 @@ export class ApiRequestError extends Error {
   }
 }
 
+export interface ClientDraft {
+  id: string;
+  name: string;
+  status: 'active' | 'archived';
+  isSample: boolean;
+  data: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   body?: unknown;
@@ -228,6 +238,10 @@ export function fetchInrFxRates(): Promise<FxRatesResponse> {
 
 export function listClients(): Promise<{ data: ClientSummary[] }> {
   return request<{ data: ClientSummary[] }>('/clients');
+}
+
+export function listClientDrafts(): Promise<{ data: ClientDraft[] }> {
+  return request<{ data: ClientDraft[] }>('/client-drafts');
 }
 
 export function createClient(body: { firstName: string; lastName: string; preferredName?: string; email?: string; phone?: string }): Promise<ClientRecord> {
