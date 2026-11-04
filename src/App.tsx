@@ -2,12 +2,13 @@ import { Suspense, lazy, type ComponentType } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CalculatorProvider } from './context/CalculatorContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './lib/theme';
 import { Layout } from './components/layout/Layout';
 import { Skeleton } from './components/Skeleton';
 
 import { AuthPage } from './pages/AuthPage';
+import { OnboardingPage } from './pages/OnboardingPage';
 
 function lazyNamed<T extends ComponentType<any>>(
   factory: () => Promise<{ [key: string]: T }>,
@@ -106,7 +107,7 @@ function AnimatedRoutes() {
           <Route path="/practitioner" element={<Practitioner />} />
           <Route path="/style-guide" element={<StyleGuide />} />
           <Route path="/ui-review" element={<UIReview />} />
-          <Route path="/welcome" element={<AuthPage onEnter={() => {}} />} />
+          <Route path="/welcome" element={<Navigate to="/" replace />} />
           <Route path="/login" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
@@ -131,10 +132,19 @@ function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <BrowserRouter><WorkspaceRoutes /></BrowserRouter>
+        <BrowserRouter><AuthenticatedApplication /></BrowserRouter>
       </ThemeProvider>
     </AuthProvider>
   );
+}
+
+function AuthenticatedApplication() {
+  const { ready, user, needsOnboarding, recovery } = useAuth();
+  if (!ready) return <div className="min-h-screen grid place-items-center bg-canvas text-muted">Restoring your secure workspace…</div>;
+  if (recovery) return <AuthPage initialMode="recovery" />;
+  if (needsOnboarding) return <OnboardingPage />;
+  if (!user) return <AuthPage />;
+  return <WorkspaceRoutes />;
 }
 
 export default App;
