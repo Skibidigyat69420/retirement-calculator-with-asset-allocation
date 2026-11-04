@@ -56,3 +56,4 @@ functions/.env
 functions/.env.*
 functions/node_modules/
 functions/*.log
+.vercel

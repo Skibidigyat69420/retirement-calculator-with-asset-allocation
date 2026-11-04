@@ -1,5 +1,5 @@
-import type { AssetCategory, MasterPlanInputs, Goal, GoalPriority, Asset, RiskProfile, AssumptionSet } from '../types';
-import { createSeededRandom } from './random';
+import type { AssetCategory, MasterPlanInputs, Goal, GoalPriority, Asset, RiskProfile, AssumptionSet } from '../types/index.js';
+import { createSeededRandom } from './random.js';
 
 export interface CurrencyExposure {
   currency: string;

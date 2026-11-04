@@ -1,4 +1,4 @@
-import type { AssetCategory } from '../types';
+import type { AssetCategory } from '../types/index.js';
 
 export const COLORS = {
   cream: '#F4F2ED',

@@ -1,5 +1,5 @@
-import type { MasterPlanInputs } from '../types';
-import { DEFAULT_RATES } from './constants';
+import type { MasterPlanInputs } from '../types/index.js';
+import { DEFAULT_RATES } from './constants.js';
 
 /**
  * Single source of truth for a blank planning workspace: every user-entered
