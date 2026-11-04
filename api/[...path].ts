@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { buildApp } from '../../server/src/app.js';
+import { buildApp } from '../server/src/app.js';
 
 type AppInstance = Awaited<ReturnType<typeof buildApp>>;
 
@@ -20,17 +20,18 @@ async function getApp(): Promise<AppInstance> {
   return appPromise;
 }
 
+/**
+ * Vercel's top-level API catch-all. Fastify receives the untouched request
+ * path, including /api/v1/*, and owns the application route matching.
+ */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const app = await getApp();
     app.server.emit('request', req, res);
   } catch (cause: unknown) {
-    // Keep initialization diagnostics in Vercel logs without exposing
-    // connection strings or internal implementation details to callers.
     console.error('Unable to initialize Sound Thesis API.', cause);
     res.status(500).json({
       error: { code: 'INITIALIZATION_FAILED', message: 'The API could not be initialized.' },
     });
   }
 }
-

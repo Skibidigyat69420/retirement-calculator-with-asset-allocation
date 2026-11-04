@@ -32,7 +32,7 @@ For local demo testing only, set `SEED_DEMO_WORKSPACE=true` before starting the 
 
 ## Vercel
 
-`api/v1/[...path].ts` adapts the Fastify API to a Vercel Node.js Function and
+`api/[...path].ts` adapts the Fastify API to a Vercel Node.js Function and
 serves the existing `/api/v1/*` contract. Configure `DATABASE_URL`,
 `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `CORS_ORIGIN` as server-only
 variables in both Vercel Preview and Production. Use Supabase's transaction

@@ -1,6 +1,6 @@
 # Backend API Contract
 
-This is the working contract between the React frontend and the new backend. The current implementation lives in `server/src/app.ts` and is exposed locally by `server/src/server.ts`. Vercel uses `api/v1/[...path].ts`.
+This is the working contract between the React frontend and the new backend. The current implementation lives in `server/src/app.ts` and is exposed locally by `server/src/server.ts`. Vercel uses `api/[...path].ts`.
 
 All authenticated routes use:
 
