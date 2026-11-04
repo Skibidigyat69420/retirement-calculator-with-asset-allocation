@@ -27,7 +27,7 @@ export function PolicyCenterPage() {
           <div className="w-9 h-9 rounded-lg grid place-items-center bg-accent text-white"><Layers3 size={18} /></div>
           <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-accent">Connected path</div>
           <h2 className="font-semibold text-ink text-lg mt-1">Build from the client plan</h2>
-          <p className="text-sm text-muted leading-relaxed mt-2">Bring goals, cash flow, holdings, risk results and selected allocation into a governed policy, IPS and dossier.</p>
+          <p className="text-sm text-muted leading-relaxed mt-2">Bring goals, cash flow, holdings, risk results and selected allocation in as planning inputs and suggestions—not automatic commitments—before issuing the policy, IPS and dossier.</p>
           <div className="mt-auto pt-5"><Link to="/planning" className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-accent text-white text-xs font-semibold hover:bg-accent-strong">Open planning studio <ArrowRight size={14} /></Link></div>
         </article>
 

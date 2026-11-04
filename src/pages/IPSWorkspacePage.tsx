@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   Calendar,
@@ -24,10 +24,17 @@ import {
   X,
   TrendingUp,
   AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  Lightbulb,
+  CheckCircle2,
+  ListTodo,
+  Briefcase,
+  ExternalLink,
 } from 'lucide-react';
 import { useCalculator } from '../context/CalculatorContext';
 import { categoryLabels, defaultState, generateIPSMarkdown, type IPSState } from '../lib/ipsMarkdown';
-import type { AssetCategory } from '../types';
+import type { AssetCategory, GoalPriority } from '../types';
 import { formatCurrency, formatCurrencyCompact } from '../lib/formatters';
 import {
   type CRMClient,
@@ -45,7 +52,60 @@ import {
   toggleCRMActionCompleted,
 } from '../lib/crm';
 
-type StepId = 'client' | 'position' | 'policy' | 'document';
+export interface AdvisorySuggestion {
+  id: string;
+  title: string;
+  category: 'Retirement' | 'Liquidity' | 'Education' | 'Capital' | 'Legacy';
+  rationale: string;
+  suggestedHorizonYears: number;
+  priority: GoalPriority;
+  suggestedAmount?: number;
+}
+
+export const ADVISORY_SUGGESTION_TEMPLATES: AdvisorySuggestion[] = [
+  {
+    id: 'sugg-ret-longevity',
+    title: 'Retirement Corpus Longevity & Core Annuity',
+    category: 'Retirement',
+    rationale: 'Protect purchasing power across a 30+ year decumulation phase with inflation-indexed SWP and sequence-of-returns protection.',
+    suggestedHorizonYears: 16,
+    priority: 'essential',
+  },
+  {
+    id: 'sugg-liq-reserve',
+    title: 'Dedicated 12–24 Month Contingency Buffer',
+    category: 'Liquidity',
+    rationale: 'Maintain an unencumbered liquid reserve in overnight / short-duration sovereign instruments to insulate long-term growth assets from sudden capital calls.',
+    suggestedHorizonYears: 1,
+    priority: 'essential',
+  },
+  {
+    id: 'sugg-edu-milestone',
+    title: 'Higher Education / Milestone Fund',
+    category: 'Education',
+    rationale: 'Earmark ring-fenced hybrid allocations maturing in alignment with major university fee disbursement schedules.',
+    suggestedHorizonYears: 10,
+    priority: 'important',
+  },
+  {
+    id: 'sugg-re-consolidation',
+    title: 'Illiquid Asset & Real Estate Consolidation',
+    category: 'Capital',
+    rationale: 'Strategically rationalize low-yield legacy properties and redeploy into financial assets to improve liquidity and portfolio governance.',
+    suggestedHorizonYears: 5,
+    priority: 'aspirational',
+  },
+  {
+    id: 'sugg-wealth-transfer',
+    title: 'Family Trust & Wealth Succession Architecture',
+    category: 'Legacy',
+    rationale: 'Structure nomination records, private family trust distributions, and multi-generational tax governance.',
+    suggestedHorizonYears: 25,
+    priority: 'important',
+  },
+];
+
+type StepId = 'document' | 'client' | 'position' | 'policy';
 
 interface StepMeta {
   id: StepId;
@@ -56,10 +116,10 @@ interface StepMeta {
 }
 
 const steps: StepMeta[] = [
-  { id: 'client', number: '01', label: 'Client CRM & Household', description: 'Relationship context, contact & history', icon: UserRound },
-  { id: 'position', number: '02', label: 'Wealth Position & Balance Sheet', description: 'Cashflows, reserves & asset inventory', icon: WalletCards },
-  { id: 'policy', number: '03', label: 'Policy Corridors & Allocation', description: 'Strategic corridors & governance rules', icon: SlidersHorizontal },
-  { id: 'document', number: '04', label: 'IPS Document & Ratification', description: 'Institutional charter & sign-off', icon: FileText },
+  { id: 'document', number: '01', label: 'Institutional Charter', description: 'Institutional policy charter & executive mandate', icon: FileText },
+  { id: 'client', number: '02', label: 'Client CRM & Household', description: 'Relationship context, contact & history', icon: UserRound },
+  { id: 'position', number: '03', label: 'Wealth Position & Balance Sheet', description: 'Cashflows, reserves & asset inventory', icon: WalletCards },
+  { id: 'policy', number: '04', label: 'Policy Suggestions & Allocation', description: 'Suggested targets, corridors & review rules', icon: SlidersHorizontal },
 ];
 
 const categories: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
@@ -89,8 +149,6 @@ export function IPSWorkspacePage() {
     inputs,
     updateInputs,
     updateClient,
-    addGoal,
-    updateGoal,
     manualTargets,
     setManualTargets,
     riskProfile,
@@ -101,11 +159,21 @@ export function IPSWorkspacePage() {
     manualAllocationPolicy,
   } = useCalculator();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
-  // Active wizard step
-  const [step, setStep] = useState<StepId>('client');
+  // Active view mode / step — defaults to 'document' (Institutional Charter) on main view load
+  const [step, setStep] = useState<StepId>(() => {
+    const requested = searchParams.get('step');
+    if (requested === 'client' || requested === 'position' || requested === 'policy') {
+      return requested;
+    }
+    return 'document';
+  });
   const [saving, setSaving] = useState(false);
   const [docViewMode, setDocViewMode] = useState<'formatted' | 'markdown'>('formatted');
+  const [crmLeadOpen, setCrmLeadOpen] = useState(true);
+  const [dossierExportModalOpen, setDossierExportModalOpen] = useState(false);
+  const [newQuickTaskTitle, setNewQuickTaskTitle] = useState('');
 
   // CRM State
   const [clients, setClients] = useState<CRMClient[]>(() => getCRMClients());
@@ -139,7 +207,10 @@ export function IPSWorkspacePage() {
   });
 
   useEffect(() => {
-    if (searchParams.get('step') === 'document') setStep('document');
+    const s = searchParams.get('step');
+    if (s === 'client' || s === 'position' || s === 'policy' || s === 'document') {
+      setStep(s);
+    }
   }, [searchParams]);
 
   // Refresh clients on external changes
@@ -281,6 +352,110 @@ export function IPSWorkspacePage() {
     updateActiveCRMClient({ tags: nextTags });
   };
 
+  // Advisory Suggestions Handlers
+  const handleAdoptSuggestion = (suggestion: AdvisorySuggestion) => {
+    if (inputs.goals.some((g) => g.name.toLowerCase() === suggestion.title.toLowerCase())) {
+      showToast(`"${suggestion.title}" is already in the mandate priorities.`, 'info');
+      return;
+    }
+    const defaultTargetAmount = suggestion.suggestedAmount ?? Math.max(1_000_000, Math.round(wealthResult.netWorth * 0.1));
+    const newGoal = {
+      id: `sugg-${Date.now()}`,
+      name: suggestion.title,
+      priority: suggestion.priority,
+      yearsToGoal: suggestion.suggestedHorizonYears,
+      targetAmount: defaultTargetAmount,
+    };
+    updateInputs({ goals: [...inputs.goals, newGoal] });
+    showToast(`Adopted advisory suggestion: ${suggestion.title}`, 'success');
+  };
+
+  const handleRemoveSuggestion = (goalId: string) => {
+    updateInputs({ goals: inputs.goals.filter((g) => g.id !== goalId) });
+    showToast('Removed planning suggestion.', 'info');
+  };
+
+  const handleAddQuickTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeClient || !newQuickTaskTitle.trim()) return;
+    addCRMInteraction(activeClient.id, {
+      clientId: activeClient.id,
+      date: new Date().toISOString().slice(0, 10),
+      type: 'note',
+      title: 'Action Item Added',
+      notes: newQuickTaskTitle.trim(),
+      nextAction: newQuickTaskTitle.trim(),
+      actionCompleted: false,
+      advisorName: inputs.client.advisor || 'SoundThesis Capital',
+    });
+    setNewQuickTaskTitle('');
+    refreshClientList();
+    showToast('Added follow-up task to client record.', 'success');
+  };
+
+  // Dossier Export Handlers
+  const generateDossierBrief = useCallback(() => {
+    const clientName = inputs.client.name || activeClient?.name || 'Private Client';
+    const netWorthFormatted = formatCurrency(wealthResult.netWorth);
+    const dateFormatted = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    return [
+      `# Wealth Dossier — ${clientName}`,
+      `SoundThesis Capital • Private Wealth Management`,
+      `Date: ${dateFormatted} | Advisor: ${inputs.client.advisor || 'SoundThesis Capital'}`,
+      '',
+      `## Executive Wealth Position`,
+      `- Recorded Net Worth: ${netWorthFormatted}`,
+      `- Planning Horizon: Age ${inputs.currentAge} to ${inputs.lifeExpectancy} (Retirement at ${inputs.retirementAge})`,
+      `- Risk Profile: ${riskProfile.label} (${riskProfile.maxDrawdown}% allowable drawdown)`,
+      `- Monthly Expense Burn: ${formatCurrency(inputs.monthlyLivingExpenses || 0)}`,
+      `- Emergency Reserve Target: ${formatCurrency((inputs.monthlyLivingExpenses || 0) * 12)} (12 months)`,
+      '',
+      `## Strategic Asset Allocation Targets`,
+      ...categories.map((cat) => `- ${categoryLabels[cat]}: Target ${allocation[cat] || 0}% | Current ${(currentAllocation[cat] || 0).toFixed(1)}%`),
+      '',
+      `## Strategic Advisory Guidance & Suggested Priorities`,
+      ...(inputs.goals.length
+        ? inputs.goals.map((g) => `- ${g.name} (${g.priority.toUpperCase()}): ${g.yearsToGoal} yr horizon, Target ₹${g.targetAmount.toLocaleString('en-IN')}`)
+        : ['- No formal planning goals recorded. Advisory focus is ongoing.']),
+      '',
+      `## Governance & Review Directive`,
+      `- Review Frequency: Quarterly monitoring; annual formal mandate review`,
+      `- Drift Rebalancing Threshold: ±5% absolute variance`,
+      `- Mandate Status: ${activeClient?.stage || 'Discovery'}`,
+    ].join('\n');
+  }, [activeClient, allocation, currentAllocation, inputs, riskProfile, wealthResult.netWorth]);
+
+  const handleExportPdfDossier = () => {
+    setDossierExportModalOpen(false);
+    navigate('/dossier?autoPrint=true');
+  };
+
+  const handleDownloadDossierMd = () => {
+    const text = generateDossierBrief();
+    const safeName = (inputs.client.name || activeClient?.name || 'client')
+      .replace(/[^a-z0-9]+/gi, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase();
+    const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${safeName || 'client'}-wealth-dossier-brief.md`;
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast('Wealth Dossier brief downloaded as Markdown.', 'success');
+  };
+
+  const handleCopyDossierBrief = async () => {
+    try {
+      await navigator.clipboard.writeText(generateDossierBrief());
+      showToast('Dossier executive brief copied to clipboard.', 'success');
+    } catch {
+      showToast('Could not copy dossier to clipboard.', 'error');
+    }
+  };
+
   // Calculations
   const allocation = manualTargets ?? riskProfile.targets;
   const allocationTotal = categories.reduce((total, category) => total + (allocation[category] || 0), 0);
@@ -361,17 +536,9 @@ export function IPSWorkspacePage() {
   };
 
   const persistGoal = () => {
-    if (!primaryGoal.trim()) return;
-    const current = inputs.goals[0];
-    if (current) updateGoal(current.id, { name: primaryGoal.trim() });
-    else {
-      addGoal({
-        name: primaryGoal.trim(),
-        priority: 'essential',
-        yearsToGoal: Math.max(1, inputs.retirementAge - inputs.currentAge),
-        targetAmount: 0,
-      });
-    }
+    // A policy focus is a non-binding planning suggestion. Formal goals,
+    // amounts and priorities continue to live in the Goal Planner so an IPS
+    // draft never creates a funding commitment by accident.
     updateActiveCRMClient({ primaryGoal: primaryGoal.trim() });
   };
 
@@ -478,10 +645,10 @@ export function IPSWorkspacePage() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="min-w-0">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ink">
-              Client Mandate & Investment Policy
+              Investment Policy Statement
             </h1>
             <p className="text-sm text-muted mt-1 max-w-2xl">
-              Unified CRM relationship management, asset allocation governance, and institutional IPS issuance.
+              SoundThesis Capital Institutional Policy Standard · relationship CRM, policy guidance and ratification in one working view.
             </p>
           </div>
 
@@ -570,11 +737,25 @@ export function IPSWorkspacePage() {
             {/* Quick add client button */}
             <button
               type="button"
+            {/* Quick add client button */}
+            <button
+              type="button"
               onClick={() => setAddClientOpen(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface hover:bg-sunken text-xs font-medium text-ink transition-colors cursor-pointer"
             >
               <Plus size={14} />
               <span className="hidden sm:inline">New Client</span>
+            </button>
+
+            {/* Export Dossier button */}
+            <button
+              type="button"
+              onClick={() => setDossierExportModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border bg-surface hover:bg-sunken text-xs font-semibold text-ink shadow-xs transition-colors cursor-pointer"
+              title="Export Client Wealth Dossier"
+            >
+              <Printer size={14} className="text-accent-strong" />
+              <span>Export Dossier</span>
             </button>
 
             {/* Save button */}
@@ -630,15 +811,269 @@ export function IPSWorkspacePage() {
         )}
       </header>
 
+      {/* Institutional IPS lead block — the main view opens on the mandate, not a generic dashboard. */}
+      <section className="rounded-2xl border border-inkfill bg-inkfill text-on-inkfill overflow-hidden mb-6 shadow-card" aria-labelledby="ips-lead-title">
+        <div className="grid lg:grid-cols-[1.25fr_0.75fr] gap-0">
+          <div className="p-5 sm:p-7">
+            <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono tracking-wide text-on-inkfill/60">
+              <span>REF: IPS-{(inputs.client.reviewDate || new Date().toISOString().slice(0, 10)).replaceAll('-', '')}</span>
+              <span className="h-1 w-1 rounded-full bg-accent" />
+              <span>PRIVATE WEALTH MANAGEMENT</span>
+            </div>
+            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-accent">Client mandate</p>
+            <h2 id="ips-lead-title" className="mt-2 text-3xl sm:text-4xl font-semibold tracking-tight leading-[1.02]">
+              {inputs.client.name || activeClient?.name || 'Select a client relationship'}
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-on-inkfill/70">A living governance charter. Current plan data flows in; policy suggestions, review dates and ratification remain explicit adviser decisions.</p>
+            <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-px overflow-hidden rounded-lg border border-white/15 bg-white/15">
+              {[
+                ['Fiduciary adviser', inputs.client.advisor || 'SoundThesis Capital'],
+                ['Portfolio NAV', formatCurrencyCompact(wealthResult.netWorth || activeClient?.financialSummary?.netWorth || 0)],
+                ['Risk budget', hasRiskAnswers ? `${riskProfile.label} · ${riskProfile.maxDrawdown}% drawdown` : 'Awaiting assessment'],
+                ['Mandate status', activeClient?.stage || 'Discovery'],
+              ].map(([label, value]) => <div key={label} className="bg-inkfill/95 p-3"><span className="block text-[10px] uppercase tracking-wide text-on-inkfill/55">{label}</span><strong className="mt-1 block text-xs leading-snug text-on-inkfill">{value}</strong></div>)}
+            </div>
+          </div>
+          <div className="border-t lg:border-t-0 lg:border-l border-white/15 bg-white/[0.04] p-5 sm:p-7 flex flex-col justify-between gap-5">
+            <div>
+              <span className="text-[11px] uppercase tracking-[0.14em] text-on-inkfill/55">Mandate readiness</span>
+              <strong className="mt-2 block text-4xl font-mono tracking-tight">{progressPercent}%</strong>
+              <p className="mt-1 text-xs text-on-inkfill/65">{completedStepsCount} of {steps.length} policy sections have sufficient working inputs.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCrmLeadOpen((current) => !current)}
+              aria-expanded={crmLeadOpen}
+              aria-controls="ips-relationship-crm"
+              className="flex items-center justify-between gap-3 rounded-lg border border-white/20 bg-white/10 px-3.5 py-3 text-left text-xs font-semibold text-on-inkfill hover:bg-white/15 transition-colors cursor-pointer"
+            >
+              <span className="flex items-center gap-2">
+                <UserRound size={15} className="text-accent" />
+                <span>Relationship CRM & Pipeline</span>
+              </span>
+              {crmLeadOpen ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Deepened Relationship CRM Drawer */}
+      {crmLeadOpen && (
+        <section id="ips-relationship-crm" className="mb-6 rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-card space-y-5" aria-label="Relationship CRM lead panel">
+          {/* Header Row */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-accent-soft text-accent flex items-center justify-center">
+                  <UserRound size={15} />
+                </div>
+                <h2 className="text-sm font-bold text-ink">Built-in Relationship CRM</h2>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-accent-soft text-accent-strong border border-accent/20">
+                  {activeClient?.tier || 'HNI'} Tier
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-muted">
+                Relationship lifecycle, scheduled reviews, and follow-up action items remain integrated directly into the governance mandate.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <Link
+                to="/clients"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-raised px-3 py-1.5 text-xs font-semibold text-ink hover:bg-sunken transition-colors"
+              >
+                <span>Directory</span>
+                <ArrowRight size={13} />
+              </Link>
+              <button
+                type="button"
+                onClick={() => setInteractionModalOpen(true)}
+                disabled={!activeClient}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-white hover:bg-accent-strong disabled:opacity-40 cursor-pointer shadow-xs transition-colors"
+              >
+                <Plus size={13} />
+                <span>Log Touchpoint</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Lifecycle Stage Pipeline Track */}
+          <div className="space-y-1.5">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-muted block">
+              Relationship Lifecycle Pipeline
+            </span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5">
+              {CRM_STAGES.map((stg, i) => {
+                const isCurrent = (activeClient?.stage || 'Discovery') === stg;
+                const isPast = CRM_STAGES.indexOf(activeClient?.stage || 'Discovery') > i;
+                return (
+                  <button
+                    key={stg}
+                    type="button"
+                    onClick={() => updateActiveCRMClient({ stage: stg })}
+                    disabled={!activeClient}
+                    className={`px-2.5 py-1.5 rounded-lg text-left text-xs font-medium border transition-colors cursor-pointer flex items-center justify-between gap-1 ${
+                      isCurrent
+                        ? 'border-accent bg-accent text-white font-bold shadow-xs'
+                        : isPast
+                          ? 'border-border bg-positive-soft/40 text-ink hover:border-positive/50'
+                          : 'border-border/60 bg-raised/50 text-muted hover:border-border hover:text-ink'
+                    }`}
+                  >
+                    <span className="truncate">{stg}</span>
+                    {isCurrent ? (
+                      <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                    ) : isPast ? (
+                      <Check size={12} className="text-positive shrink-0" />
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* CRM Details Grid: Coordinates & Actions vs Activity Feed */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 pt-1">
+            {/* Left Column: Key Coordinates & Open Tasks Checklist (7 cols) */}
+            <div className="lg:col-span-7 space-y-4">
+              {/* Coordinates strip */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                <div className="p-3 rounded-xl border border-border bg-raised/60">
+                  <span className="text-[10px] uppercase tracking-wide text-muted block">Next Review Date</span>
+                  <strong className="text-ink font-mono text-xs mt-1 block">
+                    {activeClient?.reviewDate || inputs.client.reviewDate || 'Not set'}
+                  </strong>
+                </div>
+                <div className="p-3 rounded-xl border border-border bg-raised/60">
+                  <span className="text-[10px] uppercase tracking-wide text-muted block">Client Phone</span>
+                  <span className="text-ink font-medium text-xs mt-1 block truncate">
+                    {activeClient?.phone || inputs.client.phone || '—'}
+                  </span>
+                </div>
+                <div className="p-3 rounded-xl border border-border bg-raised/60 col-span-2 sm:col-span-1">
+                  <span className="text-[10px] uppercase tracking-wide text-muted block">PAN / KYC</span>
+                  <span className="text-ink font-mono font-medium text-xs mt-1 block truncate">
+                    {activeClient?.pan || 'Verified'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Items & Follow-ups Checklist */}
+              <div className="p-4 rounded-xl border border-border bg-raised/40 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ListTodo size={14} className="text-accent" />
+                    <span className="text-xs font-bold text-ink">Action Items & Advisory Follow-ups</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-muted">
+                    {activeClient?.interactions?.filter((item) => item.nextAction && !item.actionCompleted).length || 0} pending
+                  </span>
+                </div>
+
+                {/* Task Checklist Items */}
+                <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                  {activeClient?.interactions?.filter((item) => item.nextAction).length ? (
+                    activeClient.interactions
+                      .filter((item) => item.nextAction)
+                      .slice(0, 5)
+                      .map((task) => (
+                        <div
+                          key={task.id}
+                          className="flex items-start gap-2.5 p-2 rounded-lg bg-surface border border-border/70 hover:border-border text-xs transition-colors"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleToggleTask(task.id)}
+                            className="mt-0.5 text-muted hover:text-accent cursor-pointer shrink-0"
+                            title={task.actionCompleted ? 'Mark incomplete' : 'Mark completed'}
+                          >
+                            {task.actionCompleted ? (
+                              <CheckSquare size={14} className="text-positive" />
+                            ) : (
+                              <Square size={14} />
+                            )}
+                          </button>
+                          <div className="min-w-0 flex-1">
+                            <span className={`block text-xs leading-snug ${task.actionCompleted ? 'line-through text-muted' : 'text-ink font-medium'}`}>
+                              {task.nextAction}
+                            </span>
+                            <span className="text-[10px] text-faint font-mono block mt-0.5">
+                              From: {task.title} · {task.date}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                  ) : (
+                    <p className="text-xs text-muted p-2 border border-dashed border-border rounded-lg">
+                      No pending action items recorded for this client.
+                    </p>
+                  )}
+                </div>
+
+                {/* Inline Quick Add Task Form */}
+                <form onSubmit={handleAddQuickTask} className="flex items-center gap-2 pt-1 border-t border-border/60">
+                  <input
+                    type="text"
+                    value={newQuickTaskTitle}
+                    onChange={(e) => setNewQuickTaskTitle(e.target.value)}
+                    placeholder="Add follow-up task (e.g. Request 2026 Form 26AS)..."
+                    className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-surface text-xs text-ink placeholder:text-faint focus:border-accent focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!newQuickTaskTitle.trim()}
+                    className="px-3 py-1.5 rounded-lg bg-raised hover:bg-sunken border border-border text-xs font-semibold text-ink disabled:opacity-40 cursor-pointer"
+                  >
+                    Add Task
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            {/* Right Column: Recent Activity Feed (5 cols) */}
+            <div className="lg:col-span-5 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Recent Touchpoints</span>
+                <span className="text-[10px] font-mono text-muted">{activeClient?.interactions?.length || 0} total</span>
+              </div>
+
+              <div className="space-y-2 max-h-56 overflow-y-auto">
+                {activeClient?.interactions?.length ? (
+                  activeClient.interactions.slice(0, 4).map((interaction) => (
+                    <div key={interaction.id} className="p-3 rounded-xl border border-border bg-raised/40 text-xs space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <strong className="text-ink font-semibold truncate">{interaction.title}</strong>
+                        <span className="font-mono text-[10px] text-faint shrink-0">{interaction.date}</span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed text-muted line-clamp-2">
+                        {interaction.notes || 'Touchpoint logged.'}
+                      </p>
+                      <div className="flex items-center gap-2 pt-0.5 text-[10px] text-faint">
+                        <span className="capitalize">{interaction.type}</span>
+                        <span>•</span>
+                        <span>{interaction.advisorName || 'SoundThesis Capital'}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="p-4 rounded-xl border border-dashed border-border text-xs text-muted">
+                    No interactions logged yet. Use the "Log Touchpoint" button to track meetings and calls.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ═══ Horizontal Progress Stepper Across Top ═══ */}
       <section className="mb-8" aria-label="Workflow progress">
         <div className="flex items-center justify-between text-xs text-muted mb-2 px-1">
           <span className="font-medium">
-            Phase {activeIndex + 1} of {steps.length}:{' '}
-            <strong className="text-ink">{steps[activeIndex]?.label}</strong>
+            Active View: <strong className="text-ink">{steps[activeIndex]?.label}</strong>
           </span>
           <span className="font-mono text-[11px]">
-            {completedStepsCount} of {steps.length} Phases Ready ({progressPercent}%)
+            {completedStepsCount} of {steps.length} Mandate Phases Ready ({progressPercent}%)
           </span>
         </div>
 
@@ -1115,15 +1550,16 @@ export function IPSWorkspacePage() {
                   </label>
 
                   <label className="space-y-1.5 sm:col-span-2">
-                    <span className="font-semibold text-ink-soft">Primary Financial Goal / Milestone</span>
+                    <span className="font-semibold text-ink-soft">Suggested Planning Focus</span>
                     <input
                       type="text"
                       value={primaryGoal}
                       onChange={(e) => setPrimaryGoal(e.target.value)}
                       onBlur={persistGoal}
-                      placeholder="e.g. Retirement income & intergenerational legacy"
+                      placeholder="e.g. Prioritise retirement income and education funding"
                       className="w-full px-3 py-2 rounded-lg border border-border bg-raised text-ink text-xs focus:border-accent focus:outline-none"
                     />
+                    <small className="block text-[11px] leading-relaxed text-muted">This is an advisory prompt for the IPS and CRM. Formal targets, amounts and priorities are set separately in the Goal Planner.</small>
                   </label>
                 </div>
 
@@ -1512,18 +1948,42 @@ export function IPSWorkspacePage() {
             {/* Document Body */}
             {docViewMode === 'formatted' ? (
               <div className="bg-surface border border-border rounded-2xl p-8 sm:p-12 shadow-card max-w-4xl mx-auto space-y-8 font-sans">
-                {/* Formal Document Title Block */}
-                <div className="border-b-2 border-border pb-6 space-y-2">
-                  <div className="text-xs font-medium text-muted">
-                    Institutional Wealth Charter • Private Mandate
+                {/* Institutional Header Banner */}
+                <div className="border-b-2 border-ink pb-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted font-medium mb-2">
+                    <span className="font-semibold text-ink-soft">SoundThesis Capital • Private Wealth Management</span>
+                    <span className="font-mono text-ink-soft">
+                      REF: IPS-{(inputs.client.reviewDate || activeClient?.reviewDate || new Date().toISOString().slice(0, 10)).replace(/-/g, '')}
+                    </span>
                   </div>
-                  <h1 className="text-3xl font-bold tracking-tight text-ink">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-ink tracking-tight">
                     Investment Policy Statement
                   </h1>
-                  <p className="text-sm text-muted">
-                    Fiduciary Objectives, Governance Corridors & Rebalancing Protocol for{' '}
-                    <strong className="text-ink">{inputs.client.name || activeClient?.name}</strong>
+                  <p className="text-sm text-ink-soft mt-1">
+                    SoundThesis Capital Institutional Policy Standard
                   </p>
+
+                  {/* Document Meta Row */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-4 border-t border-border text-xs">
+                    <div>
+                      <span className="text-muted block text-[11px] font-medium">Client Mandate</span>
+                      <strong className="font-semibold text-ink block truncate">{inputs.client.name || activeClient?.name || 'Private Client'}</strong>
+                    </div>
+                    <div>
+                      <span className="text-muted block text-[11px] font-medium">Fiduciary Advisor</span>
+                      <strong className="font-semibold text-ink block truncate">{inputs.client.advisor || 'SoundThesis Capital'}</strong>
+                    </div>
+                    <div>
+                      <span className="text-muted block text-[11px] font-medium">Portfolio NAV</span>
+                      <strong className="font-semibold text-ink font-mono block">{formatCurrency(wealthResult.netWorth || activeClient?.financialSummary.netWorth || 0)}</strong>
+                    </div>
+                    <div>
+                      <span className="text-muted block text-[11px] font-medium">Ratification Status</span>
+                      <span className="inline-flex items-center gap-1 font-semibold text-accent-strong mt-0.5">
+                        <ShieldCheck size={13} /> {activeClient?.ratifiedDate ? 'Ratified Policy' : 'Active Mandate'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Section 1: Executive Profile */}
@@ -1600,13 +2060,156 @@ export function IPSWorkspacePage() {
                   </div>
                 </section>
 
-                <section className="space-y-3">
-                  <h3 className="text-sm font-semibold text-ink">03. Purpose, Objectives & Funding Priorities</h3>
-                  <div className="grid md:grid-cols-2 gap-4 text-xs">
-                    <div className="rounded-xl border border-border bg-raised/50 p-4"><span className="text-[11px] text-muted block">Investment objective</span><p className="text-ink leading-relaxed mt-1">{manualAllocationPolicy?.objective || 'Fund the household’s priority goals while maintaining purchasing power and an appropriate liquidity reserve.'}</p></div>
-                    <div className="rounded-xl border border-border bg-raised/50 p-4"><span className="text-[11px] text-muted block">Risk capacity & planning horizon</span><p className="text-ink leading-relaxed mt-1">{riskProfile.label} profile; {Math.max(0, inputs.retirementAge - inputs.currentAge)} years to retirement and {Math.max(0, inputs.lifeExpectancy - inputs.retirementAge)} years of projected distribution.</p></div>
+                <section className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-border pb-2">
+                    <h3 className="text-sm font-bold text-ink">
+                      03. Strategic Advisory Guidance & Suggested Priorities
+                    </h3>
+                    <Link
+                      to="/master-plan?step=goals"
+                      className="text-xs text-accent hover:underline flex items-center gap-1 font-medium"
+                    >
+                      Refine in Goal Planner <ExternalLink size={12} />
+                    </Link>
                   </div>
-                  <div className="border border-border rounded-xl overflow-hidden"><div className="grid grid-cols-[1fr_90px_110px] gap-3 bg-sunken px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted"><span>Goal</span><span>Priority</span><span className="text-right">Horizon</span></div>{inputs.goals.length ? inputs.goals.map((goal) => <div key={goal.id} className="grid grid-cols-[1fr_90px_110px] gap-3 border-t border-border px-4 py-2.5 text-xs"><span className="font-medium text-ink truncate">{goal.name}</span><span className="capitalize text-muted">{goal.priority}</span><span className="font-mono text-right text-muted">{goal.yearsToGoal} yrs</span></div>) : <p className="px-4 py-3 text-xs text-muted">No specific goals have been recorded. Review before client signature.</p>}</div>
+
+                  <div className="grid md:grid-cols-2 gap-4 text-xs">
+                    <div className="rounded-xl border border-border bg-raised/50 p-4">
+                      <span className="text-[11px] font-medium text-muted block">Strategic Advisory Objective</span>
+                      <p className="text-ink leading-relaxed mt-1 font-medium">
+                        {manualAllocationPolicy?.objective ||
+                          'Safeguard real purchasing power, establish an enduring liquidity reserve, and fund strategic household milestones through disciplined asset allocation corridors.'}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-border bg-raised/50 p-4">
+                      <span className="text-[11px] font-medium text-muted block">Risk Profile & Planning Horizon</span>
+                      <p className="text-ink leading-relaxed mt-1 font-medium">
+                        {riskProfile.label} profile; {Math.max(0, inputs.retirementAge - inputs.currentAge)} years to target retirement and {Math.max(0, inputs.lifeExpectancy - inputs.retirementAge)} years of expected distribution phase.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Advisory Notice Banner */}
+                  <div className="rounded-xl border border-accent/20 bg-accent-soft/20 p-3 text-xs flex items-start gap-2.5 text-ink-soft">
+                    <Lightbulb size={16} className="text-accent shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <strong className="text-ink font-semibold block text-xs">Fiduciary Suggestion Policy</strong>
+                      <p className="text-[11px] text-muted leading-relaxed">
+                        The priorities listed below are strategic advisory recommendations formulated by SoundThesis Capital. They serve as guidance for capital preservation and liquidity buffers, rather than rigid contractual lock-ins. Adopt or prune recommendations below.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Active Suggested Priorities Table */}
+                  <div className="border border-border rounded-xl overflow-hidden shadow-xs">
+                    <div className="grid grid-cols-[1fr_80px_100px_70px] sm:grid-cols-[1fr_100px_110px_90px_70px] gap-2 bg-sunken px-4 py-2.5 text-[11px] font-semibold text-muted">
+                      <span>Suggested Planning Priority</span>
+                      <span className="hidden sm:inline">Category</span>
+                      <span className="text-right">Est. Target</span>
+                      <span className="text-right">Horizon</span>
+                      <span className="text-right">Action</span>
+                    </div>
+                    {inputs.goals.length > 0 ? (
+                      <div className="divide-y divide-border">
+                        {inputs.goals.map((goal) => (
+                          <div
+                            key={goal.id}
+                            className="grid grid-cols-[1fr_80px_100px_70px] sm:grid-cols-[1fr_100px_110px_90px_70px] gap-2 px-4 py-2.5 text-xs items-center hover:bg-raised/40 transition-colors"
+                          >
+                            <div className="truncate">
+                              <span className="font-semibold text-ink block truncate">{goal.name}</span>
+                              <span className="text-[10px] text-muted capitalize sm:hidden">{goal.priority} priority</span>
+                            </div>
+                            <span className="hidden sm:inline text-muted text-[11px] capitalize">{goal.priority} priority</span>
+                            <span className="font-mono text-right font-medium text-ink text-xs">
+                              {formatCurrency(goal.targetAmount)}
+                            </span>
+                            <span className="font-mono text-right text-muted text-xs">
+                              {goal.yearsToGoal} yrs
+                            </span>
+                            <div className="text-right">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveSuggestion(goal.id)}
+                                className="text-[11px] text-rose-500 hover:text-rose-600 font-medium hover:underline cursor-pointer"
+                                title="Remove suggestion from active IPS"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 text-center text-xs text-muted">
+                        No active priorities selected. Adopt one or more strategic advisory suggestions below.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Pre-built Advisory Suggestion Templates Library */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-ink-soft">
+                        Private Wealth Advisory Recommendations (Click to Adopt)
+                      </span>
+                      <span className="text-[11px] text-muted">
+                        {ADVISORY_SUGGESTION_TEMPLATES.length} templates available
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {ADVISORY_SUGGESTION_TEMPLATES.map((tmpl) => {
+                        const isAdopted = inputs.goals.some(
+                          (g) => g.name.toLowerCase() === tmpl.title.toLowerCase()
+                        );
+                        return (
+                          <div
+                            key={tmpl.id}
+                            className={`p-3.5 rounded-xl border text-xs flex flex-col justify-between transition-all ${
+                              isAdopted
+                                ? 'bg-positive/5 border-positive/30'
+                                : 'bg-surface border-border hover:border-accent/40 hover:bg-raised/50'
+                            }`}
+                          >
+                            <div className="space-y-1.5">
+                              <div className="flex items-start justify-between gap-1.5">
+                                <span className="font-semibold text-ink leading-snug">{tmpl.title}</span>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-sunken border border-border text-muted font-medium shrink-0">
+                                  {tmpl.category}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-muted line-clamp-2 leading-relaxed">
+                                {tmpl.guidance}
+                              </p>
+                              <div className="flex items-center gap-2 text-[11px] font-mono text-ink-soft pt-1">
+                                <span>{formatCurrency(tmpl.defaultAmount)}</span>
+                                <span className="text-muted">•</span>
+                                <span>{tmpl.horizonYears} yr horizon</span>
+                              </div>
+                            </div>
+
+                            <div className="pt-3 mt-2 border-t border-border/60 flex items-center justify-between">
+                              <span className="text-[10px] text-muted capitalize">{tmpl.priority} priority</span>
+                              {isAdopted ? (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-positive">
+                                  <CheckCircle2 size={13} /> Active
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleAdoptSuggestion(tmpl)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-accent/10 hover:bg-accent text-accent hover:text-white text-[11px] font-semibold transition-colors cursor-pointer"
+                                >
+                                  + Adopt Suggestion
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </section>
 
                 <section className="space-y-3 text-xs leading-relaxed text-muted">
@@ -1933,6 +2536,135 @@ export function IPSWorkspacePage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Dossier Export Modal ═══ */}
+      {dossierExportModalOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-surface border border-border rounded-2xl shadow-popover max-w-xl w-full p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <FileText size={18} className="text-accent" />
+                <div>
+                  <h3 className="text-sm font-bold text-ink">Wealth Dossier Export Desk</h3>
+                  <p className="text-[11px] text-muted">
+                    SoundThesis Capital • REF: IPS-{(inputs.client.reviewDate || activeClient?.reviewDate || new Date().toISOString().slice(0, 10)).replace(/-/g, '')}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDossierExportModalOpen(false)}
+                className="text-faint hover:text-ink cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                {/* 1. Open Dossier Presentation */}
+                <div className="p-4 rounded-xl border border-border bg-raised/50 space-y-2 flex flex-col justify-between">
+                  <div>
+                    <strong className="block text-ink font-semibold">Interactive 16:9 Dossier</strong>
+                    <p className="text-[11px] text-muted mt-1 leading-relaxed">
+                      Launch the dedicated, full-screen private wealth client presentation desk.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDossierExportModalOpen(false);
+                      navigate(`/dossier${activeClient?.id ? `?client=${activeClient.id}` : ''}`);
+                    }}
+                    className="mt-2 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-accent hover:bg-accent-strong text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer w-full"
+                  >
+                    <span>Open 16:9 Dossier</span>
+                    <ExternalLink size={13} />
+                  </button>
+                </div>
+
+                {/* 2. Instant PDF Deck */}
+                <div className="p-4 rounded-xl border border-border bg-raised/50 space-y-2 flex flex-col justify-between">
+                  <div>
+                    <strong className="block text-ink font-semibold">PDF Document / Print</strong>
+                    <p className="text-[11px] text-muted mt-1 leading-relaxed">
+                      Generate a clean, print-ready PDF folio formatted with institutional header.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleExportPdfDossier}
+                    className="mt-2 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface hover:bg-sunken text-ink text-xs font-semibold shadow-xs transition-colors cursor-pointer w-full"
+                  >
+                    <Printer size={13} />
+                    <span>Print / Save PDF</span>
+                  </button>
+                </div>
+
+                {/* 3. Markdown Mandate */}
+                <div className="p-4 rounded-xl border border-border bg-raised/50 space-y-2 flex flex-col justify-between">
+                  <div>
+                    <strong className="block text-ink font-semibold">Markdown Charter (.md)</strong>
+                    <p className="text-[11px] text-muted mt-1 leading-relaxed">
+                      Download the full policy text file for compliance archives or custom formatting.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDownloadDossierMd}
+                    className="mt-2 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface hover:bg-sunken text-ink text-xs font-semibold shadow-xs transition-colors cursor-pointer w-full"
+                  >
+                    <Download size={13} />
+                    <span>Download Markdown</span>
+                  </button>
+                </div>
+
+                {/* 4. Copy Executive Brief */}
+                <div className="p-4 rounded-xl border border-border bg-raised/50 space-y-2 flex flex-col justify-between">
+                  <div>
+                    <strong className="block text-ink font-semibold">Copy Executive Brief</strong>
+                    <p className="text-[11px] text-muted mt-1 leading-relaxed">
+                      Instant one-click clipboard copy of the mandate, net worth, corridors, and advice.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCopyDossierBrief}
+                    className="mt-2 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface hover:bg-sunken text-ink text-xs font-semibold shadow-xs transition-colors cursor-pointer w-full"
+                  >
+                    <Copy size={13} />
+                    <span>Copy Text Summary</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Live Preview Box */}
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-semibold text-muted block uppercase tracking-wide">
+                  Executive Brief Live Preview
+                </span>
+                <div className="p-3 bg-sunken rounded-xl border border-border font-mono text-[11px] text-muted max-h-36 overflow-y-auto whitespace-pre-wrap leading-relaxed select-all">
+                  {generateDossierBrief()}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end pt-3 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setDossierExportModalOpen(false)}
+                className="px-4 py-1.5 rounded-lg border border-border text-xs font-medium text-ink hover:bg-sunken cursor-pointer"
+              >
+                Close Desk
+              </button>
+            </div>
           </div>
         </div>
       )}

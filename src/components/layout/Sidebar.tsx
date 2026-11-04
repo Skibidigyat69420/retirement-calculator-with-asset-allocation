@@ -63,7 +63,7 @@ const NavLink = ({ item, collapsed, onClick }: NavLinkProps) => {
   return link;
 };
 
-const PRIMARY_PATHS = ['/', '/planning', '/policy', '/ips', '/dossier'];
+const PRIMARY_PATHS = ['/', '/clients', '/planning', '/policy', '/dossier'];
 
 const TOOL_GROUPS: { id: string; label: string; paths: string[] }[] = [
   {
@@ -188,7 +188,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
       <div className="flex items-center justify-between gap-1 px-1 mb-1.5">
         <span className="text-[11px] font-medium text-muted">Active household</span>
         <Link
-          to="/"
+          to="/clients"
           title="Switch client household"
           className="p-0.5 rounded text-muted hover:text-ink hover:bg-sunken transition-colors flex items-center gap-1 text-[11px]"
         >

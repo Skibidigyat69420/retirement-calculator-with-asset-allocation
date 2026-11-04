@@ -31,10 +31,17 @@ export const SECTION_ORDER = ['Workspace', 'Plan', 'Portfolio', 'Deliver', 'Prac
 export const navItems: NavItem[] = [
   {
     path: '/',
-    label: 'Clients',
+    label: 'IPS desk',
+    icon: FileText,
+    section: 'Workspace',
+    description: 'Mandate, relationship CRM and policy issuance',
+  },
+  {
+    path: '/clients',
+    label: 'Client CRM',
     icon: Users,
     section: 'Workspace',
-    description: 'Client relationships and active households',
+    description: 'Client relationships, pipeline and active households',
   },
   {
     path: '/overview',
@@ -120,11 +127,18 @@ export const navItems: NavItem[] = [
     description: 'Choose connected, manual, or standalone IPS creation',
   },
   {
+    path: '/dossier',
+    label: 'Dossier',
+    icon: Printer,
+    section: 'Deliver',
+    description: 'Client-ready position, recommendations and exports',
+  },
+  {
     path: '/ips',
-    label: 'Create IPS',
+    label: 'IPS builder',
     icon: FileText,
     section: 'Deliver',
-    description: 'Guided Investment Policy Statement builder',
+    description: 'Return to the guided Investment Policy Statement desk',
   },
   {
     path: '/ips/editor',

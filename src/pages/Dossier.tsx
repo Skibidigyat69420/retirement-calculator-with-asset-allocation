@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Printer, ArrowLeft, FileText, ArrowUpRight, ChartNoAxesCombined, Database, LayoutTemplate, ShieldCheck } from 'lucide-react';
+import { Printer, ArrowLeft, FileText, ArrowUpRight, ChartNoAxesCombined, Database, Download, LayoutTemplate, ShieldCheck, Copy } from 'lucide-react';
 import { useCalculator } from '../context/CalculatorContext';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -31,6 +31,7 @@ export const Dossier = () => {
     hasRiskAnswers,
     assumptions,
     loadSampleWorkspace,
+    showToast,
   } = useCalculator();
 
   const targets = manualTargets || riskProfile.targets;
@@ -89,6 +90,74 @@ export const Dossier = () => {
     window.setTimeout(restoreTitle, 1500);
   };
 
+  const handleCopySummary = async () => {
+    try {
+      await navigator.clipboard.writeText(buildAccessibleDocument());
+      showToast('Accessible dossier executive summary copied to clipboard.', 'success');
+    } catch {
+      showToast('Could not copy dossier to clipboard.', 'error');
+    }
+  };
+
+  const handleDownloadAccessibleSummary = () => {
+    const safeClientName = (inputs.client?.name || 'Client').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
+    const documentText = buildAccessibleDocument();
+    const blob = new Blob([documentText], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${safeClientName || 'client'}-wealth-dossier-accessible.md`;
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast('Accessible dossier summary downloaded as Markdown.', 'success');
+  };
+
+  const buildAccessibleDocument = () => {
+    const allocationLines = CATEGORIES.map((category) => {
+      const current = wealthResult.currentAllocation[category] * 100;
+      const proposed = latestRecommendation?.targets[category] ?? targets[category];
+      return `- ${ASSET_LABELS[category]}: current ${formatPercent(current)}; policy ${formatPercent(proposed)}; change ${formatPercent(proposed - current)}`;
+    });
+    const goalLines = wealthResult.goalResults.length
+      ? wealthResult.goalResults.map((goal) => `- ${goal.goal.name}: ${formatPercent(goal.successRate * 100)} funding confidence; ${goal.goal.yearsToGoal} year horizon`).join('\n')
+      : '- No formal goals have been recorded.';
+    return [
+      `# Wealth Dossier — ${inputs.client?.name || 'Private Client'}`,
+      '',
+      `Prepared: ${printDate}`,
+      `Adviser: ${inputs.client?.advisor || 'SoundThesis Capital'}`,
+      '',
+      '## Current position',
+      `- Net worth: ${formatCurrency(wealthResult.netWorth)}`,
+      `- Plan outcome: ${wealthResult.sustainable ? 'Projected through life expectancy' : `Potential depletion at age ${wealthResult.depletionAge}`}`,
+      `- Monte Carlo plan success: ${formatPercent(wealthResult.monteCarlo.successRate * 100)}`,
+      `- Risk profile: ${riskProfile.label} (${riskScore}/100)`,
+      `- Liquid reserve: ${liquidityMonths.toFixed(1)} months of expenditure`,
+      `- Monthly surplus: ${formatCurrency(monthlySurplus)}`,
+      `- Goals funded at the ${formatPercent(riskProfile.goalSuccessThreshold)} threshold: ${fundedGoals} of ${wealthResult.goalResults.length}`,
+      '',
+      '## Strategic Advisory Guidance & Suggested Priorities',
+      goalLines,
+      '',
+      '## Allocation recommendation',
+      `- Status: ${latestRecommendation ? 'Adviser proposal recorded' : 'No adviser proposal recorded'}`,
+      `- Method: ${latestRecommendation ? METHOD_LABELS[latestRecommendation.method] : 'Not yet selected'}`,
+      `- Prepared by: ${latestRecommendation?.createdBy || inputs.client?.advisor || '—'}`,
+      `- Rationale: ${latestRecommendation?.rationale || manualAllocationPolicy?.rationale || 'No rationale recorded.'}`,
+      `- Evidence / citation: ${latestRecommendation?.evidenceCitation || 'No supporting citation recorded.'}`,
+      '',
+      '### Current portfolio versus proposed policy',
+      ...allocationLines,
+      '',
+      '## Governance',
+      `- Review cadence: ${manualAllocationPolicy?.reviewFrequency || 'Annual'}`,
+      `- Rebalance trigger: ${manualAllocationPolicy ? `±${manualAllocationPolicy.rebalanceThreshold}%` : 'Model review'}`,
+      `- Constraints: ${manualAllocationPolicy?.constraints || 'Risk-profile constraints and goal-liquidity requirements apply.'}`,
+      '',
+      'This accessible summary is generated from the live planning workspace. It is an advice record, not a guarantee of investment outcomes.',
+    ].join('\n');
+  };
+
   if (!wealthResult.isConfigured) {
     return (
       <EmptyState
@@ -120,17 +189,23 @@ export const Dossier = () => {
             <h1>{inputs.client?.name || 'Client Report'}</h1>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <nav className="flex items-center gap-2" aria-label="Dossier export options">
           <span className="dossier-format-label hidden md:inline-flex"><LayoutTemplate size={13} /> 16:9 presentation</span>
-          <Button variant="primary" size="sm" onClick={handleExportPdf}>
+          <Button variant="outline" size="sm" onClick={handleCopySummary} aria-label="Copy Markdown summary of this dossier">
+            <Copy size={14} strokeWidth={1.6} /> <span className="hidden sm:inline">Copy brief</span>
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleDownloadAccessibleSummary} aria-label="Download an accessible Markdown summary of this dossier">
+            <Download size={14} strokeWidth={1.6} /> <span className="hidden sm:inline">Accessible summary</span>
+          </Button>
+          <Button variant="primary" size="sm" onClick={handleExportPdf} aria-label="Open the print dialog to save this dossier as a PDF slide deck">
             <Printer size={14} strokeWidth={1.6} /> Export PDF slide deck
           </Button>
-        </div>
+        </nav>
       </div>
 
       <div className="dossier-export-note print:hidden" role="note">
         <div><Printer size={16} /><strong>Ready for the client room.</strong></div>
-        <p>The dossier stays live on this page. To download it, choose <b>Save as PDF</b> in the print dialog; the deck is already formatted as 16:9 landscape slides with backgrounds and zero margins.</p>
+        <p>Choose <b>Export PDF slide deck</b>, then select <b>Save as PDF</b> in the print dialog. Prefer <b>Accessible summary</b> for a concise, semantic version that works well with screen readers, notes and document review tools.</p>
       </div>
 
       <div className="dossier-deck" id="dossier-deck">

@@ -174,7 +174,9 @@ _SoundThesis Capital Institutional Policy Standard_
 - **Systematic Withdrawal Plan (SWP) Directive:** Decumulation drawdown commencing at age ${state.client.retirementAge} through age ${state.client.lifeExpectancy} with inflation indexing and sequence-of-returns mitigation via dedicated liquid and short-duration fixed-income reserves.
 - **Tax Governance:** Asset location and tax-loss harvesting reviewed systematically prior to fiscal year-end.
 
-## 4. Priority-Tiered Goals & Liabilities
+## 4. Strategic Advisory Guidance & Suggested Priorities
+
+_Advisory planning priorities agreed to inform asset allocation corridors and liquidity needs without constituting rigid contractual lock-ins._
 
 ${goalsMd}
 
@@ -310,7 +312,7 @@ export function parseIPSMarkdown(md: string): IPSState {
   }
 
   // Parse goals
-  const goalsMatch = md.match(/##\s*(?:4\.\s*)?(?:Goals|Priority-Tiered Goals & Liabilities)\s*\n+([\s\S]*?)(?=\n##|$)/);
+  const goalsMatch = md.match(/##\s*(?:4\.\s*)?(?:Goals|Priority-Tiered Goals & Liabilities|Strategic Advisory Guidance & Suggested Priorities)\s*\n+([\s\S]*?)(?=\n##|$)/);
   if (goalsMatch) {
     const parsedGoals: IPSGoal[] = [];
     const lines = goalsMatch[1].trim().split('\n');

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
-import { Menu, Search, Wallet, ShieldCheck, User, FlaskConical, RotateCcw, ChevronDown, LogOut, Save } from 'lucide-react';
+import { Menu, Search, Wallet, ShieldCheck, User, FlaskConical, RotateCcw, ChevronDown, LogOut, Save, Printer } from 'lucide-react';
 import { navItems } from './navItems';
 import { LogoMark } from './BrandMark';
 import { CommandPalette } from './CommandPalette';
@@ -75,6 +75,11 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
       run: () => navigate('/master-plan'),
     },
     {
+      label: 'Wealth dossier',
+      icon: Printer,
+      run: () => navigate('/dossier'),
+    },
+    {
       label: 'Save plan',
       icon: Save,
       run: () => saveCurrentPlan(),
@@ -145,7 +150,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
 
           {/* Desktop: breadcrumb */}
           <div className="hidden lg:flex items-center gap-1.5 min-w-0">
-            <Link to="/overview" className="text-xs font-medium text-muted hover:text-ink transition-colors">Workspace</Link>
+            <Link to="/" className="text-xs font-medium text-muted hover:text-ink transition-colors">Workspace</Link>
             <span className="text-muted text-xs" aria-hidden="true">/</span>
             <span className="text-xs text-muted font-medium">{section}</span>
             <span className="text-muted text-xs" aria-hidden="true">/</span>
@@ -198,6 +203,16 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
                 <span className="text-[11px] text-muted tabular-nums">{riskScore}</span>
               </Link>
             )}
+
+            {/* Dossier quick export pill */}
+            <Link
+              to="/dossier"
+              title="Open or export wealth dossier slide deck"
+              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-surface/80 text-ink hover:border-border-strong hover:bg-raised transition-colors text-[13px] font-medium"
+            >
+              <Printer size={14} strokeWidth={1.7} className="text-accent-strong shrink-0" />
+              <span>Dossier</span>
+            </Link>
 
             <ThemeToggle variant="segmented" className="hidden sm:inline-flex" />
 

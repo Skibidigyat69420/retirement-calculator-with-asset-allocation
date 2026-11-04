@@ -144,7 +144,7 @@ export const RiskQuestionnaire = () => {
       />
 
       <WorkflowFooter
-        prev={{ path: '/', label: 'Dashboard' }}
+        prev={{ path: '/', label: 'IPS desk' }}
         next={{ path: '/policy?source=risk', label: 'Policy & IPS' }}
         flowHint="Risk profile establishes a recommended risk budget; use Policy & IPS to accept it, customise it, or create a standalone mandate."
       />

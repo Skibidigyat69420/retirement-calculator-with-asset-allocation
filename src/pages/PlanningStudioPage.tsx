@@ -175,7 +175,7 @@ export function PlanningStudioPage() {
 
       <section className="grid gap-4 lg:grid-cols-3" aria-label="Planning sequence">
         {[
-          ['01', 'Client plan', 'Household, goals, cash flow and risk profile inform the mandate.'],
+          ['01', 'Client plan', 'Household, suggested goals, cash flow and risk profile inform the mandate.'],
           ['02', 'Allocation policy', 'Choose a practice template or author a client-specific allocation.'],
           ['03', 'IPS & dossier', 'The saved policy is reused directly in the IPS and client dossier.'],
         ].map(([number, title, copy], index) => <div key={title} className={`rounded-xl border p-4 ${index === 1 ? 'border-accent bg-accent-soft/30' : 'border-border bg-surface'}`}><span className="font-mono text-xs text-accent">{number}</span><h2 className="font-semibold text-ink mt-2">{title}</h2><p className="text-xs text-muted mt-1 leading-relaxed">{copy}</p></div>)}
@@ -215,7 +215,7 @@ export function PlanningStudioPage() {
         </section>
       </div>
 
-      <section className="rounded-xl border border-border bg-surface p-4 flex flex-col md:flex-row md:items-center justify-between gap-4"><div><h2 className="font-semibold text-sm text-ink">Already have a full financial plan?</h2><p className="text-xs text-muted mt-1">Complete household facts, cash flow and goals before setting the strategic policy.</p></div><div className="flex gap-2"><Link to="/master-plan" className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-ink hover:bg-sunken"><PencilLine size={14} /> Open plan</Link><Link to="/dossier" className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-ink hover:bg-sunken"><Sparkles size={14} /> View dossier</Link></div></section>
+      <section className="rounded-xl border border-border bg-surface p-4 flex flex-col md:flex-row md:items-center justify-between gap-4"><div><h2 className="font-semibold text-sm text-ink">Already have a full financial plan?</h2><p className="text-xs text-muted mt-1">Use household facts, cash flow and goals as inputs to the recommendation; validate formal funding commitments before the policy is ratified.</p></div><div className="flex gap-2"><Link to="/master-plan" className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-ink hover:bg-sunken"><PencilLine size={14} /> Open plan</Link><Link to="/dossier" className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-ink hover:bg-sunken"><Sparkles size={14} /> View dossier</Link></div></section>
     </div>
   );
 }

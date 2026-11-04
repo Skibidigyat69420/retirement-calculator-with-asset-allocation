@@ -88,7 +88,8 @@ function AnimatedRoutes() {
         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
       >
         <Routes location={location}>
-          <Route path="/" element={<Practitioner />} />
+          <Route path="/" element={<IPSWorkspace />} />
+          <Route path="/clients" element={<Practitioner />} />
           <Route path="/overview" element={<Dashboard />} />
           <Route path="/risk" element={<RiskQuestionnaire />} />
           <Route path="/master-plan" element={<MasterPlan />} />
@@ -105,7 +106,7 @@ function AnimatedRoutes() {
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/dossier" element={<Dossier />} />
           <Route path="/calculators" element={<Calculators />} />
-          <Route path="/ips" element={<IPSWorkspace />} />
+          <Route path="/ips" element={<Navigate to="/" replace />} />
           <Route path="/ips/editor" element={<IPSTemplate />} />
           <Route path="/team" element={<PracticeTeam />} />
           <Route path="/practitioner" element={<Practitioner />} />
