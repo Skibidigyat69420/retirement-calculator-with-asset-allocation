@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
   Calendar,
@@ -98,7 +98,9 @@ export function IPSWorkspacePage() {
     wealthResult,
     saveCurrentPlan,
     showToast,
+    manualAllocationPolicy,
   } = useCalculator();
+  const [searchParams] = useSearchParams();
 
   // Active wizard step
   const [step, setStep] = useState<StepId>('client');
@@ -135,6 +137,10 @@ export function IPSWorkspacePage() {
     notes: '',
     nextAction: '',
   });
+
+  useEffect(() => {
+    if (searchParams.get('step') === 'document') setStep('document');
+  }, [searchParams]);
 
   // Refresh clients on external changes
   const refreshClientList = useCallback(() => {
@@ -428,6 +434,22 @@ export function IPSWorkspacePage() {
     link.click();
     URL.revokeObjectURL(url);
     showToast('IPS downloaded as Markdown.', 'success');
+  };
+
+  const exportPdf = () => {
+    const previousTitle = document.title;
+    const safeName = (inputs.client.name || activeClient?.name || 'client')
+      .replace(/[^a-z0-9]+/gi, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase();
+    document.title = `${safeName || 'client'}-investment-policy-statement`;
+    const restore = () => {
+      document.title = previousTitle;
+      window.removeEventListener('afterprint', restore);
+    };
+    window.addEventListener('afterprint', restore);
+    window.print();
+    window.setTimeout(restore, 1500);
   };
 
   const copyToClipboard = async () => {
@@ -1468,12 +1490,12 @@ export function IPSWorkspacePage() {
 
                 <button
                   type="button"
-                  onClick={() => window.print()}
+                  onClick={exportPdf}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-sunken text-xs font-medium text-ink transition-colors cursor-pointer"
-                  title="Print IPS"
+                  title="Export IPS as a PDF"
                 >
                   <Printer size={14} />
-                  <span>Print</span>
+                  <span>Export PDF</span>
                 </button>
 
                 <button
@@ -1578,10 +1600,24 @@ export function IPSWorkspacePage() {
                   </div>
                 </section>
 
+                <section className="space-y-3">
+                  <h3 className="text-sm font-semibold text-ink">03. Purpose, Objectives & Funding Priorities</h3>
+                  <div className="grid md:grid-cols-2 gap-4 text-xs">
+                    <div className="rounded-xl border border-border bg-raised/50 p-4"><span className="text-[11px] text-muted block">Investment objective</span><p className="text-ink leading-relaxed mt-1">{manualAllocationPolicy?.objective || 'Fund the household’s priority goals while maintaining purchasing power and an appropriate liquidity reserve.'}</p></div>
+                    <div className="rounded-xl border border-border bg-raised/50 p-4"><span className="text-[11px] text-muted block">Risk capacity & planning horizon</span><p className="text-ink leading-relaxed mt-1">{riskProfile.label} profile; {Math.max(0, inputs.retirementAge - inputs.currentAge)} years to retirement and {Math.max(0, inputs.lifeExpectancy - inputs.retirementAge)} years of projected distribution.</p></div>
+                  </div>
+                  <div className="border border-border rounded-xl overflow-hidden"><div className="grid grid-cols-[1fr_90px_110px] gap-3 bg-sunken px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted"><span>Goal</span><span>Priority</span><span className="text-right">Horizon</span></div>{inputs.goals.length ? inputs.goals.map((goal) => <div key={goal.id} className="grid grid-cols-[1fr_90px_110px] gap-3 border-t border-border px-4 py-2.5 text-xs"><span className="font-medium text-ink truncate">{goal.name}</span><span className="capitalize text-muted">{goal.priority}</span><span className="font-mono text-right text-muted">{goal.yearsToGoal} yrs</span></div>) : <p className="px-4 py-3 text-xs text-muted">No specific goals have been recorded. Review before client signature.</p>}</div>
+                </section>
+
+                <section className="space-y-3 text-xs leading-relaxed text-muted">
+                  <h3 className="text-sm font-semibold text-ink">04. Liquidity, Restrictions & Implementation</h3>
+                  <div className="grid md:grid-cols-2 gap-4"><div className="rounded-xl border border-border bg-raised/50 p-4"><p>• <strong>Minimum liquid reserve:</strong> {formatCurrency((inputs.monthlyLivingExpenses || 0) * 12)} (12 months of recorded household expenditure).</p><p className="mt-2">• <strong>Review cadence:</strong> {manualAllocationPolicy?.reviewFrequency || 'quarterly'}; formal review at least annually and upon a material household event.</p></div><div className="rounded-xl border border-border bg-raised/50 p-4"><p>• <strong>Rebalance trigger:</strong> {manualAllocationPolicy?.rebalanceThreshold ?? 5}% absolute drift from target allocation.</p><p className="mt-2">• <strong>Client constraints:</strong> {manualAllocationPolicy?.constraints || policyNote || 'No client-specific exclusions recorded.'}</p></div></div>
+                </section>
+
                 {/* Section 3: Rebalancing Protocol */}
                 <section className="space-y-3 text-xs leading-relaxed text-muted">
                   <h3 className="text-sm font-semibold text-ink">
-                    03. Governance & Rebalancing Protocol
+                    05. Governance & Rebalancing Protocol
                   </h3>
                   <div className="p-4 rounded-xl border border-border bg-raised/50 space-y-2">
                     <p>

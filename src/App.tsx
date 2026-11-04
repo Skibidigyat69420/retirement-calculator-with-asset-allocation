@@ -36,6 +36,8 @@ function lazyNamed<T extends ComponentType<any>>(
 const Dashboard = lazyNamed(() => import('./pages/Dashboard'), 'Dashboard');
 const MasterPlan = lazyNamed(() => import('./pages/MasterPlan'), 'MasterPlan');
 const Allocation = lazyNamed(() => import('./pages/Allocation'), 'Allocation');
+const PlanningStudio = lazyNamed(() => import('./pages/PlanningStudioPage'), 'PlanningStudioPage');
+const PolicyCenter = lazyNamed(() => import('./pages/PolicyCenterPage'), 'PolicyCenterPage');
 const GoalPlanner = lazyNamed(() => import('./pages/GoalPlanner'), 'GoalPlanner');
 const Retirement = lazyNamed(() => import('./pages/Retirement'), 'Retirement');
 const IPSTemplate = lazy(async () => {
@@ -96,6 +98,8 @@ function AnimatedRoutes() {
           <Route path="/retirement" element={<Retirement />} />
           <Route path="/reverse-planning" element={<ReversePlanning />} />
           <Route path="/allocation" element={<Allocation />} />
+          <Route path="/planning" element={<PlanningStudio />} />
+          <Route path="/policy" element={<PolicyCenter />} />
           <Route path="/meeting-workflow" element={<ClientMeeting />} />
           <Route path="/decision-history" element={<DecisionHistory />} />
           <Route path="/reports" element={<ReportsPage />} />

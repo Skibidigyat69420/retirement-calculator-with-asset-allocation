@@ -100,6 +100,33 @@ export function defaultState(): IPSState {
   };
 }
 
+/** A genuinely blank IPS for adviser-authored, standalone mandates. */
+export function blankState(): IPSState {
+  return {
+    client: {
+      name: '',
+      advisor: 'SoundThesis Capital',
+      reviewDate: new Date().toISOString().split('T')[0],
+      currentAge: 0,
+      retirementAge: 0,
+      lifeExpectancy: 0,
+      inflation: 0,
+    },
+    returnObjective: '',
+    riskTolerance: 'moderate',
+    maxDrawdown: 0,
+    allocation: { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 },
+    currentAllocation: { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 },
+    baseCurrency: 'INR',
+    foreignExposure: 0,
+    hedgePolicy: '',
+    implementationReview: '',
+    goals: [],
+    assets: [],
+    notes: '',
+  };
+}
+
 export function generateIPSMarkdown(state: IPSState, netWorth: number): string {
   const goalsMd =
     state.goals.length === 0

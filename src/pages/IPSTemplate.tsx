@@ -1,4 +1,5 @@
-import { useReducer, useState, useEffect, useCallback, useId, useMemo } from 'react';
+import { useReducer, useState, useEffect, useCallback, useId, useMemo, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   FileText,
   Download,
@@ -31,6 +32,7 @@ import { cn } from '../lib/utils';
 import type { AssetCategory, GoalPriority, ClientProfile, MasterPlanInputs } from '../types';
 import {
   categoryLabels,
+  blankState,
   defaultState,
   generateIPSMarkdown,
   parseIPSMarkdown,
@@ -137,7 +139,9 @@ function loadPersistedState(): IPSState | null {
 }
 
 export const IPSTemplate = () => {
-  const [state, dispatch] = useReducer(ipsReducer, undefined, () => loadPersistedState() || defaultState());
+  const [searchParams] = useSearchParams();
+  const startIndependent = searchParams.get('mode') === 'independent';
+  const [state, dispatch] = useReducer(ipsReducer, undefined, () => startIndependent ? blankState() : loadPersistedState() || defaultState());
   const baseId = useId();
   const fieldId = (name: string) => `${baseId}-${name}`;
 
@@ -159,6 +163,7 @@ export const IPSTemplate = () => {
   } = useCalculator();
 
   const [isLinkedToPlan, setIsLinkedToPlan] = useState<boolean>(() => {
+    if (startIndependent) return false;
     try {
       const stored = localStorage.getItem('soundthesis_ips_linked_mode');
       return stored === null ? true : stored === 'true';
@@ -166,6 +171,15 @@ export const IPSTemplate = () => {
       return true;
     }
   });
+  const independentModeConsumed = useRef(startIndependent);
+
+  useEffect(() => {
+    if (searchParams.get('mode') !== 'independent' || independentModeConsumed.current) return;
+    independentModeConsumed.current = true;
+    setIsLinkedToPlan(false);
+    dispatch({ type: 'reset', payload: blankState() });
+    localStorage.setItem('soundthesis_ips_linked_mode', 'false');
+  }, [searchParams]);
 
   const handleSetLinkedMode = (linked: boolean) => {
     setIsLinkedToPlan(linked);
@@ -745,6 +759,7 @@ export const IPSTemplate = () => {
                 onChange={(v) => handleClientChange({ currentAge: v })}
                 min={18}
                 max={100}
+                allowEmpty={!isLinkedToPlan}
               />
               <NumberInput
                 label="Target Retirement"
@@ -752,6 +767,7 @@ export const IPSTemplate = () => {
                 onChange={(v) => handleClientChange({ retirementAge: v })}
                 min={30}
                 max={100}
+                allowEmpty={!isLinkedToPlan}
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -761,6 +777,7 @@ export const IPSTemplate = () => {
                 onChange={(v) => handleClientChange({ lifeExpectancy: v })}
                 min={30}
                 max={120}
+                allowEmpty={!isLinkedToPlan}
               />
               <NumberInput
                 label="Inflation Hurdle"
@@ -1244,7 +1261,7 @@ export const IPSTemplate = () => {
               variant="ghost"
               size="sm"
               className="flex-1 text-xs text-negative hover:text-negative hover:bg-negative-soft"
-              onClick={() => dispatch({ type: 'reset' })}
+              onClick={() => dispatch({ type: 'reset', payload: blankState() })}
             >
               <Eraser size={13} className="mr-1" /> Clear All
             </Button>

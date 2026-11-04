@@ -81,6 +81,29 @@ export interface AllocationRange {
   max: number;
 }
 
+/**
+ * A dated, adviser-authored allocation proposal. Proposals are intentionally
+ * retained with the client policy so the dossier can distinguish the current
+ * position from the recommendation that is being put forward.
+ */
+export type AllocationRecommendationMethod =
+  | 'advisor-rationale'
+  | 'model-optimised'
+  | 'goal-and-cashflow-led'
+  | 'risk-budget-calibrated';
+
+export interface AllocationRecommendation {
+  id: string;
+  title: string;
+  method: AllocationRecommendationMethod;
+  sourceLabel: string;
+  rationale: string;
+  evidenceCitation: string;
+  createdAt: string;
+  createdBy: string;
+  targets: Record<AssetCategory, number>;
+}
+
 /** Advisor-authored client allocation mandate that accompanies manual target weights. */
 export interface ManualAllocationPolicy {
   name: string;
@@ -94,6 +117,8 @@ export interface ManualAllocationPolicy {
   approvedBy: string;
   ranges: Record<AssetCategory, AllocationRange>;
   updatedAt: string;
+  /** Newest proposal last; retained as a lightweight, client-specific advice trail. */
+  recommendations?: AllocationRecommendation[];
 }
 
 export interface RiskQuestion {

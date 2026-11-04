@@ -1,4 +1,4 @@
-import type { AssetCategory } from '../types';
+import type { AssetCategory, ManualAllocationPolicy, MasterPlanInputs, RiskAnswers } from '../types';
 import type { ClientSummary } from './api';
 
 export type CRMStage =
@@ -24,6 +24,20 @@ export interface CRMInteraction {
   advisorName?: string;
 }
 
+/**
+ * The offline practice workspace keeps an explicit snapshot per household.
+ * This prevents a planner's work for one client from leaking into the next
+ * client selected in the directory. The hosted API keeps its own versioned
+ * plan records; this is only the resilient local-workspace equivalent.
+ */
+export interface CRMPlanSnapshot {
+  inputs: MasterPlanInputs;
+  riskAnswers: RiskAnswers;
+  manualTargets: Record<AssetCategory, number> | null;
+  manualAllocationPolicy: ManualAllocationPolicy | null;
+  updatedAt: string;
+}
+
 export interface CRMClient extends ClientSummary {
   email?: string;
   phone?: string;
@@ -43,6 +57,7 @@ export interface CRMClient extends ClientSummary {
   policyNotes?: string;
   targetAllocation?: Record<AssetCategory, number>;
   interactions?: CRMInteraction[];
+  planSnapshot?: CRMPlanSnapshot;
 }
 
 export const CRM_STAGES: CRMStage[] = [
@@ -301,6 +316,15 @@ export function getActiveCRMClient(): CRMClient | null {
     if (found) return found;
   }
   return clients[0] ?? null;
+}
+
+/** Return the explicitly selected local CRM record, without a fallback.
+ * Server-backed plans use the same active-client key but need not have a
+ * duplicate record in the browser directory. */
+export function getSelectedCRMClient(): CRMClient | null {
+  const activeId = localStorage.getItem(ACTIVE_CLIENT_KEY);
+  if (!activeId) return null;
+  return getCRMClients().find((client) => client.id === activeId) ?? null;
 }
 
 /** Set active client ID in localStorage and dispatch event. */

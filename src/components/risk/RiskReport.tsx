@@ -514,7 +514,7 @@ export const RiskReport = ({
       <section className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
         <Button onClick={onApply} className="sm:min-w-56">
           <ShieldCheck size={16} strokeWidth={1.7} className="mr-2" aria-hidden="true" />
-          Apply to allocation
+          Use this risk budget
         </Button>
         <Button variant="outline" onClick={onEdit}>
           <ArrowLeft size={15} strokeWidth={1.7} className="mr-1.5" aria-hidden="true" />

@@ -46,6 +46,7 @@ import {
   patchFinancialResource,
   fetchInrFxRates,
 } from '../lib/api';
+import { getActiveCRMClient, saveCRMClient } from '../lib/crm';
 
 export interface ToastNotification {
   id: string;
@@ -436,6 +437,71 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     return () => window.removeEventListener('stw:active-client-changed', syncActiveClient);
   }, []);
 
+  // The API hydrates server-backed households above. In the offline practice
+  // workspace, keep the same promise with a client-scoped local snapshot.
+  // A new relationship receives a useful planning shell from its CRM record;
+  // thereafter every plan, policy and risk change belongs to that household.
+  useEffect(() => {
+    if (backendEnabled || !activeClientId) return;
+    const client = getActiveCRMClient();
+    if (!client || client.id !== activeClientId) return;
+    const snapshot = client.planSnapshot;
+    if (snapshot) {
+      setInputs(normalizePlan(snapshot.inputs));
+      setRiskAnswersState(snapshot.riskAnswers || {});
+      setManualTargetsState(snapshot.manualTargets ?? client.targetAllocation ?? null);
+      setManualAllocationPolicyState(snapshot.manualAllocationPolicy ?? null);
+      return;
+    }
+
+    const defaults = defaultClientInputs();
+    const categories: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
+    const assets = categories
+      .map((category) => ({ category, value: Number(client.financialSummary?.byCategory?.[category] || 0) }))
+      .filter((asset) => asset.value > 0)
+      .map((asset) => ({
+        id: `crm-${client.id}-${asset.category}`,
+        name: `${asset.category === 'realestate' ? 'Real estate' : asset.category[0].toUpperCase() + asset.category.slice(1)} holdings`,
+        category: asset.category,
+        value: asset.value,
+        returnRate: 0,
+        currency: 'INR',
+        liquidateAtRetirement: false,
+      }));
+    setInputs(normalizePlan({
+      ...defaults,
+      client: {
+        ...defaults.client,
+        name: client.name,
+        email: client.email || '',
+        phone: client.phone || '',
+        advisor: client.assignedPractitioners?.[0]?.fullName || defaults.client.advisor,
+        reviewDate: client.reviewDate || defaults.client.reviewDate,
+        notes: client.policyNotes || '',
+      },
+      currentAge: client.currentAge || defaults.currentAge,
+      retirementAge: client.retirementAge || defaults.retirementAge,
+      lifeExpectancy: client.lifeExpectancy || defaults.lifeExpectancy,
+      annualIncome: client.annualIncome || 0,
+      monthlyLivingExpenses: client.monthlyLivingExpenses || 0,
+      monthlyExpenditure: client.monthlyLivingExpenses || 0,
+      inflation: client.inflation || defaults.inflation,
+      assets,
+      goals: client.primaryGoal ? [{
+        id: `crm-goal-${client.id}`,
+        name: client.primaryGoal,
+        targetAmount: 0,
+        yearsToGoal: Math.max(1, (client.retirementAge || defaults.retirementAge) - (client.currentAge || defaults.currentAge)),
+        priority: 'essential',
+        inflation: client.inflation || defaults.inflation,
+        recurring: false,
+      }] : [],
+    }));
+    setRiskAnswersState({});
+    setManualTargetsState(client.targetAllocation ?? null);
+    setManualAllocationPolicyState(null);
+  }, [activeClientId, backendEnabled]);
+
   const activeAssumptions = useMemo(() => {
     return getAssumptionsForMode(assumptionMode, assumptions, customCategoryReturns);
   }, [assumptionMode, assumptions, customCategoryReturns]);
@@ -531,6 +597,26 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     saveTimerRef.current = setTimeout(() => saveClientData(inputs), 500);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [inputs]);
+
+  useEffect(() => {
+    if (backendEnabled || !activeClientId) return;
+    const timer = window.setTimeout(() => {
+      const client = getActiveCRMClient();
+      if (!client || client.id !== activeClientId) return;
+      saveCRMClient({
+        ...client,
+        planSnapshot: {
+          inputs,
+          riskAnswers,
+          manualTargets,
+          manualAllocationPolicy,
+          updatedAt: new Date().toISOString(),
+        },
+        targetAllocation: manualTargets ?? client.targetAllocation,
+      });
+    }, 650);
+    return () => window.clearTimeout(timer);
+  }, [activeClientId, backendEnabled, inputs, manualAllocationPolicy, manualTargets, riskAnswers]);
 
   // The database is authoritative for an advisor-selected client. Full
   // planning state is versioned on the plan, and row-shaped financial

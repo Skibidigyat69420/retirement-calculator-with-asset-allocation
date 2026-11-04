@@ -141,11 +141,11 @@ export function PractitionerPage() {
           </div>
 
           <div className="client-selected-banner-actions">
-            <Link to="/ips" onClick={() => openClientWorkspace(selected.id)} className="client-action-primary">
-              Create IPS <ArrowUpRight size={14} />
+            <Link to="/planning" onClick={() => openClientWorkspace(selected.id)} className="client-action-primary">
+              Plan allocation <ArrowUpRight size={14} />
             </Link>
-            <Link to="/master-plan" onClick={() => openClientWorkspace(selected.id)} className="client-action-btn">
-              Open Plan <ArrowUpRight size={14} />
+            <Link to="/ips" onClick={() => openClientWorkspace(selected.id)} className="client-action-btn">
+              Open IPS <ArrowUpRight size={14} />
             </Link>
             <Link to="/reports" onClick={() => openClientWorkspace(selected.id)} className="client-action-btn">
               Reports <ArrowUpRight size={14} />

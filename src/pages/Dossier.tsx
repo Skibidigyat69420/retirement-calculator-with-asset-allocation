@@ -7,9 +7,16 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { PlanReportBody } from '../components/reports/PlanReportBody';
 import { ASSET_LABELS } from '../lib/constants';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
-import type { AssetCategory } from '../types';
+import type { AllocationRecommendationMethod, AssetCategory } from '../types';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
+
+const METHOD_LABELS: Record<AllocationRecommendationMethod, string> = {
+  'advisor-rationale': 'Advisor rationale',
+  'model-optimised': 'Suggestive optimisation',
+  'goal-and-cashflow-led': 'Goals & cash-flow led',
+  'risk-budget-calibrated': 'Risk-budget calibrated',
+};
 
 export const Dossier = () => {
   const [searchParams] = useSearchParams();
@@ -27,6 +34,8 @@ export const Dossier = () => {
   } = useCalculator();
 
   const targets = manualTargets || riskProfile.targets;
+  const allocationRecommendations = [...(manualAllocationPolicy?.recommendations || [])].reverse();
+  const latestRecommendation = allocationRecommendations[0];
   const grossAssets = inputs.assets.reduce((sum, asset) => sum + asset.value, 0);
   const totalLiabilities = inputs.liabilities.reduce((sum, liability) => sum + liability.principal, 0);
   const liquidAssets = inputs.assets.filter((asset) => asset.category === 'liquid').reduce((sum, asset) => sum + asset.value, 0);
@@ -36,6 +45,9 @@ export const Dossier = () => {
     (inner, b) => inner + (targets[a] / 100) * (targets[b] / 100) * assumptions.covariance[a][b], 0,
   ), 0);
   const targetVolatility = Math.sqrt(Math.max(0, targetVariance));
+  const goalThreshold = riskProfile.goalSuccessThreshold / 100;
+  const fundedGoals = wealthResult.goalResults.filter((goal) => goal.successRate >= goalThreshold).length;
+  const monthlySurplus = wealthResult.annualSavings / 12;
   const dataCoverage = [
     inputs.client.name,
     inputs.assets.length,
@@ -150,12 +162,13 @@ export const Dossier = () => {
               {[
                 ['01', 'Client & household', 'People, circumstances, mandate and scope of advice'],
                 ['02', 'Financial position', 'Balance sheet, cash flow, liabilities and liquidity'],
-                ['03', 'Risk & allocation', 'Capacity, current exposures, policy ranges and trades'],
-                ['04', 'Goals & retirement', 'Funding confidence, conflicts and longevity'],
-                ['05', 'Stress & sensitivity', 'Crisis paths and the variables that matter'],
-                ['06', 'Tax & protection', 'Tax drag, currency exposure and insurance records'],
-                ['07', 'Assumptions', 'Capital-market inputs, simulation and limitations'],
-                ['08', 'Actions & governance', 'Recommendations, decisions and review record'],
+                ['03', 'Current position', 'Plan viability, surplus, risk budget, liquidity and goal funding'],
+                ['04', 'Risk & goals', 'Capacity, profile, funding confidence and longevity'],
+                ['05', 'Allocation recommendation', 'Advisor proposal, rationale, evidence and proposed changes'],
+                ['06', 'Current versus policy', 'Current exposures, policy ranges and implementation trades'],
+                ['07', 'Stress & sensitivity', 'Crisis paths and the variables that matter'],
+                ['08', 'Tax, protection & assumptions', 'Tax drag, currency exposure and capital-market inputs'],
+                ['09', 'Actions & governance', 'Recommendations, decisions and review record'],
               ].map(([number, title, copy]) => <li key={number}><span>{number}</span><div><strong>{title}</strong><p>{copy}</p></div></li>)}
             </ol>
           </div>
@@ -164,7 +177,7 @@ export const Dossier = () => {
             <Link to="/balance-sheet">Balance sheet <ArrowUpRight size={14} /></Link>
             <Link to="/goal">Goals <ArrowUpRight size={14} /></Link>
             <Link to="/risk">Risk profile <ArrowUpRight size={14} /></Link>
-            <Link to="/allocation">Allocation <ArrowUpRight size={14} /></Link>
+            <Link to="/planning">Allocation recommendations <ArrowUpRight size={14} /></Link>
             <Link to="/retirement">Retirement <ArrowUpRight size={14} /></Link>
           </div>
           <div className="dossier-folio"><span>Contents / Source map</span><span>02</span></div>
@@ -224,6 +237,34 @@ export const Dossier = () => {
           <div className="dossier-folio"><span>Executive signal board / Current plan state</span><span>04</span></div>
         </section>
 
+        <section className="dossier-print-page dossier-current-position-page">
+          <div className="dossier-position-head"><div><span>Current position / Master Plan</span><h2>The facts before<br />the allocation decision.</h2></div><p>This is the baseline that flows from the live plan. Allocation recommendations below are additive advice records, never substitutes for the client’s current position.</p></div>
+          <div className="dossier-position-grid">
+            <div className="dossier-position-hero"><span>Plan outcome</span><strong>{wealthResult.sustainable ? 'On track through life expectancy' : `Requires action before age ${wealthResult.depletionAge}`}</strong><div><b>{formatPercent(wealthResult.monteCarlo.successRate * 100)}</b><small>Plan success probability</small></div><p>{wealthResult.sustainable ? 'Retirement cash-flow is projected to remain funded under the recorded assumptions.' : 'The current plan has a projected funding gap; allocation alone should not be treated as the remedy.'}</p></div>
+            <div className="dossier-position-register">
+              {[
+                ['Assessed risk', `${riskProfile.label} · ${riskScore}/100`],
+                ['Monthly surplus', monthlySurplus >= 0 ? formatCurrencyCompact(monthlySurplus) : `Shortfall ${formatCurrencyCompact(Math.abs(monthlySurplus))}`],
+                ['Liquid reserve', `${liquidityMonths.toFixed(1)} months of expenditure`],
+                ['Goals funded', `${fundedGoals} of ${wealthResult.goalResults.length || 0} at ${formatPercent(riskProfile.goalSuccessThreshold)} threshold`],
+                ['Goals requiring action', wealthResult.goalsAtRisk.length ? wealthResult.goalsAtRisk.map((goal) => goal.goal.name).join(', ') : 'None flagged by the current model'],
+                ['Current policy basis', manualTargets ? 'Advisor-authored client policy' : `${riskProfile.label} risk model`],
+              ].map(([label, value], index) => <div key={label}><i>{String(index + 1).padStart(2, '0')}</i><span>{label}</span><strong>{value}</strong></div>)}
+            </div>
+          </div>
+          <div className="dossier-folio"><span>Current position / Inputs, outcomes and funding needs</span><span>05</span></div>
+        </section>
+
+        <section className="dossier-print-page dossier-recommendations-page">
+          <div className="dossier-recommendation-head"><div><span>Allocations / Advisory proposal</span><h2>{latestRecommendation ? latestRecommendation.title : 'No allocation proposal recorded yet'}</h2><p>{latestRecommendation ? 'A traceable recommendation, shown separately from the client’s current portfolio and policy implementation table.' : 'Create an allocation proposal in the Planning workspace to record the approach, rationale and evidence used for this household.'}</p></div><div className="dossier-recommendation-tag"><span>Proposal method</span><strong>{latestRecommendation ? METHOD_LABELS[latestRecommendation.method] : 'Pending adviser input'}</strong><small>{latestRecommendation ? latestRecommendation.sourceLabel : 'No recommendation source recorded'}</small></div></div>
+          <div className="dossier-recommendation-grid">
+            <div className="dossier-rationale-panel"><span>Why this allocation</span><p>{latestRecommendation?.rationale || manualAllocationPolicy?.rationale || 'No rationale recorded.'}</p><div><b>Prepared by</b><strong>{latestRecommendation?.createdBy || inputs.client.advisor || '—'}</strong></div><div><b>Recorded</b><strong>{latestRecommendation ? new Date(latestRecommendation.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</strong></div><div className="dossier-citation"><b>Evidence / citation</b><p>{latestRecommendation?.evidenceCitation || 'No supporting citation recorded.'}</p></div></div>
+            <div className="dossier-proposed-changes"><div className="dossier-proposal-table-head"><span>Asset class</span><span>Current</span><span>Proposed</span><span>Change</span></div>{CATEGORIES.map((category) => { const current = wealthResult.currentAllocation[category] * 100; const proposed = latestRecommendation?.targets[category] ?? targets[category]; const change = proposed - current; return <div className="dossier-proposal-row" key={category}><span>{ASSET_LABELS[category]}</span><span>{formatPercent(current)}</span><span>{formatPercent(proposed)}</span><span className={change > 0.01 ? 'is-increase' : change < -0.01 ? 'is-reduction' : ''}>{Math.abs(change) < .01 ? 'Hold' : `${change > 0 ? '+' : ''}${formatPercent(change)}`}</span></div>; })}</div>
+          </div>
+          <div className="dossier-proposal-history"><span>Advice trail</span>{allocationRecommendations.length ? allocationRecommendations.slice(0, 3).map((item) => <div key={item.id}><strong>{item.title}</strong><small>{METHOD_LABELS[item.method]} · {new Date(item.createdAt).toLocaleDateString('en-IN')} · {item.createdBy}</small></div>) : <p>No proposal has been retained yet. The current allocation remains a baseline until an adviser records a recommendation.</p>}</div>
+          <div className="dossier-folio"><span>Allocation recommendations / Rationale, evidence and proposed changes</span><span>06</span></div>
+        </section>
+
         <section className="dossier-print-page dossier-allocation-page">
           <div className="dossier-allocation-lead">
             <div><span>Policy basis</span><strong>{manualTargets ? 'Advisor-authored mandate' : `${riskProfile.label} model`}</strong></div>
@@ -253,7 +294,7 @@ export const Dossier = () => {
             })}
           </div>
           <div className="dossier-policy-note"><span>Mandate objective</span><p>{manualAllocationPolicy?.objective || riskProfile.recommendedApproach}</p><span>Constraints</span><p>{manualAllocationPolicy?.constraints || 'Risk-profile constraints and goal-liquidity requirements apply.'}</p></div>
-          <div className="dossier-folio"><span>Allocation decision ledger / Current versus policy</span><span>05</span></div>
+          <div className="dossier-folio"><span>Allocation decision ledger / Current versus policy</span><span>07</span></div>
         </section>
 
         <section className="dossier-print-page dossier-risk-page">
@@ -283,7 +324,7 @@ export const Dossier = () => {
               ].map(([label, value], index) => <div key={label}><i>{String(index + 1).padStart(2, '0')}</i><span>{label}</span><strong>{value}</strong></div>)}
             </div>
           </div>
-          <div className="dossier-folio"><span>Risk framework / Assessment and calibration</span><span>06</span></div>
+          <div className="dossier-folio"><span>Risk framework / Assessment and calibration</span><span>08</span></div>
         </section>
 
         <div className="dossier-report-content">

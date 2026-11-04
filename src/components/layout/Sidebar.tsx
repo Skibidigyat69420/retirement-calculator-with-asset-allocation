@@ -63,13 +63,28 @@ const NavLink = ({ item, collapsed, onClick }: NavLinkProps) => {
   return link;
 };
 
-const PRIMARY_PATHS = ['/overview', '/', '/master-plan', '/ips', '/meeting-workflow', '/reports', '/calculators'];
+const PRIMARY_PATHS = ['/', '/planning', '/policy', '/ips', '/dossier'];
 
 const TOOL_GROUPS: { id: string; label: string; paths: string[] }[] = [
   {
-    id: 'analytics',
-    label: 'Analytics & Strategy',
-    paths: ['/allocation', '/retirement', '/goal', '/reverse-planning', '/decision-history'],
+    id: 'client-plan',
+    label: 'Client plan',
+    paths: ['/master-plan', '/client-profile', '/balance-sheet', '/goal', '/risk', '/retirement', '/reverse-planning'],
+  },
+  {
+    id: 'portfolio',
+    label: 'Portfolio & policy',
+    paths: ['/allocation', '/ips/editor'],
+  },
+  {
+    id: 'documents',
+    label: 'Documents & reviews',
+    paths: ['/meeting-workflow', '/decision-history', '/reports'],
+  },
+  {
+    id: 'practice',
+    label: 'Practice operations',
+    paths: ['/overview', '/practitioner', '/team', '/calculators'],
   },
 ];
 
@@ -77,7 +92,7 @@ const NavSections = ({ collapsed, onClick }: { collapsed?: boolean; onClick?: ()
   const location = useLocation();
   const [openGroups, setOpenGroups] = useState<string[]>(() => {
     const current = TOOL_GROUPS.find((group) => group.paths.includes(location.pathname));
-    return current ? [current.id] : ['analytics'];
+    return current ? [current.id] : ['client-plan'];
   });
   const primary = navItems.filter((item) => PRIMARY_PATHS.includes(item.path));
   // Sort primary according to PRIMARY_PATHS order

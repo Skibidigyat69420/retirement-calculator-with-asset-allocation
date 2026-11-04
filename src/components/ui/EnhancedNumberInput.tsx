@@ -33,6 +33,8 @@ export interface EnhancedNumberInputProps {
   onCurrencyChange?: (currency: string) => void;
   /** ISO currency codes offered by the live backend FX catalogue. */
   currencyOptions?: string[];
+  /** Treat a zero value as an intentional blank draft field instead of a range error. */
+  allowEmpty?: boolean;
 }
 
 const formatValue = (val: number): string =>
@@ -73,6 +75,7 @@ export const EnhancedNumberInput = ({
   currency = 'INR',
   onCurrencyChange,
   currencyOptions,
+  allowEmpty = false,
 }: EnhancedNumberInputProps) => {
   const isCurrency = kind === 'currency';
   const effectiveMin = isCurrency ? (min ?? 0) : min;
@@ -91,7 +94,7 @@ export const EnhancedNumberInput = ({
     ...(currencyOptions?.length ? currencyOptions : DEFAULT_CURRENCY_OPTIONS),
   ])).sort((a, b) => (a === 'INR' ? -1 : b === 'INR' ? 1 : a.localeCompare(b)));
 
-  const displayValue = isEditing ? localValue : format(value);
+  const displayValue = isEditing ? localValue : allowEmpty && value === 0 ? '' : format(value);
 
   const clamp = useCallback(
     (val: number) => {
@@ -104,6 +107,11 @@ export const EnhancedNumberInput = ({
 
   const commit = useCallback(
     (raw: string) => {
+      if (allowEmpty && raw.trim() === '') {
+        onChange(0);
+        setIsEditing(false);
+        return;
+      }
       const parsed = parseRaw(raw);
       if (parsed !== null) {
         onChange(clamp(parsed));
@@ -112,7 +120,7 @@ export const EnhancedNumberInput = ({
       }
       setIsEditing(false);
     },
-    [onChange, clamp, value, format],
+    [allowEmpty, onChange, clamp, value, format],
   );
 
   const adjust = (delta: number) => {
@@ -121,7 +129,7 @@ export const EnhancedNumberInput = ({
     setLocalValue(String(newVal));
   };
 
-  const outOfRange = (effectiveMin !== undefined && value < effectiveMin) || (max !== undefined && value > max);
+  const outOfRange = !allowEmpty && ((effectiveMin !== undefined && value < effectiveMin) || (max !== undefined && value > max));
   const hasError = !!error || outOfRange;
   const inline = layout === 'inline';
 

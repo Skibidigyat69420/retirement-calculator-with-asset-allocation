@@ -14,6 +14,7 @@ import {
   Users,
   UserRound,
   ClipboardList,
+  Layers3,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -44,6 +45,13 @@ export const navItems: NavItem[] = [
   },
 
   // Plan
+  {
+    path: '/planning',
+    label: 'Planning studio',
+    icon: Layers3,
+    section: 'Plan',
+    description: 'Client-specific allocation policy from practice templates',
+  },
   {
     path: '/master-plan',
     label: 'Client plan',
@@ -104,6 +112,13 @@ export const navItems: NavItem[] = [
   },
 
   // Deliver
+  {
+    path: '/policy',
+    label: 'Policy & IPS',
+    icon: FileText,
+    section: 'Deliver',
+    description: 'Choose connected, manual, or standalone IPS creation',
+  },
   {
     path: '/ips',
     label: 'Create IPS',

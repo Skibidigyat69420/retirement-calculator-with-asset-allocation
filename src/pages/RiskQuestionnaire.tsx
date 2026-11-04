@@ -41,7 +41,7 @@ export const RiskQuestionnaire = () => {
 
   const handleApply = () => {
     applyRiskProfileToPlan();
-    navigate('/allocation');
+    navigate('/policy?source=risk');
   };
 
   const handleReset = () => {
@@ -55,14 +55,14 @@ export const RiskQuestionnaire = () => {
         <PageHeader
           title="Risk Profile"
           variant="hero"
-          description="The risk profile anchors the strategic asset allocation, volatility constraints, and goal success thresholds. It is established through a structured questionnaire — never assumed."
+          description="The risk profile establishes a recommended risk budget: strategic allocation, volatility constraints and goal-success thresholds. You can accept that starting point, refine it for the client, or write an independent IPS after the assessment."
         />
 
         <EmptyState
           display
           icon={ClipboardList}
           title="No assessment yet"
-          description="Answer the questionnaire to establish the client's risk profile — fourteen questions across eight dimensions, grouped by ability, attitude and experience."
+          description="Answer the questionnaire to establish the client's risk budget — fourteen questions across eight dimensions, grouped by ability, attitude and experience. The resulting allocation remains an adviser-reviewed starting point, not an automatic mandate."
           action={
             <Button size="lg" onClick={() => setMode('assessment')}>
               Begin assessment
@@ -145,8 +145,8 @@ export const RiskQuestionnaire = () => {
 
       <WorkflowFooter
         prev={{ path: '/', label: 'Dashboard' }}
-        next={{ path: '/master-plan', label: 'Master Plan' }}
-        flowHint="Risk profile establishes your strategic asset allocation targets and SIP/STP equity splits."
+        next={{ path: '/policy?source=risk', label: 'Policy & IPS' }}
+        flowHint="Risk profile establishes a recommended risk budget; use Policy & IPS to accept it, customise it, or create a standalone mandate."
       />
     </div>
   );
