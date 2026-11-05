@@ -82,6 +82,20 @@ export interface AllocationRange {
 }
 
 /**
+ * An investable sleeve inside a strategic asset class.  Sleeves let an adviser
+ * describe the actual construction of a client policy (for example, Indian
+ * equity, global equity and short-duration debt), while the plan engine still
+ * works with the six broad asset classes it can model consistently.
+ */
+export interface AllocationSleeve {
+  id: string;
+  assetClass: AssetCategory;
+  category: string;
+  target: number;
+  purpose: string;
+}
+
+/**
  * A dated, adviser-authored allocation proposal. Proposals are intentionally
  * retained with the client policy so the dossier can distinguish the current
  * position from the recommendation that is being put forward.
@@ -102,6 +116,8 @@ export interface AllocationRecommendation {
   createdAt: string;
   createdBy: string;
   targets: Record<AssetCategory, number>;
+  /** The investable building blocks supporting the high-level target mix. */
+  sleeves?: AllocationSleeve[];
 }
 
 /** Advisor-authored client allocation mandate that accompanies manual target weights. */
@@ -117,6 +133,8 @@ export interface ManualAllocationPolicy {
   approvedBy: string;
   ranges: Record<AssetCategory, AllocationRange>;
   updatedAt: string;
+  /** Detailed SAA categories. Their totals reconcile to the policy targets. */
+  sleeves?: AllocationSleeve[];
   /** Newest proposal last; retained as a lightweight, client-specific advice trail. */
   recommendations?: AllocationRecommendation[];
 }

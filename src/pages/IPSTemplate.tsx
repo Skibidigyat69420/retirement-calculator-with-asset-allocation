@@ -151,7 +151,9 @@ export const IPSTemplate = () => {
     riskProfile,
     riskScore,
     manualTargets,
+    manualAllocationPolicy,
     setManualTargets,
+    setManualAllocationPolicy,
     updateClient,
     updateInputs,
     addGoal,
@@ -296,15 +298,16 @@ export const IPSTemplate = () => {
   );
   const allocationOk = Math.abs(totalAllocation - 100) < 0.1;
 
-  // Check if any category has breached the ±5% rebalancing corridor
+  // Check against the client policy's actual ranges when a linked SAA exists.
   const hasCorridorBreach = useMemo(() => {
     for (const cat of Object.keys(categoryLabels) as AssetCategory[]) {
       const target = effectiveAllocation[cat] || 0;
       const current = effectiveCurrentAllocation[cat] || 0;
-      if (Math.abs(current - target) > 5.0) return true;
+      const range = manualAllocationPolicy?.ranges?.[cat];
+      if (range ? current < range.min || current > range.max : Math.abs(current - target) > (manualAllocationPolicy?.rebalanceThreshold ?? 5)) return true;
     }
     return false;
-  }, [effectiveAllocation, effectiveCurrentAllocation]);
+  }, [effectiveAllocation, effectiveCurrentAllocation, manualAllocationPolicy]);
 
   const effectiveState = useMemo<IPSState>(
     () => ({
@@ -316,6 +319,14 @@ export const IPSTemplate = () => {
       assets: effectiveAssets,
       riskTolerance: effectiveRiskTolerance,
       maxDrawdown: effectiveMaxDrawdown,
+      policyName: isLinkedToPlan ? manualAllocationPolicy?.name : state.policyName,
+      policyObjective: isLinkedToPlan ? manualAllocationPolicy?.objective : state.policyObjective,
+      policyRationale: isLinkedToPlan ? manualAllocationPolicy?.rationale : state.policyRationale,
+      policyConstraints: isLinkedToPlan ? manualAllocationPolicy?.constraints : state.policyConstraints,
+      reviewFrequency: isLinkedToPlan ? manualAllocationPolicy?.reviewFrequency : state.reviewFrequency,
+      rebalanceThreshold: isLinkedToPlan ? manualAllocationPolicy?.rebalanceThreshold : state.rebalanceThreshold,
+      allocationRanges: isLinkedToPlan ? manualAllocationPolicy?.ranges : state.allocationRanges,
+      sleeves: isLinkedToPlan ? manualAllocationPolicy?.sleeves : state.sleeves,
     }),
     [
       state,
@@ -326,6 +337,8 @@ export const IPSTemplate = () => {
       effectiveAssets,
       effectiveRiskTolerance,
       effectiveMaxDrawdown,
+      isLinkedToPlan,
+      manualAllocationPolicy,
     ],
   );
 
@@ -351,7 +364,24 @@ export const IPSTemplate = () => {
   const handleAllocationChange = (category: AssetCategory, value: number) => {
     if (isLinkedToPlan) {
       const base = manualTargets || riskProfile.targets;
-      setManualTargets({ ...base, [category]: value });
+      const targets = { ...base, [category]: value };
+      setManualTargets(targets);
+      setManualAllocationPolicy((previous) => {
+        if (!previous?.sleeves?.length) return previous;
+        const classSleeves = previous.sleeves.filter((sleeve) => sleeve.assetClass === category);
+        if (!classSleeves.length) return previous;
+        const currentTotal = classSleeves.reduce((sum, sleeve) => sum + sleeve.target, 0);
+        let allocated = 0;
+        const sleeves = previous.sleeves.map((sleeve) => {
+          if (sleeve.assetClass !== category) return sleeve;
+          const isLast = sleeve.id === classSleeves[classSleeves.length - 1].id;
+          const target = isLast ? Math.max(0, value - allocated) : Number((currentTotal > 0 ? sleeve.target * value / currentTotal : value / classSleeves.length).toFixed(1));
+          allocated += target;
+          return { ...sleeve, target };
+        });
+        const threshold = previous.rebalanceThreshold;
+        return { ...previous, updatedAt: new Date().toISOString(), sleeves, ranges: { ...previous.ranges, [category]: { min: Math.max(0, value - threshold), max: Math.min(100, value + threshold) } } };
+      });
     }
     dispatch({ type: 'updateAllocation', category, value });
   };
@@ -359,6 +389,7 @@ export const IPSTemplate = () => {
   const handleResetAllocationToRiskProfile = () => {
     if (isLinkedToPlan) {
       setManualTargets(null);
+      setManualAllocationPolicy(null);
     }
     dispatch({
       type: 'reset',
@@ -438,6 +469,14 @@ export const IPSTemplate = () => {
         returnObjective: state.returnObjective,
         riskTolerance: effectiveRiskTolerance,
         maxDrawdown: effectiveMaxDrawdown,
+        policyName: manualAllocationPolicy?.name,
+        policyObjective: manualAllocationPolicy?.objective,
+        policyRationale: manualAllocationPolicy?.rationale,
+        policyConstraints: manualAllocationPolicy?.constraints,
+        reviewFrequency: manualAllocationPolicy?.reviewFrequency,
+        rebalanceThreshold: manualAllocationPolicy?.rebalanceThreshold,
+        allocationRanges: manualAllocationPolicy?.ranges,
+        sleeves: manualAllocationPolicy?.sleeves,
         allocation: { ...effectiveAllocation },
         currentAllocation: { ...effectiveCurrentAllocation },
         baseCurrency: state.baseCurrency || 'INR',
@@ -1498,7 +1537,7 @@ export const IPSTemplate = () => {
                       <th className="py-2.5 px-3">Asset Class</th>
                       <th className="py-2.5 px-3 text-right">Policy Target</th>
                       <th className="py-2.5 px-3 text-right">Current Weight</th>
-                      <th className="py-2.5 px-3 text-right">Tolerance Corridor (±5%)</th>
+                      <th className="py-2.5 px-3 text-right">Tolerance Corridor</th>
                       <th className="py-2.5 px-3 text-right">Corridor Drift</th>
                       <th className="py-2.5 px-3 text-center">Policy Status</th>
                     </tr>
@@ -1509,7 +1548,9 @@ export const IPSTemplate = () => {
                       const current = effectiveCurrentAllocation[cat] || 0;
                       const drift = current - target;
                       const isTargetMet = Math.abs(drift) <= 2.0;
-                      const isWithinCorridor = Math.abs(drift) <= 5.0;
+                      const range = manualAllocationPolicy?.ranges?.[cat];
+                      const corridor = manualAllocationPolicy?.rebalanceThreshold ?? 5;
+                      const isWithinCorridor = range ? current >= range.min && current <= range.max : Math.abs(drift) <= corridor;
 
                       return (
                         <tr key={cat} className="hover:bg-surface/50">
@@ -1521,7 +1562,7 @@ export const IPSTemplate = () => {
                             {current.toFixed(1)}%
                           </td>
                           <td className="py-2.5 px-3 text-right text-xs text-muted font-mono">
-                            {Math.max(0, target - 5).toFixed(0)}% – {(target + 5).toFixed(0)}%
+                            {(range?.min ?? Math.max(0, target - corridor)).toFixed(0)}% – {(range?.max ?? Math.min(100, target + corridor)).toFixed(0)}%
                           </td>
                           <td
                             className={cn(
@@ -1585,6 +1626,18 @@ export const IPSTemplate = () => {
                   </tfoot>
                 </table>
               </div>
+              {effectiveState.sleeves?.length ? (
+                <div className="rounded-xl border border-border bg-surface overflow-hidden">
+                  <div className="px-3 py-2.5 border-b border-border"><h3 className="text-xs font-semibold text-ink">5.1 Investable category map</h3><p className="text-[11px] text-muted mt-0.5">Client-specific sleeves carried from the Strategic Allocation workspace.</p></div>
+                  <div className="grid md:grid-cols-2 xl:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border">
+                    {(Object.keys(categoryLabels) as AssetCategory[]).map((assetClass) => {
+                      const sleeves = effectiveState.sleeves?.filter((sleeve) => sleeve.assetClass === assetClass) || [];
+                      if (!sleeves.length) return null;
+                      return <div key={assetClass} className="p-3 space-y-2"><div className="text-[10px] uppercase tracking-wide text-accent font-semibold">{categoryLabels[assetClass]} · {effectiveAllocation[assetClass]}%</div>{sleeves.map((sleeve) => <div key={sleeve.id} className="grid grid-cols-[1fr_auto] gap-x-2 gap-y-0.5"><span className="text-xs font-medium text-ink">{sleeve.category}</span><span className="font-mono text-xs text-ink">{sleeve.target}%</span><span className="col-span-2 text-[10px] text-muted leading-relaxed">{sleeve.purpose || 'Policy category'}</span></div>)}</div>;
+                    })}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             {/* Section 6: Balance Sheet Inventory & Holdings Schedule */}

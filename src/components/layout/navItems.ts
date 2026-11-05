@@ -54,10 +54,10 @@ export const navItems: NavItem[] = [
   // Plan
   {
     path: '/planning',
-    label: 'Planning studio',
+    label: 'Strategic allocation',
     icon: Layers3,
     section: 'Plan',
-    description: 'Client-specific allocation policy from practice templates',
+    description: 'Client-specific SAA, investable categories and policy governance',
   },
   {
     path: '/master-plan',

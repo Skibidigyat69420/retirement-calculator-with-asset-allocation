@@ -1,25 +1,23 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowRight, Check, FileText, Layers3, PencilLine, ShieldCheck, SlidersHorizontal, Sparkles, Users } from 'lucide-react';
+import { ArrowRight, BarChart3, Check, ChevronDown, ChevronUp, FileText, Layers3, PencilLine, Plus, ShieldCheck, SlidersHorizontal, Sparkles, Trash2, Users } from 'lucide-react';
 import { useCalculator } from '../context/CalculatorContext';
-import type { AllocationRecommendationMethod, AssetCategory, ManualAllocationPolicy } from '../types';
+import type { AllocationRecommendationMethod, AllocationSleeve, AssetCategory, ManualAllocationPolicy } from '../types';
 import { formatCurrencyCompact } from '../lib/formatters';
+import { ASSET_LABELS } from '../lib/constants';
 import { addCRMInteraction, getSelectedCRMClient, saveCRMClient } from '../lib/crm';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
-const LABELS: Record<AssetCategory, string> = {
-  equity: 'Equity', debt: 'Fixed income', gold: 'Gold', realestate: 'Real estate', liquid: 'Liquidity', other: 'Other',
+const CLASS_META: Record<AssetCategory, { label: string; short: string; detail: string; accent: string }> = {
+  equity: { label: 'Growth equity', short: 'EQ', detail: 'Long-term real return engine', accent: 'bg-ink' },
+  debt: { label: 'Fixed income', short: 'FI', detail: 'Stability and known cash flows', accent: 'bg-[#64748b]' },
+  gold: { label: 'Gold & diversifiers', short: 'GD', detail: 'Crisis diversification', accent: 'bg-[#b48a32]' },
+  realestate: { label: 'Real assets', short: 'RA', detail: 'Income and inflation sensitivity', accent: 'bg-[#98714c]' },
+  liquid: { label: 'Liquidity reserve', short: 'LQ', detail: 'Near-term funding reserve', accent: 'bg-[#4e8c82]' },
+  other: { label: 'Other / alternatives', short: 'AL', detail: 'Only where explicitly suitable', accent: 'bg-[#8b6fae]' },
 };
 
-type AllocationTemplate = {
-  id: string;
-  name: string;
-  audience: string;
-  description: string;
-  mix: Record<AssetCategory, number>;
-  objective: string;
-  threshold: number;
-};
+type AllocationTemplate = { id: string; name: string; audience: string; description: string; mix: Record<AssetCategory, number>; objective: string; threshold: number };
 
 const TEMPLATES: AllocationTemplate[] = [
   { id: 'capital-preservation', name: 'Capital preservation', audience: 'Practice template · lower drawdown focus', description: 'Defensive, liquidity-led policy for near-term cash-flow needs and modest growth.', mix: { equity: 30, debt: 40, gold: 10, realestate: 0, liquid: 20, other: 0 }, objective: 'Protect capital, maintain funding liquidity and target a modest real return.', threshold: 4 },
@@ -28,7 +26,14 @@ const TEMPLATES: AllocationTemplate[] = [
   { id: 'family-office', name: 'Multi-generational capital', audience: 'Practice template · family office mandate', description: 'Diversifies public capital, real assets and liquidity for intergenerational stewardship.', mix: { equity: 45, debt: 20, gold: 10, realestate: 15, liquid: 5, other: 5 }, objective: 'Preserve and compound multi-generational capital across liquidity, growth and legacy pools.', threshold: 5 },
 ];
 
-const cloneMix = (mix: Record<AssetCategory, number>) => ({ ...mix });
+const SLEEVE_BLUEPRINTS: Record<AssetCategory, Array<{ category: string; purpose: string; ratio: number }>> = {
+  equity: [{ category: 'Core domestic equity', purpose: 'Broad-market participation and compounding.', ratio: 0.55 }, { category: 'Satellite / mid & small cap', purpose: 'Measured growth premium within the equity budget.', ratio: 0.2 }, { category: 'International equity', purpose: 'Geographic diversification and foreign-currency exposure.', ratio: 0.25 }],
+  debt: [{ category: 'Short-duration & cash-plus', purpose: 'Known near-term commitments and rate resilience.', ratio: 0.35 }, { category: 'Core high-quality bonds', purpose: 'Portfolio ballast and medium-term funding.', ratio: 0.5 }, { category: 'Sovereign / inflation-linked', purpose: 'Defensive duration and real-value protection.', ratio: 0.15 }],
+  gold: [{ category: 'Gold ETF / fund', purpose: 'Liquid inflation and crisis diversifier.', ratio: 1 }],
+  realestate: [{ category: 'Listed REITs / InvITs', purpose: 'Liquid real-asset income exposure.', ratio: 0.6 }, { category: 'Direct property', purpose: 'Existing strategic real-estate holdings.', ratio: 0.4 }],
+  liquid: [{ category: 'Emergency reserve', purpose: 'Immediate family and income-interruption reserve.', ratio: 0.6 }, { category: 'Goal reserve', purpose: 'Capital earmarked for commitments inside three years.', ratio: 0.4 }],
+  other: [{ category: 'Alternatives / private assets', purpose: 'Only where liquidity, governance and suitability are clear.', ratio: 1 }],
+};
 
 const RECOMMENDATION_METHODS: { value: AllocationRecommendationMethod; label: string; detail: string }[] = [
   { value: 'advisor-rationale', label: 'Advisor rationale', detail: 'A judgement-led recommendation explained in the advice record.' },
@@ -37,8 +42,33 @@ const RECOMMENDATION_METHODS: { value: AllocationRecommendationMethod; label: st
   { value: 'risk-budget-calibrated', label: 'Risk-budget calibrated', detail: 'Anchored to the completed risk assessment and capacity.' },
 ];
 
-const formatMethod = (method: AllocationRecommendationMethod) =>
-  RECOMMENDATION_METHODS.find((item) => item.value === method)?.label || 'Advisor rationale';
+const cloneMix = (mix: Record<AssetCategory, number>) => ({ ...mix });
+const sumSleeves = (sleeves: AllocationSleeve[], assetClass: AssetCategory) => sleeves.filter((sleeve) => sleeve.assetClass === assetClass).reduce((sum, sleeve) => sum + (Number(sleeve.target) || 0), 0);
+
+const buildDefaultSleeves = (mix: Record<AssetCategory, number>): AllocationSleeve[] => CATEGORIES.flatMap((assetClass) => {
+  const items = SLEEVE_BLUEPRINTS[assetClass];
+  const target = mix[assetClass] || 0;
+  let allocated = 0;
+  return items.map((item, index) => {
+    const value = index === items.length - 1 ? Math.max(0, target - allocated) : Number((target * item.ratio).toFixed(1));
+    allocated += value;
+    return { id: `${assetClass}-${index}`, assetClass, category: item.category, target: value, purpose: item.purpose };
+  });
+});
+
+const rescaleSleeves = (sleeves: AllocationSleeve[], assetClass: AssetCategory, target: number): AllocationSleeve[] => {
+  const classSleeves = sleeves.filter((sleeve) => sleeve.assetClass === assetClass);
+  const current = sumSleeves(sleeves, assetClass);
+  if (!classSleeves.length) return [...sleeves, { id: `${assetClass}-${Date.now()}`, assetClass, category: 'Custom category', target, purpose: '' }];
+  let allocated = 0;
+  return sleeves.map((sleeve) => {
+    if (sleeve.assetClass !== assetClass) return sleeve;
+    const isLast = sleeve.id === classSleeves[classSleeves.length - 1].id;
+    const nextTarget = isLast ? Math.max(0, target - allocated) : Number((current > 0 ? sleeve.target * target / current : target / classSleeves.length).toFixed(1));
+    allocated += nextTarget;
+    return { ...sleeve, target: nextTarget };
+  });
+};
 
 export function PlanningStudioPage() {
   const navigate = useNavigate();
@@ -46,7 +76,9 @@ export function PlanningStudioPage() {
   const { inputs, wealthResult, manualTargets, manualAllocationPolicy, riskProfile, setManualTargets, setManualAllocationPolicy, updateClient, showToast } = useCalculator();
   const [activeClient, setActiveClient] = useState(() => getSelectedCRMClient());
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [expandedClass, setExpandedClass] = useState<AssetCategory | null>('equity');
   const [mix, setMix] = useState<Record<AssetCategory, number>>(() => cloneMix(manualTargets || riskProfile.targets));
+  const [sleeves, setSleeves] = useState<AllocationSleeve[]>(() => manualAllocationPolicy?.sleeves?.length ? manualAllocationPolicy.sleeves : buildDefaultSleeves(manualTargets || riskProfile.targets));
   const [policyName, setPolicyName] = useState(manualAllocationPolicy?.name || 'Strategic allocation mandate');
   const [objective, setObjective] = useState(manualAllocationPolicy?.objective || '');
   const [constraints, setConstraints] = useState(manualAllocationPolicy?.constraints || inputs.client.notes || '');
@@ -66,14 +98,13 @@ export function PlanningStudioPage() {
     const refresh = () => setActiveClient(getSelectedCRMClient());
     window.addEventListener('stw:active-client-changed', refresh);
     window.addEventListener('stw:clients-updated', refresh);
-    return () => {
-      window.removeEventListener('stw:active-client-changed', refresh);
-      window.removeEventListener('stw:clients-updated', refresh);
-    };
+    return () => { window.removeEventListener('stw:active-client-changed', refresh); window.removeEventListener('stw:clients-updated', refresh); };
   }, []);
 
   useEffect(() => {
-    setMix(cloneMix(manualTargets || riskProfile.targets));
+    const nextMix = manualTargets || riskProfile.targets;
+    setMix(cloneMix(nextMix));
+    setSleeves(manualAllocationPolicy?.sleeves?.length ? manualAllocationPolicy.sleeves : buildDefaultSleeves(nextMix));
     setPolicyName(manualAllocationPolicy?.name || 'Strategic allocation mandate');
     setObjective(manualAllocationPolicy?.objective || '');
     setConstraints(manualAllocationPolicy?.constraints || inputs.client.notes || '');
@@ -85,137 +116,49 @@ export function PlanningStudioPage() {
   }, [activeClient?.id, inputs.client.notes, manualAllocationPolicy, manualTargets, riskProfile.targets]);
 
   const total = useMemo(() => CATEGORIES.reduce((sum, category) => sum + (Number(mix[category]) || 0), 0), [mix]);
-  const isValid = Math.abs(total - 100) < 0.01;
+  const classReconciles = useMemo(() => CATEGORIES.every((assetClass) => Math.abs(sumSleeves(sleeves, assetClass) - mix[assetClass]) < 0.06), [mix, sleeves]);
+  const isValid = Math.abs(total - 100) < 0.01 && classReconciles;
   const clientName = inputs.client.name || activeClient?.name || 'Select a client';
+  const riskWithinGuardrail = mix.equity >= riskProfile.minEquity && mix.equity <= riskProfile.maxEquity;
 
   const chooseTemplate = (template: AllocationTemplate) => {
-    setSelectedTemplate(template.id);
-    setMix(cloneMix(template.mix));
-    setPolicyName(template.name);
-    setObjective(template.objective);
-    setRebalanceThreshold(template.threshold);
-    setRecommendationMethod('model-optimised');
-    setRationale(`Adapted from the practice-wide ${template.name} template for this household's plan, risk budget and liquidity needs.`);
+    setSelectedTemplate(template.id); setMix(cloneMix(template.mix)); setSleeves(buildDefaultSleeves(template.mix)); setPolicyName(template.name); setObjective(template.objective); setRebalanceThreshold(template.threshold); setRecommendationMethod('model-optimised'); setRationale(`Adapted from the practice-wide ${template.name} template for this household's plan, risk budget and liquidity needs.`);
   };
-
-  const updateMix = (category: AssetCategory, value: number) => {
+  const updateMix = (assetClass: AssetCategory, value: number) => { const target = Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0)); setSelectedTemplate(null); setMix((current) => ({ ...current, [assetClass]: target })); setSleeves((current) => rescaleSleeves(current, assetClass, target)); };
+  const updateSleeve = (id: string, field: 'category' | 'target' | 'purpose', value: string | number) => {
     setSelectedTemplate(null);
-    setMix((current) => ({ ...current, [category]: Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0)) }));
+    setSleeves((current) => {
+      const edited = current.map((sleeve) => sleeve.id === id ? { ...sleeve, [field]: field === 'target' ? Math.max(0, Math.min(100, Number(value) || 0)) : value } : sleeve);
+      const changed = edited.find((sleeve) => sleeve.id === id);
+      if (changed && field === 'target') setMix((currentMix) => ({ ...currentMix, [changed.assetClass]: sumSleeves(edited, changed.assetClass) }));
+      return edited;
+    });
   };
+  const addSleeve = (assetClass: AssetCategory) => { setSelectedTemplate(null); setSleeves((current) => [...current, { id: `${assetClass}-${Date.now()}`, assetClass, category: 'New category', target: 0, purpose: 'Describe this sleeve’s role in the policy.' }]); setExpandedClass(assetClass); };
+  const removeSleeve = (id: string) => { setSelectedTemplate(null); setSleeves((current) => { const candidate = current.find((sleeve) => sleeve.id === id); const next = current.filter((sleeve) => sleeve.id !== id); if (candidate) setMix((currentMix) => ({ ...currentMix, [candidate.assetClass]: sumSleeves(next, candidate.assetClass) })); return next; }); };
 
-  const publishPolicy = (openIPS: boolean) => {
-    if (!isValid) {
-      showToast('Allocation must total exactly 100% before it can be used in an IPS.', 'warning');
-      return;
-    }
+  const publishPolicy = (openDossier: boolean) => {
+    if (!isValid) { showToast(classReconciles ? 'Allocation must total exactly 100% before it can be saved.' : 'Each asset class must reconcile to its detailed categories before saving.', 'warning'); return; }
     const now = new Date().toISOString();
-    const sourceLabel = selectedTemplate
-      ? `Practice template · ${TEMPLATES.find((template) => template.id === selectedTemplate)?.name || 'Allocation library'}`
-      : 'Client-specific allocation';
-    const recommendation = {
-      id: `allocation-proposal-${Date.now()}`,
-      title: policyName.trim() || 'Strategic allocation mandate',
-      method: recommendationMethod,
-      sourceLabel,
-      rationale: rationale.trim() || 'Advisor recommendation recorded against the client plan and current allocation.',
-      evidenceCitation: evidenceCitation.trim(),
-      createdAt: now,
-      createdBy: inputs.client.advisor || 'SoundThesis Capital',
-      targets: cloneMix(mix),
-    };
-    const policy: ManualAllocationPolicy = {
-      name: policyName.trim() || 'Strategic allocation mandate',
-      objective: objective.trim() || 'Client-specific strategic allocation policy.',
-      rationale: recommendation.rationale,
-      constraints: constraints.trim(),
-      reviewFrequency,
-      rebalanceThreshold,
-      status: 'proposed',
-      effectiveDate: new Date().toISOString().slice(0, 10),
-      approvedBy: inputs.client.advisor || 'SoundThesis Capital',
-      ranges: Object.fromEntries(CATEGORIES.map((category) => [category, { min: Math.max(0, mix[category] - rebalanceThreshold), max: Math.min(100, mix[category] + rebalanceThreshold) }])) as ManualAllocationPolicy['ranges'],
-      updatedAt: now,
-      recommendations: [...(manualAllocationPolicy?.recommendations || []), recommendation].slice(-12),
-    };
-    setManualTargets(cloneMix(mix));
-    setManualAllocationPolicy(policy);
-    updateClient({ notes: policy.constraints });
+    const sourceLabel = selectedTemplate ? `Practice template · ${TEMPLATES.find((template) => template.id === selectedTemplate)?.name || 'Allocation library'}` : 'Client-specific allocation';
+    const cleanSleeves = sleeves.map((sleeve) => ({ ...sleeve, category: sleeve.category.trim() || 'Unlabelled category', purpose: sleeve.purpose.trim() }));
+    const recommendation = { id: `allocation-proposal-${Date.now()}`, title: policyName.trim() || 'Strategic allocation mandate', method: recommendationMethod, sourceLabel, rationale: rationale.trim() || 'Advisor recommendation recorded against the client plan and current allocation.', evidenceCitation: evidenceCitation.trim(), createdAt: now, createdBy: inputs.client.advisor || 'SoundThesis Capital', targets: cloneMix(mix), sleeves: cleanSleeves };
+    const policy: ManualAllocationPolicy = { name: policyName.trim() || 'Strategic allocation mandate', objective: objective.trim() || 'Client-specific strategic allocation policy.', rationale: recommendation.rationale, constraints: constraints.trim(), reviewFrequency, rebalanceThreshold, status: 'proposed', effectiveDate: new Date().toISOString().slice(0, 10), approvedBy: inputs.client.advisor || 'SoundThesis Capital', ranges: Object.fromEntries(CATEGORIES.map((assetClass) => [assetClass, { min: Math.max(0, mix[assetClass] - rebalanceThreshold), max: Math.min(100, mix[assetClass] + rebalanceThreshold) }])) as ManualAllocationPolicy['ranges'], updatedAt: now, sleeves: cleanSleeves, recommendations: [...(manualAllocationPolicy?.recommendations || []), recommendation].slice(-12) };
+    setManualTargets(cloneMix(mix)); setManualAllocationPolicy(policy); updateClient({ notes: policy.constraints });
     const client = getSelectedCRMClient();
-    if (client) {
-      saveCRMClient({ ...client, stage: client.stage === 'Active Mandate' ? client.stage : 'IPS Draft', targetAllocation: cloneMix(mix), policyNotes: policy.constraints });
-      addCRMInteraction(client.id, {
-        clientId: client.id,
-        date: new Date().toISOString().slice(0, 10),
-        type: 'note',
-        title: 'Strategic allocation policy prepared',
-        notes: `${policy.name}: ${policy.objective}`,
-        nextAction: 'Review and issue the Investment Policy Statement',
-        actionCompleted: false,
-        advisorName: inputs.client.advisor || 'SoundThesis Capital',
-      });
-    }
-    showToast(openIPS ? 'Allocation proposal recorded. Opening the IPS with this policy.' : 'Allocation proposal recorded in the client plan and dossier.', 'success');
-    if (openIPS) navigate('/ips?step=document');
+    if (client) { saveCRMClient({ ...client, stage: client.stage === 'Active Mandate' ? client.stage : 'IPS Draft', targetAllocation: cloneMix(mix), policyNotes: policy.constraints }); addCRMInteraction(client.id, { clientId: client.id, date: new Date().toISOString().slice(0, 10), type: 'note', title: 'Strategic allocation policy prepared', notes: `${policy.name}: ${policy.objective}`, nextAction: 'Review allocation proposal with client', actionCompleted: false, advisorName: inputs.client.advisor || 'SoundThesis Capital' }); }
+    showToast(openDossier ? 'Allocation policy saved. Opening the updated client dossier.' : 'Allocation policy recorded in the client plan and dossier.', 'success'); if (openDossier) navigate('/dossier');
   };
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7 space-y-7">
-      <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-5 border-b border-border pb-6">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">Client planning workspace</div>
-          <h1 className="text-3xl font-bold tracking-tight text-ink mt-2">Turn a plan into a policy.</h1>
-          <p className="text-sm text-muted max-w-2xl mt-2">Practice-wide allocation ideas stay in the library. Here, an adviser adapts one for a single household, saves it to the client plan, then issues the IPS from the same live state.</p>
-        </div>
-        <div className="rounded-xl border border-border bg-surface px-4 py-3 min-w-[250px]">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">Working for</div>
-          <div className="font-semibold text-ink mt-1">{clientName}</div>
-          <div className="text-xs text-muted mt-1">{activeClient?.stage || 'Discovery'} · {formatCurrencyCompact(wealthResult.netWorth || activeClient?.financialSummary?.netWorth || 0)} net worth</div>
-        </div>
-      </header>
-
-      <section className="grid gap-4 lg:grid-cols-3" aria-label="Planning sequence">
-        {[
-          ['01', 'Client plan', 'Household, suggested goals, cash flow and risk profile inform the mandate.'],
-          ['02', 'Allocation policy', 'Choose a practice template or author a client-specific allocation.'],
-          ['03', 'IPS & dossier', 'The saved policy is reused directly in the IPS and client dossier.'],
-        ].map(([number, title, copy], index) => <div key={title} className={`rounded-xl border p-4 ${index === 1 ? 'border-accent bg-accent-soft/30' : 'border-border bg-surface'}`}><span className="font-mono text-xs text-accent">{number}</span><h2 className="font-semibold text-ink mt-2">{title}</h2><p className="text-xs text-muted mt-1 leading-relaxed">{copy}</p></div>)}
-      </section>
-
-      <div className="grid gap-7 xl:grid-cols-[0.9fr_1.4fr]">
-        <section className="space-y-4">
-          <div className="flex items-center gap-2"><Layers3 size={17} className="text-accent" /><div><h2 className="font-semibold text-ink">Practice allocation library</h2><p className="text-xs text-muted">Reusable starting points. Selecting one never changes another client.</p></div></div>
-          <div className="space-y-3">
-            {TEMPLATES.map((template) => <button key={template.id} type="button" onClick={() => chooseTemplate(template)} className={`w-full text-left rounded-xl border p-4 transition-colors ${selectedTemplate === template.id ? 'border-accent bg-accent-soft/40' : 'border-border bg-surface hover:bg-sunken'}`}>
-              <div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold text-sm text-ink">{template.name}</h3><p className="text-[11px] text-accent mt-0.5">{template.audience}</p></div>{selectedTemplate === template.id && <Check size={16} className="text-accent shrink-0" />}</div>
-              <p className="text-xs text-muted leading-relaxed mt-2">{template.description}</p>
-              <div className="font-mono text-[11px] text-ink mt-3">Eq {template.mix.equity}% · FI {template.mix.debt}% · Gold {template.mix.gold}% · Liquid {template.mix.liquid}%</div>
-            </button>)}
-          </div>
-          <div className="rounded-xl border border-border bg-sunken p-4 text-xs text-muted"><div className="flex gap-2"><Users size={15} className="text-faint shrink-0" /><p><strong className="text-ink">Practice vs client separation:</strong> templates are starting points; only the policy at right is written to {clientName}'s record.</p></div></div>
-        </section>
-
-        <section className="rounded-2xl border border-border bg-surface shadow-card p-5 sm:p-7 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4"><div className="flex items-center gap-2.5"><div className="w-9 h-9 grid place-items-center rounded-lg bg-accent-soft text-accent"><SlidersHorizontal size={18} /></div><div><h2 className="font-semibold text-ink">Client allocation policy</h2><p className="text-xs text-muted">Edit this allocation freely. It becomes the IPS policy target after saving.</p></div></div><div className={`rounded-md px-3 py-1.5 text-xs font-mono font-semibold ${isValid ? 'bg-positive-soft text-positive' : 'bg-warning-soft text-warning'}`}>{total.toFixed(0)}% / 100%</div></div>
-
-          <div className="grid sm:grid-cols-2 gap-4"><label className="space-y-1.5"><span className="text-xs font-semibold text-ink-soft">Policy name</span><input value={policyName} onChange={(event) => setPolicyName(event.target.value)} className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent" /></label><label className="space-y-1.5"><span className="text-xs font-semibold text-ink-soft">Review cadence</span><select value={reviewFrequency} onChange={(event) => setReviewFrequency(event.target.value as ManualAllocationPolicy['reviewFrequency'])} className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent"><option value="quarterly">Quarterly</option><option value="semiannual">Semiannual</option><option value="annual">Annual</option></select></label></div>
-          <label className="block space-y-1.5"><span className="text-xs font-semibold text-ink-soft">Investment objective</span><textarea value={objective} onChange={(event) => setObjective(event.target.value)} rows={2} placeholder="What must this allocation accomplish for this household?" className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent resize-y" /></label>
-
-          <div className="border border-border rounded-xl overflow-hidden"><div className="grid grid-cols-[1fr_86px_92px] gap-3 px-4 py-2.5 bg-sunken text-[11px] font-semibold uppercase tracking-wide text-muted"><span>Asset class</span><span className="text-right">Target</span><span className="text-right">Corridor</span></div>{CATEGORIES.map((category) => <div key={category} className="grid grid-cols-[1fr_86px_92px] gap-3 items-center px-4 py-3 border-t border-border"><div><div className="text-sm font-medium text-ink">{LABELS[category]}</div><input type="range" min="0" max="100" value={mix[category]} onChange={(event) => updateMix(category, Number(event.target.value))} className="w-full accent-[var(--color-accent)] mt-1" aria-label={`${LABELS[category]} allocation`} /></div><input type="number" min="0" max="100" value={mix[category]} onChange={(event) => updateMix(category, Number(event.target.value))} className="w-full rounded-md border border-border bg-raised px-2 py-1.5 text-right font-mono text-sm text-ink focus:outline-none focus:border-accent" /><span className="text-right font-mono text-xs text-muted">±{rebalanceThreshold}%</span></div>)}</div>
-          <div className="grid sm:grid-cols-[1fr_150px] gap-4"><label className="space-y-1.5"><span className="text-xs font-semibold text-ink-soft">Client constraints & exclusions</span><textarea value={constraints} onChange={(event) => setConstraints(event.target.value)} rows={3} placeholder="Liquidity floor, securities exclusions, tax or legacy constraints…" className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent resize-y" /></label><label className="space-y-1.5"><span className="text-xs font-semibold text-ink-soft">Rebalance trigger</span><input type="number" min="1" max="20" value={rebalanceThreshold} onChange={(event) => setRebalanceThreshold(Math.max(1, Math.min(20, Number(event.target.value) || 1)))} className="w-full rounded-lg border border-border bg-raised px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:border-accent" /><p className="text-[11px] text-muted leading-relaxed">Absolute drift from target before a review is required.</p></label></div>
-
-          <section className="rounded-xl border border-border bg-sunken/40 p-4 space-y-4" aria-label="Allocation proposal record">
-            <div><h3 className="text-sm font-semibold text-ink">Record the recommendation</h3><p className="text-xs text-muted mt-1">This creates a dated advisory proposal in the dossier. It preserves how the allocation was chosen, not just the final weights.</p></div>
-            <div className="grid sm:grid-cols-2 gap-4"><label className="space-y-1.5"><span className="text-xs font-semibold text-ink-soft">Suggestion type</span><select value={recommendationMethod} onChange={(event) => setRecommendationMethod(event.target.value as AllocationRecommendationMethod)} className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent">{RECOMMENDATION_METHODS.map((method) => <option key={method.value} value={method.value}>{method.label}</option>)}</select><p className="text-[11px] leading-relaxed text-muted">{RECOMMENDATION_METHODS.find((method) => method.value === recommendationMethod)?.detail}</p></label><label className="space-y-1.5"><span className="text-xs font-semibold text-ink-soft">Proposed by</span><div className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-ink">{inputs.client.advisor || 'SoundThesis Capital'}</div><p className="text-[11px] leading-relaxed text-muted">Recorded with a timestamp when this proposal is saved.</p></label></div>
-            <label className="block space-y-1.5"><span className="text-xs font-semibold text-ink-soft">Advisor rationale</span><textarea value={rationale} onChange={(event) => setRationale(event.target.value)} rows={3} placeholder="Explain why this mix is suitable, including the trade-offs being accepted." className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent resize-y" /></label>
-            <label className="block space-y-1.5"><span className="text-xs font-semibold text-ink-soft">Evidence / citation</span><input value={evidenceCitation} onChange={(event) => setEvidenceCitation(event.target.value)} placeholder="Research note, committee paper, policy reference or URL" className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent" /><p className="text-[11px] text-muted">Optional, but shown verbatim in the dossier so the source can be reviewed later.</p></label>
-            {manualAllocationPolicy?.recommendations?.length ? <p className="border-t border-border pt-3 text-[11px] text-muted"><span className="font-semibold text-ink">Traceability:</span> {manualAllocationPolicy.recommendations.length} earlier proposal{manualAllocationPolicy.recommendations.length === 1 ? '' : 's'} retained with this client policy. Current selection: {formatMethod(recommendationMethod)}.</p> : null}
-          </section>
-
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-border pt-5"><p className="text-xs text-muted flex gap-2"><ShieldCheck size={15} className="text-accent shrink-0" />Saving records the proposal, then updates the active client's policy, IPS and dossier source state.</p><div className="flex flex-wrap gap-2"><button type="button" onClick={() => publishPolicy(false)} className="px-3.5 py-2 rounded-lg border border-border text-xs font-semibold text-ink hover:bg-sunken">Record & save</button><button type="button" onClick={() => publishPolicy(true)} disabled={!isValid} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-accent text-white text-xs font-semibold hover:bg-accent-strong disabled:opacity-40"><FileText size={14} /> Record & issue IPS <ArrowRight size={14} /></button></div></div>
-        </section>
-      </div>
-
-      <section className="rounded-xl border border-border bg-surface p-4 flex flex-col md:flex-row md:items-center justify-between gap-4"><div><h2 className="font-semibold text-sm text-ink">Already have a full financial plan?</h2><p className="text-xs text-muted mt-1">Use household facts, cash flow and goals as inputs to the recommendation; validate formal funding commitments before the policy is ratified.</p></div><div className="flex gap-2"><Link to="/master-plan" className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-ink hover:bg-sunken"><PencilLine size={14} /> Open plan</Link><Link to="/dossier" className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-ink hover:bg-sunken"><Sparkles size={14} /> View dossier</Link></div></section>
+  return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7 space-y-7">
+    <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-5 border-b border-border pb-6"><div><div className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">Strategic allocation studio</div><h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-ink mt-2">Build the client’s capital map.</h1><p className="text-sm text-muted max-w-3xl mt-2">Translate the household’s facts, goals and risk profile into an adviser-authored strategic asset allocation. Start with a practice model or build every asset class and category from scratch.</p></div><div className="rounded-xl border border-border bg-surface px-4 py-3 min-w-[265px] shadow-card"><div className="text-[11px] font-semibold uppercase tracking-wide text-muted">Active client</div><div className="font-semibold text-ink mt-1">{clientName}</div><div className="text-xs text-muted mt-1">{activeClient?.stage || 'Discovery'} · {formatCurrencyCompact(wealthResult.netWorth || activeClient?.financialSummary?.netWorth || 0)} net worth</div></div></header>
+    <section className="grid gap-3 md:grid-cols-4" aria-label="Client policy workflow">{[['01', 'Client facts', 'Household, assets, liabilities and cash flow'], ['02', 'Risk & goals', `${riskProfile.label} profile · ${wealthResult.goalResults.length} mapped goals`], ['03', 'SAA design', 'Asset classes, sleeves and corridors'], ['04', 'Client dossier', 'Proposal, rationale and governance record']].map(([number, label, detail], index) => <div key={number} className={`rounded-xl border p-4 ${index === 2 ? 'border-accent bg-accent-soft/30 shadow-card' : 'border-border bg-surface'}`}><span className="font-mono text-xs text-accent">{number}</span><h2 className="font-semibold text-ink mt-2">{label}</h2><p className="text-xs leading-relaxed text-muted mt-1">{detail}</p></div>)}</section>
+    <section className="grid gap-4 lg:grid-cols-3" aria-label="Policy alignment"><div className="rounded-xl border border-border bg-surface p-4"><div className="flex items-center gap-2 text-accent"><ShieldCheck size={16} /><span className="text-xs font-semibold uppercase tracking-wide">Risk alignment</span></div><p className="mt-3 text-sm font-semibold text-ink">{mix.equity}% equity against a {riskProfile.minEquity}–{riskProfile.maxEquity}% guardrail</p><p className={`mt-1 text-xs ${riskWithinGuardrail ? 'text-positive' : 'text-warning'}`}>{riskWithinGuardrail ? 'Within the assessed risk range.' : 'Outside the assessed range — document the reason before issue.'}</p></div><div className="rounded-xl border border-border bg-surface p-4"><div className="flex items-center gap-2 text-accent"><BarChart3 size={16} /><span className="text-xs font-semibold uppercase tracking-wide">Goal funding</span></div><p className="mt-3 text-sm font-semibold text-ink">{wealthResult.goalResults.length - wealthResult.goalsAtRisk.length} of {wealthResult.goalResults.length} goals currently on track</p><p className="mt-1 text-xs text-muted">Use liquid and short-duration sleeves for commitments due inside three years.</p></div><div className="rounded-xl border border-border bg-surface p-4"><div className="flex items-center gap-2 text-accent"><Layers3 size={16} /><span className="text-xs font-semibold uppercase tracking-wide">Policy integrity</span></div><p className="mt-3 text-sm font-semibold text-ink">{sleeves.length} investable categories across {CATEGORIES.filter((assetClass) => mix[assetClass] > 0).length} asset classes</p><p className={`mt-1 text-xs ${classReconciles ? 'text-positive' : 'text-warning'}`}>{classReconciles ? 'Category totals reconcile to the headline mix.' : 'A category total needs reconciling before save.'}</p></div></section>
+    <div className="grid gap-7 xl:grid-cols-[0.84fr_1.5fr]"><aside className="space-y-4"><div className="flex items-center gap-2"><Layers3 size={17} className="text-accent" /><div><h2 className="font-semibold text-ink">Practice starting points</h2><p className="text-xs text-muted">Reusable models; a selection never changes another client.</p></div></div><div className="space-y-3">{TEMPLATES.map((template) => <button key={template.id} type="button" onClick={() => chooseTemplate(template)} className={`w-full text-left rounded-xl border p-4 transition-all ${selectedTemplate === template.id ? 'border-accent bg-accent-soft/40 shadow-card' : 'border-border bg-surface hover:bg-sunken'}`}><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold text-sm text-ink">{template.name}</h3><p className="text-[11px] text-accent mt-0.5">{template.audience}</p></div>{selectedTemplate === template.id && <Check size={16} className="text-accent shrink-0" />}</div><p className="text-xs text-muted leading-relaxed mt-2">{template.description}</p><div className="font-mono text-[11px] text-ink mt-3">EQ {template.mix.equity}% · FI {template.mix.debt}% · Gold {template.mix.gold}% · Liquid {template.mix.liquid}%</div></button>)}</div><div className="rounded-xl border border-border bg-sunken p-4 text-xs text-muted"><div className="flex gap-2"><Users size={15} className="text-faint shrink-0" /><p><strong className="text-ink">One source of truth:</strong> once saved, this client policy updates the allocation monitor and flows directly into the dossier’s advice trail.</p></div></div><div className="rounded-xl border border-accent/30 bg-accent-soft/20 p-4"><div className="flex items-center gap-2 text-accent"><Sparkles size={15} /><h3 className="text-sm font-semibold text-ink">Adviser judgement stays visible</h3></div><p className="text-xs leading-relaxed text-muted mt-2">This is a decision workspace, not an auto-pilot. The dossier will carry the selected method, rationale, source and each category-level sleeve.</p></div></aside>
+      <section className="rounded-2xl border border-border bg-surface shadow-card overflow-hidden"><div className="p-5 sm:p-7 border-b border-border bg-[linear-gradient(135deg,rgba(179,148,90,.12),transparent_55%)]"><div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4"><div className="flex items-center gap-2.5"><div className="w-10 h-10 grid place-items-center rounded-lg bg-accent-soft text-accent"><SlidersHorizontal size={19} /></div><div><h2 className="font-semibold text-ink">Client strategic asset allocation</h2><p className="text-xs text-muted mt-1">Set the policy mix, then open a class to map its investable categories and purpose.</p></div></div><div className={`rounded-md px-3 py-1.5 text-xs font-mono font-semibold ${isValid ? 'bg-positive-soft text-positive' : 'bg-warning-soft text-warning'}`}>{total.toFixed(1)}% / 100%</div></div><div className="grid sm:grid-cols-2 gap-4 mt-6"><label className="space-y-1.5"><span className="text-xs font-semibold text-ink-soft">Policy name</span><input value={policyName} onChange={(event) => setPolicyName(event.target.value)} className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent" /></label><label className="space-y-1.5"><span className="text-xs font-semibold text-ink-soft">Review cadence</span><select value={reviewFrequency} onChange={(event) => setReviewFrequency(event.target.value as ManualAllocationPolicy['reviewFrequency'])} className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent"><option value="quarterly">Quarterly</option><option value="semiannual">Semiannual</option><option value="annual">Annual</option></select></label></div><label className="block space-y-1.5 mt-4"><span className="text-xs font-semibold text-ink-soft">Investment objective</span><textarea value={objective} onChange={(event) => setObjective(event.target.value)} rows={2} placeholder="What must this allocation accomplish for this household?" className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent resize-y" /></label></div>
+        <div className="p-5 sm:p-7 space-y-3"><div className="flex items-end justify-between gap-4"><div><h3 className="text-sm font-semibold text-ink">Allocation architecture</h3><p className="text-xs text-muted mt-1">Headline asset classes are policy targets. The categories beneath them are the implementation map.</p></div><span className="hidden sm:block text-[11px] font-medium uppercase tracking-wide text-muted">Target weights</span></div>{CATEGORIES.map((assetClass) => { const classSleeves = sleeves.filter((sleeve) => sleeve.assetClass === assetClass); const classTotal = sumSleeves(sleeves, assetClass); const open = expandedClass === assetClass; const reconciled = Math.abs(classTotal - mix[assetClass]) < 0.06; return <div key={assetClass} className={`rounded-xl border overflow-hidden transition-colors ${open ? 'border-accent/50 bg-raised' : 'border-border bg-surface'}`}><div className="grid grid-cols-[auto_1fr_74px_auto] sm:grid-cols-[auto_1fr_100px_112px_auto] items-center gap-3 p-3 sm:p-4"><div className={`w-9 h-9 rounded-lg ${CLASS_META[assetClass].accent} text-white grid place-items-center text-[10px] font-bold tracking-wide`}>{CLASS_META[assetClass].short}</div><button type="button" onClick={() => setExpandedClass(open ? null : assetClass)} className="text-left min-w-0"><div className="font-semibold text-sm text-ink">{CLASS_META[assetClass].label}</div><div className="text-[11px] text-muted truncate">{CLASS_META[assetClass].detail} · {classSleeves.length} categories</div></button><input type="number" min="0" max="100" value={mix[assetClass]} onChange={(event) => updateMix(assetClass, Number(event.target.value))} aria-label={`${ASSET_LABELS[assetClass]} target`} className="w-full rounded-md border border-border bg-surface px-2 py-2 text-right font-mono text-sm text-ink focus:outline-none focus:border-accent" /><div className="hidden sm:block"><div className="h-1.5 rounded-full bg-sunken overflow-hidden"><div className={`h-full ${CLASS_META[assetClass].accent}`} style={{ width: `${Math.max(0, Math.min(100, mix[assetClass]))}%` }} /></div><div className="flex justify-between mt-1 text-[10px] font-mono text-muted"><span>{mix[assetClass]}%</span><span>{reconciled ? 'mapped' : `${classTotal.toFixed(1)}% mapped`}</span></div></div><button type="button" onClick={() => setExpandedClass(open ? null : assetClass)} className="p-2 text-muted hover:text-ink" aria-label={`${open ? 'Close' : 'Open'} ${CLASS_META[assetClass].label} categories`}>{open ? <ChevronUp size={17} /> : <ChevronDown size={17} />}</button></div>{open && <div className="border-t border-border px-3 sm:px-4 pb-4 pt-3 bg-sunken/40"><div className="grid grid-cols-[1fr_68px_36px] sm:grid-cols-[1.1fr_1.45fr_74px_36px] gap-3 px-2 pb-2 text-[10px] uppercase tracking-wide font-semibold text-muted"><span>Category</span><span className="hidden sm:block">Role in the plan</span><span className="text-right">Target</span><span /></div><div className="space-y-2">{classSleeves.map((sleeve) => <div key={sleeve.id} className="grid grid-cols-[1fr_68px_36px] sm:grid-cols-[1.1fr_1.45fr_74px_36px] gap-3 items-center rounded-lg bg-surface border border-border/70 p-2"><input value={sleeve.category} onChange={(event) => updateSleeve(sleeve.id, 'category', event.target.value)} aria-label="Category name" className="min-w-0 bg-transparent text-xs font-medium text-ink focus:outline-none focus:ring-1 focus:ring-accent rounded px-1 py-1" /><input value={sleeve.purpose} onChange={(event) => updateSleeve(sleeve.id, 'purpose', event.target.value)} aria-label="Category purpose" className="hidden sm:block min-w-0 bg-transparent text-xs text-muted focus:outline-none focus:ring-1 focus:ring-accent rounded px-1 py-1" /><input type="number" min="0" max="100" value={sleeve.target} onChange={(event) => updateSleeve(sleeve.id, 'target', event.target.value)} aria-label={`${sleeve.category} target`} className="w-full rounded border border-border bg-raised px-1.5 py-1.5 text-right font-mono text-xs text-ink focus:outline-none focus:border-accent" /><button type="button" onClick={() => removeSleeve(sleeve.id)} className="p-1.5 rounded text-faint hover:text-danger hover:bg-danger-soft" aria-label={`Remove ${sleeve.category}`}><Trash2 size={14} /></button></div>)}</div><div className="mt-3 flex flex-wrap items-center justify-between gap-2"><button type="button" onClick={() => addSleeve(assetClass)} className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold text-accent hover:bg-accent-soft"><Plus size={14} /> Add category</button><span className={`text-[11px] font-mono ${reconciled ? 'text-positive' : 'text-warning'}`}>{classTotal.toFixed(1)}% category total / {mix[assetClass].toFixed(1)}% class target</span></div></div>}</div>; })}</div>
+        <div className="p-5 sm:p-7 border-t border-border bg-sunken/25 space-y-5"><div className="grid sm:grid-cols-[1fr_150px] gap-4"><label className="space-y-1.5"><span className="text-xs font-semibold text-ink-soft">Client constraints & exclusions</span><textarea value={constraints} onChange={(event) => setConstraints(event.target.value)} rows={3} placeholder="Liquidity floor, exclusions, tax or legacy constraints…" className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent resize-y" /></label><label className="space-y-1.5"><span className="text-xs font-semibold text-ink-soft">Rebalance trigger</span><input type="number" min="1" max="20" value={rebalanceThreshold} onChange={(event) => setRebalanceThreshold(Math.max(1, Math.min(20, Number(event.target.value) || 1)))} className="w-full rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:border-accent" /><p className="text-[11px] text-muted leading-relaxed">Absolute drift from target that calls for a review.</p></label></div><section className="rounded-xl border border-border bg-surface p-4 space-y-4" aria-label="Allocation proposal record"><div><h3 className="text-sm font-semibold text-ink">Record the recommendation</h3><p className="text-xs text-muted mt-1">The dossier retains the reason for the allocation, not only its percentages.</p></div><div className="grid sm:grid-cols-2 gap-4"><label className="space-y-1.5"><span className="text-xs font-semibold text-ink-soft">Suggestion type</span><select value={recommendationMethod} onChange={(event) => setRecommendationMethod(event.target.value as AllocationRecommendationMethod)} className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent">{RECOMMENDATION_METHODS.map((method) => <option key={method.value} value={method.value}>{method.label}</option>)}</select><p className="text-[11px] leading-relaxed text-muted">{RECOMMENDATION_METHODS.find((method) => method.value === recommendationMethod)?.detail}</p></label><div className="space-y-1.5"><span className="text-xs font-semibold text-ink-soft">Proposed by</span><div className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-ink">{inputs.client.advisor || 'SoundThesis Capital'}</div><p className="text-[11px] leading-relaxed text-muted">Stamped to the client’s advice trail on save.</p></div></div><label className="block space-y-1.5"><span className="text-xs font-semibold text-ink-soft">Advisor rationale</span><textarea value={rationale} onChange={(event) => setRationale(event.target.value)} rows={3} placeholder="Explain why this mix and these categories suit this household, including trade-offs." className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent resize-y" /></label><label className="block space-y-1.5"><span className="text-xs font-semibold text-ink-soft">Evidence / citation</span><input value={evidenceCitation} onChange={(event) => setEvidenceCitation(event.target.value)} placeholder="Research note, committee paper, policy reference or URL" className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-ink focus:outline-none focus:border-accent" /></label></section><div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-border pt-5"><p className="text-xs text-muted flex gap-2"><ShieldCheck size={15} className="text-accent shrink-0" />Saving updates this client’s policy, implementation monitor and dossier source state.</p><div className="flex flex-wrap gap-2"><button type="button" onClick={() => publishPolicy(false)} disabled={!isValid} className="px-3.5 py-2 rounded-lg border border-border text-xs font-semibold text-ink hover:bg-surface disabled:opacity-40">Save SAA</button><button type="button" onClick={() => publishPolicy(true)} disabled={!isValid} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-accent text-white text-xs font-semibold hover:bg-accent-strong disabled:opacity-40"><FileText size={14} /> Save & view dossier <ArrowRight size={14} /></button></div></div></div></section>
     </div>
-  );
+    <section className="rounded-xl border border-border bg-surface p-4 flex flex-col md:flex-row md:items-center justify-between gap-4"><div><h2 className="font-semibold text-sm text-ink">Policy ready for client conversation?</h2><p className="text-xs text-muted mt-1">The dossier shows the client’s current position, policy mix, category sleeves, rationale, proposed changes and governance record together.</p></div><div className="flex gap-2"><Link to="/master-plan" className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-ink hover:bg-sunken"><PencilLine size={14} /> Open plan</Link><Link to="/dossier" className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-ink hover:bg-sunken"><Sparkles size={14} /> View dossier</Link></div></section>
+  </div>;
 }

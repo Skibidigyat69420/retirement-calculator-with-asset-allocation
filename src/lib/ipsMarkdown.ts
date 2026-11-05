@@ -1,4 +1,4 @@
-import type { AssetCategory, GoalPriority } from '../types';
+import type { AllocationRange, AllocationSleeve, AssetCategory, GoalPriority, ManualAllocationPolicy } from '../types';
 
 export interface IPSGoal {
   id: string;
@@ -30,6 +30,15 @@ export interface IPSState {
   maxDrawdown: number;
   allocation: Record<AssetCategory, number>;
   currentAllocation: Record<AssetCategory, number>;
+  /** Client-specific SAA metadata, carried through when an IPS is linked to a plan. */
+  policyName?: string;
+  policyObjective?: string;
+  policyRationale?: string;
+  policyConstraints?: string;
+  reviewFrequency?: ManualAllocationPolicy['reviewFrequency'];
+  rebalanceThreshold?: number;
+  allocationRanges?: Record<AssetCategory, AllocationRange>;
+  sleeves?: AllocationSleeve[];
   baseCurrency: string;
   foreignExposure: number;
   hedgePolicy: string;
@@ -148,6 +157,21 @@ export function generateIPSMarkdown(state: IPSState, netWorth: number): string {
           )
           .join('\n');
 
+  const corridor = (category: AssetCategory) => {
+    const target = state.allocation[category];
+    const range = state.allocationRanges?.[category];
+    const threshold = state.rebalanceThreshold ?? 5;
+    return `${range?.min ?? Math.max(0, target - threshold)}% – ${range?.max ?? Math.min(100, target + threshold)}%`;
+  };
+  const policyStatus = (category: AssetCategory) => {
+    const drift = Math.abs(state.currentAllocation[category] - state.allocation[category]);
+    const threshold = state.rebalanceThreshold ?? 5;
+    return drift <= 2 ? 'Target Met' : drift <= threshold ? 'Within Corridor' : 'Rebalance Triggered';
+  };
+  const sleeveMd = state.sleeves?.length
+    ? state.sleeves.map((sleeve) => `| ${categoryLabels[sleeve.assetClass]} | ${sleeve.category || 'Unlabelled category'} | ${sleeve.target}% | ${sleeve.purpose || 'Policy category'} |`).join('\n')
+    : '_No category-level sleeves have been recorded for this policy._';
+
   return `# Investment Policy Statement
 _SoundThesis Capital Institutional Policy Standard_
 
@@ -173,6 +197,8 @@ _SoundThesis Capital Institutional Policy Standard_
 - **Planning Horizons:** ${Math.max(0, state.client.retirementAge - state.client.currentAge)} years accumulation phase; ${Math.max(0, state.client.lifeExpectancy - state.client.retirementAge)} years distribution phase.
 - **Systematic Withdrawal Plan (SWP) Directive:** Decumulation drawdown commencing at age ${state.client.retirementAge} through age ${state.client.lifeExpectancy} with inflation indexing and sequence-of-returns mitigation via dedicated liquid and short-duration fixed-income reserves.
 - **Tax Governance:** Asset location and tax-loss harvesting reviewed systematically prior to fiscal year-end.
+- **Policy Name:** ${state.policyName || 'Strategic allocation mandate'}
+- **Policy Objective:** ${state.policyObjective || state.returnObjective}
 
 ## 4. Strategic Advisory Guidance & Suggested Priorities
 
@@ -182,14 +208,20 @@ ${goalsMd}
 
 ## 5. Strategic Asset Allocation (SAA) & Rebalancing Corridors
 
-| Asset Class | Policy Target | Current Weight | Corridor (±5%) | Drift | Policy Status |
+| Asset Class | Policy Target | Current Weight | Corridor | Drift | Policy Status |
 |-------------|---------------|----------------|----------------|-------|---------------|
-| Equity | ${state.allocation.equity}% | ${state.currentAllocation.equity.toFixed(1)}% | ${Math.max(0, state.allocation.equity - 5)}% – ${state.allocation.equity + 5}% | ${(state.currentAllocation.equity - state.allocation.equity).toFixed(1)}% | ${Math.abs(state.currentAllocation.equity - state.allocation.equity) <= 2.0 ? 'Target Met' : Math.abs(state.currentAllocation.equity - state.allocation.equity) <= 5.0 ? 'Within Corridor' : 'Rebalance Triggered'} |
-| Debt | ${state.allocation.debt}% | ${state.currentAllocation.debt.toFixed(1)}% | ${Math.max(0, state.allocation.debt - 5)}% – ${state.allocation.debt + 5}% | ${(state.currentAllocation.debt - state.allocation.debt).toFixed(1)}% | ${Math.abs(state.currentAllocation.debt - state.allocation.debt) <= 2.0 ? 'Target Met' : Math.abs(state.currentAllocation.debt - state.allocation.debt) <= 5.0 ? 'Within Corridor' : 'Rebalance Triggered'} |
-| Gold | ${state.allocation.gold}% | ${state.currentAllocation.gold.toFixed(1)}% | ${Math.max(0, state.allocation.gold - 5)}% – ${state.allocation.gold + 5}% | ${(state.currentAllocation.gold - state.allocation.gold).toFixed(1)}% | ${Math.abs(state.currentAllocation.gold - state.allocation.gold) <= 2.0 ? 'Target Met' : Math.abs(state.currentAllocation.gold - state.allocation.gold) <= 5.0 ? 'Within Corridor' : 'Rebalance Triggered'} |
-| Real Estate | ${state.allocation.realestate}% | ${state.currentAllocation.realestate.toFixed(1)}% | ${Math.max(0, state.allocation.realestate - 5)}% – ${state.allocation.realestate + 5}% | ${(state.currentAllocation.realestate - state.allocation.realestate).toFixed(1)}% | ${Math.abs(state.currentAllocation.realestate - state.allocation.realestate) <= 2.0 ? 'Target Met' : Math.abs(state.currentAllocation.realestate - state.allocation.realestate) <= 5.0 ? 'Within Corridor' : 'Rebalance Triggered'} |
-| Liquid | ${state.allocation.liquid}% | ${state.currentAllocation.liquid.toFixed(1)}% | ${Math.max(0, state.allocation.liquid - 5)}% – ${state.allocation.liquid + 5}% | ${(state.currentAllocation.liquid - state.allocation.liquid).toFixed(1)}% | ${Math.abs(state.currentAllocation.liquid - state.allocation.liquid) <= 2.0 ? 'Target Met' : Math.abs(state.currentAllocation.liquid - state.allocation.liquid) <= 5.0 ? 'Within Corridor' : 'Rebalance Triggered'} |
-| Other | ${state.allocation.other}% | ${state.currentAllocation.other.toFixed(1)}% | ${Math.max(0, state.allocation.other - 5)}% – ${state.allocation.other + 5}% | ${(state.currentAllocation.other - state.allocation.other).toFixed(1)}% | ${Math.abs(state.currentAllocation.other - state.allocation.other) <= 2.0 ? 'Target Met' : Math.abs(state.currentAllocation.other - state.allocation.other) <= 5.0 ? 'Within Corridor' : 'Rebalance Triggered'} |
+| Equity | ${state.allocation.equity}% | ${state.currentAllocation.equity.toFixed(1)}% | ${corridor('equity')} | ${(state.currentAllocation.equity - state.allocation.equity).toFixed(1)}% | ${policyStatus('equity')} |
+| Debt | ${state.allocation.debt}% | ${state.currentAllocation.debt.toFixed(1)}% | ${corridor('debt')} | ${(state.currentAllocation.debt - state.allocation.debt).toFixed(1)}% | ${policyStatus('debt')} |
+| Gold | ${state.allocation.gold}% | ${state.currentAllocation.gold.toFixed(1)}% | ${corridor('gold')} | ${(state.currentAllocation.gold - state.allocation.gold).toFixed(1)}% | ${policyStatus('gold')} |
+| Real Estate | ${state.allocation.realestate}% | ${state.currentAllocation.realestate.toFixed(1)}% | ${corridor('realestate')} | ${(state.currentAllocation.realestate - state.allocation.realestate).toFixed(1)}% | ${policyStatus('realestate')} |
+| Liquid | ${state.allocation.liquid}% | ${state.currentAllocation.liquid.toFixed(1)}% | ${corridor('liquid')} | ${(state.currentAllocation.liquid - state.allocation.liquid).toFixed(1)}% | ${policyStatus('liquid')} |
+| Other | ${state.allocation.other}% | ${state.currentAllocation.other.toFixed(1)}% | ${corridor('other')} | ${(state.currentAllocation.other - state.allocation.other).toFixed(1)}% | ${policyStatus('other')} |
+
+### 5.1 Investable Category Map
+
+| Strategic Asset Class | Category / Sleeve | Policy Weight | Purpose |
+|-----------------------|-------------------|---------------|---------|
+${sleeveMd}
 
 ## 6. Balance Sheet Inventory & Asset Schedule
 
@@ -205,9 +237,13 @@ ${assetsMd}
 
 ${state.implementationReview}
 
+- **Review cadence:** ${state.reviewFrequency || 'annual'}.
+- **Rebalance trigger:** ±${state.rebalanceThreshold ?? 5}% absolute drift from the strategic target.
+- **Adviser rationale:** ${state.policyRationale || 'No separate adviser rationale recorded.'}
+
 ## 9. Special Covenants & Mandate Exclusions
 
-${state.notes || 'No specific restrictions or covenants registered.'}
+${state.policyConstraints || state.notes || 'No specific restrictions or covenants registered.'}
 
 ## 10. Fiduciary Execution & Ratification
 

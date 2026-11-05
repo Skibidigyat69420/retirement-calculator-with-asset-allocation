@@ -37,6 +37,9 @@ export const Dossier = () => {
   const targets = manualTargets || riskProfile.targets;
   const allocationRecommendations = [...(manualAllocationPolicy?.recommendations || [])].reverse();
   const latestRecommendation = allocationRecommendations[0];
+  // A proposal owns its sleeve map so an older advice record remains complete
+  // even if the active policy is later revised. Legacy policies simply omit it.
+  const policySleeves = latestRecommendation?.sleeves ?? manualAllocationPolicy?.sleeves ?? [];
   const grossAssets = inputs.assets.reduce((sum, asset) => sum + asset.value, 0);
   const totalLiabilities = inputs.liabilities.reduce((sum, liability) => sum + liability.principal, 0);
   const liquidAssets = inputs.assets.filter((asset) => asset.category === 'liquid').reduce((sum, asset) => sum + asset.value, 0);
@@ -121,6 +124,9 @@ export const Dossier = () => {
     const goalLines = wealthResult.goalResults.length
       ? wealthResult.goalResults.map((goal) => `- ${goal.goal.name}: ${formatPercent(goal.successRate * 100)} funding confidence; ${goal.goal.yearsToGoal} year horizon`).join('\n')
       : '- No formal goals have been recorded.';
+    const sleeveLines = policySleeves.length
+      ? policySleeves.map((sleeve) => `- ${ASSET_LABELS[sleeve.assetClass]} / ${sleeve.category}: ${formatPercent(sleeve.target)}${sleeve.purpose ? ` — ${sleeve.purpose}` : ''}`)
+      : ['- No detailed category map has been recorded.'];
     return [
       `# Wealth Dossier — ${inputs.client?.name || 'Private Client'}`,
       '',
@@ -148,6 +154,9 @@ export const Dossier = () => {
       '',
       '### Current portfolio versus proposed policy',
       ...allocationLines,
+      '',
+      '### Policy category map',
+      ...sleeveLines,
       '',
       '## Governance',
       `- Review cadence: ${manualAllocationPolicy?.reviewFrequency || 'Annual'}`,
@@ -367,6 +376,18 @@ export const Dossier = () => {
                 </div>
               );
             })}
+          </div>
+          <div className="dossier-sleeve-map">
+            <div className="dossier-sleeve-map-head"><span>Policy category map</span><small>Investable sleeves that reconcile to the strategic asset allocation</small></div>
+            {policySleeves.length ? (
+              <div className="dossier-sleeve-grid">
+                {CATEGORIES.map((category) => {
+                  const sleeves = policySleeves.filter((sleeve) => sleeve.assetClass === category);
+                  if (!sleeves.length) return null;
+                  return <div className="dossier-sleeve-group" key={category}><strong>{ASSET_LABELS[category]}</strong>{sleeves.map((sleeve) => <div key={sleeve.id}><span>{sleeve.category}</span><b>{formatPercent(sleeve.target)}</b><small>{sleeve.purpose || 'Policy category'}</small></div>)}</div>;
+                })}
+              </div>
+            ) : <p className="dossier-sleeve-empty">No category-level sleeves are recorded for this policy yet. Build them in the Strategic Allocation Studio.</p>}
           </div>
           <div className="dossier-policy-note"><span>Mandate objective</span><p>{manualAllocationPolicy?.objective || riskProfile.recommendedApproach}</p><span>Constraints</span><p>{manualAllocationPolicy?.constraints || 'Risk-profile constraints and goal-liquidity requirements apply.'}</p></div>
           <div className="dossier-folio"><span>Allocation decision ledger / Current versus policy</span><span>07</span></div>

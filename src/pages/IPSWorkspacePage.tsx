@@ -156,6 +156,7 @@ export function IPSWorkspacePage() {
     saveCurrentPlan,
     showToast,
     manualAllocationPolicy,
+    setManualAllocationPolicy,
   } = useCalculator();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -501,6 +502,14 @@ export function IPSWorkspacePage() {
       maxDrawdown: riskProfile.maxDrawdown,
       allocation,
       currentAllocation,
+      policyName: manualAllocationPolicy?.name,
+      policyObjective: manualAllocationPolicy?.objective,
+      policyRationale: manualAllocationPolicy?.rationale,
+      policyConstraints: manualAllocationPolicy?.constraints,
+      reviewFrequency: manualAllocationPolicy?.reviewFrequency,
+      rebalanceThreshold: manualAllocationPolicy?.rebalanceThreshold,
+      allocationRanges: manualAllocationPolicy?.ranges,
+      sleeves: manualAllocationPolicy?.sleeves,
       goals: inputs.goals.map((goal) => ({
         id: goal.id,
         name: goal.name,
@@ -516,7 +525,7 @@ export function IPSWorkspacePage() {
       })),
       notes: policyNote || activeClient?.policyNotes || '',
     };
-  }, [activeClient, allocation, currentAllocation, inputs, policyNote, riskProfile]);
+  }, [activeClient, allocation, currentAllocation, inputs, manualAllocationPolicy, policyNote, riskProfile]);
 
   const documentText = useMemo(
     () => generateIPSMarkdown(ipsState, wealthResult.netWorth),
@@ -543,6 +552,33 @@ export function IPSWorkspacePage() {
   const setManualTarget = (category: AssetCategory, val: number) => {
     const updated = { ...allocation, [category]: Math.max(0, val) };
     setManualTargets(updated);
+    // Keep an existing category map reconciled when a corridor is adjusted in
+    // the IPS itself.  The Strategic Allocation Studio remains the richer
+    // editor; this preserves the same policy rather than orphaning its sleeves.
+    setManualAllocationPolicy((previous) => {
+      if (!previous?.sleeves?.length) return previous;
+      const target = updated[category];
+      const classSleeves = previous.sleeves.filter((sleeve) => sleeve.assetClass === category);
+      if (!classSleeves.length) return previous;
+      const currentTotal = classSleeves.reduce((sum, sleeve) => sum + sleeve.target, 0);
+      let allocated = 0;
+      const sleeves = previous.sleeves.map((sleeve) => {
+        if (sleeve.assetClass !== category) return sleeve;
+        const isLast = sleeve.id === classSleeves[classSleeves.length - 1].id;
+        const sleeveTarget = isLast
+          ? Math.max(0, target - allocated)
+          : Number((currentTotal > 0 ? sleeve.target * target / currentTotal : target / classSleeves.length).toFixed(1));
+        allocated += sleeveTarget;
+        return { ...sleeve, target: sleeveTarget };
+      });
+      const threshold = previous.rebalanceThreshold;
+      return {
+        ...previous,
+        updatedAt: new Date().toISOString(),
+        sleeves,
+        ranges: { ...previous.ranges, [category]: { min: Math.max(0, target - threshold), max: Math.min(100, target + threshold) } },
+      };
+    });
     updateActiveCRMClient({ targetAllocation: updated });
   };
 
@@ -1674,7 +1710,14 @@ export function IPSWorkspacePage() {
 
                   <button
                     type="button"
-                    onClick={() => setManualTargets(manualTargets ? null : { ...riskProfile.targets })}
+                    onClick={() => {
+                      if (manualTargets) {
+                        setManualTargets(null);
+                        setManualAllocationPolicy(null);
+                      } else {
+                        setManualTargets({ ...riskProfile.targets });
+                      }
+                    }}
                     className="text-xs font-semibold text-accent hover:underline cursor-pointer self-start sm:self-auto"
                   >
                     {manualTargets ? 'Reset to Recommended Profile' : 'Enable Manual Mandate Override'}
@@ -2026,7 +2069,7 @@ export function IPSWorkspacePage() {
                           <th className="py-2.5 px-4">Asset Class</th>
                           <th className="py-2.5 px-4 text-right">Target Weight</th>
                           <th className="py-2.5 px-4 text-right">Current Position</th>
-                          <th className="py-2.5 px-4 text-right">Permissible Corridor (±5%)</th>
+                          <th className="py-2.5 px-4 text-right">Permissible Corridor</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
@@ -2045,7 +2088,7 @@ export function IPSWorkspacePage() {
                                 {currentVal.toFixed(1)}%
                               </td>
                               <td className="py-2.5 px-4 text-right font-mono text-faint">
-                                {Math.max(0, target - 5)}% – {Math.min(100, target + 5)}%
+                                {manualAllocationPolicy?.ranges?.[cat]?.min ?? Math.max(0, target - (manualAllocationPolicy?.rebalanceThreshold ?? 5))}% – {manualAllocationPolicy?.ranges?.[cat]?.max ?? Math.min(100, target + (manualAllocationPolicy?.rebalanceThreshold ?? 5))}%
                               </td>
                             </tr>
                           );
@@ -2053,6 +2096,21 @@ export function IPSWorkspacePage() {
                       </tbody>
                     </table>
                   </div>
+                  {manualAllocationPolicy?.sleeves?.length ? (
+                    <div className="rounded-xl border border-border bg-raised/50 overflow-hidden">
+                      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border">
+                        <div><h4 className="text-xs font-semibold text-ink">2.1 Investable category map</h4><p className="text-[11px] text-muted mt-0.5">The implementation sleeves that reconcile to the client’s strategic allocation.</p></div>
+                        <span className="text-[10px] font-mono text-muted">{manualAllocationPolicy.sleeves.length} categories</span>
+                      </div>
+                      <div className="grid md:grid-cols-2 xl:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border">
+                        {categories.map((category) => {
+                          const sleeves = manualAllocationPolicy.sleeves?.filter((sleeve) => sleeve.assetClass === category) || [];
+                          if (!sleeves.length) return null;
+                          return <div key={category} className="p-3 space-y-2"><div className="text-[10px] uppercase tracking-wide font-semibold text-accent">{categoryLabels[category]} · {allocation[category]}%</div>{sleeves.map((sleeve) => <div key={sleeve.id} className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5"><span className="text-xs font-medium text-ink">{sleeve.category}</span><span className="font-mono text-xs text-ink">{sleeve.target}%</span><span className="col-span-2 text-[10px] leading-relaxed text-muted">{sleeve.purpose || 'Policy category'}</span></div>)}</div>;
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
                 </section>
 
                 <section className="space-y-4">
