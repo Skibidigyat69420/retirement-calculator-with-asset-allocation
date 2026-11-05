@@ -29,7 +29,6 @@ import {
   Lightbulb,
   CheckCircle2,
   ListTodo,
-  Briefcase,
   ExternalLink,
 } from 'lucide-react';
 import { useCalculator } from '../context/CalculatorContext';
@@ -365,6 +364,8 @@ export function IPSWorkspacePage() {
       priority: suggestion.priority,
       yearsToGoal: suggestion.suggestedHorizonYears,
       targetAmount: defaultTargetAmount,
+      inflation: 6,
+      recurring: false,
     };
     updateInputs({ goals: [...inputs.goals, newGoal] });
     showToast(`Adopted advisory suggestion: ${suggestion.title}`, 'success');
@@ -392,6 +393,12 @@ export function IPSWorkspacePage() {
     refreshClientList();
     showToast('Added follow-up task to client record.', 'success');
   };
+
+  const allocation = manualTargets ?? riskProfile.targets;
+  const currentAllocation = useMemo(() => {
+    const total = inputs.assets.reduce((sum, asset) => sum + asset.value, 0);
+    return categories.reduce((result, category) => ({ ...result, [category]: total ? (inputs.assets.filter((asset) => asset.category === category).reduce((sum, asset) => sum + asset.value, 0) / total) * 100 : 0 }), {} as Record<AssetCategory, number>);
+  }, [inputs.assets]);
 
   // Dossier Export Handlers
   const generateDossierBrief = useCallback(() => {
@@ -457,7 +464,6 @@ export function IPSWorkspacePage() {
   };
 
   // Calculations
-  const allocation = manualTargets ?? riskProfile.targets;
   const allocationTotal = categories.reduce((total, category) => total + (allocation[category] || 0), 0);
   const clientReady = Boolean(
     (inputs.client.name.trim() || activeClient?.name.trim()) &&
@@ -476,14 +482,6 @@ export function IPSWorkspacePage() {
 
   const completedStepsCount = steps.filter((s) => completed[s.id]).length;
   const progressPercent = Math.round((completedStepsCount / steps.length) * 100);
-
-  // Computed current allocation percentages from wealthResult
-  const currentAllocation = useMemo(() => {
-    return categories.reduce<Record<AssetCategory, number>>((result, category) => {
-      result[category] = Number(((wealthResult.currentAllocation?.[category] || 0) * 100).toFixed(1));
-      return result;
-    }, { equity: 0, debt: 0, gold: 0, realestate: 0, liquid: 0, other: 0 });
-  }, [wealthResult.currentAllocation]);
 
   // IPS State for document generation
   const ipsState = useMemo<IPSState>(() => {
@@ -2177,12 +2175,12 @@ export function IPSWorkspacePage() {
                                 </span>
                               </div>
                               <p className="text-[11px] text-muted line-clamp-2 leading-relaxed">
-                                {tmpl.guidance}
+                                 {tmpl.rationale}
                               </p>
                               <div className="flex items-center gap-2 text-[11px] font-mono text-ink-soft pt-1">
-                                <span>{formatCurrency(tmpl.defaultAmount)}</span>
+                                 <span>{formatCurrency(tmpl.suggestedAmount ?? 0)}</span>
                                 <span className="text-muted">•</span>
-                                <span>{tmpl.horizonYears} yr horizon</span>
+                                 <span>{tmpl.suggestedHorizonYears} yr horizon</span>
                               </div>
                             </div>
 

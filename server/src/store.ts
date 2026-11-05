@@ -91,6 +91,26 @@ function defaultClientDrafts(): { name: string; sampleKey: string; data: Record<
   ];
 }
 
+function sampleFinancialAmounts(data: Record<string, unknown>) {
+  const summary = data.financialSummary;
+  const values = summary && typeof summary === 'object' ? summary as Record<string, unknown> : {};
+  const amount = (value: unknown, fallback: number) => typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  return {
+    investableAssets: amount(values.investableAssets, 1_000_000),
+    netWorth: amount(values.netWorth, 5_000_000),
+  };
+}
+
+function sampleProfile(data: Record<string, unknown>): Profile {
+  const { investableAssets, netWorth } = sampleFinancialAmounts(data);
+  return {
+    assets: [{ name: 'Sample opening portfolio', category: 'equity', assetCategory: 'equity', currency: 'INR', currentValue: investableAssets, expectedReturn: 10, status: 'active' }],
+    liabilities: [],
+    cashflows: [{ type: 'income', annualAmount: Math.max(1_200_000, investableAssets * 0.08), status: 'active' }],
+    goals: [{ name: 'Sample retirement objective', targetAmount: Math.max(5_000_000, netWorth * 1.5), yearsToGoal: 15, priority: 'essential', status: 'active' }],
+  };
+}
+
 function clientNameParts(input: Partial<ClientRecord> & { firstName: string; lastName: string }) {
   return {
     firstName: input.firstName,
@@ -116,6 +136,8 @@ class MemoryStore implements AppStore {
   private calculationRuns = new Map<string, CalculationRun & { organizationId: string }>();
   private auditEvents: AuditEvent[] = [];
   private clientDrafts = new Map<string, ClientDraft & { organizationId: string }>();
+  private sampleCatalog = new Map<string, ClientDraft>();
+  private sampleWorkspaceClientIds = new Map<string, string>();
 
   constructor() {
     const org = { id: 'demo-practice', name: 'Sound Thesis Demo Practice' };
@@ -212,10 +234,31 @@ class MemoryStore implements AppStore {
   }
 
   async ensureClientDraftSamples(organizationId: string) {
-    if (Array.from(this.clientDrafts.values()).some((draft) => draft.organizationId === organizationId && draft.isSample)) return;
-    for (const sample of defaultClientDrafts()) await this.createClientDraft(organizationId, { ...sample, isSample: true });
+    const now = new Date().toISOString();
+    for (const sample of defaultClientDrafts()) {
+      let draft = this.sampleCatalog.get(sample.sampleKey);
+      if (!draft) {
+        draft = { id: randomUUID(), clientId: null, name: sample.name, data: sample.data, isSample: true, sampleKey: sample.sampleKey, status: 'active', createdAt: now, updatedAt: now };
+        this.sampleCatalog.set(sample.sampleKey, draft);
+      }
+      const workspaceKey = `${organizationId}:${draft.id}`;
+      if (this.sampleWorkspaceClientIds.has(workspaceKey)) continue;
+      const client: ClientRecord & { organizationId: string } = {
+        id: randomUUID(), organizationId, householdId: randomUUID(), firstName: 'Sample', lastName: 'Client', preferredName: draft.name,
+        email: null, phone: null, dateOfBirth: null, maritalStatus: null, notes: 'Global sample workspace', status: 'active', assignedPractitioners: [],
+      };
+      this.clients.set(client.id, client);
+      this.profiles.set(client.id, sampleProfile(draft.data));
+      this.sampleWorkspaceClientIds.set(workspaceKey, client.id);
+    }
   }
-  async listClientDrafts(organizationId: string) { return Array.from(this.clientDrafts.values()).filter((draft) => draft.organizationId === organizationId && draft.status === 'active'); }
+  async listClientDrafts(organizationId: string) {
+    const samples = Array.from(this.sampleCatalog.values())
+      .filter((draft) => draft.status === 'active')
+      .map((draft) => ({ ...draft, clientId: this.sampleWorkspaceClientIds.get(`${organizationId}:${draft.id}`) ?? null }));
+    const custom = Array.from(this.clientDrafts.values()).filter((draft) => draft.organizationId === organizationId && draft.status === 'active');
+    return [...samples, ...custom];
+  }
   async createClientDraft(organizationId: string, input: { name: string; data: Record<string, unknown>; isSample?: boolean; sampleKey?: string }) {
     const now = new Date().toISOString(); const draft = { id: randomUUID(), organizationId, clientId: null, name: input.name, data: input.data, isSample: input.isSample ?? false, sampleKey: input.sampleKey ?? null, status: 'active' as const, createdAt: now, updatedAt: now };
     this.clientDrafts.set(draft.id, draft); return draft;
@@ -541,14 +584,41 @@ class PostgresStore implements AppStore {
 
   async ensureClientDraftSamples(organizationId: string) {
     await this.withOrganization(organizationId, async (query) => {
-      const rows = await query`select id from client_drafts where organization_id = ${organizationId} and is_sample = true limit 1`;
-      if (rows[0]) return;
-      for (const sample of defaultClientDrafts()) await query`insert into client_drafts (organization_id, name, data, is_sample, sample_key) values (${organizationId}, ${sample.name}, ${query.json(sample.data as any)}, true, ${sample.sampleKey}) on conflict (organization_id, sample_key) where sample_key is not null do nothing`;
+      // Serialise first access for an organisation. The catalog is global, but
+      // the linked test client must remain private to this organisation.
+      await query`select pg_advisory_xact_lock(hashtext(${organizationId}))`;
+      const samples = await query`select id, name, data from sample_draft_catalog where status = 'active' order by created_at asc`;
+      for (const sample of samples) {
+        const existing = await query`select client_id from sample_client_workspaces where organization_id = ${organizationId} and sample_draft_id = ${sample.id} limit 1`;
+        if (existing[0]) continue;
+
+        const client = (await query`
+          insert into clients (organization_id, first_name, last_name, preferred_name, notes)
+          values (${organizationId}, 'Sample', 'Client', ${sample.name}, 'Global sample workspace')
+          returning id
+        `)[0];
+        await query`insert into sample_client_workspaces (organization_id, sample_draft_id, client_id) values (${organizationId}, ${sample.id}, ${client.id})`;
+
+        const { investableAssets, netWorth } = sampleFinancialAmounts(sample.data ?? {});
+        await query`insert into financial_resources (organization_id, client_id, resource_type, data) values (${organizationId}, ${client.id}, 'assets', ${query.json({ name: 'Sample opening portfolio', category: 'equity', assetCategory: 'equity', currency: 'INR', currentValue: investableAssets, expectedReturn: 10 })})`;
+        await query`insert into financial_resources (organization_id, client_id, resource_type, data) values (${organizationId}, ${client.id}, 'cashflows', ${query.json({ type: 'income', annualAmount: Math.max(1_200_000, investableAssets * 0.08) })})`;
+        await query`insert into financial_resources (organization_id, client_id, resource_type, data) values (${organizationId}, ${client.id}, 'goals', ${query.json({ name: 'Sample retirement objective', targetAmount: Math.max(5_000_000, netWorth * 1.5), yearsToGoal: 15, priority: 'essential' })})`;
+      }
     });
   }
   async listClientDrafts(organizationId: string) {
     return this.withOrganization(organizationId, async (query) => {
-      const rows = await query`select * from client_drafts where organization_id = ${organizationId} and status = 'active' order by created_at desc`;
+      const rows = await query`
+        select d.id, w.client_id, d.name, d.status, true as is_sample, d.sample_key, d.data, d.created_at, d.updated_at
+        from sample_draft_catalog d
+        join sample_client_workspaces w on w.sample_draft_id = d.id and w.organization_id = ${organizationId}
+        where d.status = 'active'
+        union all
+        select id, client_id, name, status, is_sample, sample_key, data, created_at, updated_at
+        from client_drafts
+        where organization_id = ${organizationId} and is_sample = false and status = 'active'
+        order by created_at desc
+      `;
       return rows.map(mapClientDraft).filter((draft): draft is ClientDraft => draft !== null);
     });
   }

@@ -11,13 +11,13 @@ import { AuthPage } from './pages/AuthPage';
 import { OnboardingPage } from './pages/OnboardingPage';
 
 function lazyNamed<T extends ComponentType<any>>(
-  factory: () => Promise<{ [key: string]: T }>,
+  factory: () => Promise<Record<string, unknown>>,
   exportName: string,
 ) {
   return lazy(async () => {
     const load = async () => {
       const mod = await factory();
-      const component = mod[exportName];
+      const component = mod[exportName] as T | undefined;
       if (!component) {
         throw new Error(`Module does not export "${exportName}"`);
       }

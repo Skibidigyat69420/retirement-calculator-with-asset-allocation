@@ -129,3 +129,36 @@ test('API rejects requests without a valid session', async () => {
     await app.close();
   }
 });
+
+test('sample catalog is stable and exposes an isolated usable workspace', async () => {
+  const app = await buildApp(createInMemoryStore());
+  try {
+    const login = await request(app, {
+      method: 'POST',
+      url: '/api/v1/auth/dev-login',
+      payload: { email: 'adviser@soundthesis.local' },
+    });
+    const headers = {
+      authorization: `Bearer ${login.body.token}`,
+      'x-organization-id': login.body.memberships[0].organizationId,
+    };
+
+    const first = await request(app, { method: 'GET', url: '/api/v1/client-drafts', headers });
+    const second = await request(app, { method: 'GET', url: '/api/v1/client-drafts', headers });
+    assert.equal(first.response.statusCode, 200);
+    assert.equal(first.body.data.length, 4);
+    assert.deepEqual(
+      first.body.data.map((draft: { id: string }) => draft.id).sort(),
+      second.body.data.map((draft: { id: string }) => draft.id).sort(),
+    );
+
+    const sampleClientId = first.body.data[0].clientId as string;
+    assert.ok(sampleClientId);
+    const profile = await request(app, { method: 'GET', url: `/api/v1/clients/${sampleClientId}/profile`, headers });
+    assert.equal(profile.response.statusCode, 200);
+    assert.equal(profile.body.assets.length, 1);
+    assert.equal(profile.body.goals.length, 1);
+  } finally {
+    await app.close();
+  }
+});
