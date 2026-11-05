@@ -16,7 +16,7 @@ export const Card = ({
   const variants = {
     default: 'glass-bento text-ink',
     elevated: 'glass-bento shadow-elevated text-ink',
-    navy: 'bg-sunken border border-border-strong text-ink rounded-xl',
+    navy: 'bg-deep border border-deep text-on-inkfill rounded-xl',
     gold: 'bg-brass-soft border border-brass/30 text-ink rounded-xl',
     subtle: 'bg-surface border border-border-subtle text-ink-soft rounded-xl',
     bento: 'glass-bento text-ink',
@@ -25,7 +25,7 @@ export const Card = ({
   return (
     <div
       {...props}
-      className={cn('rounded-xl p-5 md:p-6 print:break-inside-avoid', variants[variant], className)}
+      className={cn('rounded-[10px] p-5 md:p-6 print:break-inside-avoid', variants[variant], className)}
     >
       {children}
     </div>

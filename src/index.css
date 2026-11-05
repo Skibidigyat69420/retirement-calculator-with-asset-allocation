@@ -1,58 +1,54 @@
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 /* Class-based dark mode: `.dark` on <html> or any ancestor */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* ─────────────────────────────────────────────────────────────
-     SOUNDTHESIS CAPITAL — Modern, Simple & Clean Design System
-     Clean zinc/slate neutrals, crisp typography (Inter UI & headings,
-     JetBrains Mono data figures), modern blue accent.
-     ───────────────────────────────────────────────────────────── */
-
-  /* ── Light Theme: Clean Modern Slate ── */
-  --color-canvas: #f8fafc;
-  --color-background: #f8fafc;
-  --color-surface: #ffffff;
+  /* SOUNDTHESIS — Warm ivory, deep navy and sage. */
+  --color-canvas: #f7f0e6;
+  --color-background: #f7f0e6;
+  --color-surface: #fffdf8;
   --color-raised: #ffffff;
-  --color-sunken: #f1f5f9;
-  --color-inset: #f8fafc;
+  --color-sunken: #eee5d8;
+  --color-inset: #f3ebe0;
   --color-elevated: #ffffff;
-  --color-deep: #0f172a;
-  --color-inkfill: #0f172a;
-  --color-on-inkfill: #ffffff;
-  --color-overlay: rgba(15, 23, 42, 0.5);
+  --color-deep: #102b46;
+  --color-inkfill: #102b46;
+  --color-on-inkfill: #fffdf8;
+  --color-overlay: rgba(16, 43, 70, 0.52);
 
-  --color-border: #e2e8f0;
-  --color-border-strong: #cbd5e1;
-  --color-border-subtle: #f1f5f9;
+  --color-border: #ded5c7;
+  --color-border-strong: #c9bcaa;
+  --color-border-subtle: #eee7dd;
 
-  --color-ink: #0f172a;
-  --color-ink-soft: #334155;
-  --color-muted: #64748b;
-  --color-faint: #94a3b8;
+  --color-ink: #16314d;
+  --color-ink-soft: #3f5466;
+  --color-muted: #6a7a7b;
+  --color-faint: #99a49d;
 
-  /* Accent — clean modern blue */
-  --color-accent: #2563eb;
-  --color-accent-strong: #1d4ed8;
-  --color-accent-soft: #eff6ff;
-  --color-accent-softer: #f8fafc;
+  /* Sage is the only directional accent. */
+  --color-accent: #789173;
+  --color-accent-strong: #526e58;
+  --color-accent-soft: #e3ebdf;
+  --color-accent-softer: #f1f5ee;
 
-  /* Reference & Target Marks (warm amber) */
-  --color-brass: #d97706;
-  --color-brass-strong: #b45309;
-  --color-brass-soft: #fef3c7;
+  /* A warm mineral note is reserved for references and targets. */
+  --color-brass: #b28a5e;
+  --color-brass-strong: #87633f;
+  --color-brass-soft: #f2e6d6;
 
-  --color-positive: #16a34a;
-  --color-positive-soft: #f0fdf4;
-  --color-negative: #dc2626;
-  --color-negative-soft: #fef2f2;
-  --color-warning: #d97706;
-  --color-warning-soft: #fffbeb;
-  --color-info: #0284c7;
-  --color-info-soft: #f0f9ff;
+  --color-positive: #397553;
+  --color-positive-soft: #e5f0e7;
+  --color-negative: #b34c49;
+  --color-negative-soft: #f8e9e6;
+  --color-warning: #a56d2a;
+  --color-warning-soft: #f8eddc;
+  --color-info: #406b86;
+  --color-info-soft: #e6eff3;
 
-  --color-focus-ring: #2563eb;
+  --color-focus-ring: #789173;
 
   /* Legacy aliases */
   --color-cream: var(--color-background);
@@ -60,20 +56,19 @@
   --color-warm: var(--color-sunken);
   --color-warm-dark: var(--color-muted);
   --color-navy: var(--color-deep);
-  --color-navy-dark: #0f172a;
+  --color-navy-dark: #102b46;
   --color-gold: var(--color-brass);
   --color-red: var(--color-negative);
   --color-emerald: var(--color-positive);
   --color-textMain: var(--color-ink);
   --color-textMuted: var(--color-muted);
 
-  /* Typography — Single font (Inter) across the entire application */
-  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-serif: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: "Satoshi", "Avenir Next", "Segoe UI", sans-serif;
+  --font-display: "Satoshi", "Avenir Next", "Segoe UI", sans-serif;
+  --font-serif: "Satoshi", "Avenir Next", "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", monospace;
 
-  /* Radius — clean, modern */
+  /* Quietly tailored, not pill-heavy. */
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -81,13 +76,12 @@
   --radius-xl: 16px;
   --radius-2xl: 20px;
 
-  /* Modern subtle shadows */
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-  --shadow-card-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-  --shadow-raised: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-elevated: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.03);
-  --shadow-popover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-  --shadow-glow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  --shadow-card: 0 1px 1px rgba(16, 43, 70, 0.02), 0 8px 24px rgba(16, 43, 70, 0.045);
+  --shadow-card-hover: 0 2px 2px rgba(16, 43, 70, 0.025), 0 14px 32px rgba(16, 43, 70, 0.08);
+  --shadow-raised: 0 4px 14px rgba(16, 43, 70, 0.06);
+  --shadow-elevated: 0 14px 34px rgba(16, 43, 70, 0.10);
+  --shadow-popover: 0 18px 48px rgba(16, 43, 70, 0.14), 0 2px 8px rgba(16, 43, 70, 0.06);
+  --shadow-glow: 0 0 0 3px rgba(120, 145, 115, 0.23);
 
   /* Motion */
   --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
@@ -97,75 +91,73 @@
   --duration-normal: 200ms;
   --duration-slow: 300ms;
 
-  /* Neutral palette overrides */
-  --color-zinc-400: #94a3b8;
-  --color-zinc-500: #64748b;
-  --color-emerald-500: #16a34a;
-  --color-emerald-600: #15803d;
-  --color-emerald-50: #f0fdf4;
-  --color-rose-500: #dc2626;
-  --color-rose-600: #b91c1c;
-  --color-amber-500: #d97706;
-  --color-amber-600: #b45309;
+  --color-zinc-400: #99a49d;
+  --color-zinc-500: #6a7a7b;
+  --color-emerald-500: #397553;
+  --color-emerald-600: #2e5f43;
+  --color-emerald-50: #e5f0e7;
+  --color-rose-500: #b34c49;
+  --color-rose-600: #933d3b;
+  --color-amber-500: #a56d2a;
+  --color-amber-600: #82541f;
 }
 
-/* ── Dark: Clean Modern Zinc ── */
+/* ── Dark: Deep navy, sage and parchment ── */
 .dark {
-  --color-canvas: #09090b;
-  --color-background: #09090b;
-  --color-surface: #121316;
-  --color-raised: #18191d;
-  --color-sunken: #09090b;
-  --color-inset: #0e0f12;
-  --color-elevated: #202227;
-  --color-deep: #f4f4f5;
-  --color-inkfill: #f4f4f5;
-  --color-on-inkfill: #09090b;
-  --color-overlay: rgba(0, 0, 0, 0.7);
+  --color-canvas: #0c233b;
+  --color-background: #0c233b;
+  --color-surface: #112e49;
+  --color-raised: #163752;
+  --color-sunken: #0d2741;
+  --color-inset: #102b46;
+  --color-elevated: #1a3d59;
+  --color-deep: #fff7eb;
+  --color-inkfill: #fff7eb;
+  --color-on-inkfill: #102b46;
+  --color-overlay: rgba(4, 16, 30, 0.76);
 
-  --color-border: #27272a;
-  --color-border-strong: #3f3f46;
-  --color-border-subtle: #18181b;
+  --color-border: #29445d;
+  --color-border-strong: #3b5870;
+  --color-border-subtle: #1a3650;
 
-  --color-ink: #f4f4f5;
-  --color-ink-soft: #d4d4d8;
-  --color-muted: #a1a1aa;
-  --color-faint: #71717a;
+  --color-ink: #fff7eb;
+  --color-ink-soft: #d5dfd6;
+  --color-muted: #a9bab3;
+  --color-faint: #78918e;
 
-  --color-accent: #3b82f6;
-  --color-accent-strong: #60a5fa;
-  --color-accent-soft: rgba(59, 130, 246, 0.15);
-  --color-accent-softer: rgba(59, 130, 246, 0.08);
+  --color-accent: #a9bf9d;
+  --color-accent-strong: #c2d1b7;
+  --color-accent-soft: rgba(169, 191, 157, 0.16);
+  --color-accent-softer: rgba(169, 191, 157, 0.08);
 
-  --color-brass: #fbbf24;
-  --color-brass-strong: #fcd34d;
-  --color-brass-soft: rgba(251, 191, 36, 0.15);
+  --color-brass: #dbbd91;
+  --color-brass-strong: #ead2a9;
+  --color-brass-soft: rgba(219, 189, 145, 0.14);
 
-  --color-positive: #22c55e;
-  --color-positive-soft: rgba(34, 197, 94, 0.15);
-  --color-negative: #ef4444;
-  --color-negative-soft: rgba(239, 68, 68, 0.15);
-  --color-warning: #f59e0b;
-  --color-warning-soft: rgba(245, 158, 11, 0.15);
-  --color-info: #38bdf8;
-  --color-info-soft: rgba(56, 189, 248, 0.15);
+  --color-positive: #78c392;
+  --color-positive-soft: rgba(120, 195, 146, 0.14);
+  --color-negative: #f1948d;
+  --color-negative-soft: rgba(241, 148, 141, 0.14);
+  --color-warning: #edbd78;
+  --color-warning-soft: rgba(237, 189, 120, 0.14);
+  --color-info: #8bc3d7;
+  --color-info-soft: rgba(139, 195, 215, 0.14);
 
-  --color-focus-ring: #3b82f6;
+  --color-focus-ring: #a9bf9d;
+  --color-navy: #fff7eb;
+  --color-navy-dark: #fffdf8;
 
-  --color-navy: #f4f4f5;
-  --color-navy-dark: #ffffff;
-
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-card-hover: 0 4px 10px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.25);
-  --shadow-raised: 0 2px 6px rgba(0, 0, 0, 0.35);
-  --shadow-elevated: 0 12px 28px rgba(0, 0, 0, 0.5);
-  --shadow-popover: 0 20px 40px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  --shadow-card: 0 8px 24px rgba(3, 14, 27, 0.20);
+  --shadow-card-hover: 0 14px 32px rgba(3, 14, 27, 0.30);
+  --shadow-raised: 0 4px 14px rgba(3, 14, 27, 0.28);
+  --shadow-elevated: 0 14px 34px rgba(3, 14, 27, 0.36);
+  --shadow-popover: 0 18px 48px rgba(3, 14, 27, 0.52);
+  --shadow-glow: 0 0 0 3px rgba(169, 191, 157, 0.24);
 }
 
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
     scrollbar-width: thin;
     scrollbar-color: var(--color-border-strong) transparent;
   }
@@ -191,7 +183,7 @@
     text-wrap: balance;
     color: var(--color-ink);
     font-weight: 600;
-    letter-spacing: -0.022em;
+    letter-spacing: -0.028em;
   }
   p {
     text-wrap: pretty;
@@ -406,12 +398,12 @@
     position: relative;
   }
 
-  /* Standard crisp modern card */
+  /* Structural panels earn their edges; they do not float by default. */
   .glass-bento {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-card);
+    box-shadow: none;
     transition:
       box-shadow var(--duration-fast) ease,
       border-color var(--duration-fast) ease;
@@ -423,30 +415,32 @@
 
   /* Header toolbar */
   .glass-header {
-    background: var(--color-canvas);
+    background: color-mix(in srgb, var(--color-canvas) 90%, transparent);
     border-bottom: 1px solid var(--color-border);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
   }
 
   .hairline {
     border-color: var(--color-border);
   }
 
-  /* Hero numbers — tabular Inter, tight tracking */
+  /* Hero numbers — exact and stable */
   .num-hero {
-    font-family: var(--font-sans);
-    font-weight: 650;
+    font-family: var(--font-mono);
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.035em;
     line-height: 1.05;
   }
 
-  /* Eyebrow — clean muted label */
+  /* Eyebrow — small, structured and never decorative */
   .eyebrow {
     font-family: var(--font-sans);
-    font-size: 0.75rem;
-    font-weight: 500;
-    letter-spacing: normal;
-    text-transform: none;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
     color: var(--color-muted);
   }
 }
@@ -523,11 +517,11 @@
     transform: translateY(-1px);
   }
 
-  /* Soft accent + brass wash for hero panels */
+  /* Deep navy and sage establish focal moments without spectacle. */
   .hero-gradient {
     background:
-      radial-gradient(130% 110% at 100% 0%, color-mix(in srgb, var(--color-accent) 16%, transparent), transparent 58%),
-      radial-gradient(110% 110% at 0% 100%, color-mix(in srgb, var(--color-brass) 14%, transparent), transparent 52%),
+      radial-gradient(100% 100% at 100% 0%, color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 58%),
+      linear-gradient(135deg, color-mix(in srgb, var(--color-deep) 5%, var(--color-surface)), var(--color-surface)),
       var(--color-surface);
   }
 }
@@ -536,24 +530,87 @@
 
 /* Private-study sidebar rail */
 .brand-rail {
-  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
-  color: var(--color-ink);
-  border-right: 1px solid var(--color-border);
-  backdrop-filter: blur(32px) saturate(140%);
-  -webkit-backdrop-filter: blur(32px) saturate(140%);
-  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.03), 8px 0 28px rgba(0, 0, 0, 0.12);
+  background: var(--color-deep);
+  color: #fffdf8;
+  border-right: 1px solid color-mix(in srgb, #fffdf8 12%, transparent);
+  box-shadow: 8px 0 28px rgba(16, 43, 70, 0.10);
 }
 :root:not(.dark) .brand-rail {
-  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.35), 8px 0 28px rgba(0, 0, 0, 0.03);
+  box-shadow: 8px 0 28px rgba(16, 43, 70, 0.10);
 }
+.brand-rail :where(.text-ink) { color: #fffdf8; }
+.brand-rail :where(.text-ink-soft) { color: #d7e0d5; }
+.brand-rail :where(.text-muted) { color: #b6c5b8; }
+.brand-rail :where(.text-faint) { color: #839b8c; }
+.brand-rail :where(.border-border, .border-border-subtle) {
+  border-color: rgba(255, 253, 248, 0.12);
+}
+.brand-rail :where(.bg-surface\/60) { background-color: rgba(255, 253, 248, 0.06); }
+.brand-rail :where(.bg-sunken) { background-color: rgba(255, 253, 248, 0.08); }
 
 .brand-rail nav a[aria-current="page"] {
-  background: var(--color-accent-soft);
-  color: var(--color-accent-strong);
-  box-shadow: inset 2px 0 0 var(--color-brass), inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 12%, transparent);
+  background: rgba(169, 191, 157, 0.17);
+  color: #fffdf8;
+  box-shadow: inset 2px 0 0 #a9bf9d, inset 0 0 0 1px rgba(169, 191, 157, 0.16);
 }
 .brand-rail nav a[aria-current="page"] svg {
-  color: var(--color-brass);
+  color: #c4d4ba;
+}
+
+/* The client thread: visible on work screens, quiet enough to avoid dashboard noise. */
+.workspace-context {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-surface) 84%, transparent);
+}
+.workspace-context-name {
+  display: block;
+  overflow: hidden;
+  color: var(--color-ink);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.workspace-context-name:hover { color: var(--color-accent-strong); }
+.workspace-context-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.25rem;
+  color: var(--color-muted);
+  font-size: 0.6875rem;
+  line-height: 1;
+}
+.workspace-context-meta .inline-flex {
+  padding: 0.2rem 0.38rem;
+  font-size: 0.625rem;
+}
+.workspace-context-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  color: var(--color-ink-soft);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+.workspace-context-action:hover {
+  background: var(--color-accent-softer);
+  color: var(--color-accent-strong);
+}
+@media (max-width: 639px) {
+  .workspace-context { margin-bottom: 1.25rem; padding: 0.55rem 0.625rem; }
+  .workspace-context-action { min-width: 2rem; justify-content: center; }
 }
 
 /* Institutional feature card */
@@ -593,7 +650,7 @@ a {
     opacity var(--duration-fast) ease;
 }
 button:not(:disabled):active {
-  transform: scale(0.985);
+  transform: translateY(1px);
 }
 
 /* Card hover lift — quiet premium feel */

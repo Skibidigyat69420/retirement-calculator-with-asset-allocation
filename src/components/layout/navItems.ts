@@ -26,6 +26,14 @@ export interface NavItem {
   description?: string;
 }
 
+export interface ChapterNavItem {
+  path: string;
+  label: string;
+  icon: LucideIcon;
+  description: string;
+  paths: string[];
+}
+
 export const SECTION_ORDER = ['Workspace', 'Plan', 'Portfolio', 'Deliver', 'Practice', 'Tools'] as const;
 
 export const navItems: NavItem[] = [
@@ -172,10 +180,17 @@ export const navItems: NavItem[] = [
   // Practice
   {
     path: '/practitioner',
-    label: 'Practice Clients (API)',
+    label: 'Client operations',
     icon: Briefcase,
     section: 'Practice',
-    description: 'Live backend clients, plans & calculations',
+    description: 'Live client records, plans and calculations',
+  },
+  {
+    path: '/team',
+    label: 'Practice team',
+    icon: Users,
+    section: 'Practice',
+    description: 'Team members, roles and invitations',
   },
 
   // Tools
@@ -186,7 +201,61 @@ export const navItems: NavItem[] = [
     section: 'Tools',
     description: 'SIP, SWP, STP, EMI & lumpsum utilities',
   },
+  {
+    path: '/style-guide',
+    label: 'Style guide',
+    icon: Layers3,
+    section: 'Tools',
+    description: 'Internal component and token reference',
+  },
+  {
+    path: '/ui-review',
+    label: 'UI review',
+    icon: Activity,
+    section: 'Tools',
+    description: 'Internal workflow and quality review',
+  },
 ];
+
+export const chapterNavItems: ChapterNavItem[] = [
+  {
+    path: '/clients',
+    label: 'Households',
+    icon: Users,
+    description: 'Relationships, readiness and active households',
+    paths: ['/clients', '/practitioner'],
+  },
+  {
+    path: '/master-plan',
+    label: 'Plan',
+    icon: ClipboardList,
+    description: 'Facts, goals, risk and plan feasibility',
+    paths: ['/master-plan', '/client-profile', '/balance-sheet', '/goal', '/risk', '/retirement', '/reverse-planning'],
+  },
+  {
+    path: '/policy',
+    label: 'Policy',
+    icon: Layers3,
+    description: 'Allocation, policy, implementation and IPS',
+    paths: ['/', '/planning', '/policy', '/allocation', '/ips', '/ips/editor'],
+  },
+  {
+    path: '/dossier',
+    label: 'Dossier',
+    icon: Printer,
+    description: 'Client narrative, reports and meetings',
+    paths: ['/dossier', '/reports', '/meeting-workflow'],
+  },
+  {
+    path: '/overview',
+    label: 'Review',
+    icon: Activity,
+    description: 'Practice attention, changes and decision history',
+    paths: ['/overview', '/decision-history'],
+  },
+];
+
+export const toolPaths = ['/calculators', '/team', '/style-guide', '/ui-review'] as const;
 
 export const groupBySection = (items: NavItem[]): [string, NavItem[]][] => {
   const groups = items.reduce((acc, item) => {

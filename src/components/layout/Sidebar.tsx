@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { ChevronDown, PanelLeftClose, PanelLeftOpen, X, ArrowLeftRight } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/utils';
-import { navItems, type NavItem } from './navItems';
+import { chapterNavItems, navItems, type ChapterNavItem, type NavItem } from './navItems';
 import { Lockup, LogoMark } from './BrandMark';
 import { Avatar } from '../ui/Avatar';
 import { StatusBadge } from '../ui/StatusBadge';
@@ -24,15 +24,16 @@ const loadCollapsed = (): boolean => {
 };
 
 interface NavLinkProps {
-  item: NavItem;
+  item: Pick<NavItem, 'path' | 'label' | 'icon'> | ChapterNavItem;
   collapsed?: boolean;
   onClick?: () => void;
+  active?: boolean;
 }
 
-const NavLink = ({ item, collapsed, onClick }: NavLinkProps) => {
+const NavLink = ({ item, collapsed, onClick, active: activeOverride }: NavLinkProps) => {
   const location = useLocation();
   const Icon = item.icon;
-  const active = location.pathname === item.path;
+  const active = activeOverride ?? location.pathname === item.path;
 
   const link = (
     <Link
@@ -63,69 +64,58 @@ const NavLink = ({ item, collapsed, onClick }: NavLinkProps) => {
   return link;
 };
 
-const PRIMARY_PATHS = ['/', '/clients', '/planning', '/policy', '/dossier'];
-
-const TOOL_GROUPS: { id: string; label: string; paths: string[] }[] = [
-  {
-    id: 'client-plan',
-    label: 'Client plan',
-    paths: ['/master-plan', '/client-profile', '/balance-sheet', '/goal', '/risk', '/retirement', '/reverse-planning'],
-  },
-  {
-    id: 'portfolio',
-    label: 'Portfolio & policy',
-    paths: ['/allocation', '/ips/editor'],
-  },
-  {
-    id: 'documents',
-    label: 'Documents & reviews',
-    paths: ['/meeting-workflow', '/decision-history', '/reports'],
-  },
-  {
-    id: 'practice',
-    label: 'Practice operations',
-    paths: ['/overview', '/practitioner', '/team', '/calculators'],
-  },
-];
-
 const NavSections = ({ collapsed, onClick }: { collapsed?: boolean; onClick?: () => void }) => {
   const location = useLocation();
-  const [openGroups, setOpenGroups] = useState<string[]>(() => {
-    const current = TOOL_GROUPS.find((group) => group.paths.includes(location.pathname));
-    return current ? [current.id] : ['client-plan'];
-  });
-  const primary = navItems.filter((item) => PRIMARY_PATHS.includes(item.path));
-  // Sort primary according to PRIMARY_PATHS order
-  const sortedPrimary = [...primary].sort((a, b) => PRIMARY_PATHS.indexOf(a.path) - PRIMARY_PATHS.indexOf(b.path));
-  const toggleGroup = (id: string) => setOpenGroups((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  const activeChapter = chapterNavItems.find((chapter) => chapter.paths.includes(location.pathname));
+  const activeChapterItems = activeChapter
+    ? navItems.filter((item) => activeChapter.paths.includes(item.path) && item.path !== activeChapter.path)
+    : [];
+  const toolItems = navItems.filter((item) => !chapterNavItems.some((chapter) => chapter.paths.includes(item.path)));
+  const currentIsTool = toolItems.some((item) => item.path === location.pathname);
+  const [toolsOpen, setToolsOpen] = useState(currentIsTool);
 
   return (
     <nav aria-label="Primary" className="flex-1 overflow-y-auto py-2" style={{ scrollbarWidth: 'none' }}>
       <ul className={cn('space-y-px', collapsed && 'space-y-1')}>
-        {sortedPrimary.map((item) => <li key={item.path}><NavLink item={item} collapsed={collapsed} onClick={onClick} /></li>)}
+        {chapterNavItems.map((chapter) => (
+          <li key={chapter.path}>
+            <NavLink
+              item={chapter}
+              collapsed={collapsed}
+              onClick={onClick}
+              active={chapter.paths.includes(location.pathname)}
+            />
+          </li>
+        ))}
       </ul>
-      <div className="mt-4 pt-3 border-t border-border-subtle space-y-1">
-        {TOOL_GROUPS.map((group) => {
-          const items = navItems.filter((item) => group.paths.includes(item.path));
-          const groupActive = group.paths.includes(location.pathname);
-          const open = openGroups.includes(group.id);
-          const GroupIcon = items[0]?.icon;
-          return <div key={group.id} className="sidebar-tool-group">
+      {!collapsed && activeChapter && activeChapterItems.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-border-subtle">
+          <div className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
+            {activeChapter.label} workspace
+          </div>
+          <ul className="space-y-px">
+            {activeChapterItems.map((item) => (
+              <li key={item.path}><NavLink item={item} onClick={onClick} /></li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <div className="mt-4 pt-3 border-t border-border-subtle">
+        <div className="sidebar-tool-group">
             <button
               type="button"
-              onClick={() => toggleGroup(group.id)}
-              aria-expanded={open}
-              title={collapsed ? group.label : undefined}
-              className={cn('sidebar-tool-group-button', collapsed && 'justify-center px-0', groupActive && 'text-accent-strong')}
+              onClick={() => setToolsOpen((open) => !open)}
+              aria-expanded={toolsOpen}
+              title={collapsed ? 'Tools & practice' : undefined}
+              className={cn('sidebar-tool-group-button', collapsed && 'justify-center px-0', currentIsTool && 'text-accent-strong')}
             >
-              {GroupIcon && <GroupIcon size={16} strokeWidth={1.6} className="shrink-0" />}
-              {!collapsed && <><span className="flex-1 text-left">{group.label}</span><ChevronDown size={14} className={cn('transition-transform duration-150', open && 'rotate-180')} /></>}
+              <ArrowLeftRight size={16} strokeWidth={1.6} className="shrink-0" />
+              {!collapsed && <><span className="flex-1 text-left">Tools & practice</span><ChevronDown size={14} className={cn('transition-transform duration-150', toolsOpen && 'rotate-180')} /></>}
             </button>
-            {open && <ul className={cn('mt-1 space-y-px', collapsed && 'space-y-1')}>
-              {items.map((item) => <li key={item.path}><NavLink item={item} collapsed={collapsed} onClick={onClick} /></li>)}
+            {toolsOpen && <ul className={cn('mt-1 space-y-px', collapsed && 'space-y-1')}>
+              {toolItems.map((item) => <li key={item.path}><NavLink item={item} collapsed={collapsed} onClick={onClick} /></li>)}
             </ul>}
-          </div>;
-        })}
+        </div>
       </div>
     </nav>
   );

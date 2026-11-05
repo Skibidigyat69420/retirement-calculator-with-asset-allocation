@@ -13,7 +13,7 @@ export interface MetricCardProps {
 }
 
 const variants = {
-  default: 'bg-raised border border-border shadow-card text-ink',
+  default: 'bg-raised border border-border text-ink',
   navy: 'bg-sunken border border-border-strong text-ink',
   gold: 'bg-raised border border-brass/30 text-ink',
   success: 'bg-raised border border-positive/30 text-ink',
@@ -54,7 +54,7 @@ export const MetricCard = ({
   icon,
 }: MetricCardProps) => {
   return (
-    <div className={cn('rounded-lg p-4 sm:p-5 print:break-inside-avoid', variants[variant], className)}>
+    <div className={cn('rounded-[10px] p-4 sm:p-5 print:break-inside-avoid', variants[variant], className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className={cn('text-xs font-medium truncate', labelColors[variant])}>{label}</div>

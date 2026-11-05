@@ -1,16 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Home, PieChart, TrendingUp, BarChart3, Menu, X, type LucideIcon } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { navItems, groupBySection, type NavItem } from './navItems';
+import { chapterNavItems, navItems, groupBySection, type NavItem } from './navItems';
 
-const PRIMARY: { path: string; label: string; icon: LucideIcon }[] = [
-  { path: '/', label: 'Home', icon: Home },
-  { path: '/master-plan', label: 'Plan', icon: PieChart },
-  { path: '/allocation', label: 'Portfolio', icon: TrendingUp },
-  { path: '/reports', label: 'Deliver', icon: BarChart3 },
-];
+const PRIMARY = chapterNavItems.filter((item) => item.label !== 'Review');
 
 const primaryPaths = new Set(PRIMARY.map((p) => p.path));
 const remainingItems = navItems.filter((item) => !primaryPaths.has(item.path));
@@ -68,7 +63,7 @@ export const MobileNav = () => {
         <ul className="grid grid-cols-5">
           {PRIMARY.map((item) => {
             const Icon = item.icon;
-            const active = location.pathname === item.path;
+            const active = item.paths.includes(location.pathname);
             return (
               <li key={item.path}>
                 <Link

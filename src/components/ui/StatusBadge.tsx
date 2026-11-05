@@ -72,7 +72,7 @@ export const StatusBadge = ({ status, className }: StatusBadgeProps) => {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm border text-xs font-medium leading-none',
+        'inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs font-medium leading-none',
         toneClass,
         className,
       )}

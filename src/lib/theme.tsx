@@ -21,7 +21,7 @@ function loadPreference(): ThemePreference {
   } catch {
     // ignore
   }
-  return 'dark';
+  return 'light';
 }
 
 function systemPrefersDark(): boolean {
@@ -32,7 +32,7 @@ function applyToDocument(dark: boolean): void {
   document.documentElement.classList.toggle('dark', dark);
   document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
   const meta = document.querySelector('meta[name="theme-color"]:last-of-type');
-  if (meta) meta.setAttribute('content', dark ? '#09090b' : '#f8fafc');
+  if (meta) meta.setAttribute('content', dark ? '#0c233b' : '#f7f0e6');
 }
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {

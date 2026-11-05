@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { MobileNav } from './MobileNav';
 import { Footer } from './Footer';
+import { WorkspaceContextBar } from './WorkspaceContextBar';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,7 +15,7 @@ export const Layout = ({ children }: LayoutProps) => {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="app-canvas h-screen w-screen overflow-hidden flex relative selection:bg-accent selection:text-on-inkfill text-ink">
+      <div className="app-canvas min-h-[100dvh] w-full overflow-hidden flex relative selection:bg-accent selection:text-on-inkfill text-ink">
         <a href="#main-content" className="skip-to-content sr-only focus:not-sr-only">
           <span className="inline-flex items-center rounded-md bg-accent text-on-inkfill px-4 py-2.5 shadow-lg font-medium text-xs">
             Skip to main content
@@ -22,7 +23,7 @@ export const Layout = ({ children }: LayoutProps) => {
         </a>
         <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
-        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0 min-h-[100dvh] overflow-hidden">
           <TopBar onMenuClick={() => setMobileOpen(true)} mobileOpen={mobileOpen} />
           <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
             <motion.main
@@ -33,6 +34,7 @@ export const Layout = ({ children }: LayoutProps) => {
               className="flex-1 w-full px-4 sm:px-6 lg:px-10 py-6 lg:py-8 pb-20 lg:pb-8"
             >
               <div className="max-w-[1440px] mx-auto w-full flex flex-col flex-1">
+                <WorkspaceContextBar />
                 {children}
               </div>
             </motion.main>

@@ -8,7 +8,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const variants = {
   primary:
-    'bg-accent text-white border border-transparent hover:bg-accent-strong shadow-xs transition-colors',
+    'bg-accent text-on-inkfill border border-accent hover:bg-accent-strong hover:border-accent-strong shadow-none transition-colors',
   secondary:
     'bg-raised text-ink border border-border hover:border-border-strong hover:bg-sunken transition-colors',
   outline:
@@ -34,8 +34,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
         className={cn(
           'inline-flex items-center justify-center font-semibold cursor-pointer select-none',
-          'rounded-md transition-all duration-150 active:scale-[0.97]',
-          'disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100',
+          'rounded-md transition-all duration-150 active:translate-y-px',
+          'disabled:opacity-50 disabled:pointer-events-none disabled:active:translate-y-0',
           variants[variant],
           sizes[size],
           className,
