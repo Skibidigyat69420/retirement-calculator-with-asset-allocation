@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowUpRight, ChevronRight, Download, LayoutGrid, List, RefreshCw, Search, Sparkles, UserPlus, Users, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCalculator } from '../context/CalculatorContext';
-import { ApiRequestError, exportClientBundle, listClients, listClientDrafts, createClient, type ClientSummary } from '../lib/api';
+import { ApiRequestError, createClient, exportClientBundle, listClients, listClientDrafts, type ClientSummary } from '../lib/api';
 import { formatCurrencyCompact } from '../lib/formatters';
 
 import { setActiveCRMClient } from '../lib/crm';
@@ -37,8 +37,8 @@ export function PractitionerPage() {
     try {
       const [response, draftResponse] = await Promise.all([listClients(), listClientDrafts()]);
       const assigned = response.data.filter((client) => client.assignedPractitioners.some((advisor) => advisor.userId === user?.id));
-      const drafts = draftResponse.data.map((draft): ClientSummary => ({ id: draft.id, name: draft.name, status: 'Draft', householdId: draft.id, assignedPractitioners: [], financialSummary: (draft.data.financialSummary as ClientSummary['financialSummary'] | undefined) ?? { netWorth: 0, investableAssets: 0, totalAssets: 0, totalLiabilities: 0, assetCount: 0 } }));
-      const directory = [...assigned, ...drafts];
+      const drafts = draftResponse.data.filter((draft) => Boolean(draft.clientId)).map((draft): ClientSummary => ({ id: draft.clientId!, name: draft.name, status: 'Sample', householdId: draft.clientId!, assignedPractitioners: [], financialSummary: (draft.data.financialSummary as ClientSummary['financialSummary'] | undefined) ?? { netWorth: 0, investableAssets: 0, totalAssets: 0, totalLiabilities: 0, assetCount: 0 } }));
+      const directory = [...new Map([...assigned, ...drafts].map((client) => [client.id, client])).values()];
       setClients(directory);
       setSelectedId((current) => current ?? directory[0]?.id ?? null);
     } catch (cause) {
@@ -92,10 +92,10 @@ export function PractitionerPage() {
     }
   };
 
-  const openClientWorkspace = (clientId: string) => {
+  const openClientWorkspace = async (clientId: string) => {
     const client = clients.find((item) => item.id === clientId);
-    if (client) selectClient(client);
-    setActiveCRMClient(clientId);
+    if (client) await selectClient(client);
+    else setActiveCRMClient(clientId);
   };
 
   if (!ready) return <div className="directory-loading">Restoring your practice desk…</div>;

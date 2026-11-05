@@ -737,9 +737,6 @@ export function IPSWorkspacePage() {
             {/* Quick add client button */}
             <button
               type="button"
-            {/* Quick add client button */}
-            <button
-              type="button"
               onClick={() => setAddClientOpen(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface hover:bg-sunken text-xs font-medium text-ink transition-colors cursor-pointer"
             >

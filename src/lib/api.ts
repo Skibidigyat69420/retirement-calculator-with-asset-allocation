@@ -48,6 +48,7 @@ export class ApiRequestError extends Error {
 
 export interface ClientDraft {
   id: string;
+  clientId: string | null;
   name: string;
   status: 'active' | 'archived';
   isSample: boolean;
@@ -242,6 +243,10 @@ export function listClients(): Promise<{ data: ClientSummary[] }> {
 
 export function listClientDrafts(): Promise<{ data: ClientDraft[] }> {
   return request<{ data: ClientDraft[] }>('/client-drafts');
+}
+
+export function archiveClientDraft(id: string): Promise<ClientDraft> {
+  return request<ClientDraft>(`/client-drafts/${id}`, { method: 'PATCH', body: { status: 'archived' } });
 }
 
 export function createClient(body: { firstName: string; lastName: string; preferredName?: string; email?: string; phone?: string }): Promise<ClientRecord> {

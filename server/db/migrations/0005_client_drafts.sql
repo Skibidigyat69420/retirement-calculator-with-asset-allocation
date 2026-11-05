@@ -6,15 +6,19 @@ create table if not exists client_drafts (
   status stw_status not null default 'active',
   is_sample boolean not null default false,
   sample_key text,
+  client_id uuid references clients(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
 alter table client_drafts add column if not exists sample_key text;
+alter table client_drafts add column if not exists client_id uuid references clients(id) on delete set null;
 
 create index if not exists client_drafts_org_status_idx on client_drafts (organization_id, status, created_at desc);
 create unique index if not exists client_drafts_org_sample_key_idx
   on client_drafts (organization_id, sample_key) where sample_key is not null;
+create unique index if not exists client_drafts_client_id_unique
+  on client_drafts (client_id) where client_id is not null;
 
 alter table client_drafts enable row level security;
 drop policy if exists client_drafts_org_access on client_drafts;

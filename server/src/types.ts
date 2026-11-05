@@ -75,6 +75,7 @@ export type CalculationRun = {
 
 export type ClientDraft = {
   id: string;
+  clientId: string | null;
   name: string;
   status: 'active' | 'archived';
   isSample: boolean;

@@ -217,7 +217,7 @@ class MemoryStore implements AppStore {
   }
   async listClientDrafts(organizationId: string) { return Array.from(this.clientDrafts.values()).filter((draft) => draft.organizationId === organizationId && draft.status === 'active'); }
   async createClientDraft(organizationId: string, input: { name: string; data: Record<string, unknown>; isSample?: boolean; sampleKey?: string }) {
-    const now = new Date().toISOString(); const draft = { id: randomUUID(), organizationId, name: input.name, data: input.data, isSample: input.isSample ?? false, sampleKey: input.sampleKey ?? null, status: 'active' as const, createdAt: now, updatedAt: now };
+    const now = new Date().toISOString(); const draft = { id: randomUUID(), organizationId, clientId: null, name: input.name, data: input.data, isSample: input.isSample ?? false, sampleKey: input.sampleKey ?? null, status: 'active' as const, createdAt: now, updatedAt: now };
     this.clientDrafts.set(draft.id, draft); return draft;
   }
   async updateClientDraft(organizationId: string, id: string, patch: { name?: string; data?: Record<string, unknown>; status?: 'active' | 'archived' }) {
@@ -887,7 +887,7 @@ function mapUser(row: any): UserRecord | null {
 
 function mapClientDraft(row: any): ClientDraft | null {
   if (!row) return null;
-  return { id: row.id, name: row.name, status: row.status, isSample: row.is_sample, sampleKey: row.sample_key ?? null, data: row.data ?? {}, createdAt: row.created_at, updatedAt: row.updated_at };
+  return { id: row.id, clientId: row.client_id ?? null, name: row.name, status: row.status, isSample: row.is_sample, sampleKey: row.sample_key ?? null, data: row.data ?? {}, createdAt: row.created_at, updatedAt: row.updated_at };
 }
 
 function mapMembership(row: any): Membership {
