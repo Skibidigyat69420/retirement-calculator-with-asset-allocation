@@ -25,26 +25,17 @@ create table if not exists sample_client_workspaces (
 
 insert into sample_draft_catalog (sample_key, name, data)
 values
-  ('shah', 'Rhea and Karan Shah', '{"tier":"HNI","stage":"IPS Draft","tags":["Tech Founder","Retirement 2035"],"financialSummary":{"netWorth":48500000,"investableAssets":38200000,"totalAssets":52000000,"totalLiabilities":3500000,"assetCount":8}}'::jsonb),
-  ('malhotra', 'Vikram & Ananya Malhotra', '{"tier":"Ultra HNI","stage":"Discovery","tags":["Estate Succession","NRI Compliance"],"financialSummary":{"netWorth":124000000,"investableAssets":95000000,"totalAssets":130000000,"totalLiabilities":6000000,"assetCount":14}}'::jsonb),
-  ('sharma', 'Sharma Family', '{"tier":"HNI","stage":"Active Mandate","tags":["Multi-Gen","Higher Education"],"financialSummary":{"netWorth":24700000,"investableAssets":18200000,"totalAssets":34400000,"totalLiabilities":9700000,"assetCount":6}}'::jsonb),
-  ('mehta', 'Aarav Mehta', '{"tier":"Affluent","stage":"Risk Profiling","tags":["FIRE 45","Aggressive Growth"],"financialSummary":{"netWorth":8200000,"investableAssets":7800000,"totalAssets":8200000,"totalLiabilities":0,"assetCount":4}}'::jsonb)
+  ('comprehensive-household', 'Sample Household', '{"tier":"HNI","stage":"Active Mandate","tags":["Comprehensive Test","Dossier Ready","Multi-Goal"],"financialSummary":{"netWorth":68400000,"investableAssets":51900000,"totalAssets":84600000,"totalLiabilities":16200000,"assetCount":8}}'::jsonb)
 on conflict (sample_key) do update
 set name = excluded.name, data = excluded.data, status = 'active', updated_at = now();
 
--- Preserve existing linked test clients before removing the old per-tenant
--- sample copies. For duplicate legacy rows, retain the earliest linked client.
-insert into sample_client_workspaces (organization_id, sample_draft_id, client_id)
-select distinct on (legacy.organization_id, catalog.id)
-  legacy.organization_id, catalog.id, legacy.client_id
-from client_drafts legacy
-join sample_draft_catalog catalog on catalog.sample_key = legacy.sample_key
-where legacy.is_sample = true and legacy.client_id is not null
-order by legacy.organization_id, catalog.id, legacy.created_at asc
-on conflict (organization_id, sample_draft_id) do nothing;
-
--- Legacy sample rows are no longer the source of truth. Non-sample drafts are
--- intentionally untouched.
+-- Remove the old disposable sample workspaces (and their cascaded plans,
+-- reports and resources) before discarding legacy sample rows. Non-sample
+-- clients and drafts are intentionally untouched.
+delete from clients
+where id in (
+  select client_id from client_drafts where is_sample = true and client_id is not null
+);
 delete from client_drafts where is_sample = true;
 
 -- Make migrated workspaces fully usable even when migration 0006 was not run.

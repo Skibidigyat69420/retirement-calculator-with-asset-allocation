@@ -409,7 +409,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
           client: {
             ...defaultClientInputs().client,
             ...(snapshot.client || {}),
-            name: [client.firstName, client.lastName].filter(Boolean).join(' ') || client.preferredName || '',
+            name: client.preferredName || [client.firstName, client.lastName].filter(Boolean).join(' ') || '',
             email: client.email || '', phone: client.phone || '', notes: client.notes || '',
           },
           annualIncome: incomeRule ? numberValue(incomeRule.annualAmount) : snapshot.annualIncome,

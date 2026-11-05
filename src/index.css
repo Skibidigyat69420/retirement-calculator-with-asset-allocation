@@ -1980,11 +1980,34 @@ button:not(:disabled):active {
 
 /* ═══ Client dossier — a calm 16:9 deck on screen and in print ═══ */
 .dossier-workspace {
+  /* The dossier is a client-facing document, so it deliberately keeps one
+     readable light palette even if the application shell is in dark mode. */
+  color-scheme: light;
+  --color-background: #F4F6F9;
+  --color-canvas: #F4F6F9;
+  --color-surface: #FFFFFF;
+  --color-raised: #FFFFFF;
+  --color-sunken: #EEF2F7;
+  --color-border: #D5DAE3;
+  --color-border-strong: #A8B2C1;
+  --color-ink: #1A1E27;
+  --color-ink-soft: #3D4655;
+  --color-muted: #5B6474;
+  --color-faint: #6E7788;
+  --color-on-inkfill: #FFFFFF;
   --deck-paper: #FFFFFF;
   --deck-ink: #1A1E27;
   --deck-rule: #D5DAE3;
-  color: var(--color-ink);
+  background: #F4F6F9;
+  color: #1A1E27;
 }
+.dossier-workspace .text-ink { color: #1A1E27; }
+.dossier-workspace .text-ink-soft { color: #3D4655; }
+.dossier-workspace .text-muted,
+.dossier-workspace .text-faint { color: #5B6474; }
+.dossier-workspace .bg-surface,
+.dossier-workspace .bg-raised { background-color: #FFFFFF; }
+.dossier-workspace .bg-sunken { background-color: #EEF2F7; }
 .dossier-toolbar {
   min-height: 56px;
   padding: 0.65rem 0.85rem;

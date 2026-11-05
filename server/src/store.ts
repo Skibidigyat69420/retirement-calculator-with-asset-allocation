@@ -83,31 +83,84 @@ function normalizeEmail(email: string): string {
 }
 
 function defaultClientDrafts(): { name: string; sampleKey: string; data: Record<string, unknown> }[] {
-  return [
-    { name: 'Rhea and Karan Shah', sampleKey: 'shah', data: { tier: 'HNI', stage: 'IPS Draft', tags: ['Tech Founder', 'Retirement 2035'], financialSummary: { netWorth: 48500000, investableAssets: 38200000, totalAssets: 52000000, totalLiabilities: 3500000, assetCount: 8 } } },
-    { name: 'Vikram & Ananya Malhotra', sampleKey: 'malhotra', data: { tier: 'Ultra HNI', stage: 'Discovery', tags: ['Estate Succession', 'NRI Compliance'], financialSummary: { netWorth: 124000000, investableAssets: 95000000, totalAssets: 130000000, totalLiabilities: 6000000, assetCount: 14 } } },
-    { name: 'Sharma Family', sampleKey: 'sharma', data: { tier: 'HNI', stage: 'Active Mandate', tags: ['Multi-Gen', 'Higher Education'], financialSummary: { netWorth: 24700000, investableAssets: 18200000, totalAssets: 34400000, totalLiabilities: 9700000, assetCount: 6 } } },
-    { name: 'Aarav Mehta', sampleKey: 'mehta', data: { tier: 'Affluent', stage: 'Risk Profiling', tags: ['FIRE 45', 'Aggressive Growth'], financialSummary: { netWorth: 8200000, investableAssets: 7800000, totalAssets: 8200000, totalLiabilities: 0, assetCount: 4 } } },
-  ];
+  const workspace = comprehensiveSampleWorkspace();
+  return [{
+    name: 'Sample Household',
+    sampleKey: 'comprehensive-household',
+    data: {
+      tier: 'HNI', stage: 'Active Mandate', tags: ['Comprehensive Test', 'Dossier Ready', 'Multi-Goal'],
+      financialSummary: { netWorth: 68_400_000, investableAssets: 51_900_000, totalAssets: 84_600_000, totalLiabilities: 16_200_000, assetCount: workspace.assets.length },
+      workspace,
+    },
+  }];
 }
 
-function sampleFinancialAmounts(data: Record<string, unknown>) {
-  const summary = data.financialSummary;
-  const values = summary && typeof summary === 'object' ? summary as Record<string, unknown> : {};
-  const amount = (value: unknown, fallback: number) => typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+function comprehensiveSampleWorkspace(): Record<string, any> {
   return {
-    investableAssets: amount(values.investableAssets, 1_000_000),
-    netWorth: amount(values.netWorth, 5_000_000),
+    client: {
+      name: 'Sample Household', email: 'sample.household@example.com', phone: '+91 98450 12345', advisor: 'SoundThesis Capital', reviewDate: '2026-11-05',
+      address: '42 Palm Grove Road, Indiranagar, Bengaluru 560038', occupation: 'Senior Engineering Manager', business: 'Household IT services income; no active business interests', spouse: 'Priya Sharma', healthStatus: 'Good — no chronic conditions across the household',
+      notes: 'Dual-income household with two school-going children and one dependent retired parent. Review allocation annually and rebalance SIPs each April.', maritalStatus: 'Married',
+      familyComposition: 'Self (42), spouse (40), son (14), daughter (11), dependent father (70)', planningPurpose: 'Fund retirement at 60 with children’s education secured, a healthcare buffer and a family legacy.',
+      goalsSummary: 'Retirement corpus, two education goals, parent healthcare, annual travel and estate legacy.', insuranceSummary: 'Term cover for both earners, family floater and senior-citizen health policy.',
+      investmentPhilosophy: 'Growth-oriented with disciplined rebalancing and no leverage beyond essential loans.', adviceRequested: 'Validate retirement glide path, sequence education funding and review protection gaps.',
+      familyMembers: [
+        { id: 'sample-self', name: 'Arjun Sharma', relationship: 'Self', dateOfBirth: '1984-03-15', occupation: 'Senior Engineering Manager', status: 'Working', dependent: false, goal: 'Retire at 60' },
+        { id: 'sample-spouse', name: 'Priya Sharma', relationship: 'Spouse', dateOfBirth: '1986-07-22', occupation: 'Architect', status: 'Working', dependent: false, goal: 'Joint retirement planning' },
+        { id: 'sample-son', name: 'Aarav Sharma', relationship: 'Son', dateOfBirth: '2012-01-30', status: 'Education', dependent: true, goal: 'Engineering degree' },
+        { id: 'sample-daughter', name: 'Ananya Sharma', relationship: 'Daughter', dateOfBirth: '2015-09-12', status: 'Education', dependent: true, goal: 'Master’s degree abroad' },
+        { id: 'sample-parent', name: 'Ramesh Sharma', relationship: 'Father', dateOfBirth: '1955-11-05', occupation: 'Retired Government Officer', status: 'Retired', dependent: true, goal: 'Healthcare buffer' },
+      ],
+      incomeSources: [
+        { id: 'salary-arjun', name: 'Primary Salary', amount: 4_800_000, amountInBaseCurrency: 4_800_000, currency: 'INR', frequency: 'annual', notes: 'Includes annual bonus' },
+        { id: 'salary-priya', name: 'Spouse Salary', amount: 1_800_000, amountInBaseCurrency: 1_800_000, currency: 'INR', frequency: 'annual', notes: 'Architecture practice income' },
+        { id: 'rental', name: 'Rental Income', amount: 60_000, amountInBaseCurrency: 60_000, currency: 'INR', frequency: 'monthly', notes: 'Downtown apartment' },
+        { id: 'consulting', name: 'Consulting', amount: 500_000, amountInBaseCurrency: 500_000, currency: 'INR', frequency: 'annual', notes: 'Advisory retainers' },
+      ],
+      insurancePolicies: [
+        { id: 'life-arjun', type: 'Life', provider: 'HDFC Life', coverage: '20,000,000', premium: 32_000, premiumFrequency: 'annual', notes: 'Term cover for Arjun' },
+        { id: 'life-priya', type: 'Life', provider: 'ICICI Prudential', coverage: '10,000,000', premium: 21_000, premiumFrequency: 'annual', notes: 'Term cover for Priya' },
+        { id: 'health-family', type: 'Health', provider: 'Star Health', coverage: '1,500,000', premium: 41_000, premiumFrequency: 'annual', notes: 'Family floater' },
+        { id: 'health-parent', type: 'Health', provider: 'Care Health', coverage: '1,000,000', premium: 58_000, premiumFrequency: 'annual', notes: 'Senior-citizen policy' },
+      ],
+    },
+    currentAge: 42, retirementAge: 60, lifeExpectancy: 85, inflation: 6, annualIncome: 7_820_000, monthlyLivingExpenses: 220_000, monthlyExpenditure: 339_700,
+    assets: [
+      { id: 'home', name: 'Primary Residence (4BHK)', value: 32_000_000, returnRate: 6.5, category: 'realestate', currency: 'INR', liquidateAtRetirement: false },
+      { id: 'rental-flat', name: 'Rental Apartment', value: 9_500_000, returnRate: 6.5, category: 'realestate', currency: 'INR', liquidateAtRetirement: true },
+      { id: 'equity-mf', name: 'Equity Mutual Funds', value: 14_800_000, returnRate: 12, category: 'equity', currency: 'INR', liquidateAtRetirement: true },
+      { id: 'us-equity', name: 'US Equity ETF', value: 3_600_000, returnRate: 11, category: 'equity', currency: 'USD', liquidateAtRetirement: true },
+      { id: 'debt', name: 'EPF, PPF and Bonds', value: 8_400_000, returnRate: 7.2, category: 'debt', currency: 'INR', liquidateAtRetirement: true },
+      { id: 'gold', name: 'Gold ETF and Jewellery', value: 2_100_000, returnRate: 7, category: 'gold', currency: 'INR', liquidateAtRetirement: false },
+      { id: 'liquid', name: 'Emergency Fund and FDs', value: 4_200_000, returnRate: 5.5, category: 'liquid', currency: 'INR', liquidateAtRetirement: true },
+      { id: 'other', name: 'ESOPs and Alternatives', value: 1_800_000, returnRate: 10, category: 'other', currency: 'INR', liquidateAtRetirement: true },
+    ],
+    liabilities: [
+      { id: 'home-loan', name: 'Home Loan', principal: 12_500_000, rate: 8.4, tenureYears: 12, monthlyPayment: 137_000, includeInExpenses: true, lender: 'HDFC Bank' },
+      { id: 'auto-loan', name: 'Auto Loan', principal: 1_200_000, rate: 9.1, tenureYears: 3, monthlyPayment: 38_000, includeInExpenses: true, lender: 'ICICI Bank' },
+      { id: 'personal-loan', name: 'Personal Loan', principal: 650_000, rate: 11.5, tenureYears: 2, monthlyPayment: 31_700, includeInExpenses: true, lender: 'Axis Bank' },
+    ],
+    sip: { amount: 180_000, equitySplit: 75, debtSplit: 25, stepUp: 10, equityReturn: 12, debtReturn: 7 },
+    stp: { active: true, source: 'idle-cash', lumpsum: 1_200_000, monthlyTransfer: 100_000, liquidReturn: 5.5, equitySplit: 80, debtSplit: 20, liquidCap: 300_000 },
+    swp: { monthlyNeedToday: 240_000, postRetirementReturn: 8, taxRate: 10, startAge: 60, endAge: 85 },
+    goals: [
+      { id: 'education-son', name: 'Aarav Engineering Degree', targetAmount: 8_000_000, yearsToGoal: 7, priority: 'essential', inflation: 9, recurring: false },
+      { id: 'education-daughter', name: 'Ananya Masters Abroad', targetAmount: 14_000_000, yearsToGoal: 11, priority: 'essential', inflation: 9, recurring: false },
+      { id: 'retirement', name: 'Retirement Corpus', targetAmount: 65_000_000, yearsToGoal: 18, priority: 'essential', inflation: 6, recurring: false },
+      { id: 'healthcare', name: 'Parent Healthcare Reserve', targetAmount: 3_500_000, yearsToGoal: 5, priority: 'important', inflation: 8, recurring: false },
+      { id: 'travel', name: 'Annual Family Travel', targetAmount: 1_200_000, yearsToGoal: 1, priority: 'aspirational', inflation: 6, recurring: true },
+      { id: 'legacy', name: 'Family Legacy', targetAmount: 20_000_000, yearsToGoal: 25, priority: 'aspirational', inflation: 6, recurring: false },
+    ],
   };
 }
 
 function sampleProfile(data: Record<string, unknown>): Profile {
-  const { investableAssets, netWorth } = sampleFinancialAmounts(data);
+  const workspace = (data.workspace && typeof data.workspace === 'object' ? data.workspace : comprehensiveSampleWorkspace()) as Record<string, any>;
   return {
-    assets: [{ name: 'Sample opening portfolio', category: 'equity', assetCategory: 'equity', currency: 'INR', currentValue: investableAssets, expectedReturn: 10, status: 'active' }],
-    liabilities: [],
-    cashflows: [{ type: 'income', annualAmount: Math.max(1_200_000, investableAssets * 0.08), status: 'active' }],
-    goals: [{ name: 'Sample retirement objective', targetAmount: Math.max(5_000_000, netWorth * 1.5), yearsToGoal: 15, priority: 'essential', status: 'active' }],
+    assets: workspace.assets.map((asset: Record<string, unknown>) => ({ name: asset.name, category: asset.category, assetCategory: asset.category, currency: asset.currency, currentValue: asset.value, expectedReturn: asset.returnRate, liquidateAtRetirement: asset.liquidateAtRetirement, status: 'active' })),
+    liabilities: workspace.liabilities.map((liability: Record<string, unknown>) => ({ name: liability.name, outstandingAmount: liability.principal, interestRate: liability.rate, monthlyPayment: liability.monthlyPayment, metadata: { tenureYears: liability.tenureYears, includeInExpenses: liability.includeInExpenses, lender: liability.lender }, status: 'active' })),
+    cashflows: [{ type: 'income', annualAmount: workspace.annualIncome, status: 'active' }, { type: 'expense', monthlyAmount: workspace.monthlyLivingExpenses, status: 'active' }, { type: 'sip', monthlyAmount: workspace.sip.amount, status: 'active' }],
+    goals: workspace.goals.map((goal: Record<string, unknown>) => ({ name: goal.name, targetAmount: goal.targetAmount, yearsToGoal: goal.yearsToGoal, priority: goal.priority, inflationRate: goal.inflation, recurring: goal.recurring, status: 'active' })),
   };
 }
 
@@ -243,9 +296,13 @@ class MemoryStore implements AppStore {
       }
       const workspaceKey = `${organizationId}:${draft.id}`;
       if (this.sampleWorkspaceClientIds.has(workspaceKey)) continue;
+      const workspace = (draft.data.workspace && typeof draft.data.workspace === 'object'
+        ? draft.data.workspace : comprehensiveSampleWorkspace()) as Record<string, any>;
+      const clientProfile = workspace.client as Record<string, unknown>;
       const client: ClientRecord & { organizationId: string } = {
         id: randomUUID(), organizationId, householdId: randomUUID(), firstName: 'Sample', lastName: 'Client', preferredName: draft.name,
-        email: null, phone: null, dateOfBirth: null, maritalStatus: null, notes: 'Global sample workspace', status: 'active', assignedPractitioners: [],
+        email: String(clientProfile.email || '') || null, phone: String(clientProfile.phone || '') || null, dateOfBirth: null,
+        maritalStatus: String(clientProfile.maritalStatus || '') || null, notes: String(clientProfile.notes || '') || null, status: 'active', assignedPractitioners: [],
       };
       this.clients.set(client.id, client);
       this.profiles.set(client.id, sampleProfile(draft.data));
@@ -592,17 +649,25 @@ class PostgresStore implements AppStore {
         const existing = await query`select client_id from sample_client_workspaces where organization_id = ${organizationId} and sample_draft_id = ${sample.id} limit 1`;
         if (existing[0]) continue;
 
+        const workspace = (sample.data?.workspace && typeof sample.data.workspace === 'object'
+          ? sample.data.workspace : comprehensiveSampleWorkspace()) as Record<string, any>;
+        const clientProfile = workspace.client as Record<string, unknown>;
         const client = (await query`
-          insert into clients (organization_id, first_name, last_name, preferred_name, notes)
-          values (${organizationId}, 'Sample', 'Client', ${sample.name}, 'Global sample workspace')
+          insert into clients (organization_id, first_name, last_name, preferred_name, email, phone, marital_status, notes)
+          values (${organizationId}, 'Sample', 'Client', ${sample.name}, ${String(clientProfile.email || '') || null}, ${String(clientProfile.phone || '') || null}, ${String(clientProfile.maritalStatus || '') || null}, ${String(clientProfile.notes || '') || null})
           returning id
         `)[0];
         await query`insert into sample_client_workspaces (organization_id, sample_draft_id, client_id) values (${organizationId}, ${sample.id}, ${client.id})`;
 
-        const { investableAssets, netWorth } = sampleFinancialAmounts(sample.data ?? {});
-        await query`insert into financial_resources (organization_id, client_id, resource_type, data) values (${organizationId}, ${client.id}, 'assets', ${query.json({ name: 'Sample opening portfolio', category: 'equity', assetCategory: 'equity', currency: 'INR', currentValue: investableAssets, expectedReturn: 10 })})`;
-        await query`insert into financial_resources (organization_id, client_id, resource_type, data) values (${organizationId}, ${client.id}, 'cashflows', ${query.json({ type: 'income', annualAmount: Math.max(1_200_000, investableAssets * 0.08) })})`;
-        await query`insert into financial_resources (organization_id, client_id, resource_type, data) values (${organizationId}, ${client.id}, 'goals', ${query.json({ name: 'Sample retirement objective', targetAmount: Math.max(5_000_000, netWorth * 1.5), yearsToGoal: 15, priority: 'essential' })})`;
+        const profile = sampleProfile(sample.data ?? {});
+        for (const [resourceType, records] of Object.entries(profile)) {
+          for (const record of records) {
+            await query`insert into financial_resources (organization_id, client_id, resource_type, data) values (${organizationId}, ${client.id}, ${resourceType}, ${query.json(record as any)})`;
+          }
+        }
+        const plan = (await query`insert into plans (organization_id, client_id, name) values (${organizationId}, ${client.id}, 'Comprehensive Sample Master Plan') returning id`)[0];
+        const version = (await query`insert into plan_versions (plan_id, version_number, input_snapshot, assumptions_snapshot) values (${plan.id}, 1, ${query.json({ ...workspace, inputs: workspace, riskAnswers: { time: 8, capacity: 8, attitude: 7, experience: 7, liquidity: 7, goals: 8 } })}, '{}'::jsonb) returning id`)[0];
+        await query`update plans set current_version_id = ${version.id}, status = 'active', updated_at = now() where id = ${plan.id}`;
       }
     });
   }
