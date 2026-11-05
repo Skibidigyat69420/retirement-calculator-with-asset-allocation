@@ -18,6 +18,7 @@ const titleStyles = {
 export const PageHeader = ({
   title,
   description,
+  eyebrow,
   actions,
   variant = 'standard',
 }: PageHeaderProps) => {
