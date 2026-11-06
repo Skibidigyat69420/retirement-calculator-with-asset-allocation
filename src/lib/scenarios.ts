@@ -439,7 +439,7 @@ export const aaravClientInputs = (): MasterPlanInputs => ({
     liquidCap: 0,
   },
   swp: {
-    monthlyNeedToday: 0,
+    monthlyNeedToday: 60000,
     postRetirementReturn: 8.5,
     taxRate: 10,
     startAge: 45,

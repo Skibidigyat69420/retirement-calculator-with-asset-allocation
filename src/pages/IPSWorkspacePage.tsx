@@ -265,6 +265,17 @@ export function IPSWorkspacePage() {
     if (client.primaryGoal) setPrimaryGoal(client.primaryGoal);
     if (client.policyNotes) setPolicyNote(client.policyNotes);
     if (client.targetAllocation) setManualTargets({ ...client.targetAllocation });
+    if (client.swp) {
+      updateInputs({ swp: { ...inputs.swp, ...client.swp } });
+    } else if (client.swpMonthlyNeed) {
+      updateInputs({
+        swp: {
+          ...inputs.swp,
+          monthlyNeedToday: client.swpMonthlyNeed,
+          startAge: client.swpStartAge || client.retirementAge || inputs.swp.startAge,
+        },
+      });
+    }
 
     showToast(`Loaded ${client.name} relationship record.`, 'info');
   };
@@ -744,14 +755,32 @@ export function IPSWorkspacePage() {
                         }`}
                       >
                         <div className="min-w-0 pr-2">
-                          <p className="truncate font-medium">{c.name}</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="truncate font-medium">{c.name}</p>
+                            {c.status === 'Prospect' ? (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                                Prospect
+                              </span>
+                            ) : c.tags?.includes('Nearing SWP') ? (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
+                                Nearing SWP
+                              </span>
+                            ) : null}
+                          </div>
                           <p className="text-[10px] text-muted truncate">
                             {c.tier || 'Affluent'} • {c.stage || 'Discovery'}
                           </p>
                         </div>
-                        <span className="font-mono text-[10px] text-muted shrink-0">
-                          {formatCurrencyCompact(c.financialSummary.netWorth)}
-                        </span>
+                        <div className="text-right shrink-0">
+                          <span className="font-mono text-[10px] text-muted block">
+                            {formatCurrencyCompact(c.financialSummary.netWorth)}
+                          </span>
+                          {c.swpMonthlyNeed ? (
+                            <span className="font-mono text-[10px] text-accent font-semibold block">
+                              SWP {formatCurrencyCompact(c.swpMonthlyNeed)}/mo
+                            </span>
+                          ) : null}
+                        </div>
                       </button>
                     ))}
                   </div>
@@ -1411,6 +1440,76 @@ export function IPSWorkspacePage() {
                     <span className="text-muted">Total Planning Span:</span>
                     <strong className="text-ink font-mono">
                       {Math.max(0, inputs.lifeExpectancy - inputs.currentAge)} years
+                    </strong>
+                  </div>
+                </div>
+
+                {/* Modeled SWP Decumulation Blueprint */}
+                <div className="bg-sunken rounded-xl p-3 border border-border/80 space-y-2.5 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-ink flex items-center gap-1.5">
+                      <TrendingUp size={13} className="text-accent" /> Modeled SWP (Systematic Withdrawal)
+                    </span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                      Math.max(0, inputs.retirementAge - inputs.currentAge) <= 3
+                        ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30'
+                        : activeClient?.status === 'Prospect'
+                        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                        : 'bg-accent-soft text-accent'
+                    }`}>
+                      {Math.max(0, inputs.retirementAge - inputs.currentAge) <= 3
+                        ? 'Nearing SWP'
+                        : activeClient?.status === 'Prospect'
+                        ? 'Prospect Target'
+                        : 'Active Mandate'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-1 border-t border-border/60">
+                    <label className="space-y-1">
+                      <span className="text-muted text-[11px] block">Monthly SWP Target</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted font-mono">₹</span>
+                        <input
+                          type="number"
+                          value={inputs.swp.monthlyNeedToday || ''}
+                          onChange={(e) => {
+                            const val = number(e.target.value);
+                            updateInputs({ swp: { ...inputs.swp, monthlyNeedToday: val } });
+                            updateActiveCRMClient({
+                              swpMonthlyNeed: val,
+                              swp: { ...inputs.swp, monthlyNeedToday: val },
+                            });
+                          }}
+                          placeholder="70000"
+                          className="w-full px-2 py-1 rounded border border-border bg-raised text-ink font-mono text-xs font-semibold focus:border-accent focus:outline-none"
+                        />
+                      </div>
+                    </label>
+
+                    <label className="space-y-1">
+                      <span className="text-muted text-[11px] block">Drawdown Start Age</span>
+                      <input
+                        type="number"
+                        value={inputs.swp.startAge || inputs.retirementAge || ''}
+                        onChange={(e) => {
+                          const val = number(e.target.value);
+                          updateInputs({ swp: { ...inputs.swp, startAge: val } });
+                          updateActiveCRMClient({
+                            swpStartAge: val,
+                            swp: { ...inputs.swp, startAge: val },
+                          });
+                        }}
+                        placeholder="60"
+                        className="w-full px-2 py-1 rounded border border-border bg-raised text-ink font-mono text-xs font-semibold focus:border-accent focus:outline-none"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-muted pt-1 border-t border-border/40">
+                    <span>Drawdown Runway:</span>
+                    <strong className="text-ink font-mono">
+                      {Math.max(0, (inputs.swp.endAge || inputs.lifeExpectancy) - (inputs.swp.startAge || inputs.retirementAge))} years ({Math.max(0, (inputs.swp.startAge || inputs.retirementAge) - inputs.currentAge)} yrs away)
                     </strong>
                   </div>
                 </div>

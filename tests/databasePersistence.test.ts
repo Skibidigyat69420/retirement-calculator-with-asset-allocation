@@ -139,29 +139,51 @@ describe('Database & Persistence System Verification', () => {
   });
 
   describe('3. CRM Directory & Interaction Logs', () => {
-    test('getCRMClients provides seed directory when unpopulated', () => {
+    test('getCRMClients provides 3 seed personas at different levels with SWP models', () => {
       const clients = getCRMClients();
       assert.ok(Array.isArray(clients));
-      assert.ok(clients.length > 0);
-      assert.equal(clients[0].name, 'Sample Household');
-      assert.equal(clients[0].status, 'Sample');
-      assert.equal(clients.length, 1);
+      assert.equal(clients.length, 3);
+
+      const clientPersona = clients.find((c) => c.name === 'Sample Household');
+      assert.ok(clientPersona);
+      assert.equal(clientPersona.status, 'Active');
+      assert.equal(clientPersona.stage, 'Active Mandate');
+      assert.equal(clientPersona.swpMonthlyNeed, 70000);
+      assert.equal(clientPersona.swp?.startAge, 60);
+
+      const prospectPersona = clients.find((c) => c.name === 'Aarav Mehta');
+      assert.ok(prospectPersona);
+      assert.equal(prospectPersona.status, 'Prospect');
+      assert.equal(prospectPersona.stage, 'Discovery');
+      assert.equal(prospectPersona.swpMonthlyNeed, 60000);
+      assert.equal(prospectPersona.swp?.startAge, 45);
+
+      const nearingSWPPersona = clients.find((c) => c.name === 'Sunita & Ashok Khanna');
+      assert.ok(nearingSWPPersona);
+      assert.ok(nearingSWPPersona.tags?.includes('Nearing SWP'));
+      assert.equal(nearingSWPPersona.swpMonthlyNeed, 120000);
+      assert.equal(nearingSWPPersona.swp?.startAge, 60);
     });
 
-    test('createCRMClient appends client and sets as active', () => {
+    test('createCRMClient appends client and sets up SWP model', () => {
       const newClient = createCRMClient({
         name: 'Sunita & Deepak Verma',
         tier: 'HNI',
         stage: 'Risk Profiling',
         email: 'deepak.verma@example.com',
+        monthlyLivingExpenses: 100000,
+        retirementAge: 58,
       });
       assert.ok(newClient.id.startsWith('client-'));
       assert.equal(newClient.name, 'Sunita & Deepak Verma');
+      assert.ok(newClient.swpMonthlyNeed && newClient.swpMonthlyNeed > 0);
+      assert.equal(newClient.swp?.startAge, 58);
 
       const all = getCRMClients();
       const found = all.find((c) => c.id === newClient.id);
       assert.ok(found);
       assert.equal(found.tier, 'HNI');
+      assert.equal(found.swpMonthlyNeed, 90000);
     });
 
     test('saveCRMClient updates existing client attributes', () => {

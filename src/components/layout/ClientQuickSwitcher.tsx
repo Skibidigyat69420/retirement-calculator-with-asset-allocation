@@ -103,7 +103,9 @@ export function ClientQuickSwitcher() {
             {currentDisplayName}
           </span>
           <span className="text-xs text-muted leading-tight font-medium truncate w-full">
-            {currentTier} · {activeClient?.stage || 'Active'}
+            {activeClient?.swpMonthlyNeed
+              ? `SWP ${formatCurrencyCompact(activeClient.swpMonthlyNeed)}/mo`
+              : `${currentTier} · ${activeClient?.stage || 'Active'}`}
           </span>
         </div>
         <ChevronDown
@@ -158,22 +160,40 @@ export function ClientQuickSwitcher() {
                   <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
                     <Avatar name={client.name} id={client.email} size="sm" />
                     <div className="min-w-0 flex-1">
-                      <span className="block font-semibold truncate leading-tight">
-                        {client.name}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold truncate leading-tight">
+                          {client.name}
+                        </span>
+                        {client.status === 'Prospect' ? (
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                            Prospect
+                          </span>
+                        ) : client.tags?.includes('Nearing SWP') ? (
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
+                            Nearing SWP
+                          </span>
+                        ) : null}
+                      </div>
                       <span className="block text-[10px] text-muted truncate mt-0.5">
                         {client.tier || 'Client'} {client.stage ? `· ${client.stage}` : ''}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {nw ? (
-                      <span className="font-mono text-[11px] text-muted">
-                        {formatCurrencyCompact(nw)}
+                  <div className="flex flex-col items-end shrink-0 gap-0.5">
+                    <div className="flex items-center gap-1.5">
+                      {nw ? (
+                        <span className="font-mono text-[11px] text-ink font-semibold">
+                          {formatCurrencyCompact(nw)}
+                        </span>
+                      ) : null}
+                      {isSelected && <Check size={14} className="text-accent-strong shrink-0" />}
+                    </div>
+                    {client.swpMonthlyNeed ? (
+                      <span className="text-[10px] text-accent font-medium font-mono">
+                        SWP {formatCurrencyCompact(client.swpMonthlyNeed)}/mo
                       </span>
                     ) : null}
-                    {isSelected && <Check size={14} className="text-accent-strong shrink-0" />}
                   </div>
                 </button>
               );

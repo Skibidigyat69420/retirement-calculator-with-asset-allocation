@@ -1,5 +1,6 @@
 import type { AssetCategory, ManualAllocationPolicy, MasterPlanInputs, RiskAnswers } from '../types';
 import type { ClientSummary } from './api';
+import { aaravClientInputs, khannaClientInputs, sampleClientInputs } from './scenarios';
 
 export type CRMStage =
   | 'Lead'
@@ -58,6 +59,15 @@ export interface CRMClient extends ClientSummary {
   targetAllocation?: Record<AssetCategory, number>;
   interactions?: CRMInteraction[];
   planSnapshot?: CRMPlanSnapshot;
+  swpMonthlyNeed?: number;
+  swpStartAge?: number;
+  swp?: {
+    monthlyNeedToday: number;
+    postRetirementReturn: number;
+    taxRate: number;
+    startAge: number;
+    endAge: number;
+  };
 }
 
 export const CRM_STAGES: CRMStage[] = [
@@ -72,21 +82,22 @@ export const CRM_STAGES: CRMStage[] = [
 
 export const CRM_TIERS: CRMTier[] = ['Retail', 'Affluent', 'HNI', 'Ultra HNI', 'Family Office'];
 
-const LOCAL_CLIENTS_KEY = 'stw.local-client-directory.v3';
+const LOCAL_CLIENTS_KEY = 'stw.local-client-directory.v4';
 const ACTIVE_CLIENT_KEY = 'stw.activeClientId';
 const CRM_LOGS_PREFIX = 'stw.crm.interactions.';
 
 const SAMPLE_CLIENTS: CRMClient[] = [
+  // 1. ACTIVE CLIENT: Mid-career mass-affluent family mandate
   {
     id: 'sample-household',
     name: 'Sample Household',
-    status: 'Sample',
-    stage: 'Discovery',
+    status: 'Active',
+    stage: 'Active Mandate',
     tier: 'Affluent',
     email: 'sample.household@example.com',
     phone: '+91 98450 12345',
     pan: 'AABCS9912D',
-    tags: ['Sample Household', 'Moderate Allocation', 'Dual Earner', 'Multi-Goal'],
+    tags: ['Active Mandate', 'Dual Earner', 'Multi-Goal', 'Moderate Allocation', 'Core SWP'],
     householdId: 'household-sample',
     assignedPractitioners: [
       { userId: 'advisor-1', fullName: 'SoundThesis Capital', assignmentRole: 'Lead Adviser' },
@@ -98,8 +109,8 @@ const SAMPLE_CLIENTS: CRMClient[] = [
     annualIncome: 2400000,
     monthlyLivingExpenses: 75000,
     inflation: 6.0,
-    primaryGoal: 'Retirement at 60 & balanced education funding',
-    policyNotes: 'Moderate 50/35/10/5 balanced allocation. Systematic monthly SIP of ₹35,000 with modest annual step-up.',
+    primaryGoal: 'Retirement at 60 with ₹70,000/mo SWP & children education',
+    policyNotes: 'Moderate 50/35/10/5 balanced allocation. Systematic monthly SIP of ₹35,000 with modest annual step-up. Core retirement SWP of ₹70,000/mo structured from age 60.',
     targetAllocation: {
       equity: 50,
       debt: 35,
@@ -107,6 +118,15 @@ const SAMPLE_CLIENTS: CRMClient[] = [
       realestate: 0,
       liquid: 5,
       other: 0,
+    },
+    swpMonthlyNeed: 70000,
+    swpStartAge: 60,
+    swp: {
+      monthlyNeedToday: 70000,
+      postRetirementReturn: 7.5,
+      taxRate: 10,
+      startAge: 60,
+      endAge: 82,
     },
     financialSummary: {
       netWorth: 6900000,
@@ -116,15 +136,209 @@ const SAMPLE_CLIENTS: CRMClient[] = [
       byCategory: { equity: 2000000, debt: 1650000, gold: 500000, liquid: 400000, realestate: 5350000 },
       assetCount: 18,
     },
+    planSnapshot: {
+      inputs: sampleClientInputs(),
+      riskAnswers: {
+        'time-horizon-main': 5,
+        'time-horizon-retirement': 5,
+        'loss-reaction': 6,
+        'drawdown-tolerance': 5,
+        'income-stability': 5,
+        'net-worth-income': 5,
+        'experience': 5,
+        'understanding-risk': 5,
+        'emergency-fund': 5,
+        'liquidity-needs': 5,
+        'goal-timing-flexibility': 5,
+        'past-behavior': 5,
+        'regret-reaction': 3,
+        'portfolio-concentration': 5,
+      },
+      manualTargets: { equity: 50, debt: 35, gold: 10, realestate: 0, liquid: 5, other: 0 },
+      manualAllocationPolicy: null,
+      updatedAt: new Date().toISOString(),
+    },
     interactions: [
       {
         id: 'sample-int-1',
         clientId: 'sample-household',
         date: new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10),
         type: 'meeting',
-        title: 'Initial Discovery & Risk Profiling',
-        notes: 'Reviewed middle-income household balance sheet. Moderate living expenses of ₹75k/mo against ₹24L annual gross income. Established a balanced 50% equity allocation with a 6% annual SIP step-up.',
-        nextAction: 'Finalize master plan and review glide path',
+        title: 'Annual Mandate Review & SWP Glide Path',
+        notes: 'Reviewed middle-income household portfolio. ₹35k/mo SIP running across diversified equity and fixed income. Validated retirement SWP requirement of ₹70k/mo from age 60 with sequence-of-returns protection.',
+        nextAction: 'Rebalance asset allocation in April',
+        actionCompleted: false,
+        advisorName: 'SoundThesis Capital',
+      },
+    ],
+  },
+
+  // 2. PROSPECT: Early-career tech professional exploring FIRE
+  {
+    id: 'prospect-aarav',
+    name: 'Aarav Mehta',
+    status: 'Prospect',
+    stage: 'Discovery',
+    tier: 'Retail',
+    email: 'aarav.mehta@example.com',
+    phone: '+91 98861 40217',
+    pan: 'AARPM7712E',
+    tags: ['Prospect', 'Early Career', 'Tech Professional', 'Long Runway', 'Future SWP'],
+    householdId: 'household-aarav',
+    assignedPractitioners: [
+      { userId: 'advisor-1', fullName: 'SoundThesis Capital', assignmentRole: 'Lead Adviser' },
+    ],
+    reviewDate: new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10),
+    currentAge: 28,
+    retirementAge: 45,
+    lifeExpectancy: 85,
+    annualIncome: 3200000,
+    monthlyLivingExpenses: 90000,
+    inflation: 6.0,
+    primaryGoal: 'FIRE Corpus (Retire at 45) with ₹60,000/mo SWP',
+    policyNotes: 'Early-career software engineer pursuing financial independence by 45. Aggressive 80/20 equity-debt SIP. Modeling future retirement SWP of ₹60,000/mo from age 45.',
+    targetAllocation: {
+      equity: 80,
+      debt: 15,
+      gold: 0,
+      realestate: 0,
+      liquid: 5,
+      other: 0,
+    },
+    swpMonthlyNeed: 60000,
+    swpStartAge: 45,
+    swp: {
+      monthlyNeedToday: 60000,
+      postRetirementReturn: 8.5,
+      taxRate: 10,
+      startAge: 45,
+      endAge: 85,
+    },
+    financialSummary: {
+      netWorth: 2400000,
+      investableAssets: 2400000,
+      totalAssets: 2400000,
+      totalLiabilities: 0,
+      byCategory: { equity: 1350000, debt: 0, gold: 0, liquid: 1050000, realestate: 0, other: 0 },
+      assetCount: 4,
+    },
+    planSnapshot: {
+      inputs: aaravClientInputs(),
+      riskAnswers: {
+        'time-horizon-main': 10,
+        'time-horizon-retirement': 8,
+        'loss-reaction': 9,
+        'drawdown-tolerance': 10,
+        'income-stability': 7,
+        'net-worth-income': 3,
+        'experience': 5,
+        'understanding-risk': 5,
+        'emergency-fund': 8,
+        'liquidity-needs': 8,
+        'goal-timing-flexibility': 8,
+        'past-behavior': 5,
+        'regret-reaction': 7,
+        'portfolio-concentration': 3,
+      },
+      manualTargets: { equity: 80, debt: 15, gold: 0, realestate: 0, liquid: 5, other: 0 },
+      manualAllocationPolicy: null,
+      updatedAt: new Date().toISOString(),
+    },
+    interactions: [
+      {
+        id: 'aarav-int-1',
+        clientId: 'prospect-aarav',
+        date: new Date(Date.now() - 4 * 86400000).toISOString().slice(0, 10),
+        type: 'meeting',
+        title: 'Prospect Discovery & FIRE Roadmap',
+        notes: 'Initial consultation with prospective client Aarav (age 28, senior software engineer). Evaluated current ₹60k/mo SIP against age-45 FIRE corpus. Modeled future SWP requirement of ₹60,000/mo over a 40-year retirement span.',
+        nextAction: 'Complete full risk profile & draft investment policy',
+        actionCompleted: false,
+        advisorName: 'SoundThesis Capital',
+      },
+    ],
+  },
+
+  // 3. NEARING SWP: Pre-retirement transition mandate (starts in ~3 years)
+  {
+    id: 'client-khanna',
+    name: 'Sunita & Ashok Khanna',
+    status: 'Active',
+    stage: 'Review & Approval',
+    tier: 'HNI',
+    email: 'khanna.household@example.com',
+    phone: '+91 99481 26670',
+    pan: 'AAHPK4418K',
+    tags: ['Nearing SWP', 'Pre-Retirement', 'HNI', 'Capital Preservation', 'Immediate Decumulation'],
+    householdId: 'household-khanna',
+    assignedPractitioners: [
+      { userId: 'advisor-1', fullName: 'SoundThesis Capital', assignmentRole: 'Lead Adviser' },
+    ],
+    reviewDate: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+    currentAge: 57,
+    retirementAge: 60,
+    lifeExpectancy: 85,
+    annualIncome: 6360000,
+    monthlyLivingExpenses: 120000,
+    inflation: 6.0,
+    primaryGoal: 'Transitioning to ₹1,20,000/mo SWP at age 60 with medical buffer',
+    policyNotes: 'Pre-retirement couple 3 years from retirement at age 60. Shifted allocation to debt and liquid assets (25/55/10/5/5). Structured an immediate ₹1,20,000/mo tax-efficient SWP starting at age 60.',
+    targetAllocation: {
+      equity: 25,
+      debt: 55,
+      gold: 10,
+      realestate: 5,
+      liquid: 5,
+      other: 0,
+    },
+    swpMonthlyNeed: 120000,
+    swpStartAge: 60,
+    swp: {
+      monthlyNeedToday: 120000,
+      postRetirementReturn: 7.5,
+      taxRate: 10,
+      startAge: 60,
+      endAge: 85,
+    },
+    financialSummary: {
+      netWorth: 42000000,
+      investableAssets: 28500000,
+      totalAssets: 42000000,
+      totalLiabilities: 0,
+      byCategory: { equity: 4500000, debt: 14500000, gold: 2000000, liquid: 7500000, realestate: 13500000 },
+      assetCount: 8,
+    },
+    planSnapshot: {
+      inputs: khannaClientInputs(),
+      riskAnswers: {
+        'time-horizon-main': 1,
+        'time-horizon-retirement': 1,
+        'loss-reaction': 1,
+        'drawdown-tolerance': 1,
+        'income-stability': 5,
+        'net-worth-income': 8,
+        'experience': 3,
+        'understanding-risk': 3,
+        'emergency-fund': 8,
+        'liquidity-needs': 1,
+        'goal-timing-flexibility': 1,
+        'past-behavior': 3,
+        'regret-reaction': 1,
+        'portfolio-concentration': 8,
+      },
+      manualTargets: { equity: 25, debt: 55, gold: 10, realestate: 5, liquid: 5, other: 0 },
+      manualAllocationPolicy: null,
+      updatedAt: new Date().toISOString(),
+    },
+    interactions: [
+      {
+        id: 'khanna-int-1',
+        clientId: 'client-khanna',
+        date: new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10),
+        type: 'meeting',
+        title: 'Pre-Retirement SWP Structuring & Bucket Strategy',
+        notes: 'Sunita is 3 years from retirement at age 60. Finalized decumulation strategy with an initial SWP of ₹1,20,000/mo. Earmarked 3 years of living expenses in liquid FDs and sweep accounts to guard against sequence-of-returns shock in early retirement.',
+        nextAction: 'Finalize medical contingency reserve and coordinate LIC annuity payout',
         actionCompleted: false,
         advisorName: 'SoundThesis Capital',
       },
@@ -178,16 +392,21 @@ export function setActiveCRMClient(clientId: string): void {
   window.dispatchEvent(new Event('stw:active-client-changed'));
 }
 
-/** Save or update a single CRM client. */
 export function saveCRMClient(client: CRMClient): void {
   const clients = getCRMClients();
   const index = clients.findIndex((c) => c.id === client.id);
+  const updatedClient: CRMClient = { ...client };
+  if (client.planSnapshot?.inputs.swp) {
+    updatedClient.swp = { ...client.planSnapshot.inputs.swp };
+    updatedClient.swpMonthlyNeed = client.planSnapshot.inputs.swp.monthlyNeedToday;
+    updatedClient.swpStartAge = client.planSnapshot.inputs.swp.startAge;
+  }
   let next: CRMClient[];
   if (index >= 0) {
     next = [...clients];
-    next[index] = { ...next[index], ...client };
+    next[index] = { ...next[index], ...updatedClient };
   } else {
-    next = [client, ...clients];
+    next = [updatedClient, ...clients];
   }
   localStorage.setItem(LOCAL_CLIENTS_KEY, JSON.stringify(next));
   window.dispatchEvent(new Event('stw:clients-updated'));
@@ -196,10 +415,16 @@ export function saveCRMClient(client: CRMClient): void {
 /** Create a new CRM client. */
 export function createCRMClient(data: Partial<CRMClient>): CRMClient {
   const id = `client-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const defaultMonthlyExpenses = data.monthlyLivingExpenses || 0;
+  const defaultRetirementAge = data.retirementAge || 60;
+  const defaultLifeExpectancy = data.lifeExpectancy || 85;
+  const defaultSWPNeed = data.swpMonthlyNeed || data.swp?.monthlyNeedToday || (defaultMonthlyExpenses ? Math.round(defaultMonthlyExpenses * 0.9) : 60000);
+  const defaultSWPStartAge = data.swpStartAge || data.swp?.startAge || defaultRetirementAge;
+
   const newClient: CRMClient = {
     id,
     name: data.name?.trim() || 'New Client Relationship',
-    status: 'Active',
+    status: data.status || 'Active',
     stage: data.stage || 'Discovery',
     tier: data.tier || 'Affluent',
     email: data.email || '',
@@ -212,10 +437,10 @@ export function createCRMClient(data: Partial<CRMClient>): CRMClient {
     ],
     reviewDate: data.reviewDate || new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10),
     currentAge: data.currentAge || 40,
-    retirementAge: data.retirementAge || 60,
-    lifeExpectancy: data.lifeExpectancy || 85,
+    retirementAge: defaultRetirementAge,
+    lifeExpectancy: defaultLifeExpectancy,
     annualIncome: data.annualIncome || 0,
-    monthlyLivingExpenses: data.monthlyLivingExpenses || 0,
+    monthlyLivingExpenses: defaultMonthlyExpenses,
     inflation: data.inflation || 6,
     primaryGoal: data.primaryGoal || 'Financial Independence',
     policyNotes: data.policyNotes || '',
@@ -226,6 +451,15 @@ export function createCRMClient(data: Partial<CRMClient>): CRMClient {
       realestate: 5,
       liquid: 5,
       other: 0,
+    },
+    swpMonthlyNeed: defaultSWPNeed,
+    swpStartAge: defaultSWPStartAge,
+    swp: data.swp || {
+      monthlyNeedToday: defaultSWPNeed,
+      postRetirementReturn: 7.5,
+      taxRate: 10,
+      startAge: defaultSWPStartAge,
+      endAge: defaultLifeExpectancy,
     },
     financialSummary: data.financialSummary || {
       netWorth: 0,
