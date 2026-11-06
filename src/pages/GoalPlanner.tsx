@@ -24,6 +24,8 @@ import { GoalConflictMatrix } from '../components/analytics/GoalConflictMatrix';
 import { GoalSuccessChart } from '../components/charts/GoalSuccessChart';
 import { GoalHorizonTimeline } from '../components/charts/GoalHorizonTimeline';
 import { GoalPriorityWaterfall } from '../components/charts/GoalPriorityWaterfall';
+import { GoalProbabilityLab } from '../components/master-plan/GoalProbabilityLab';
+import { simulateGoalPlan } from '../lib/goalMonteCarlo';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import { cn } from '../lib/utils';
 import type { Goal, GoalPriority } from '../types';
@@ -52,7 +54,7 @@ interface TimelineRow {
 }
 
 export const GoalPlanner = () => {
-  const { inputs, riskProfile, wealthResult, addGoal, updateGoal, removeGoal, updateSIP, showToast } = useCalculator();
+  const { inputs, riskProfile, wealthResult, assumptions, addGoal, updateGoal, removeGoal, updateSIP, showToast } = useCalculator();
   const reduceMotion = useReducedMotion();
   const [activeTab, setActiveTab] = useState('timeline');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -69,6 +71,27 @@ export const GoalPlanner = () => {
   const successById = useMemo(
     () => new Map(wealthResult.goalResults.map((g) => [g.goal.id, g])),
     [wealthResult.goalResults],
+  );
+
+  const investable = useMemo(
+    () => inputs.assets.reduce((sum, a) => sum + (a.value || 0), 0),
+    [inputs.assets],
+  );
+
+  const goalSimResult = useMemo(
+    () =>
+      simulateGoalPlan({
+        goals: inputs.goals,
+        currentPortfolioValue: investable,
+        monthlySIP: inputs.sip.amount || 0,
+        sipStepUp: inputs.sip.stepUp || 0,
+        portfolioWeights: wealthResult.targetAllocation,
+        assumptions,
+        simulations: Math.min(riskProfile?.monteCarloSimulations || 1000, 1000),
+        seed: 'goal-planner-sim',
+        targetConfidence: (riskProfile.goalSuccessThreshold || 80) / 100,
+      }),
+    [inputs.goals, investable, inputs.sip.amount, inputs.sip.stepUp, wealthResult.targetAllocation, assumptions, riskProfile?.monteCarloSimulations, riskProfile.goalSuccessThreshold],
   );
 
   // Timeline rows sorted by horizon; every derived number is guarded so
@@ -120,13 +143,13 @@ export const GoalPlanner = () => {
       demand += f.futureCost;
       allocated += f.allocatedWealth;
     });
-    const passRate = guardNumber(wealthResult.overallGoalSuccessRate);
+    const passRate = guardNumber(Math.round(goalSimResult.planSuccessRate * 100));
     return {
       demand: demand > 0 ? demand : null,
       coverage: demand > 0 ? Math.min(100, Math.round((allocated / demand) * 100)) : null,
       passRate,
     };
-  }, [wealthResult.isConfigured, wealthResult.overallGoalSuccessRate, inputs.goals, fundingById]);
+  }, [wealthResult.isConfigured, goalSimResult.planSuccessRate, inputs.goals, fundingById]);
 
   const goalSuccessData = useMemo(
     () =>
@@ -252,10 +275,10 @@ export const GoalPlanner = () => {
             <div className="bg-surface px-4 py-3.5">
               <FinancialMetric
                 size="sm"
-                label="Monte Carlo pass rate"
+                label="Consolidated Monte Carlo"
                 value={summary.passRate}
                 suffix="%"
-                hint={`Threshold ≥${riskProfile.goalSuccessThreshold}%`}
+                hint={summary.passRate !== null ? `All goals funded · Target ≥${riskProfile.goalSuccessThreshold}%` : `Threshold ≥${riskProfile.goalSuccessThreshold}%`}
               />
             </div>
           </div>
@@ -433,6 +456,7 @@ export const GoalPlanner = () => {
                 </div>
               ) : (
                 <>
+                  <GoalProbabilityLab />
                   <div>
                     <SectionHeader
                       title="Monte Carlo feasibility by goal"

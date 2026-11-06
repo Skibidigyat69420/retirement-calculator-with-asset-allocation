@@ -198,7 +198,7 @@ export const GoalsStep = ({
       </FormSection>
 
       <div className="mt-8">
-        <GoalProbabilityLab />
+        <GoalProbabilityLab index="02" />
       </div>
 
       {/* Integrated Goal Conflict Resolver (owned by analytics group) */}

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Printer, ArrowLeft, FileText, ArrowUpRight, ChartNoAxesCombined, Database, Download, LayoutTemplate, ShieldCheck, Copy } from 'lucide-react';
 import { useCalculator } from '../context/CalculatorContext';
@@ -7,6 +7,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { PlanReportBody } from '../components/reports/PlanReportBody';
 import { ASSET_LABELS } from '../lib/constants';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
+import { simulateGoalPlan } from '../lib/goalMonteCarlo';
 import type { AllocationRecommendationMethod, AssetCategory } from '../types';
 
 const CATEGORIES: AssetCategory[] = ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'];
@@ -52,6 +53,23 @@ export const Dossier = () => {
   const goalThreshold = riskProfile.goalSuccessThreshold / 100;
   const fundedGoals = wealthResult.goalResults.filter((goal) => goal.successRate >= goalThreshold).length;
   const monthlySurplus = wealthResult.annualSavings / 12;
+
+  const investableCorpus = inputs.assets.reduce((sum, asset) => sum + (asset.value || 0), 0);
+  const goalSimResult = useMemo(
+    () =>
+      simulateGoalPlan({
+        goals: inputs.goals,
+        currentPortfolioValue: investableCorpus,
+        monthlySIP: inputs.sip.amount || 0,
+        sipStepUp: inputs.sip.stepUp || 0,
+        portfolioWeights: targets,
+        assumptions,
+        simulations: Math.min(riskProfile?.monteCarloSimulations || 1000, 1000),
+        seed: 'dossier-goal-sim',
+        targetConfidence: goalThreshold,
+      }),
+    [inputs.goals, investableCorpus, inputs.sip.amount, inputs.sip.stepUp, targets, assumptions, riskProfile?.monteCarloSimulations, goalThreshold],
+  );
   const dataCoverage = [
     inputs.client.name,
     inputs.assets.length,
@@ -144,6 +162,21 @@ export const Dossier = () => {
       '',
       '## Strategic Advisory Guidance & Suggested Priorities',
       goalLines,
+      '',
+      '## Goal Solvency & Monte Carlo Simulation',
+      `- Consolidated plan success probability: ${formatPercent(goalSimResult.planSuccessRate * 100)} (all goals funded simultaneously)`,
+      `- Target confidence threshold: ${formatPercent(goalThreshold * 100)}`,
+      `- Goals achieving target confidence: ${goalSimResult.fundedGoalCount} of ${goalSimResult.goals.length}`,
+      `- Simulated required monthly SIP: ${formatCurrency(goalSimResult.requiredSIP)} (current plan: ${formatCurrency(inputs.sip.amount || 0)})`,
+      `- Total inflated goal commitment: ${formatCurrency(goalSimResult.totalCostAtFinalHorizon)}`,
+      '',
+      '### Milestone waterfall probabilities',
+      ...(goalSimResult.goals.length
+        ? goalSimResult.goals.map(
+            (g) =>
+              `- ${g.name} (${g.priority}, Year ${g.horizonYear}, Age ${inputs.currentAge + g.horizonYear}): ${formatPercent(g.successRate * 100)} probability; inflated cost ${formatCurrency(g.costAtHorizon)}; median corpus ${formatCurrency(g.medianCorpusAtHorizon)}${g.expectedShortfall > 0 ? `; expected shortfall ${formatCurrency(g.expectedShortfall)}` : ' (fully covered)'}`,
+          )
+        : ['- No formal goals recorded.']),
       '',
       '## Allocation recommendation',
       `- Status: ${latestRecommendation ? 'Adviser proposal recorded' : 'No adviser proposal recorded'}`,
@@ -246,11 +279,11 @@ export const Dossier = () => {
               {[
                 ['01', 'Client & household', 'People, circumstances, mandate and scope of advice'],
                 ['02', 'Financial position', 'Balance sheet, cash flow, liabilities and liquidity'],
-                ['03', 'Current position', 'Plan viability, surplus, risk budget, liquidity and goal funding'],
-                ['04', 'Risk & goals', 'Capacity, profile, funding confidence and longevity'],
+                ['03', 'Current position', 'Plan viability, surplus, risk budget and baseline metrics'],
+                ['04', 'Goal solvency & Monte Carlo', 'Corpus waterfall, milestone probabilities and joint plan success'],
                 ['05', 'Allocation recommendation', 'Advisor proposal, rationale, evidence and proposed changes'],
                 ['06', 'Current versus policy', 'Current exposures, policy ranges and implementation trades'],
-                ['07', 'Stress & sensitivity', 'Crisis paths and the variables that matter'],
+                ['07', 'Risk & calibration', 'Capacity, profile, stress testing and longevity'],
                 ['08', 'Tax, protection & assumptions', 'Tax drag, currency exposure and capital-market inputs'],
                 ['09', 'Actions & governance', 'Recommendations, decisions and review record'],
               ].map(([number, title, copy]) => <li key={number}><span>{number}</span><div><strong>{title}</strong><p>{copy}</p></div></li>)}
@@ -339,6 +372,111 @@ export const Dossier = () => {
           <div className="dossier-folio"><span>Current position / Inputs, outcomes and funding needs</span><span>05</span></div>
         </section>
 
+        <section className="dossier-print-page dossier-goal-mc-page">
+          <div className="dossier-goal-head">
+            <div>
+              <span>Goal Solvency / Monte Carlo Waterfall</span>
+              <h2>Probabilistic milestone<br />feasibility &amp; joint success.</h2>
+            </div>
+            <div className="dossier-goal-score-tag">
+              <span>Consolidated plan probability</span>
+              <strong>{formatPercent(goalSimResult.planSuccessRate * 100)}</strong>
+              <small>Joint success: all milestones funded simultaneously without shortfall</small>
+            </div>
+          </div>
+
+          <div className="dossier-goal-lead">
+            <div>
+              <span>Confidence target</span>
+              <strong>{formatPercent(goalThreshold * 100)}</strong>
+              <small>{riskProfile.label} risk standard</small>
+            </div>
+            <div>
+              <span>Milestones on track</span>
+              <strong>{goalSimResult.fundedGoalCount} of {goalSimResult.goals.length}</strong>
+              <small>Meet or exceed confidence target</small>
+            </div>
+            <div>
+              <span>Simulated required SIP</span>
+              <strong>{formatCurrencyCompact(goalSimResult.requiredSIP)}/mo</strong>
+              <small>
+                {goalSimResult.requiredSIP > (inputs.sip.amount || 0)
+                  ? `+${formatCurrencyCompact(goalSimResult.requiredSIP - (inputs.sip.amount || 0))}/mo vs plan`
+                  : 'Current SIP is sufficient'}
+              </small>
+            </div>
+            <div>
+              <span>Cumulative commitment</span>
+              <strong>{formatCurrencyCompact(goalSimResult.totalCostAtFinalHorizon)}</strong>
+              <small>Inflated cost across all horizons</small>
+            </div>
+          </div>
+
+          <div className="dossier-goal-table">
+            <div className="dossier-goal-table-row dossier-goal-table-head">
+              <span>Milestone / Priority</span>
+              <span>Horizon</span>
+              <span>Target today</span>
+              <span>Inflated cost</span>
+              <span>Success probability</span>
+              <span>Median corpus</span>
+              <span>Expected shortfall</span>
+            </div>
+            {goalSimResult.goals.length > 0 ? (
+              goalSimResult.goals.map((g, index) => {
+                const isAtTarget = g.successRate >= goalThreshold;
+                const isWarning = !isAtTarget && g.successRate >= goalThreshold * 0.6;
+                const originalGoal = inputs.goals.find((ig) => ig.id === g.goalId);
+                const targetToday = originalGoal?.targetAmount || 0;
+                return (
+                  <div className="dossier-goal-table-row" key={g.goalId}>
+                    <span>
+                      <i>{String(index + 1).padStart(2, '0')}</i>
+                      <strong>{g.name}</strong>
+                      <small className={`dossier-goal-badge priority-${g.priority}`}>{g.priority}</small>
+                    </span>
+                    <span>Year {g.horizonYear} (Age {inputs.currentAge + g.horizonYear})</span>
+                    <span>{formatCurrencyCompact(targetToday)}</span>
+                    <span>{formatCurrencyCompact(g.costAtHorizon)}</span>
+                    <span>
+                      <div className="dossier-goal-prob-bar">
+                        <div
+                          className={`dossier-goal-prob-fill ${isAtTarget ? 'is-success' : isWarning ? 'is-warning' : 'is-danger'}`}
+                          style={{ width: `${Math.min(100, Math.max(3, g.successRate * 100))}%` }}
+                        />
+                      </div>
+                      <strong className={isAtTarget ? 'text-positive' : isWarning ? 'text-warning' : 'text-negative'}>
+                        {formatPercent(g.successRate * 100)}
+                      </strong>
+                    </span>
+                    <span>{formatCurrencyCompact(g.medianCorpusAtHorizon)}</span>
+                    <span className={g.expectedShortfall > 0 ? 'text-negative font-semibold' : 'text-positive'}>
+                      {g.expectedShortfall > 0 ? `−${formatCurrencyCompact(g.expectedShortfall)}` : 'Fully funded'}
+                    </span>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="dossier-goal-empty-row">
+                <p>No individual milestones recorded in the plan. All capital remains available for general wealth preservation and retirement longevity.</p>
+              </div>
+            )}
+          </div>
+
+          <div className="dossier-goal-note">
+            <div>
+              <strong>Waterfall methodology</strong>
+              <p>Simulates {goalSimResult.simulations.toLocaleString()} correlated market paths with capital deducted at each goal horizon. Subsequent milestones inherit market drawdowns and prior withdrawals, capturing sequence-of-returns risk across the lifetime plan.</p>
+            </div>
+            <div>
+              <strong>Consolidated probability</strong>
+              <p>The joint plan success rate ({formatPercent(goalSimResult.planSuccessRate * 100)}) represents paths where every commitment was completed without depleting the portfolio below zero. It is strictly less than or equal to individual milestone rates.</p>
+            </div>
+          </div>
+
+          <div className="dossier-folio"><span>Goal solvency &amp; Monte Carlo / Corpus waterfall feasibility</span><span>06</span></div>
+        </section>
+
         <section className="dossier-print-page dossier-recommendations-page">
           <div className="dossier-recommendation-head"><div><span>Allocations / Advisory proposal</span><h2>{latestRecommendation ? latestRecommendation.title : 'No allocation proposal recorded yet'}</h2><p>{latestRecommendation ? 'A traceable recommendation, shown separately from the client’s current portfolio and policy implementation table.' : 'Create an allocation proposal in the Planning workspace to record the approach, rationale and evidence used for this household.'}</p></div><div className="dossier-recommendation-tag"><span>Proposal method</span><strong>{latestRecommendation ? METHOD_LABELS[latestRecommendation.method] : 'Pending adviser input'}</strong><small>{latestRecommendation ? latestRecommendation.sourceLabel : 'No recommendation source recorded'}</small></div></div>
           <div className="dossier-recommendation-grid">
@@ -346,7 +484,7 @@ export const Dossier = () => {
             <div className="dossier-proposed-changes"><div className="dossier-proposal-table-head"><span>Asset class</span><span>Current</span><span>Proposed</span><span>Change</span></div>{CATEGORIES.map((category) => { const current = wealthResult.currentAllocation[category] * 100; const proposed = latestRecommendation?.targets[category] ?? targets[category]; const change = proposed - current; return <div className="dossier-proposal-row" key={category}><span>{ASSET_LABELS[category]}</span><span>{formatPercent(current)}</span><span>{formatPercent(proposed)}</span><span className={change > 0.01 ? 'is-increase' : change < -0.01 ? 'is-reduction' : ''}>{Math.abs(change) < .01 ? 'Hold' : `${change > 0 ? '+' : ''}${formatPercent(change)}`}</span></div>; })}</div>
           </div>
           <div className="dossier-proposal-history"><span>Advice trail</span>{allocationRecommendations.length ? allocationRecommendations.slice(0, 3).map((item) => <div key={item.id}><strong>{item.title}</strong><small>{METHOD_LABELS[item.method]} · {new Date(item.createdAt).toLocaleDateString('en-IN')} · {item.createdBy}</small></div>) : <p>No proposal has been retained yet. The current allocation remains a baseline until an adviser records a recommendation.</p>}</div>
-          <div className="dossier-folio"><span>Allocation recommendations / Rationale, evidence and proposed changes</span><span>06</span></div>
+          <div className="dossier-folio"><span>Allocation recommendations / Rationale, evidence and proposed changes</span><span>07</span></div>
         </section>
 
         <section className="dossier-print-page dossier-allocation-page">
@@ -390,7 +528,7 @@ export const Dossier = () => {
             ) : <p className="dossier-sleeve-empty">No category-level sleeves are recorded for this policy yet. Build them in the Strategic Allocation Studio.</p>}
           </div>
           <div className="dossier-policy-note"><span>Mandate objective</span><p>{manualAllocationPolicy?.objective || riskProfile.recommendedApproach}</p><span>Constraints</span><p>{manualAllocationPolicy?.constraints || 'Risk-profile constraints and goal-liquidity requirements apply.'}</p></div>
-          <div className="dossier-folio"><span>Allocation decision ledger / Current versus policy</span><span>07</span></div>
+          <div className="dossier-folio"><span>Allocation decision ledger / Current versus policy</span><span>08</span></div>
         </section>
 
         <section className="dossier-print-page dossier-risk-page">
@@ -420,7 +558,7 @@ export const Dossier = () => {
               ].map(([label, value], index) => <div key={label}><i>{String(index + 1).padStart(2, '0')}</i><span>{label}</span><strong>{value}</strong></div>)}
             </div>
           </div>
-          <div className="dossier-folio"><span>Risk framework / Assessment and calibration</span><span>08</span></div>
+          <div className="dossier-folio"><span>Risk framework / Assessment and calibration</span><span>09</span></div>
         </section>
 
         <div className="dossier-report-content">

@@ -26,7 +26,7 @@ const pct = (v: number) => `${(v * 100).toFixed(0)}%`;
  * shortfalls, and the SIP required to hit a chosen confidence. The SIP
  * control is a what-if — it never writes back to the plan.
  */
-export const GoalProbabilityLab = () => {
+export const GoalProbabilityLab = ({ index }: { index?: string } = {}) => {
   const { inputs, assumptions, wealthResult } = useCalculator();
   const [sipOverride, setSipOverride] = useState<number | null>(null);
   const [confidence, setConfidence] = useState(0.8);
@@ -89,7 +89,7 @@ export const GoalProbabilityLab = () => {
 
   return (
     <FormSection
-      index="02"
+      index={index}
       title="Goal probability lab"
       description="Simulated corpus growth with each goal deducted at its horizon. Later goals inherit earlier shortfalls."
       meta={`${result.simulations.toLocaleString()} paths · seed ${seed}`}
