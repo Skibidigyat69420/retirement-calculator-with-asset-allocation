@@ -47,9 +47,9 @@ export function ClientQuickSwitcher() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open]);
 
-  const currentDisplayName = inputs.client.name?.trim() || activeClient?.name || 'Sharma Family';
+  const currentDisplayName = inputs.client.name?.trim() || activeClient?.name || 'Sample Household';
   const currentEmail = inputs.client.email || activeClient?.email;
-  const currentTier = activeClient?.tier || 'HNI';
+  const currentTier = activeClient?.tier || 'Affluent';
 
   const filteredClients = clients.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||

@@ -143,7 +143,9 @@ describe('Database & Persistence System Verification', () => {
       const clients = getCRMClients();
       assert.ok(Array.isArray(clients));
       assert.ok(clients.length > 0);
-      assert.equal(clients[0].name, 'Rhea and Karan Shah');
+      assert.equal(clients[0].name, 'Sample Household');
+      assert.equal(clients[0].status, 'Sample');
+      assert.equal(clients.length, 1);
     });
 
     test('createCRMClient appends client and sets as active', () => {

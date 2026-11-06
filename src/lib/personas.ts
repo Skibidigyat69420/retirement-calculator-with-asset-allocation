@@ -78,6 +78,23 @@ const KHANNA_RISK_ANSWERS: RiskAnswers = {
   'portfolio-concentration': 8,
 };
 
+const MODERATE_SAMPLE_RISK_ANSWERS: RiskAnswers = {
+  'time-horizon-main': 5,
+  'time-horizon-retirement': 5,
+  'loss-reaction': 6,
+  'drawdown-tolerance': 5,
+  'income-stability': 5,
+  'net-worth-income': 5,
+  'experience': 5,
+  'understanding-risk': 5,
+  'emergency-fund': 5,
+  'liquidity-needs': 5,
+  'goal-timing-flexibility': 5,
+  'past-behavior': 5,
+  'regret-reaction': 3,
+  'portfolio-concentration': 5,
+};
+
 export const PERSONAS: Persona[] = [
   {
     id: 'aarav-mehta',
@@ -104,13 +121,14 @@ export const PERSONAS: Persona[] = [
   },
   {
     id: 'sharma-household',
-    label: 'Sharma Family',
-    tagline: 'Dual-income family balancing kids, parents and legacy',
+    label: 'Sample Household',
+    tagline: 'Moderate middle-income family balancing retirement, education and stability',
     lifeStage: 'Multi-generational · 5 members',
-    riskStyle: 'Balanced',
+    riskStyle: 'Moderate',
     initials: 'SH',
     accent: 'from-amber-500 to-orange-600',
-    description: 'Five-member Bengaluru household with two earners, school-going children and a dependent parent. Full ownership tagging across all six asset categories.',
+    description: 'Five-member household with two earners, modest living expenses, balanced 50/35/10/5 asset allocation, and realistic education and retirement goals.',
+    riskAnswers: MODERATE_SAMPLE_RISK_ANSWERS,
     build: sampleClientInputs,
   },
   {

@@ -1204,7 +1204,7 @@ export function IPSWorkspacePage() {
                         updateClient({ name: e.target.value });
                         updateActiveCRMClient({ name: e.target.value });
                       }}
-                      placeholder="e.g. Rhea and Karan Shah"
+                      placeholder="e.g. Sample Household"
                       className="w-full px-3 py-2 rounded-lg border border-border bg-raised text-ink text-sm font-medium focus:border-accent focus:outline-none"
                     />
                   </label>

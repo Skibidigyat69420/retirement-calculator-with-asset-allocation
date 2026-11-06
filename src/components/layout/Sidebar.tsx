@@ -165,7 +165,7 @@ export const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
     };
   }, [mobileOpen, onClose]);
 
-  const displayName = inputs.client.name?.trim() || activeCRM?.name || 'Sharma Family';
+  const displayName = inputs.client.name?.trim() || activeCRM?.name || 'Sample Household';
   const displayEmail = inputs.client.email || activeCRM?.email;
   const netWorth = wealthResult.isConfigured ? wealthResult.netWorth : (activeCRM?.financialSummary?.netWorth || 0);
 
