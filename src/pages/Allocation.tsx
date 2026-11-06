@@ -358,8 +358,8 @@ export const Allocation = () => {
       )}
 
       <WorkflowFooter
-        prev={{ path: '/retirement', label: 'Step 3: Retirement' }}
-        next={{ path: '/ips', label: 'Step 5: Deliverables & IPS' }}
+        prev={{ path: '/policy', label: 'Policy Center' }}
+        next={{ path: '/dossier', label: 'Proceed to Dossier' }}
         flowHint="Strategic targets guide rebalancing trade suggestions and asset allocation envelopes."
       />
     </div>

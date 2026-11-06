@@ -4,6 +4,7 @@ import { useCalculator } from '../context/CalculatorContext';
 import { formatCurrencyCompact } from '../lib/formatters';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
+import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 
 export function PolicyCenterPage() {
   const { inputs, riskProfile, hasRiskAnswers, manualAllocationPolicy, wealthResult } = useCalculator();
@@ -18,7 +19,12 @@ export function PolicyCenterPage() {
         description={policyReady
           ? 'Start with the household objective, then turn the recorded plan and risk evidence into a reviewable policy proposal.'
           : 'A policy needs an objective, liquidity needs and risk evidence before an allocation can be defended.'}
-        actions={<Link to="/planning"><Button>Build policy proposal <ArrowRight size={14} /></Button></Link>}
+        actions={
+          <div className="flex items-center gap-2">
+            <Link to="/planning"><Button variant="outline">Strategic Allocation <ArrowRight size={14} /></Button></Link>
+            <Link to="/dossier"><Button>Proceed to Dossier <ArrowRight size={14} /></Button></Link>
+          </div>
+        }
       />
 
       <section className="grid gap-6 xl:grid-cols-12" aria-label="Policy position">
@@ -71,8 +77,19 @@ export function PolicyCenterPage() {
             <span><strong>Write an independent IPS</strong><small>Start a standalone charter when no client record should be assumed.</small></span>
             <FileText size={16} />
           </Link>
+          <Link to="/dossier" className="policy-route border-accent/40 bg-accent-soft/20 hover:bg-accent-soft/35">
+            <span className="policy-route-icon"><FileText size={18} className="text-accent" /></span>
+            <span><strong className="text-accent-strong">Proceed to Dossier</strong><small>Publish or view the client presentation deck, solvency analysis, and PDF export.</small></span>
+            <ArrowRight size={16} className="text-accent" />
+          </Link>
         </div>
       </section>
+
+      <WorkflowFooter
+        prev={{ path: '/master-plan?step=results', label: 'Plan & Projections' }}
+        next={{ path: '/dossier', label: 'Proceed to Dossier' }}
+        stepIndicator="Chapter 03 / 05 — Policy"
+      />
     </div>
   );
 }

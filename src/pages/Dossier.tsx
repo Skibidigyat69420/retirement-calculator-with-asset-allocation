@@ -1,10 +1,11 @@
 import { useEffect, useMemo } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Printer, ArrowLeft, FileText, ArrowUpRight, ChartNoAxesCombined, Database, Download, LayoutTemplate, ShieldCheck, Copy } from 'lucide-react';
+import { Printer, ArrowLeft, ArrowRight, Activity, FileText, ArrowUpRight, Database, Download, LayoutTemplate, ShieldCheck, Copy } from 'lucide-react';
 import { useCalculator } from '../context/CalculatorContext';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { PlanReportBody } from '../components/reports/PlanReportBody';
+import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import { ASSET_LABELS } from '../lib/constants';
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '../lib/formatters';
 import { simulateGoalPlan } from '../lib/goalMonteCarlo';
@@ -241,6 +242,9 @@ export const Dossier = () => {
           </Button>
           <Button variant="primary" size="sm" onClick={handleExportPdf} aria-label="Open the print dialog to save this dossier as a PDF slide deck">
             <Printer size={14} strokeWidth={1.6} /> Export PDF slide deck
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => navigate('/overview')} aria-label="Proceed to Review">
+            <Activity size={14} strokeWidth={1.6} /> <span className="hidden sm:inline">Proceed to Review</span> <ArrowRight size={14} />
           </Button>
         </nav>
       </div>
@@ -592,9 +596,20 @@ export const Dossier = () => {
       </div>
 
       <div className="dossier-endcap print:hidden">
-        <ChartNoAxesCombined size={18} />
-        <div><strong>Need to change the story?</strong><span>Return to any source module, update the assumptions, and this dossier will rebuild automatically.</span></div>
-        <Link to="/master-plan">Open master plan <ArrowUpRight size={14} /></Link>
+        <Activity size={18} className="text-accent shrink-0" />
+        <div>
+          <strong>Ready for review?</strong>
+          <span>Advance to Chapter 05: Review to inspect the practice attention queue, decision audit trail, and plan health checks.</span>
+        </div>
+        <Link to="/overview">Proceed to Review <ArrowRight size={14} /></Link>
+      </div>
+
+      <div className="print:hidden">
+        <WorkflowFooter
+          prev={{ path: '/policy', label: 'Policy' }}
+          next={{ path: '/overview', label: 'Proceed to Review' }}
+          stepIndicator="Chapter 04 / 05 — Dossier"
+        />
       </div>
     </div>
   );

@@ -1,11 +1,14 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import {
   AlertTriangle,
   CheckCircle2,
   ArrowLeft,
+  ArrowRight,
   Calendar,
   WalletMinimal,
   Globe,
+  Layers3,
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -381,6 +384,26 @@ export const ResultsStep = ({
                 </tbody>
               </table>
             </div>
+          </section>
+
+          {/* Linear Next Chapter Handoff */}
+          <section className="rounded-xl border border-border bg-surface p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
+                <Layers3 size={15} />
+                <span>Next Chapter · Policy</span>
+              </div>
+              <h3 className="text-sm font-semibold text-ink">Turn plan facts into a strategic asset allocation.</h3>
+              <p className="text-xs text-muted max-w-xl">
+                Define the policy posture, calibrate asset class corridors, map sleeves, and establish the governance mandate.
+              </p>
+            </div>
+            <Link to="/policy" className="shrink-0">
+              <Button className="w-full sm:w-auto flex items-center gap-2">
+                <span>Proceed to Policy</span>
+                <ArrowRight size={15} />
+              </Button>
+            </Link>
           </section>
         </>
       )}

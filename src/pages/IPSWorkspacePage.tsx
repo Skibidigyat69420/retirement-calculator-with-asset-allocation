@@ -211,6 +211,9 @@ export function IPSWorkspacePage() {
     if (s === 'client' || s === 'position' || s === 'policy' || s === 'document') {
       setStep(s);
     }
+    if (searchParams.get('add') === '1') {
+      setAddClientOpen(true);
+    }
   }, [searchParams]);
 
   // Refresh clients on external changes
@@ -304,6 +307,7 @@ export function IPSWorkspacePage() {
 
     handleSelectClient(created);
     showToast(`Created new client ${created.name}`, 'success');
+    navigate('/master-plan');
   };
 
   // Log interaction

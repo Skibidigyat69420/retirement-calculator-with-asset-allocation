@@ -85,7 +85,7 @@ export function ClientQuickSwitcher() {
 
   const handleAddNew = () => {
     setOpen(false);
-    navigate('/?add=1');
+    navigate('/clients?add=1');
   };
 
   return (
@@ -201,7 +201,7 @@ export function ClientQuickSwitcher() {
               type="button"
               onClick={() => {
                 setOpen(false);
-                navigate('/');
+                navigate('/clients');
               }}
               className="text-[11px] text-muted hover:text-ink px-2 py-1 rounded transition-colors"
             >

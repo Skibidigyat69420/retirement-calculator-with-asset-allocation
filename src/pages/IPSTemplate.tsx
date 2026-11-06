@@ -1812,8 +1812,8 @@ export const IPSTemplate = () => {
 
       <div className="print:hidden">
         <WorkflowFooter
-          prev={{ path: '/reports', label: 'Reports' }}
-          next={{ path: '/calculators', label: 'Calculators' }}
+          prev={{ path: '/policy', label: 'Policy Center' }}
+          next={{ path: '/dossier', label: 'Proceed to Dossier' }}
           flowHint="A formal Investment Policy Statement institutionalizes your strategic asset allocation, corridor tolerances, and rebalancing rules."
         />
       </div>

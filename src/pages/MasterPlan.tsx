@@ -409,7 +409,7 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
                   ? { path: '/master-plan?step=assumptions', label: 'Assumptions' }
                   : activeStep === 'assumptions'
                     ? { path: '/master-plan?step=results', label: 'Results & Outlook' }
-                    : { path: '/dossier', label: 'View Dossier' }
+                    : { path: '/policy', label: 'Proceed to Policy' }
         }
         stepIndicator={stepIndicator}
       />

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowUpRight, ChevronRight, Download, LayoutGrid, List, RefreshCw, Search, UserPlus, Users, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCalculator } from '../context/CalculatorContext';
@@ -11,6 +11,7 @@ import { setActiveCRMClient } from '../lib/crm';
 const initials = (name: string) => name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
 
 export function PractitionerPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { ready, user } = useAuth();
   const { updateClient } = useCalculator();
@@ -84,8 +85,15 @@ export function PractitionerPage() {
       });
       await loadClients();
       setSelectedId(created.id);
+      setActiveCRMClient(created.id);
+      updateClient({
+        name: `${created.firstName} ${created.lastName}`.trim(),
+        email: created.email ?? undefined,
+        phone: created.phone ?? undefined,
+      });
       setNewClient({ firstName: '', lastName: '', email: '', phone: '' });
       setAddOpen(false);
+      navigate('/master-plan');
     } catch (cause) {
       setError(cause instanceof ApiRequestError ? cause.message : 'Could not create client.');
     } finally {

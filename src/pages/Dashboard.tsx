@@ -12,6 +12,7 @@ import { WhatChangedPanel } from '../components/dashboard/WhatChangedPanel';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
+import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 
 /** Review is an operating queue, not an executive dashboard. */
 export const Dashboard = () => {
@@ -71,6 +72,12 @@ export const Dashboard = () => {
       <section className="border-t border-border-strong pt-1" aria-label="Recent decisions">
         <WhatChangedPanel />
       </section>
+
+      <WorkflowFooter
+        prev={{ path: '/dossier', label: 'Client Dossier' }}
+        next={{ path: '/clients', label: 'Households Directory' }}
+        stepIndicator="Chapter 05 / 05 — Review"
+      />
     </div>
   );
 };
