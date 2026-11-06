@@ -155,6 +155,96 @@
   --shadow-glow: 0 0 0 3px rgba(169, 191, 157, 0.24);
 }
 
+/* Quiet Conviction foundation. Kept as a variable override so legacy utility
+   classes inherit the new system without splitting the visual language. */
+:root {
+  --color-canvas: #F6F6F2;
+  --color-background: #F6F6F2;
+  --color-surface: #FEFFFC;
+  --color-raised: #FEFFFC;
+  --color-sunken: #ECEEE8;
+  --color-inset: #ECEEE8;
+  --color-elevated: #FEFFFC;
+  --color-deep: #17201D;
+  --color-inkfill: #17201D;
+  --color-on-inkfill: #FFFFFF;
+  --color-overlay: rgba(23, 32, 29, 0.48);
+  --color-border: #D9DED7;
+  --color-border-strong: #BFC8C0;
+  --color-border-subtle: #E8EBE5;
+  --color-ink: #17201D;
+  --color-ink-soft: #44504A;
+  --color-muted: #6B7770;
+  --color-faint: #8C9790;
+  --color-accent: #176B5B;
+  --color-accent-strong: #105446;
+  --color-accent-soft: #E1F0EA;
+  --color-accent-softer: #F0F7F3;
+  --color-brass: #9B5D17;
+  --color-brass-strong: #7A4610;
+  --color-brass-soft: #F8EEDC;
+  --color-positive: #1D774B;
+  --color-positive-soft: #E7F3EA;
+  --color-negative: #B33C40;
+  --color-negative-soft: #F8E8E8;
+  --color-warning: #9B5D17;
+  --color-warning-soft: #F8EEDC;
+  --color-info: #2A6782;
+  --color-info-soft: #E6F0F4;
+  --color-focus-ring: #176B5B;
+  --color-navy-dark: #17201D;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-2xl: 14px;
+  --shadow-card: none;
+  --shadow-card-hover: none;
+  --shadow-raised: none;
+  --shadow-elevated: none;
+  --shadow-popover: 0 18px 48px rgba(20, 31, 26, 0.14), 0 2px 8px rgba(20, 31, 26, 0.06);
+  --shadow-glow: 0 0 0 3px #E1F0EA;
+}
+
+.dark {
+  --color-canvas: #101714;
+  --color-background: #101714;
+  --color-surface: #18211E;
+  --color-raised: #18211E;
+  --color-sunken: #222E29;
+  --color-inset: #222E29;
+  --color-elevated: #18211E;
+  --color-deep: #F0F4EF;
+  --color-inkfill: #F0F4EF;
+  --color-on-inkfill: #101714;
+  --color-overlay: rgba(7, 12, 10, 0.76);
+  --color-border: #2D3933;
+  --color-border-strong: #445249;
+  --color-border-subtle: #25312C;
+  --color-ink: #F0F4EF;
+  --color-ink-soft: #CBD4CD;
+  --color-muted: #94A299;
+  --color-faint: #718077;
+  --color-accent: #63BEA7;
+  --color-accent-strong: #8BD4C0;
+  --color-accent-soft: #173D34;
+  --color-accent-softer: #142C25;
+  --color-brass: #E9AE55;
+  --color-brass-strong: #F1C77F;
+  --color-brass-soft: #3B2A12;
+  --color-positive: #62C98E;
+  --color-positive-soft: #153525;
+  --color-negative: #EE8688;
+  --color-negative-soft: #3E2022;
+  --color-warning: #E9AE55;
+  --color-warning-soft: #3B2A12;
+  --color-info: #79B9D5;
+  --color-info-soft: #173340;
+  --color-focus-ring: #63BEA7;
+  --color-navy: #F0F4EF;
+  --color-navy-dark: #F0F4EF;
+  --shadow-popover: 0 18px 48px rgba(0, 0, 0, 0.42), 0 2px 8px rgba(0, 0, 0, 0.24);
+  --shadow-glow: 0 0 0 3px #173D34;
+}
+
 @layer base {
   :root {
     color-scheme: light;
@@ -613,6 +703,46 @@
   .workspace-context-action { min-width: 2rem; justify-content: center; }
 }
 
+/* Context is a sentence-like thread, not a container of mini dashboards. */
+.workspace-context {
+  margin-bottom: 1.5rem;
+  padding: 0 0 0.75rem;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
+  background: transparent;
+}
+.workspace-context-thread {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+.workspace-context-monogram {
+  display: grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 50%;
+  color: var(--color-accent-strong);
+  font: 600 0.56rem var(--font-mono);
+}
+.workspace-context-name { color: var(--color-ink); font-weight: 650; }
+.workspace-context-saved { color: var(--color-muted); font-size: 0.68rem; }
+.workspace-context-action { min-height: 1.75rem; padding: 0.2rem 0.35rem; }
+@media (max-width: 767px) {
+  .workspace-context { align-items: flex-start; }
+  .workspace-context-thread { overflow: hidden; text-overflow: ellipsis; }
+  .workspace-context-thread > span:nth-of-type(n+3) { display: none; }
+  .workspace-context-saved { display: none; }
+}
+
 /* Institutional feature card */
 .hero-orbit {
   border-radius: var(--radius-xl);
@@ -752,6 +882,130 @@ button:not(:disabled):active {
 .stagger-3 { animation-delay: 150ms; }
 .stagger-4 { animation-delay: 200ms; }
 .stagger-5 { animation-delay: 250ms; }
+
+/* Quiet Conviction application chrome. These deliberate late overrides retire
+   the earlier glossy treatment while preserving every existing workflow. */
+.brand-rail {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border-right-color: var(--color-border);
+  box-shadow: none;
+}
+.brand-rail :where(.text-ink) { color: var(--color-ink); }
+.brand-rail :where(.text-ink-soft) { color: var(--color-ink-soft); }
+.brand-rail :where(.text-muted) { color: var(--color-muted); }
+.brand-rail :where(.text-faint) { color: var(--color-faint); }
+.brand-rail :where(.border-border, .border-border-subtle) { border-color: var(--color-border-subtle); }
+.brand-rail :where(.bg-surface\/60) { background-color: transparent; }
+.brand-rail :where(.bg-sunken) { background-color: var(--color-sunken); }
+.brand-rail nav a[aria-current="page"] {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+  box-shadow: inset 2px 0 0 var(--color-accent);
+}
+.brand-rail nav a[aria-current="page"] svg { color: var(--color-accent-strong); }
+.brand-rail nav a:hover { box-shadow: none; }
+.glass-header {
+  background: color-mix(in srgb, var(--color-canvas) 96%, transparent);
+  border-bottom-color: var(--color-border);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.glass-bento,
+.metric-strip,
+.hero-orbit {
+  box-shadow: none;
+}
+.glass-bento:hover { box-shadow: none; border-color: var(--color-border); }
+.grid-motif,
+.hero-orbit::before { display: none; }
+[class*="bg-gradient"],
+.hero-gradient { background-image: none !important; }
+[class*="backdrop-blur"] { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+.card-hover-lift:hover { transform: none; box-shadow: none; border-color: var(--color-border-strong); }
+.section-rule-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border-strong);
+}
+.section-rule-heading h2 { font-size: 1.125rem; line-height: 1.28; }
+.section-rule-heading p { margin-top: 0.3rem; color: var(--color-muted); font-size: 0.875rem; }
+.plan-header-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+.plan-header-metrics > div {
+  min-width: 9.5rem;
+  padding: .7rem 1rem .7rem 0;
+  margin-right: 1rem;
+  border-right: 1px solid var(--color-border);
+}
+.plan-header-metrics > div:last-child { border-right: 0; }
+.plan-header-metrics span,
+.plan-header-metrics strong { display: block; }
+.plan-header-metrics span { color: var(--color-muted); font-size: .64rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.plan-header-metrics strong { margin-top: .28rem; color: var(--color-ink); font: 550 .78rem var(--font-mono); }
+@media (max-width: 767px) {
+  .plan-header-metrics > div { min-width: 50%; margin-right: 0; padding-right: .8rem; }
+  .plan-header-metrics > div:nth-child(even) { border-right: 0; padding-left: .8rem; }
+}
+
+/* Policy chapter: conclusion first, evidence second, routes as a ranked list. */
+.policy-decision,
+.policy-evidence {
+  min-height: 19rem;
+  padding: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+.policy-decision { display: flex; flex-direction: column; }
+.policy-decision h2 { max-width: 30rem; margin-top: 2rem; font-size: clamp(1.35rem, 2.1vw, 1.85rem); line-height: 1.2; }
+.policy-decision > p { max-width: 42rem; margin-top: 0.7rem; color: var(--color-ink-soft); font-size: 0.9rem; line-height: 1.55; }
+.policy-decision-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: auto;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+}
+.policy-decision-metrics span,
+.policy-decision-metrics strong { display: block; }
+.policy-decision-metrics span { color: var(--color-muted); font-size: 0.67rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.policy-decision-metrics strong { margin-top: .4rem; color: var(--color-ink); font: 550 .84rem var(--font-mono); }
+.policy-evidence { display: flex; flex-direction: column; gap: 1rem; background: var(--color-sunken); }
+.policy-evidence > svg { color: var(--color-accent); }
+.policy-evidence h2 { margin-top: .45rem; font-size: 1.05rem; }
+.policy-evidence p { margin-top: .45rem; color: var(--color-ink-soft); font-size: .84rem; line-height: 1.55; }
+.policy-text-action { display: inline-flex; align-items: center; gap: .45rem; width: fit-content; margin-top: auto; color: var(--color-accent-strong); font-size: .78rem; font-weight: 650; }
+.policy-routes { border-top: 0; }
+.policy-route {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  min-height: 5.5rem;
+  padding: 1rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.policy-route:hover { background: var(--color-accent-softer); }
+.policy-route-primary { border-left: 2px solid var(--color-accent); padding-left: 1rem; }
+.policy-route-icon { display: grid; width: 2.25rem; height: 2.25rem; place-items: center; border: 1px solid var(--color-border); border-radius: 6px; color: var(--color-accent-strong); }
+.policy-route strong,
+.policy-route small { display: block; }
+.policy-route strong { color: var(--color-ink); font-size: .875rem; }
+.policy-route small { max-width: 52rem; margin-top: .25rem; color: var(--color-muted); font-size: .78rem; line-height: 1.45; }
+.policy-route > svg { color: var(--color-faint); }
+@media (max-width: 767px) {
+  .policy-decision-metrics { grid-template-columns: 1fr; gap: .8rem; }
+  .policy-decision, .policy-evidence { min-height: auto; }
+}
 
 @keyframes pulse-glow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(102, 122, 99, 0.3); }
@@ -2058,13 +2312,13 @@ button:not(:disabled):active {
   background: #F4F6F9;
   color: #1A1E27;
 }
-.dossier-workspace .text-ink { color: #1A1E27; }
-.dossier-workspace .text-ink-soft { color: #3D4655; }
+.dossier-workspace .text-ink { color: #17201D; }
+.dossier-workspace .text-ink-soft { color: #44504A; }
 .dossier-workspace .text-muted,
-.dossier-workspace .text-faint { color: #5B6474; }
+.dossier-workspace .text-faint { color: #5B6861; }
 .dossier-workspace .bg-surface,
 .dossier-workspace .bg-raised { background-color: #FFFFFF; }
-.dossier-workspace .bg-sunken { background-color: #EEF2F7; }
+.dossier-workspace .bg-sunken { background-color: #EEF0EB; }
 .dossier-toolbar {
   min-height: 56px;
   padding: 0.65rem 0.85rem;

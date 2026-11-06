@@ -32,7 +32,7 @@ function applyToDocument(dark: boolean): void {
   document.documentElement.classList.toggle('dark', dark);
   document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
   const meta = document.querySelector('meta[name="theme-color"]:last-of-type');
-  if (meta) meta.setAttribute('content', dark ? '#0c233b' : '#f7f0e6');
+  if (meta) meta.setAttribute('content', dark ? '#101714' : '#F6F6F2');
 }
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {

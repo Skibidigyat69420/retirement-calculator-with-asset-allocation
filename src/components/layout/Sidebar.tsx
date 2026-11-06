@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { ChevronDown, PanelLeftClose, PanelLeftOpen, X, ArrowLeftRight } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/utils';
-import { chapterNavItems, navItems, type ChapterNavItem, type NavItem } from './navItems';
+import { chapterMenuItems, chapterNavItems, navItems, type ChapterNavItem, type NavItem } from './navItems';
 import { Lockup, LogoMark } from './BrandMark';
 import { Avatar } from '../ui/Avatar';
 import { StatusBadge } from '../ui/StatusBadge';
@@ -68,7 +68,9 @@ const NavSections = ({ collapsed, onClick }: { collapsed?: boolean; onClick?: ()
   const location = useLocation();
   const activeChapter = chapterNavItems.find((chapter) => chapter.paths.includes(location.pathname));
   const activeChapterItems = activeChapter
-    ? navItems.filter((item) => activeChapter.paths.includes(item.path) && item.path !== activeChapter.path)
+    ? (chapterMenuItems[activeChapter.label] ?? [])
+      .map((path) => navItems.find((item) => item.path === path))
+      .filter((item): item is NavItem => Boolean(item))
     : [];
   const toolItems = navItems.filter((item) => !chapterNavItems.some((chapter) => chapter.paths.includes(item.path)));
   const currentIsTool = toolItems.some((item) => item.path === location.pathname);
@@ -91,7 +93,7 @@ const NavSections = ({ collapsed, onClick }: { collapsed?: boolean; onClick?: ()
       {!collapsed && activeChapter && activeChapterItems.length > 0 && (
         <div className="mt-4 pt-3 border-t border-border-subtle">
           <div className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
-            {activeChapter.label} workspace
+            {activeChapter.label} menu
           </div>
           <ul className="space-y-px">
             {activeChapterItems.map((item) => (

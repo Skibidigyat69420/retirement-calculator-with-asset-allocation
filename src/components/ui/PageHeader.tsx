@@ -10,8 +10,8 @@ export interface PageHeaderProps {
 }
 
 const titleStyles = {
-  standard: 'text-2xl sm:text-3xl font-semibold tracking-tight text-ink',
-  hero: 'font-display text-4xl sm:text-5xl text-ink',
+  standard: 'text-[clamp(1.5rem,2vw,2rem)] leading-[1.15] font-semibold tracking-tight text-ink',
+  hero: 'font-display text-[clamp(2rem,3.4vw,3.5rem)] leading-[1.04] text-ink',
   compact: 'text-lg font-semibold tracking-tight text-ink',
 };
 
@@ -26,7 +26,7 @@ export const PageHeader = ({
     <div
       className={cn(
         'flex flex-col gap-4',
-        variant === 'compact' ? 'pb-4 mb-4' : 'pb-6 mb-6',
+        variant === 'compact' ? 'pb-4 mb-4' : 'pb-7 mb-8',
         variant === 'standard' && 'border-b border-border',
       )}
     >
@@ -35,7 +35,7 @@ export const PageHeader = ({
           {eyebrow && <div className="eyebrow mb-2">{eyebrow}</div>}
           <h1 className={titleStyles[variant]}>{title}</h1>
           {description && (
-            <p className="mt-2 text-sm sm:text-[15px] text-muted max-w-prose leading-relaxed">
+          <p className="mt-2 max-w-[68ch] text-sm sm:text-[15px] text-muted leading-relaxed">
               {description}
             </p>
           )}

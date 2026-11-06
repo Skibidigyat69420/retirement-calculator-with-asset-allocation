@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowUpRight, ChevronRight, Download, LayoutGrid, List, RefreshCw, Search, Sparkles, UserPlus, Users, X } from 'lucide-react';
+import { ArrowUpRight, ChevronRight, Download, LayoutGrid, List, RefreshCw, Search, UserPlus, Users, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCalculator } from '../context/CalculatorContext';
 import { ApiRequestError, createClient, exportClientBundle, listClients, listClientDrafts, type ClientSummary } from '../lib/api';
@@ -49,6 +49,7 @@ export function PractitionerPage() {
   useEffect(() => { if (ready) void loadClients(); }, [ready, loadClients]);
 
   const filtered = useMemo(() => clients.filter((client) => client.name.toLowerCase().includes(query.toLowerCase()) || client.assignedPractitioners.some((advisor) => advisor.fullName?.toLowerCase().includes(query.toLowerCase()))), [clients, query]);
+  const attentionCount = useMemo(() => clients.filter((client) => client.status && !['Active', 'Sample'].includes(client.status)).length, [clients]);
   const selected = clients.find((client) => client.id === selectedId) ?? filtered[0] ?? null;
 
   const handleExport = async (client: ClientSummary) => {
@@ -104,13 +105,14 @@ export function PractitionerPage() {
     <div className="directory-page">
       <header className="directory-hero">
         <div>
-          <h1>Clients</h1>
-          <p>Select a client, create an IPS, and return here for the next review.</p>
+          <div className="eyebrow">Households</div>
+          <h1>Find the relationship that needs you.</h1>
+          <p>{clients.length ? `${clients.length} household${clients.length === 1 ? '' : 's'} in the practice${attentionCount ? ` · ${attentionCount} needing attention` : ''}.` : 'Create a household, then add the facts that make a plan possible.'}</p>
         </div>
-        <div className="directory-hero-actions"><button className="directory-icon-button" onClick={() => void loadClients()} aria-label="Refresh clients"><RefreshCw size={17} className={loading ? 'animate-spin' : ''} /></button><button className="directory-new-button" onClick={handleAddClient} disabled={loading}><Sparkles size={16} /> Add client <ArrowUpRight size={15} /></button></div>
+        <div className="directory-hero-actions"><button className="directory-icon-button" onClick={() => void loadClients()} aria-label="Refresh households"><RefreshCw size={17} className={loading ? 'animate-spin' : ''} /></button><button className="directory-new-button" onClick={handleAddClient} disabled={loading}><UserPlus size={16} /> Add household</button></div>
       </header>
 
-      <section className="directory-toolbar"><div className="directory-toolbar-title"><h2>All clients <span>{filtered.length}</span></h2></div><div className="directory-controls"><label className="directory-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search clients" aria-label="Search clients" /></label><div className="directory-view-toggle"><button className={view === 'grid' ? 'active' : ''} onClick={() => setView('grid')} aria-label="Grid view"><LayoutGrid size={16} /></button><button className={view === 'list' ? 'active' : ''} onClick={() => setView('list')} aria-label="List view"><List size={16} /></button></div></div></section>
+      <section className="directory-toolbar"><div className="directory-toolbar-title"><h2>All households <span>{filtered.length}</span></h2></div><div className="directory-controls"><label className="directory-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search households" aria-label="Search households" /></label><div className="directory-view-toggle"><button className={view === 'grid' ? 'active' : ''} onClick={() => setView('grid')} aria-label="Grid view"><LayoutGrid size={16} /></button><button className={view === 'list' ? 'active' : ''} onClick={() => setView('list')} aria-label="List view"><List size={16} /></button></div></div></section>
 
       {selected && (
         <aside className="client-selected-banner" aria-label={`Actions for ${selected.name}`}>
@@ -141,22 +143,9 @@ export function PractitionerPage() {
           </div>
 
           <div className="client-selected-banner-actions">
-            <Link to="/planning" onClick={() => openClientWorkspace(selected.id)} className="client-action-primary">
-              Plan allocation <ArrowUpRight size={14} />
+            <Link to="/master-plan" onClick={() => openClientWorkspace(selected.id)} className="client-action-primary">
+              Open plan <ArrowUpRight size={14} />
             </Link>
-            <Link to="/ips" onClick={() => openClientWorkspace(selected.id)} className="client-action-btn">
-              Open IPS <ArrowUpRight size={14} />
-            </Link>
-            <Link to="/reports" onClick={() => openClientWorkspace(selected.id)} className="client-action-btn">
-              Reports <ArrowUpRight size={14} />
-            </Link>
-            <button
-              className="client-action-btn"
-              onClick={() => void handleExport(selected)}
-              disabled={exporting === selected.id}
-            >
-              <Download size={13} /> {exporting === selected.id ? 'Exporting…' : 'Export'}
-            </button>
           </div>
         </aside>
       )}

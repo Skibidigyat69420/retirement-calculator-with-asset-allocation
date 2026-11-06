@@ -24,12 +24,12 @@ export const LogoMark = ({ size = 28, className }: LogoMarkProps) => (
     <rect x="1" y="1" width="26" height="26" stroke="currentColor" strokeOpacity="0.45" strokeWidth="1.2" />
     {/* Baseline */}
     <line x1="7" y1="21" x2="21" y2="21" stroke="currentColor" strokeOpacity="0.35" strokeWidth="1.2" />
-    {/* First bar — moss */}
+    {/* First bar — verdigris */}
     <rect x="8.5" y="14.5" width="3.6" height="6.5" fill="var(--color-accent)" />
     {/* Second, taller bar — ink */}
     <rect x="15" y="9" width="3.6" height="12" fill="currentColor" fillOpacity="0.9" />
-    {/* Continuity point — brass thesis mark */}
-    <rect x="15" y="5.5" width="3.6" height="1.6" fill="var(--color-brass)" />
+    {/* Continuity point — one restrained direction of colour */}
+    <rect x="15" y="5.5" width="3.6" height="1.6" fill="var(--color-accent)" />
   </svg>
 );
 

@@ -13,11 +13,11 @@ export interface MetricCardProps {
 }
 
 const variants = {
-  default: 'bg-raised border border-border text-ink',
-  navy: 'bg-sunken border border-border-strong text-ink',
-  gold: 'bg-raised border border-brass/30 text-ink',
-  success: 'bg-raised border border-positive/30 text-ink',
-  danger: 'bg-raised border border-negative/30 text-ink',
+  default: 'text-ink',
+  navy: 'text-ink',
+  gold: 'text-ink',
+  success: 'text-ink',
+  danger: 'text-ink',
 };
 
 const labelColors = {
@@ -37,11 +37,11 @@ const valueColors = {
 };
 
 const iconStyles = {
-  default: 'text-muted border-border',
-  navy: 'text-muted border-border-strong',
-  gold: 'text-brass border-brass/30',
-  success: 'text-positive border-positive/30',
-  danger: 'text-negative border-negative/30',
+  default: 'text-muted',
+  navy: 'text-muted',
+  gold: 'text-brass',
+  success: 'text-positive',
+  danger: 'text-negative',
 };
 
 export const MetricCard = ({
@@ -54,7 +54,7 @@ export const MetricCard = ({
   icon,
 }: MetricCardProps) => {
   return (
-    <div className={cn('rounded-[10px] p-4 sm:p-5 print:break-inside-avoid', variants[variant], className)}>
+    <div className={cn('min-w-0 border-l border-border pl-4 sm:pl-5 print:break-inside-avoid', variants[variant], className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className={cn('text-xs font-medium truncate', labelColors[variant])}>{label}</div>
@@ -69,10 +69,7 @@ export const MetricCard = ({
         </div>
         {icon && (
           <div
-            className={cn(
-              'shrink-0 p-1.5 rounded-sm border flex items-center justify-center',
-              iconStyles[variant],
-            )}
+            className={cn('shrink-0 flex items-center justify-center', iconStyles[variant])}
           >
             {icon}
           </div>

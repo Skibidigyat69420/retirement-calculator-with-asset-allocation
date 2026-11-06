@@ -1,56 +1,77 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, FilePenLine, FileText, Layers3, ShieldCheck, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { ArrowRight, FilePenLine, FileText, Layers3, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { useCalculator } from '../context/CalculatorContext';
 import { formatCurrencyCompact } from '../lib/formatters';
+import { PageHeader } from '../components/ui/PageHeader';
+import { Button } from '../components/ui/Button';
 
 export function PolicyCenterPage() {
   const { inputs, riskProfile, hasRiskAnswers, manualAllocationPolicy, wealthResult } = useCalculator();
-  const clientName = inputs.client.name || 'Active client';
+  const clientName = inputs.client.name || 'Active household';
+  const policyReady = Boolean(manualAllocationPolicy || wealthResult.isConfigured);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7 space-y-7">
-      <header className="border-b border-border pb-6 flex flex-col lg:flex-row justify-between lg:items-end gap-5">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">Policy & IPS module</div>
-          <h1 className="text-3xl font-bold tracking-tight text-ink mt-2">Choose how to create the mandate.</h1>
-          <p className="text-sm text-muted max-w-2xl mt-2">Use the full financial plan when it exists, set a deliberate manual allocation when it does not, or write an independent IPS from a blank document. These paths are explicit so no client data is silently assumed.</p>
-        </div>
-        <div className="rounded-xl border border-border bg-surface px-4 py-3 min-w-[250px]">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">Active context</span>
-          <div className="font-semibold text-ink mt-1">{clientName}</div>
-          <div className="text-xs text-muted mt-1">{formatCurrencyCompact(wealthResult.netWorth)} net worth · {manualAllocationPolicy?.name || 'No client policy saved'}</div>
-        </div>
-      </header>
+    <div className="space-y-8 pb-8">
+      <PageHeader
+        eyebrow="Policy / overview"
+        title="Make the policy position explainable."
+        description={policyReady
+          ? 'Start with the household objective, then turn the recorded plan and risk evidence into a reviewable policy proposal.'
+          : 'A policy needs an objective, liquidity needs and risk evidence before an allocation can be defended.'}
+        actions={<Link to="/planning"><Button>Build policy proposal <ArrowRight size={14} /></Button></Link>}
+      />
 
-      <section className="grid gap-4 md:grid-cols-3" aria-label="Mandate creation methods">
-        <article className="rounded-2xl border border-accent bg-accent-soft/25 p-5 flex flex-col">
-          <div className="w-9 h-9 rounded-lg grid place-items-center bg-accent text-white"><Layers3 size={18} /></div>
-          <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-accent">Connected path</div>
-          <h2 className="font-semibold text-ink text-lg mt-1">Build from the client plan</h2>
-          <p className="text-sm text-muted leading-relaxed mt-2">Bring goals, cash flow, holdings, risk results and selected allocation in as planning inputs and suggestions—not automatic commitments—before issuing the policy, IPS and dossier.</p>
-          <div className="mt-auto pt-5"><Link to="/planning" className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-accent text-white text-xs font-semibold hover:bg-accent-strong">Open planning studio <ArrowRight size={14} /></Link></div>
+      <section className="grid gap-6 xl:grid-cols-12" aria-label="Policy position">
+        <article className="policy-decision xl:col-span-7">
+          <div className="flex items-start justify-between gap-4">
+            <span className="eyebrow">Policy intent</span>
+            <span className="font-mono text-[11px] text-muted">{manualAllocationPolicy ? 'ADVISER-AUTHORED' : 'DRAFT BASIS'}</span>
+          </div>
+          <h2>{manualAllocationPolicy?.name || (hasRiskAnswers ? `${riskProfile.label} posture needs a documented policy.` : 'Risk and liquidity evidence are still needed.')}</h2>
+          <p>{manualAllocationPolicy?.rationale || (hasRiskAnswers
+            ? `Use the ${riskProfile.label.toLowerCase()} profile as a starting risk budget, then document household objectives, liquidity floor, constraints and any informed departure.`
+            : 'Complete the risk assessment and record the household’s immediate funding needs before proposing a target mix.')}</p>
+          <div className="policy-decision-metrics">
+            <div><span>Household</span><strong>{clientName}</strong></div>
+            <div><span>Risk basis</span><strong>{hasRiskAnswers ? riskProfile.label : 'Not assessed'}</strong></div>
+            <div><span>Net worth</span><strong>{wealthResult.isConfigured ? formatCurrencyCompact(wealthResult.netWorth) : 'Not recorded'}</strong></div>
+          </div>
         </article>
 
-        <article className="rounded-2xl border border-border bg-surface p-5 flex flex-col">
-          <div className="w-9 h-9 rounded-lg grid place-items-center bg-sunken text-ink"><SlidersHorizontal size={18} /></div>
-          <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted">Adviser-authored path</div>
-          <h2 className="font-semibold text-ink text-lg mt-1">Set a manual allocation</h2>
-          <p className="text-sm text-muted leading-relaxed mt-2">Start from a practice template or enter each target yourself. Add corridors, review cadence, objective and mandate restrictions before issuing.</p>
-          <div className="mt-auto pt-5"><Link to="/planning?mode=manual" className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border text-xs font-semibold text-ink hover:bg-sunken">Author allocation <ArrowRight size={14} /></Link></div>
-        </article>
-
-        <article className="rounded-2xl border border-border bg-surface p-5 flex flex-col">
-          <div className="w-9 h-9 rounded-lg grid place-items-center bg-sunken text-ink"><FilePenLine size={18} /></div>
-          <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted">Standalone document path</div>
-          <h2 className="font-semibold text-ink text-lg mt-1">Write an IPS from scratch</h2>
-          <p className="text-sm text-muted leading-relaxed mt-2">Open a blank charter and enter client, objectives, allocation, holdings and constraints directly. It stays independent until you choose to link it.</p>
-          <div className="mt-auto pt-5"><Link to="/ips/editor?mode=independent" className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border text-xs font-semibold text-ink hover:bg-sunken">Create blank IPS <FileText size={14} /></Link></div>
-        </article>
+        <aside className="policy-evidence xl:col-span-5">
+          <ShieldCheck size={18} aria-hidden="true" />
+          <div>
+            <span className="eyebrow">Required evidence</span>
+            <h2>{hasRiskAnswers ? 'Risk profile recorded' : 'Risk profile missing'}</h2>
+            <p>{hasRiskAnswers
+              ? 'Risk capacity and preference are available. Review liquidity and specific constraints before issuing an IPS.'
+              : 'A model allocation should not be issued until capacity, preference and liquidity are understood.'}</p>
+          </div>
+          <Link to="/risk" className="policy-text-action">{hasRiskAnswers ? 'Review risk evidence' : 'Assess risk'} <ArrowRight size={14} /></Link>
+        </aside>
       </section>
 
-      <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6 grid lg:grid-cols-[1fr_auto] gap-5 items-center">
-        <div className="flex gap-3"><div className="w-9 h-9 rounded-lg grid place-items-center bg-accent-soft text-accent shrink-0"><ShieldCheck size={18} /></div><div><h2 className="font-semibold text-ink">Risk profile is a decision input—not a locked allocation.</h2><p className="text-sm text-muted leading-relaxed mt-1">{hasRiskAnswers ? `${riskProfile.label} profile ready: use it as the starting risk budget, then document any client-specific manual departure in the allocation policy.` : 'Complete the risk assessment first to establish capacity, tolerance, liquidity constraints and a recommended risk budget.'}</p></div></div>
-        <Link to="/risk" className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-border text-xs font-semibold text-ink hover:bg-sunken whitespace-nowrap">{hasRiskAnswers ? 'Review risk profile' : 'Assess risk'} <Sparkles size={14} /></Link>
+      <section aria-labelledby="policy-routes-heading">
+        <div className="section-rule-heading">
+          <div><h2 id="policy-routes-heading">Choose a policy route</h2><p>Use the connected path whenever the planning facts already exist.</p></div>
+        </div>
+        <div className="policy-routes">
+          <Link to="/planning" className="policy-route policy-route-primary">
+            <span className="policy-route-icon"><Layers3 size={18} /></span>
+            <span><strong>Build from the client plan</strong><small>Bring goals, cash flow, holdings and risk results into a reviewable proposal.</small></span>
+            <ArrowRight size={16} />
+          </Link>
+          <Link to="/planning?mode=manual" className="policy-route">
+            <span className="policy-route-icon"><SlidersHorizontal size={18} /></span>
+            <span><strong>Set a manual allocation</strong><small>Author targets, corridors, objective and constraints without importing a plan.</small></span>
+            <ArrowRight size={16} />
+          </Link>
+          <Link to="/ips/editor?mode=independent" className="policy-route">
+            <span className="policy-route-icon"><FilePenLine size={18} /></span>
+            <span><strong>Write an independent IPS</strong><small>Start a standalone charter when no client record should be assumed.</small></span>
+            <FileText size={16} />
+          </Link>
+        </div>
       </section>
     </div>
   );

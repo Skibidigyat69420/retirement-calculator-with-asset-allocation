@@ -34,28 +34,28 @@ export interface ChapterNavItem {
   paths: string[];
 }
 
-export const SECTION_ORDER = ['Workspace', 'Plan', 'Portfolio', 'Deliver', 'Practice', 'Tools'] as const;
+export const SECTION_ORDER = ['Households', 'Plan', 'Policy', 'Dossier', 'Review', 'Tools & practice'] as const;
 
 export const navItems: NavItem[] = [
   {
     path: '/',
     label: 'IPS desk',
     icon: FileText,
-    section: 'Workspace',
+    section: 'Policy',
     description: 'Mandate, relationship CRM and policy issuance',
   },
   {
     path: '/clients',
-    label: 'Client CRM',
+    label: 'All households',
     icon: Users,
-    section: 'Workspace',
+    section: 'Households',
     description: 'Client relationships, pipeline and active households',
   },
   {
     path: '/overview',
-    label: 'Practice overview',
+    label: 'Attention queue',
     icon: Activity,
-    section: 'Workspace',
+    section: 'Review',
     description: 'Executive overview & plan health check',
   },
 
@@ -64,19 +64,19 @@ export const navItems: NavItem[] = [
     path: '/planning',
     label: 'Strategic allocation',
     icon: Layers3,
-    section: 'Plan',
+    section: 'Policy',
     description: 'Client-specific SAA, investable categories and policy governance',
   },
   {
     path: '/master-plan',
-    label: 'Client plan',
+    label: 'Overview',
     icon: ClipboardList,
     section: 'Plan',
     description: 'Guided seven-step planning wizard',
   },
   {
     path: '/client-profile',
-    label: 'Client profile',
+    label: 'Profile & household',
     icon: UserRound,
     section: 'Plan',
     description: 'Identity, horizon and planning context',
@@ -90,14 +90,14 @@ export const navItems: NavItem[] = [
   },
   {
     path: '/goal',
-    label: 'Goal Planner',
+    label: 'Goals',
     icon: Target,
     section: 'Plan',
     description: 'Goal milestones & conflict matrix',
   },
   {
     path: '/risk',
-    label: 'Risk Profile',
+    label: 'Risk',
     icon: Shield,
     section: 'Plan',
     description: 'Psychometric risk score & asset constraints',
@@ -111,7 +111,7 @@ export const navItems: NavItem[] = [
   },
   {
     path: '/reverse-planning',
-    label: 'Reverse Planning',
+    label: 'Reverse planning',
     icon: Compass,
     section: 'Plan',
     description: 'Reverse solver for required SIP & feasible age',
@@ -120,9 +120,9 @@ export const navItems: NavItem[] = [
   // Portfolio
   {
     path: '/allocation',
-    label: 'Allocation',
+    label: 'Current allocation',
     icon: TrendingUp,
-    section: 'Portfolio',
+    section: 'Policy',
     description: 'Current vs target rebalancing & trade orders',
   },
 
@@ -131,49 +131,49 @@ export const navItems: NavItem[] = [
     path: '/policy',
     label: 'Policy & IPS',
     icon: FileText,
-    section: 'Deliver',
+    section: 'Policy',
     description: 'Choose connected, manual, or standalone IPS creation',
   },
   {
     path: '/dossier',
     label: 'Dossier',
     icon: Printer,
-    section: 'Deliver',
+    section: 'Dossier',
     description: 'Client-ready position, recommendations and exports',
   },
   {
     path: '/ips',
     label: 'IPS builder',
     icon: FileText,
-    section: 'Deliver',
+    section: 'Policy',
     description: 'Return to the guided Investment Policy Statement desk',
   },
   {
     path: '/ips/editor',
     label: 'IPS full editor',
     icon: FileText,
-    section: 'Deliver',
+    section: 'Policy',
     description: 'Clause-level policy template and saved drafts',
   },
   {
     path: '/meeting-workflow',
-    label: 'Client Meeting',
+    label: 'Meeting prep',
     icon: Briefcase,
-    section: 'Deliver',
+    section: 'Dossier',
     description: 'Stage agenda & advisory meeting log',
   },
   {
     path: '/decision-history',
-    label: 'Decision Audit Log',
+    label: 'Decision history',
     icon: History,
-    section: 'Deliver',
+    section: 'Review',
     description: 'Audit trail of plan modifications & reverts',
   },
   {
     path: '/reports',
-    label: 'Documents & reports',
+    label: 'Reports & history',
     icon: Printer,
-    section: 'Deliver',
+    section: 'Dossier',
     description: 'Generate reports and open the PDF dossier deck',
   },
 
@@ -182,14 +182,14 @@ export const navItems: NavItem[] = [
     path: '/practitioner',
     label: 'Client operations',
     icon: Briefcase,
-    section: 'Practice',
+    section: 'Households',
     description: 'Live client records, plans and calculations',
   },
   {
     path: '/team',
     label: 'Practice team',
     icon: Users,
-    section: 'Practice',
+    section: 'Tools & practice',
     description: 'Team members, roles and invitations',
   },
 
@@ -198,21 +198,21 @@ export const navItems: NavItem[] = [
     path: '/calculators',
     label: 'Calculators',
     icon: Calculator,
-    section: 'Tools',
+    section: 'Tools & practice',
     description: 'SIP, SWP, STP, EMI & lumpsum utilities',
   },
   {
     path: '/style-guide',
     label: 'Style guide',
     icon: Layers3,
-    section: 'Tools',
+    section: 'Tools & practice',
     description: 'Internal component and token reference',
   },
   {
     path: '/ui-review',
     label: 'UI review',
     icon: Activity,
-    section: 'Tools',
+    section: 'Tools & practice',
     description: 'Internal workflow and quality review',
   },
 ];
@@ -256,6 +256,18 @@ export const chapterNavItems: ChapterNavItem[] = [
 ];
 
 export const toolPaths = ['/calculators', '/team', '/style-guide', '/ui-review'] as const;
+
+/**
+ * The rail stays short; this ordered local index preserves every workflow
+ * underneath its chapter instead of hiding specialist work in a generic menu.
+ */
+export const chapterMenuItems: Record<string, string[]> = {
+  Households: ['/clients', '/practitioner'],
+  Plan: ['/master-plan', '/client-profile', '/balance-sheet', '/goal', '/risk', '/retirement', '/reverse-planning'],
+  Policy: ['/policy', '/planning', '/allocation', '/', '/ips/editor'],
+  Dossier: ['/dossier', '/reports', '/meeting-workflow'],
+  Review: ['/overview', '/decision-history'],
+};
 
 export const groupBySection = (items: NavItem[]): [string, NavItem[]][] => {
   const groups = items.reduce((acc, item) => {
