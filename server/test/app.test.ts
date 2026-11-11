@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { buildApp } from '../src/app.js';
-import { createInMemoryStore } from '../src/store.js';
+import { createInMemoryStore, createStore } from '../src/store.js';
 import { FieldCipher } from '../src/fieldEncryption.js';
 
 async function request(app: Awaited<ReturnType<typeof buildApp>>, options: {
@@ -198,4 +198,19 @@ test('field encryption uses authenticated AES-256 encryption', () => {
   const encrypted = cipher.encryptJson({ pan: 'ABCDE1234F', balance: 1_500_000 });
   assert.notEqual(encrypted.ciphertext, 'ABCDE1234F');
   assert.deepEqual(cipher.decryptJson(encrypted), { pan: 'ABCDE1234F', balance: 1_500_000 });
+});
+
+test('database-backed API refuses to start without its field-encryption key', () => {
+  const originalDatabaseUrl = process.env.DATABASE_URL;
+  const originalKey = process.env.FIELD_ENCRYPTION_KEY;
+  try {
+    process.env.DATABASE_URL = 'postgresql://postgres:password@localhost:5432/soundthesis';
+    delete process.env.FIELD_ENCRYPTION_KEY;
+    assert.throws(() => createStore(), /FIELD_ENCRYPTION_KEY is required/);
+  } finally {
+    if (originalDatabaseUrl === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = originalDatabaseUrl;
+    if (originalKey === undefined) delete process.env.FIELD_ENCRYPTION_KEY;
+    else process.env.FIELD_ENCRYPTION_KEY = originalKey;
+  }
 });

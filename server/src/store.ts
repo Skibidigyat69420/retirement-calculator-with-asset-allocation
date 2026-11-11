@@ -70,9 +70,10 @@ export function createStore(): AppStore {
   const databaseUrl = process.env.DATABASE_URL?.trim();
   if (databaseUrl) {
     const cipher = createFieldCipher();
-    if (process.env.NODE_ENV === 'production' && !cipher) {
-      throw new Error('FIELD_ENCRYPTION_KEY is required when using Postgres in production.');
-    }
+    // A database may already contain encrypted fields, including in local
+    // development. Never fall back to returning an encryption envelope to a
+    // caller when this setting is absent.
+    if (!cipher) throw new Error('FIELD_ENCRYPTION_KEY is required whenever DATABASE_URL is configured.');
     return new PostgresStore(postgres(databaseUrl, { max: 10, prepare: false, ssl: 'require' }), cipher);
   }
   return createInMemoryStore();
@@ -487,9 +488,9 @@ class MemoryStore implements AppStore {
 
 class PostgresStore implements AppStore {
   private readonly sql: Sql;
-  private readonly cipher: FieldCipher | null;
+  private readonly cipher: FieldCipher;
 
-  constructor(sql: Sql, cipher: FieldCipher | null) {
+  constructor(sql: Sql, cipher: FieldCipher) {
     this.sql = sql;
     this.cipher = cipher;
   }
@@ -498,10 +499,10 @@ class PostgresStore implements AppStore {
     await this.sql.end();
   }
 
-  private encryptText(value: string | null) { return this.cipher ? this.cipher.encryptString(value) : value; }
-  private decryptText(value: string | null | undefined) { return this.cipher ? this.cipher.decryptString(value) : value ?? null; }
-  private encryptJson(value: Record<string, unknown>) { return this.cipher ? this.cipher.encryptJson(value) : value; }
-  private decryptJson(value: unknown) { return this.cipher ? this.cipher.decryptJson(value) : (value && typeof value === 'object' ? value : {}) as Record<string, unknown>; }
+  private encryptText(value: string | null) { return this.cipher.encryptString(value); }
+  private decryptText(value: string | null | undefined) { return this.cipher.decryptString(value); }
+  private encryptJson(value: Record<string, unknown>) { return this.cipher.encryptJson(value); }
+  private decryptJson(value: unknown) { return this.cipher.decryptJson(value); }
 
   private async withAuthUser<T>(authUserId: string, fn: (query: Sql) => Promise<T>): Promise<T> {
     const result = await this.sql.begin(async (tx) => {
