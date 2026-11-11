@@ -5,6 +5,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { createStore, emptyProfile, type AppStore } from './store.js';
 import { calculatePlan } from './calculations.js';
+import { getInrFxRates } from './fx.js';
 import type { Actor, ClientRecord, Plan, UserRecord } from './types.js';
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -252,15 +253,7 @@ export async function buildApp(store: AppStore = createStore()) {
     return { organization };
   });
 
-  app.get('/api/v1/fx/rates', async () => ({
-    base: 'INR',
-    rates: { INR: 1, USD: 83.2, EUR: 90.1, GBP: 105.5 },
-    currencies: ['INR', 'USD', 'EUR', 'GBP'],
-    asOf: new Date().toISOString().slice(0, 10),
-    fetchedAt: new Date().toISOString(),
-    source: 'bundled-fallback',
-    stale: false,
-  }));
+  app.get('/api/v1/fx/rates', async () => getInrFxRates());
 
   app.get('/api/v1/clients', async (request, reply) => {
     const scoped = await requireOrganization(store, request, reply);
