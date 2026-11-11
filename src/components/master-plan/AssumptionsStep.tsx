@@ -4,6 +4,7 @@ import { Badge } from '../ui/Badge';
 import { FormSection } from '../ui/FormSection';
 import { formatOrDash } from '../../lib/planState';
 import type { MasterPlanInputs, AssumptionMode } from '../../types';
+import { useCalculator } from '../../context/CalculatorContext';
 
 interface AssumptionsStepProps {
   inputs: MasterPlanInputs;
@@ -20,7 +21,13 @@ export const AssumptionsStep = ({
   setAssumptionMode,
   activeAssumptionSourceLabel,
 }: AssumptionsStepProps) => {
+  const { assumptions } = useCalculator();
   const inflation = inputs.inflation;
+  const fxCurrencyCount = Object.keys(assumptions.fx).length;
+  const fxSource = assumptions.fxSource === 'bundled-fallback' ? 'Bundled fallback' : 'Frankfurter reference feed';
+  const fxAsOf = assumptions.fxAsOf
+    ? new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium' }).format(new Date(`${assumptions.fxAsOf}T00:00:00Z`))
+    : 'Not yet refreshed';
 
   const MODES: { id: AssumptionMode; label: string; desc: string }[] = [
     { id: 'conservative', label: 'Conservative', desc: 'Prudent buffer with lower equity return expectations (7% inflation, 10% equity).' },
@@ -114,6 +121,22 @@ export const AssumptionsStep = ({
             </p>
           </div>
         </div>
+      </FormSection>
+
+      <FormSection
+        index="03"
+        title="Currency normalization"
+        description="Foreign-currency assets, liabilities, income, and goals are converted to INR before planning calculations."
+        className="mt-8"
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-px overflow-hidden rounded-md border border-border bg-border">
+          <div className="bg-raised px-4 py-3"><span className="block text-[10px] font-mono uppercase tracking-wide text-muted">Planning base</span><strong className="mt-1 block text-sm text-ink">INR</strong></div>
+          <div className="bg-raised px-4 py-3"><span className="block text-[10px] font-mono uppercase tracking-wide text-muted">Coverage</span><strong className="mt-1 block text-sm text-ink">{fxCurrencyCount} currencies</strong></div>
+          <div className="bg-raised px-4 py-3"><span className="block text-[10px] font-mono uppercase tracking-wide text-muted">Reference date</span><strong className="mt-1 block text-sm text-ink">{fxAsOf}</strong></div>
+        </div>
+        <p className="mt-3 text-xs leading-relaxed text-muted">
+          Source: {fxSource}{assumptions.fxStale ? ' (last available rate set).' : '.'} Rates are daily reference rates, not executable trading quotes.
+        </p>
       </FormSection>
     </div>
   );

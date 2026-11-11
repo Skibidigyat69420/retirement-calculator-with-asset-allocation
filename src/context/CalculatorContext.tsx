@@ -686,7 +686,14 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
               spotRate,
             };
           }
-          return { ...previous, fx };
+          return {
+            ...previous,
+            fx,
+            fxAsOf: response.asOf,
+            fxFetchedAt: response.fetchedAt,
+            fxSource: response.source,
+            fxStale: response.stale,
+          };
         });
       })
       .catch((error) => {

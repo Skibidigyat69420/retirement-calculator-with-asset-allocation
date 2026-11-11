@@ -28,6 +28,12 @@ const ageFromDob = (dob: string | undefined): number | null => {
   return age >= 0 ? age : null;
 };
 
+const COUNTRY_SUGGESTIONS = [
+  'India', 'United Arab Emirates', 'Singapore', 'United States', 'United Kingdom',
+  'Australia', 'Canada', 'Japan', 'Germany', 'France', 'Switzerland', 'Saudi Arabia',
+  'Qatar', 'Hong Kong', 'New Zealand', 'Netherlands', 'Other',
+];
+
 const advanceIdentityCell = (event: KeyboardEvent<HTMLDivElement>) => {
   if (
     event.key !== 'Enter'
@@ -181,7 +187,7 @@ export const ProfileStep = ({
           </label>
           <label className="identity-sheet-cell">
             <span>Country</span>
-            <input data-identity-cell className="identity-sheet-control" value={inputs.client?.country || ''} onChange={(e) => updateClient({ country: e.target.value })} placeholder="India" autoComplete="country-name" />
+            <input data-identity-cell className="identity-sheet-control" list="country-suggestions" value={inputs.client?.country || ''} onChange={(e) => updateClient({ country: e.target.value })} placeholder="India" autoComplete="country-name" />
           </label>
           <label className="identity-sheet-cell">
             <span>Address</span>
@@ -206,6 +212,9 @@ export const ProfileStep = ({
             </select>
           </label>
         </div>
+        <datalist id="country-suggestions">
+          {COUNTRY_SUGGESTIONS.map((country) => <option key={country} value={country} />)}
+        </datalist>
         <p className="identity-sheet-shortcuts">
           <span>Fast entry</span>
           <span><kbd>Enter</kbd> next cell <i>·</i> <kbd>Shift</kbd> + <kbd>Enter</kbd> previous <i>·</i> <kbd>Tab</kbd> standard navigation <i>·</i> <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd> save</span>

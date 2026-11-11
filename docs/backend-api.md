@@ -90,7 +90,7 @@ Errors use this envelope:
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `GET` | `/api/v1/fx/rates` | Return INR conversion rates. |
+| `GET` | `/api/v1/fx/rates` | Return INR-per-unit conversion rates for every available currency. Uses the free Frankfurter daily reference-rate feed, cached for six hours with a bundled fallback. |
 | `GET` | `/api/v1/audit-events?limit=50` | List tenant-scoped audit history for the active practice. |
 
 ## Reports

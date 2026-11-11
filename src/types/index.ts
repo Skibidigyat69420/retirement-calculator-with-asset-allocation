@@ -644,6 +644,11 @@ export interface AssumptionSet {
   covariance: Record<AssetCategory, Record<AssetCategory, number>>;
   correlation: Record<AssetCategory, Record<AssetCategory, number>>;
   fx: Record<string, FXAssumption>;
+  /** Provenance for the daily INR conversion rates currently in use. */
+  fxAsOf?: string;
+  fxFetchedAt?: string;
+  fxSource?: 'frankfurter' | 'frankfurter-cache' | 'bundled-fallback';
+  fxStale?: boolean;
   fetchedAt: string;
   source: 'market' | 'default';
 }
