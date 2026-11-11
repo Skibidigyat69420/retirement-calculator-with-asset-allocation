@@ -201,20 +201,6 @@ export const navItems: NavItem[] = [
     section: 'Tools & practice',
     description: 'SIP, SWP, STP, EMI & lumpsum utilities',
   },
-  {
-    path: '/style-guide',
-    label: 'Style guide',
-    icon: Layers3,
-    section: 'Tools & practice',
-    description: 'Internal component and token reference',
-  },
-  {
-    path: '/ui-review',
-    label: 'UI review',
-    icon: Activity,
-    section: 'Tools & practice',
-    description: 'Internal workflow and quality review',
-  },
 ];
 
 export const chapterNavItems: ChapterNavItem[] = [
@@ -255,7 +241,7 @@ export const chapterNavItems: ChapterNavItem[] = [
   },
 ];
 
-export const toolPaths = ['/calculators', '/team', '/style-guide', '/ui-review'] as const;
+export const toolPaths = ['/calculators', '/team'] as const;
 
 /**
  * The rail stays short; this ordered local index preserves every workflow

@@ -1,4 +1,5 @@
 import { UserRound } from 'lucide-react';
+import type { KeyboardEvent } from 'react';
 import { Input } from '../ui/Input';
 import { NumberInput } from '../ui/NumberInput';
 import { Select } from '../ui/Select';
@@ -27,6 +28,27 @@ const ageFromDob = (dob: string | undefined): number | null => {
   return age >= 0 ? age : null;
 };
 
+const advanceIdentityCell = (event: KeyboardEvent<HTMLDivElement>) => {
+  if (
+    event.key !== 'Enter'
+    || event.nativeEvent.isComposing
+    || event.ctrlKey
+    || event.metaKey
+    || event.altKey
+    || !(event.target instanceof HTMLInputElement)
+  ) return;
+
+  const cells = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[data-identity-cell]'));
+  const currentIndex = cells.indexOf(event.target);
+  if (currentIndex < 0) return;
+
+  event.preventDefault();
+  const nextIndex = event.shiftKey
+    ? Math.max(0, currentIndex - 1)
+    : Math.min(cells.length - 1, currentIndex + 1);
+  cells[nextIndex]?.focus();
+};
+
 export const ProfileStep = ({
   inputs,
   updateInputs,
@@ -48,6 +70,8 @@ export const ProfileStep = ({
     inputs.client?.email,
     inputs.client?.phone,
     inputs.client?.address,
+    inputs.client?.country,
+    inputs.client?.pan,
     inputs.client?.occupation,
     inputs.client?.spouse,
     inputs.client?.familyComposition,
@@ -128,52 +152,64 @@ export const ProfileStep = ({
       <FormSection
         index="01"
         title="Identity"
-        description="Who is this plan for? Required to begin."
+        description="Enter the core relationship details directly."
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">
-          <Input
-            layout="inline"
-            label="Client name"
-            value={inputs.client?.name || ''}
-            onChange={(e) => updateClient({ name: e.target.value })}
-            placeholder="e.g. Vikram & Priya Malhotra"
-            className="md:col-span-2"
-          />
-          <Input
-            layout="inline"
-            label="Lead advisor"
-            value={inputs.client?.advisor || ''}
-            onChange={(e) => updateClient({ advisor: e.target.value })}
-            placeholder="e.g. SoundThesis Capital"
-          />
-          <Input
-            layout="inline"
-            label="Email"
-            type="email"
-            value={inputs.client?.email || ''}
-            onChange={(e) => updateClient({ email: e.target.value })}
-            placeholder="client@domain.com"
-          />
-          <Input
-            layout="inline"
-            label="Plan review"
-            type="date"
-            value={inputs.client?.reviewDate || ''}
-            onChange={(e) => updateClient({ reviewDate: e.target.value })}
-          />
-          <Input layout="inline" label="Phone" value={inputs.client?.phone || ''} onChange={(e) => updateClient({ phone: e.target.value })} placeholder="Primary contact number" />
-          <Input layout="inline" label="Address" value={inputs.client?.address || ''} onChange={(e) => updateClient({ address: e.target.value })} placeholder="City, country or full address" className="md:col-span-2" />
-          <Input layout="inline" label="Occupation" value={inputs.client?.occupation || ''} onChange={(e) => updateClient({ occupation: e.target.value })} placeholder="Role, profession or business owner" />
-          <Input layout="inline" label="Business" value={inputs.client?.business || ''} onChange={(e) => updateClient({ business: e.target.value })} placeholder="Company or practice name" />
-          <Input layout="inline" label="Spouse" value={inputs.client?.spouse || ''} onChange={(e) => updateClient({ spouse: e.target.value })} placeholder="Name and occupation (optional)" />
-          <Select
-            layout="inline"
-            label="Marital status"
-            value={inputs.client?.maritalStatus || ''}
-            onChange={(value) => updateClient({ maritalStatus: value })}
-            options={['', 'Single', 'Married', 'Partnered', 'Divorced', 'Widowed'].map((value) => ({ value, label: value || 'Select status' }))}
-          />
+        <div className="identity-sheet" onKeyDown={advanceIdentityCell}>
+          <label className="identity-sheet-cell identity-sheet-cell--wide">
+            <span>Client or household name</span>
+            <input data-identity-cell className="identity-sheet-control" value={inputs.client?.name || ''} onChange={(e) => updateClient({ name: e.target.value })} placeholder="e.g. Vikram & Priya Malhotra" autoComplete="name" />
+          </label>
+          <label className="identity-sheet-cell">
+            <span>Lead advisor</span>
+            <input data-identity-cell className="identity-sheet-control" value={inputs.client?.advisor || ''} onChange={(e) => updateClient({ advisor: e.target.value })} placeholder="e.g. SoundThesis Capital" autoComplete="organization" />
+          </label>
+          <label className="identity-sheet-cell">
+            <span>Email</span>
+            <input data-identity-cell className="identity-sheet-control" type="email" value={inputs.client?.email || ''} onChange={(e) => updateClient({ email: e.target.value })} placeholder="client@domain.com" autoComplete="email" />
+          </label>
+          <label className="identity-sheet-cell">
+            <span>Plan review</span>
+            <input data-identity-cell className="identity-sheet-control" type="date" value={inputs.client?.reviewDate || ''} onChange={(e) => updateClient({ reviewDate: e.target.value })} />
+          </label>
+          <label className="identity-sheet-cell">
+            <span>Phone</span>
+            <input data-identity-cell className="identity-sheet-control" type="tel" value={inputs.client?.phone || ''} onChange={(e) => updateClient({ phone: e.target.value })} placeholder="Primary contact number" autoComplete="tel" />
+          </label>
+          <label className="identity-sheet-cell">
+            <span>PAN / tax ID</span>
+            <input data-identity-cell className="identity-sheet-control font-mono uppercase" value={inputs.client?.pan || ''} onChange={(e) => updateClient({ pan: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })} placeholder="ABCDE1234F" maxLength={10} autoCapitalize="characters" autoComplete="off" spellCheck={false} />
+          </label>
+          <label className="identity-sheet-cell">
+            <span>Country</span>
+            <input data-identity-cell className="identity-sheet-control" value={inputs.client?.country || ''} onChange={(e) => updateClient({ country: e.target.value })} placeholder="India" autoComplete="country-name" />
+          </label>
+          <label className="identity-sheet-cell">
+            <span>Address</span>
+            <input data-identity-cell className="identity-sheet-control" value={inputs.client?.address || ''} onChange={(e) => updateClient({ address: e.target.value })} placeholder="Street address, city or state" autoComplete="street-address" />
+          </label>
+          <label className="identity-sheet-cell">
+            <span>Occupation</span>
+            <input data-identity-cell className="identity-sheet-control" value={inputs.client?.occupation || ''} onChange={(e) => updateClient({ occupation: e.target.value })} placeholder="Role, profession or business owner" autoComplete="organization-title" />
+          </label>
+          <label className="identity-sheet-cell">
+            <span>Business</span>
+            <input data-identity-cell className="identity-sheet-control" value={inputs.client?.business || ''} onChange={(e) => updateClient({ business: e.target.value })} placeholder="Company or practice name" autoComplete="organization" />
+          </label>
+          <label className="identity-sheet-cell">
+            <span>Spouse</span>
+            <input data-identity-cell className="identity-sheet-control" value={inputs.client?.spouse || ''} onChange={(e) => updateClient({ spouse: e.target.value })} placeholder="Name and occupation (optional)" />
+          </label>
+          <label className="identity-sheet-cell">
+            <span>Marital status</span>
+            <select data-identity-cell className="identity-sheet-control" value={inputs.client?.maritalStatus || ''} onChange={(e) => updateClient({ maritalStatus: e.target.value })}>
+              {['', 'Single', 'Married', 'Partnered', 'Divorced', 'Widowed'].map((value) => <option key={value} value={value}>{value || 'Select status'}</option>)}
+            </select>
+          </label>
         </div>
+        <p className="identity-sheet-shortcuts">
+          <span>Fast entry</span>
+          <span><kbd>Enter</kbd> next cell <i>·</i> <kbd>Shift</kbd> + <kbd>Enter</kbd> previous <i>·</i> <kbd>Tab</kbd> standard navigation <i>·</i> <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd> save</span>
+        </p>
       </FormSection>
 
       <FormSection

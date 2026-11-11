@@ -81,27 +81,24 @@ export const RiskStep = ({
       >
         {answered ? (
           <>
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_15rem]">
               <div className="space-y-1.5">
-                <div className="flex items-baseline gap-3 flex-wrap">
-                  <h3 className="font-display text-2xl text-ink capitalize">
-                    {riskProfile.label} profile
-                  </h3>
-                  <span className="font-mono text-[11px] text-faint tabular-nums">
-                    Score {riskScore}/100
-                  </span>
-                </div>
-                <p className="text-sm text-muted leading-relaxed max-w-xl">
-                  {riskProfile.description}
-                </p>
+                <h3 className="font-display text-2xl text-ink capitalize">{riskProfile.label} profile</h3>
+                <p className="text-sm text-muted leading-relaxed max-w-xl">{riskProfile.description}</p>
+                <Link
+                  to="/risk"
+                  className="inline-flex items-center gap-1.5 mt-3 px-3 min-h-8 py-1.5 text-xs font-medium rounded-md border border-border text-ink-soft hover:border-border-strong hover:bg-surface transition-colors"
+                >
+                  <span>View or edit assessment</span>
+                  <ExternalLink size={13} aria-hidden="true" />
+                </Link>
               </div>
-              <Link
-                to="/risk"
-                className="inline-flex items-center gap-1.5 px-3 min-h-8 py-1.5 text-xs font-medium rounded-md border border-border text-ink-soft hover:border-border-strong hover:bg-surface transition-colors shrink-0"
-              >
-                <span>Retake questionnaire</span>
-                <ExternalLink size={13} aria-hidden="true" />
-              </Link>
+              <div className="risk-score-card risk-score-card--compact" aria-label={`Risk score ${riskScore} out of 100. ${riskProfile.label} profile range: ${riskProfile.scoreMin} to ${riskProfile.scoreMax}.`}>
+                <div className="flex items-center justify-between gap-3"><span>Risk score</span><span className="risk-score-card-band">{riskProfile.scoreMin}–{riskProfile.scoreMax}</span></div>
+                <div className="risk-score-card-value">{riskScore}<small>/100</small></div>
+                <div className="risk-score-card-track" aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(100, riskScore))}%` }} /></div>
+                <p>Assessed {riskProfile.label.toLowerCase()} range</p>
+              </div>
             </div>
 
             {/* Quant risk parameters — hairline rows */}

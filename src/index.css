@@ -973,6 +973,134 @@ select option { background: var(--color-raised); color: var(--color-ink); }
   .plan-header-metrics > div:nth-child(even) { border-right: 0; padding-left: .8rem; }
 }
 
+/* Risk is a governed planning input. The numeric result is intentionally
+   prominent, paired with the score band and the policy limits it drives. */
+.risk-score-card {
+  padding: 1rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+.risk-score-card > div:first-child > span:first-child {
+  color: var(--color-muted);
+  font-size: .67rem;
+  font-weight: 650;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.risk-score-card-band {
+  color: var(--color-accent-strong);
+  font: 600 .65rem var(--font-mono);
+}
+.risk-score-card-value {
+  margin-top: .45rem;
+  color: var(--color-ink);
+  font: 600 clamp(2.75rem, 5vw, 4rem)/.96 var(--font-mono);
+  letter-spacing: -.08em;
+}
+.risk-score-card-value small {
+  margin-left: .3rem;
+  color: var(--color-muted);
+  font: 550 .98rem/1 var(--font-mono);
+  letter-spacing: -.03em;
+}
+.risk-score-card-track {
+  height: .42rem;
+  margin-top: .8rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-sunken);
+}
+.risk-score-card-track > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-accent);
+}
+.risk-score-card > p {
+  margin-top: .55rem;
+  color: var(--color-ink-soft);
+  font-size: .73rem;
+  line-height: 1.4;
+}
+.risk-score-card--compact { align-self: start; }
+.risk-score-card--compact .risk-score-card-value { font-size: 2.65rem; }
+.dark .risk-score-card { background: color-mix(in srgb, var(--color-surface) 88%, var(--color-accent-soft)); }
+
+/* Direct-entry profile sheet: preserves labels but removes the friction of a
+   dense stack of individual form cards. */
+.identity-sheet {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-border);
+}
+.identity-sheet-cell {
+  display: grid;
+  min-width: 0;
+  min-height: 5rem;
+  padding: .72rem .85rem;
+  background: var(--color-raised);
+  transition: background var(--duration-fast) ease;
+}
+.identity-sheet-cell--wide { grid-column: span 2; }
+.identity-sheet-cell > span {
+  color: var(--color-muted);
+  font: 600 .62rem var(--font-mono);
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+.identity-sheet-control {
+  width: 100%;
+  min-width: 0;
+  min-height: 2rem;
+  margin-top: .28rem;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-ink);
+  box-shadow: none;
+  font: 500 .82rem var(--font-sans);
+}
+.identity-sheet-control.font-mono { font-family: var(--font-mono); letter-spacing: .025em; }
+.identity-sheet-control::placeholder { color: var(--color-faint); }
+.identity-sheet-control:hover,
+.identity-sheet-control:focus {
+  border-color: var(--color-accent);
+  background: transparent;
+  box-shadow: none;
+  outline: 0;
+}
+.identity-sheet-cell:focus-within { background: color-mix(in srgb, var(--color-raised) 88%, var(--color-accent-soft)); }
+.identity-sheet-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem 1rem;
+  align-items: center;
+  margin-top: .65rem;
+  color: var(--color-muted);
+  font-size: .67rem;
+  line-height: 1.5;
+}
+.identity-sheet-shortcuts > span:first-child {
+  color: var(--color-accent-strong);
+  font: 600 .62rem var(--font-mono);
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+.identity-sheet-shortcuts i { color: var(--color-faint); font-style: normal; }
+@media (max-width: 767px) {
+  .identity-sheet { grid-template-columns: 1fr; }
+  .identity-sheet-cell--wide { grid-column: span 1; }
+  .identity-sheet-cell { min-height: 4.5rem; }
+}
+
 /* Policy chapter: conclusion first, evidence second, routes as a ranked list. */
 .policy-decision,
 .policy-evidence {

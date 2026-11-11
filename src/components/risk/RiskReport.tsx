@@ -120,13 +120,19 @@ export const RiskReport = ({
               {riskProfile.description}
             </p>
           </div>
-          <div className="lg:text-right">
-            <div className="num-hero text-6xl sm:text-7xl text-ink">
-              {formatOrDash(score, (n) => String(n))}
-              <span className="text-2xl sm:text-3xl text-faint">/100</span>
+          <div className="lg:justify-self-end w-full lg:max-w-[19rem]">
+            <div className="risk-score-card" aria-label={`Composite risk score ${score} out of 100. ${riskProfile.label} profile range is ${riskProfile.scoreMin} to ${riskProfile.scoreMax}.`}>
+              <div className="flex items-center justify-between gap-3">
+                <span>Composite risk score</span>
+                <span className="risk-score-card-band">{riskProfile.scoreMin}–{riskProfile.scoreMax} band</span>
+              </div>
+              <div className="risk-score-card-value">
+                {formatOrDash(score, (n) => String(n))}<small>/100</small>
+              </div>
+              <div className="risk-score-card-track" aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(100, score))}%` }} /></div>
+              <p>{riskProfile.label} profile · the score sets the recommended risk budget below.</p>
             </div>
-            <div className="text-xs font-medium text-muted mt-2">Composite risk score</div>
-            <div className="flex lg:justify-end gap-2 mt-5">
+            <div className="flex lg:justify-end gap-2 mt-4">
               <Button variant="outline" size="sm" onClick={onEdit}>
                 <PencilLine size={14} strokeWidth={1.7} className="mr-1" aria-hidden="true" />
                 Edit answers
@@ -227,12 +233,7 @@ export const RiskReport = ({
       <section>
         <SectionHeader title="Policy constraints" description="The limits this profile places on the plan." hairline />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-6 mt-5">
-          <FinancialMetric
-            label="Equity band"
-            value={`${riskProfile.minEquity}–${riskProfile.maxEquity}%`}
-            hint="Strategic range"
-            size="sm"
-          />
+          <FinancialMetric label="Equity ceiling" value={guardNumber(riskProfile.maxEquity)} suffix="%" hint={`Floor: ${riskProfile.minEquity}%`} size="sm" />
           <FinancialMetric
             label="Max drawdown"
             value={guardNumber(riskProfile.maxDrawdown)}

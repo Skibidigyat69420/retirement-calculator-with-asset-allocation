@@ -204,7 +204,9 @@ export interface ClientProfile {
   reviewDate: string;
   notes?: string;
   address?: string;
+  country?: string;
   phone?: string;
+  pan?: string;
   occupation?: string;
   business?: string;
   spouse?: string;
