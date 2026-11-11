@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { buildApp } from '../src/app.js';
 import { createInMemoryStore } from '../src/store.js';
+import { FieldCipher } from '../src/fieldEncryption.js';
 
 async function request(app: Awaited<ReturnType<typeof buildApp>>, options: {
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
@@ -163,4 +164,38 @@ test('sample catalog is stable and exposes an isolated usable workspace', async 
   } finally {
     await app.close();
   }
+});
+
+test('an unassigned adviser cannot discover another adviser’s client', async () => {
+  const store = createInMemoryStore();
+  const owner = await store.findUserByEmail('adviser@soundthesis.local');
+  assert.ok(owner);
+  const organization = (await store.listMemberships(owner.id))[0];
+  assert.ok(organization);
+  const adviser = await store.upsertUser({ authUserId: 'second-adviser', email: 'second.adviser@example.com', fullName: 'Second Adviser' });
+  await store.addMembership({ user: adviser, organization: { id: organization.organizationId, name: organization.organizationName }, role: 'wealth_practitioner' });
+  const app = await buildApp(store);
+  try {
+    const ownerLogin = await request(app, { method: 'POST', url: '/api/v1/auth/dev-login', payload: { email: owner.email } });
+    const ownerHeaders = { authorization: `Bearer ${ownerLogin.body.token}`, 'x-organization-id': organization.organizationId };
+    const client = await request(app, { method: 'POST', url: '/api/v1/clients', headers: ownerHeaders, payload: { firstName: 'Private', lastName: 'Household' } });
+    assert.equal(client.response.statusCode, 201);
+
+    const adviserLogin = await request(app, { method: 'POST', url: '/api/v1/auth/dev-login', payload: { email: adviser.email } });
+    const adviserHeaders = { authorization: `Bearer ${adviserLogin.body.token}`, 'x-organization-id': organization.organizationId };
+    const list = await request(app, { method: 'GET', url: '/api/v1/clients', headers: adviserHeaders });
+    assert.equal(list.response.statusCode, 200);
+    assert.equal(list.body.data.length, 0);
+    const forbidden = await request(app, { method: 'GET', url: `/api/v1/clients/${client.body.id}`, headers: adviserHeaders });
+    assert.equal(forbidden.response.statusCode, 404);
+  } finally {
+    await app.close();
+  }
+});
+
+test('field encryption uses authenticated AES-256 encryption', () => {
+  const cipher = new FieldCipher('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef');
+  const encrypted = cipher.encryptJson({ pan: 'ABCDE1234F', balance: 1_500_000 });
+  assert.notEqual(encrypted.ciphertext, 'ABCDE1234F');
+  assert.deepEqual(cipher.decryptJson(encrypted), { pan: 'ABCDE1234F', balance: 1_500_000 });
 });

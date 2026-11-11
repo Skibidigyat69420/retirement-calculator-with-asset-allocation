@@ -170,6 +170,27 @@ function requireTeamAccess(reply: FastifyReply, actor: Actor, organizationId: st
   return false;
 }
 
+function hasPracticeWideClientAccess(actor: Actor, organizationId: string) {
+  const role = roleFor(actor, organizationId);
+  return role === 'practice_owner' || role === 'practice_admin';
+}
+
+async function requireClientAccess(store: AppStore, scoped: { actor: Actor; organizationId: string }, reply: FastifyReply, clientId: string) {
+  const client = await store.getClient(scoped.organizationId, clientId);
+  if (!client || (!hasPracticeWideClientAccess(scoped.actor, scoped.organizationId) && !client.assignedPractitioners.some((assignment) => assignment.userId === scoped.actor.user.id))) {
+    error(reply, 404, 'CLIENT_NOT_FOUND', 'Client was not found.');
+    return null;
+  }
+  return client;
+}
+
+async function requirePlanAccess(store: AppStore, scoped: { actor: Actor; organizationId: string }, reply: FastifyReply, planId: string) {
+  const plan = await store.getPlan(scoped.organizationId, planId);
+  if (!plan) { error(reply, 404, 'PLAN_NOT_FOUND', 'Plan was not found.'); return null; }
+  const client = await requireClientAccess(store, scoped, reply, plan.clientId);
+  return client ? plan : null;
+}
+
 export async function buildApp(store: AppStore = createStore()) {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? 'info' } });
   const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map((o) => o.trim()).filter(Boolean);
@@ -244,14 +265,14 @@ export async function buildApp(store: AppStore = createStore()) {
   app.get('/api/v1/clients', async (request, reply) => {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
-    const rows = await store.listClients(scoped.organizationId);
+    const rows = (await store.listClients(scoped.organizationId)).filter((client) => hasPracticeWideClientAccess(scoped.actor, scoped.organizationId) || client.assignedPractitioners.some((assignment) => assignment.userId === scoped.actor.user.id));
     return { data: await Promise.all(rows.map(async (client) => toClientSummary(client, (await store.getProfile(scoped.organizationId, client.id)) ?? emptyProfile()))) };
   });
 
   app.get('/api/v1/client-drafts', async (request, reply) => {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
-    await store.ensureClientDraftSamples(scoped.organizationId);
+    await store.ensureClientDraftSamples(scoped.organizationId, scoped.actor.user.id);
     return { data: await store.listClientDrafts(scoped.organizationId) };
   });
 
@@ -288,8 +309,8 @@ export async function buildApp(store: AppStore = createStore()) {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
     const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
-    const client = await store.getClient(scoped.organizationId, clientId);
-    if (!client) return error(reply, 404, 'CLIENT_NOT_FOUND', 'Client was not found.');
+    const client = await requireClientAccess(store, scoped, reply, clientId);
+    if (!client) return;
     return toClientSummary(client, (await store.getProfile(scoped.organizationId, client.id)) ?? emptyProfile());
   });
 
@@ -297,6 +318,7 @@ export async function buildApp(store: AppStore = createStore()) {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
     const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
+    if (!await requireClientAccess(store, scoped, reply, clientId)) return;
     const body = z.object({ firstName: z.string().trim().optional(), lastName: z.string().trim().optional(), preferredName: z.string().trim().nullable().optional(), email: z.string().email().nullable().optional(), phone: z.string().trim().nullable().optional(), dateOfBirth: z.string().nullable().optional(), maritalStatus: z.string().nullable().optional(), notes: z.string().nullable().optional() }).parse(request.body);
     const client = await store.updateClient(scoped.organizationId, clientId, body);
     if (!client) return error(reply, 404, 'CLIENT_NOT_FOUND', 'Client was not found.');
@@ -307,6 +329,7 @@ export async function buildApp(store: AppStore = createStore()) {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
     const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
+    if (!await requireClientAccess(store, scoped, reply, clientId)) return;
     const profile = await store.getProfile(scoped.organizationId, clientId);
     if (!profile) return error(reply, 404, 'CLIENT_NOT_FOUND', 'Client was not found.');
     return { ...profile, netWorth: sumAmount(profile.assets) - sumAmount(profile.liabilities), totals: { assets: sumAmount(profile.assets), liabilities: sumAmount(profile.liabilities) } };
@@ -318,6 +341,7 @@ export async function buildApp(store: AppStore = createStore()) {
       if (!scoped) return;
       if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
       const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
+      if (!await requireClientAccess(store, scoped, reply, clientId)) return;
       const record = await store.createResource(scoped.organizationId, clientId, resource, request.body as Record<string, unknown>);
       if (!record) return error(reply, 404, 'CLIENT_NOT_FOUND', 'Client was not found.');
       await audit(store, scoped.actor, scoped.organizationId, `financial_resource.${resource}.created`, 'financial_resource', String(record.id), { clientId });
@@ -329,6 +353,7 @@ export async function buildApp(store: AppStore = createStore()) {
       if (!scoped) return;
       if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
       const params = z.object({ clientId: z.string(), id: z.string() }).parse(request.params);
+      if (!await requireClientAccess(store, scoped, reply, params.clientId)) return;
       const record = await store.updateResource(scoped.organizationId, params.clientId, resource, params.id, request.body as Record<string, unknown>);
       if (!record) return error(reply, 404, 'RESOURCE_NOT_FOUND', 'Resource was not found.');
       await audit(store, scoped.actor, scoped.organizationId, `financial_resource.${resource}.updated`, 'financial_resource', params.id, { clientId: params.clientId });
@@ -342,6 +367,7 @@ export async function buildApp(store: AppStore = createStore()) {
       if (!scoped) return;
       if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
       const params = z.object({ clientId: z.string(), id: z.string() }).parse(request.params);
+      if (!await requireClientAccess(store, scoped, reply, params.clientId)) return;
       const record = await store.archiveResource(scoped.organizationId, params.clientId, resource, params.id);
       if (!record) return error(reply, 404, 'RESOURCE_NOT_FOUND', 'Resource was not found.');
       await audit(store, scoped.actor, scoped.organizationId, `financial_resource.${resource}.archived`, 'financial_resource', params.id, { clientId: params.clientId });
@@ -353,6 +379,7 @@ export async function buildApp(store: AppStore = createStore()) {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
     const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
+    if (!await requireClientAccess(store, scoped, reply, clientId)) return;
     const rows = await store.listPlans(scoped.organizationId, clientId);
     return { data: rows.map((plan) => ({ id: plan.id, clientId: plan.clientId, name: plan.name, status: plan.status })) };
   });
@@ -361,7 +388,11 @@ export async function buildApp(store: AppStore = createStore()) {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
     const query = z.object({ clientId: z.string().optional() }).parse(request.query);
-    return { data: await store.listReports(scoped.organizationId, query.clientId) };
+    if (query.clientId && !await requireClientAccess(store, scoped, reply, query.clientId)) return;
+    const reports = await store.listReports(scoped.organizationId, query.clientId);
+    if (hasPracticeWideClientAccess(scoped.actor, scoped.organizationId)) return { data: reports };
+    const visible = await Promise.all(reports.map(async (report) => ({ report, client: await store.getClient(scoped.organizationId, report.clientId) })));
+    return { data: visible.filter(({ client }) => client?.assignedPractitioners.some((assignment) => assignment.userId === scoped.actor.user.id)).map(({ report }) => report) };
   });
 
   app.get('/api/v1/audit-events', async (request, reply) => {
@@ -376,6 +407,7 @@ export async function buildApp(store: AppStore = createStore()) {
     if (!scoped) return;
     if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
     const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
+    if (!await requireClientAccess(store, scoped, reply, clientId)) return;
     const body = z.object({
       kind: z.enum(['plan-report', 'dossier']).default('dossier'),
       name: z.string().trim().min(1).optional(),
@@ -391,6 +423,8 @@ export async function buildApp(store: AppStore = createStore()) {
     if (!scoped) return;
     if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
     const { reportId } = z.object({ reportId: z.string() }).parse(request.params);
+    const existing = (await store.listReports(scoped.organizationId)).find((item) => item.id === reportId);
+    if (!existing || !await requireClientAccess(store, scoped, reply, existing.clientId)) return;
     const body = z.object({ status: z.enum(['draft', 'review', 'approved', 'archived']) }).parse(request.body);
     const report = await store.updateReportStatus(scoped.organizationId, reportId, body.status);
     if (!report) return error(reply, 404, 'REPORT_NOT_FOUND', 'Report was not found.');
@@ -402,6 +436,8 @@ export async function buildApp(store: AppStore = createStore()) {
     if (!scoped) return;
     if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
     const { reportId } = z.object({ reportId: z.string() }).parse(request.params);
+    const existing = (await store.listReports(scoped.organizationId)).find((item) => item.id === reportId);
+    if (!existing || !await requireClientAccess(store, scoped, reply, existing.clientId)) return;
     const report = await store.updateReportStatus(scoped.organizationId, reportId, 'archived');
     if (!report) return error(reply, 404, 'REPORT_NOT_FOUND', 'Report was not found.');
     return report;
@@ -413,6 +449,7 @@ export async function buildApp(store: AppStore = createStore()) {
     const { reportId } = z.object({ reportId: z.string() }).parse(request.params);
     const report = (await store.listReports(scoped.organizationId)).find((item) => item.id === reportId);
     if (!report) return error(reply, 404, 'REPORT_NOT_FOUND', 'Report was not found.');
+    if (!await requireClientAccess(store, scoped, reply, report.clientId)) return;
     return {
       url: `/dossier?reportId=${encodeURIComponent(report.id)}&clientId=${encodeURIComponent(report.clientId)}&autoPrint=true`,
       expiresAt: new Date(Date.now() + 1000 * 60 * 10).toISOString(),
@@ -424,6 +461,7 @@ export async function buildApp(store: AppStore = createStore()) {
     if (!scoped) return;
     if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
     const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
+    if (!await requireClientAccess(store, scoped, reply, clientId)) return;
     const body = z.object({ name: z.string().trim().min(1).default('New Financial Plan') }).parse(request.body ?? {});
     const plan = await store.createPlan(scoped.organizationId, clientId, body.name);
     if (!plan) return error(reply, 404, 'CLIENT_NOT_FOUND', 'Client was not found.');
@@ -435,8 +473,8 @@ export async function buildApp(store: AppStore = createStore()) {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
     const { planId } = z.object({ planId: z.string() }).parse(request.params);
-    const plan = await store.getPlan(scoped.organizationId, planId);
-    if (!plan) return error(reply, 404, 'PLAN_NOT_FOUND', 'Plan was not found.');
+    const plan = await requirePlanAccess(store, scoped, reply, planId);
+    if (!plan) return;
     return planResponse(plan);
   });
 
@@ -444,6 +482,8 @@ export async function buildApp(store: AppStore = createStore()) {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
     const { planId } = z.object({ planId: z.string() }).parse(request.params);
+    if (!await requirePlanAccess(store, scoped, reply, planId)) return;
+    if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
     const body = z.object({ name: z.string().trim().min(1).optional(), status: z.enum(['draft', 'active', 'archived']).optional() }).parse(request.body);
     const plan = await store.updatePlan(scoped.organizationId, planId, body);
     if (!plan) return error(reply, 404, 'PLAN_NOT_FOUND', 'Plan was not found.');
@@ -455,6 +495,7 @@ export async function buildApp(store: AppStore = createStore()) {
     if (!scoped) return;
     if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
     const { planId } = z.object({ planId: z.string() }).parse(request.params);
+    if (!await requirePlanAccess(store, scoped, reply, planId)) return;
     const plan = await store.updatePlan(scoped.organizationId, planId, { status: 'archived' });
     if (!plan) return error(reply, 404, 'PLAN_NOT_FOUND', 'Plan was not found.');
     return planResponse(plan);
@@ -464,6 +505,8 @@ export async function buildApp(store: AppStore = createStore()) {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
     const { planId } = z.object({ planId: z.string() }).parse(request.params);
+    if (!await requirePlanAccess(store, scoped, reply, planId)) return;
+    if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
     const body = z.object({ inputSnapshot: z.record(z.string(), z.unknown()).default({}), assumptionsSnapshot: z.record(z.string(), z.unknown()).default({}) }).parse(request.body ?? {});
     const version = await store.createPlanVersion(scoped.organizationId, planId, body.inputSnapshot, body.assumptionsSnapshot);
     if (!version) return error(reply, 404, 'PLAN_NOT_FOUND', 'Plan was not found.');
@@ -475,8 +518,8 @@ export async function buildApp(store: AppStore = createStore()) {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
     const { planId } = z.object({ planId: z.string() }).parse(request.params);
-    const plan = await store.getPlan(scoped.organizationId, planId);
-    if (!plan) return error(reply, 404, 'PLAN_NOT_FOUND', 'Plan was not found.');
+    const plan = await requirePlanAccess(store, scoped, reply, planId);
+    if (!plan) return;
     const profile = (await store.getProfile(scoped.organizationId, plan.clientId)) ?? emptyProfile();
     const version = plan.versions.find((item) => item.id === plan.currentVersionId) ?? null;
     if (!version) return error(reply, 409, 'PLAN_VERSION_REQUIRED', 'Save a plan version before running a calculation.');
@@ -503,8 +546,8 @@ export async function buildApp(store: AppStore = createStore()) {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
     const { planId } = z.object({ planId: z.string() }).parse(request.params);
-    const plan = await store.getPlan(scoped.organizationId, planId);
-    if (!plan) return error(reply, 404, 'PLAN_NOT_FOUND', 'Plan was not found.');
+    const plan = await requirePlanAccess(store, scoped, reply, planId);
+    if (!plan) return;
     const calculationRun = await store.getLatestCalculationRun(scoped.organizationId, planId);
     if (!calculationRun) return error(reply, 404, 'CALCULATION_NOT_FOUND', 'No calculation has been run for this plan.');
     return calculationRun;
@@ -514,8 +557,8 @@ export async function buildApp(store: AppStore = createStore()) {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
     const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
-    const client = await store.getClient(scoped.organizationId, clientId);
-    if (!client) return error(reply, 404, 'CLIENT_NOT_FOUND', 'Client was not found.');
+    const client = await requireClientAccess(store, scoped, reply, clientId);
+    if (!client) return;
     const profile = (await store.getProfile(scoped.organizationId, clientId)) ?? emptyProfile();
     const plans = await store.listPlans(scoped.organizationId, clientId);
     reply.header('content-type', 'application/json');

@@ -12,7 +12,8 @@
     "start": "node --env-file=.env --import tsx src/server.ts",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test test/**/*.test.ts",
-    "db:migrate": "tsx --env-file=.env scripts/migrate.ts"
+    "db:migrate": "tsx --env-file=.env scripts/migrate.ts",
+    "db:encrypt-existing": "tsx --env-file=.env scripts/encrypt-existing-data.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.0.1",

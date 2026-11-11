@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import postgres, { type Sql } from 'postgres';
+import { createFieldCipher, type FieldCipher } from './fieldEncryption.js';
 import type {
   AuditEvent,
   ClientDraft,
@@ -32,7 +33,7 @@ export interface AppStore {
   addMembership(input: { user: UserRecord; organization: Organization; role: Role }): Promise<Membership>;
   listClients(organizationId: string): Promise<ClientRecord[]>;
   createClient(organizationId: string, actor: UserRecord, input: Partial<ClientRecord> & { firstName: string; lastName: string }): Promise<ClientRecord>;
-  ensureClientDraftSamples(organizationId: string): Promise<void>;
+  ensureClientDraftSamples(organizationId: string, actorUserId?: string): Promise<void>;
   listClientDrafts(organizationId: string): Promise<ClientDraft[]>;
   createClientDraft(organizationId: string, input: { name: string; data: Record<string, unknown>; isSample?: boolean; sampleKey?: string }): Promise<ClientDraft>;
   updateClientDraft(organizationId: string, id: string, patch: { name?: string; data?: Record<string, unknown>; status?: 'active' | 'archived' }): Promise<ClientDraft | null>;
@@ -68,7 +69,11 @@ export function emptyProfile(): Profile {
 export function createStore(): AppStore {
   const databaseUrl = process.env.DATABASE_URL?.trim();
   if (databaseUrl) {
-    return new PostgresStore(postgres(databaseUrl, { max: 10, prepare: false }));
+    const cipher = createFieldCipher();
+    if (process.env.NODE_ENV === 'production' && !cipher) {
+      throw new Error('FIELD_ENCRYPTION_KEY is required when using Postgres in production.');
+    }
+    return new PostgresStore(postgres(databaseUrl, { max: 10, prepare: false, ssl: 'require' }), cipher);
   }
   return createInMemoryStore();
 }
@@ -284,7 +289,7 @@ class MemoryStore implements AppStore {
     return client;
   }
 
-  async ensureClientDraftSamples(organizationId: string) {
+  async ensureClientDraftSamples(organizationId: string, actorUserId?: string) {
     const now = new Date().toISOString();
     for (const sample of defaultClientDrafts()) {
       let draft = this.sampleCatalog.get(sample.sampleKey);
@@ -300,7 +305,7 @@ class MemoryStore implements AppStore {
       const client: ClientRecord & { organizationId: string } = {
         id: randomUUID(), organizationId, householdId: randomUUID(), firstName: 'Sample', lastName: 'Client', preferredName: draft.name,
         email: String(clientProfile.email || '') || null, phone: String(clientProfile.phone || '') || null, dateOfBirth: null,
-        maritalStatus: String(clientProfile.maritalStatus || '') || null, notes: String(clientProfile.notes || '') || null, status: 'active', assignedPractitioners: [],
+        maritalStatus: String(clientProfile.maritalStatus || '') || null, notes: String(clientProfile.notes || '') || null, status: 'active', assignedPractitioners: actorUserId ? [{ userId: actorUserId, fullName: null, assignmentRole: 'lead' }] : [],
       };
       this.clients.set(client.id, client);
       this.profiles.set(client.id, sampleProfile(draft.data));
@@ -482,14 +487,21 @@ class MemoryStore implements AppStore {
 
 class PostgresStore implements AppStore {
   private readonly sql: Sql;
+  private readonly cipher: FieldCipher | null;
 
-  constructor(sql: Sql) {
+  constructor(sql: Sql, cipher: FieldCipher | null) {
     this.sql = sql;
+    this.cipher = cipher;
   }
 
   async close() {
     await this.sql.end();
   }
+
+  private encryptText(value: string | null) { return this.cipher ? this.cipher.encryptString(value) : value; }
+  private decryptText(value: string | null | undefined) { return this.cipher ? this.cipher.decryptString(value) : value ?? null; }
+  private encryptJson(value: Record<string, unknown>) { return this.cipher ? this.cipher.encryptJson(value) : value; }
+  private decryptJson(value: unknown) { return this.cipher ? this.cipher.decryptJson(value) : (value && typeof value === 'object' ? value : {}) as Record<string, unknown>; }
 
   private async withAuthUser<T>(authUserId: string, fn: (query: Sql) => Promise<T>): Promise<T> {
     const result = await this.sql.begin(async (tx) => {
@@ -629,7 +641,7 @@ class PostgresStore implements AppStore {
       const p = clientNameParts(input);
       const rows = await query`
         insert into clients (organization_id, first_name, last_name, preferred_name, email, phone, date_of_birth, marital_status, notes)
-        values (${organizationId}, ${p.firstName}, ${p.lastName}, ${p.preferredName}, ${p.email}, ${p.phone}, ${p.dateOfBirth}, ${p.maritalStatus}, ${p.notes})
+        values (${organizationId}, ${this.encryptText(p.firstName)}, ${this.encryptText(p.lastName)}, ${this.encryptText(p.preferredName)}, ${this.encryptText(p.email)}, ${this.encryptText(p.phone)}, ${this.encryptText(p.dateOfBirth)}, ${this.encryptText(p.maritalStatus)}, ${this.encryptText(p.notes)})
         returning *
       `;
       await query`insert into client_assignments (client_id, user_id, assignment_role) values (${rows[0].id}, ${actor.id}, 'lead') on conflict do nothing`;
@@ -637,7 +649,7 @@ class PostgresStore implements AppStore {
     });
   }
 
-  async ensureClientDraftSamples(organizationId: string) {
+  async ensureClientDraftSamples(organizationId: string, actorUserId?: string) {
     await this.withOrganization(organizationId, async (query) => {
       // Serialise first access for an organisation. The catalog is global, but
       // the linked test client must remain private to this organisation.
@@ -645,26 +657,30 @@ class PostgresStore implements AppStore {
       const samples = await query`select id, name, data from sample_draft_catalog where status = 'active' order by created_at asc`;
       for (const sample of samples) {
         const existing = await query`select client_id from sample_client_workspaces where organization_id = ${organizationId} and sample_draft_id = ${sample.id} limit 1`;
-        if (existing[0]) continue;
+        if (existing[0]) {
+          if (actorUserId) await query`insert into client_assignments (client_id, user_id, assignment_role) values (${existing[0].client_id}, ${actorUserId}, 'sample') on conflict do nothing`;
+          continue;
+        }
 
         const workspace = (sample.data?.workspace && typeof sample.data.workspace === 'object'
           ? sample.data.workspace : comprehensiveSampleWorkspace()) as Record<string, any>;
         const clientProfile = workspace.client as Record<string, unknown>;
         const client = (await query`
           insert into clients (organization_id, first_name, last_name, preferred_name, email, phone, marital_status, notes)
-          values (${organizationId}, 'Sample', 'Client', ${sample.name}, ${String(clientProfile.email || '') || null}, ${String(clientProfile.phone || '') || null}, ${String(clientProfile.maritalStatus || '') || null}, ${String(clientProfile.notes || '') || null})
+          values (${organizationId}, ${this.encryptText('Sample')}, ${this.encryptText('Client')}, ${this.encryptText(sample.name)}, ${this.encryptText(String(clientProfile.email || '') || null)}, ${this.encryptText(String(clientProfile.phone || '') || null)}, ${this.encryptText(String(clientProfile.maritalStatus || '') || null)}, ${this.encryptText(String(clientProfile.notes || '') || null)})
           returning id
         `)[0];
         await query`insert into sample_client_workspaces (organization_id, sample_draft_id, client_id) values (${organizationId}, ${sample.id}, ${client.id})`;
+        if (actorUserId) await query`insert into client_assignments (client_id, user_id, assignment_role) values (${client.id}, ${actorUserId}, 'sample') on conflict do nothing`;
 
         const profile = sampleProfile(sample.data ?? {});
         for (const [resourceType, records] of Object.entries(profile)) {
           for (const record of records) {
-            await query`insert into financial_resources (organization_id, client_id, resource_type, data) values (${organizationId}, ${client.id}, ${resourceType}, ${query.json(record as any)})`;
+            await query`insert into financial_resources (organization_id, client_id, resource_type, data) values (${organizationId}, ${client.id}, ${resourceType}, ${query.json(this.encryptJson(record) as any)})`;
           }
         }
         const plan = (await query`insert into plans (organization_id, client_id, name) values (${organizationId}, ${client.id}, 'Comprehensive Sample Master Plan') returning id`)[0];
-        const version = (await query`insert into plan_versions (plan_id, version_number, input_snapshot, assumptions_snapshot) values (${plan.id}, 1, ${query.json({ ...workspace, inputs: workspace, riskAnswers: { time: 8, capacity: 8, attitude: 7, experience: 7, liquidity: 7, goals: 8 } })}, '{}'::jsonb) returning id`)[0];
+        const version = (await query`insert into plan_versions (plan_id, version_number, input_snapshot, assumptions_snapshot) values (${plan.id}, 1, ${query.json(this.encryptJson({ ...workspace, inputs: workspace, riskAnswers: { time: 8, capacity: 8, attitude: 7, experience: 7, liquidity: 7, goals: 8 } }) as any)}, ${query.json(this.encryptJson({}) as any)}) returning id`)[0];
         await query`update plans set current_version_id = ${version.id}, status = 'active', updated_at = now() where id = ${plan.id}`;
       }
     });
@@ -711,9 +727,9 @@ class PostgresStore implements AppStore {
       const next = { ...current, ...patch };
       const updatedRows = await query`
         update clients
-        set first_name = ${next.firstName}, last_name = ${next.lastName}, preferred_name = ${next.preferredName},
-            email = ${next.email}, phone = ${next.phone}, date_of_birth = ${next.dateOfBirth},
-            marital_status = ${next.maritalStatus}, notes = ${next.notes}, updated_at = now()
+        set first_name = ${this.encryptText(next.firstName)}, last_name = ${this.encryptText(next.lastName)}, preferred_name = ${this.encryptText(next.preferredName)},
+            email = ${this.encryptText(next.email)}, phone = ${this.encryptText(next.phone)}, date_of_birth = ${this.encryptText(next.dateOfBirth)},
+            marital_status = ${this.encryptText(next.maritalStatus)}, notes = ${this.encryptText(next.notes)}, updated_at = now()
         where organization_id = ${organizationId} and id = ${clientId}
         returning *
       `;
@@ -729,7 +745,7 @@ class PostgresStore implements AppStore {
       const profile = emptyProfile();
       for (const row of rows) {
         const resource = row.resource_type as ResourceType;
-        profile[resource].push({ id: row.id, status: row.status, ...row.data });
+        profile[resource].push({ id: row.id, status: row.status, ...this.decryptJson(row.data) });
       }
       return profile;
     });
@@ -741,22 +757,24 @@ class PostgresStore implements AppStore {
       if (!clientRows[0]) return null;
       const rows = await query`
         insert into financial_resources (organization_id, client_id, resource_type, data)
-        values (${organizationId}, ${clientId}, ${resource}, ${query.json(data as any)})
+        values (${organizationId}, ${clientId}, ${resource}, ${query.json(this.encryptJson(data) as any)})
         returning id, data, status
       `;
-      return { id: rows[0].id, status: rows[0].status, ...rows[0].data };
+      return { id: rows[0].id, status: rows[0].status, ...this.decryptJson(rows[0].data) };
     });
   }
 
   async updateResource(organizationId: string, clientId: string, resource: ResourceType, id: string, data: Record<string, unknown>) {
     return this.withOrganization(organizationId, async (query) => {
+      const existing = await query`select data from financial_resources where organization_id = ${organizationId} and client_id = ${clientId} and resource_type = ${resource} and id = ${id} limit 1`;
+      if (!existing[0]) return null;
+      const next = { ...this.decryptJson(existing[0].data), ...data };
       const rows = await query`
-        update financial_resources
-        set data = data || ${query.json(data as any)}::jsonb, updated_at = now()
+        update financial_resources set data = ${query.json(this.encryptJson(next) as any)}, updated_at = now()
         where organization_id = ${organizationId} and client_id = ${clientId} and resource_type = ${resource} and id = ${id}
         returning id, data, status
       `;
-      return rows[0] ? { id: rows[0].id, status: rows[0].status, ...rows[0].data } : null;
+      return rows[0] ? { id: rows[0].id, status: rows[0].status, ...this.decryptJson(rows[0].data) } : null;
     });
   }
 
@@ -767,7 +785,7 @@ class PostgresStore implements AppStore {
         where organization_id = ${organizationId} and client_id = ${clientId} and resource_type = ${resource} and id = ${id}
         returning id, data, status
       `;
-      return rows[0] ? { id: rows[0].id, status: rows[0].status, ...rows[0].data } : null;
+      return rows[0] ? { id: rows[0].id, status: rows[0].status, ...this.decryptJson(rows[0].data) } : null;
     });
   }
 
@@ -815,11 +833,11 @@ class PostgresStore implements AppStore {
       const plan = await this.mapPlan(planRows[0], query);
       const rows = await query`
         insert into plan_versions (plan_id, version_number, input_snapshot, assumptions_snapshot)
-        values (${planId}, ${plan.versions.length + 1}, ${query.json(inputSnapshot as any)}, ${query.json(assumptionsSnapshot as any)})
+        values (${planId}, ${plan.versions.length + 1}, ${query.json(this.encryptJson(inputSnapshot) as any)}, ${query.json(this.encryptJson(assumptionsSnapshot) as any)})
         returning id, version_number, input_snapshot, assumptions_snapshot
       `;
       await query`update plans set current_version_id = ${rows[0].id}, updated_at = now() where id = ${planId}`;
-      return mapPlanVersion(rows[0]);
+      return this.mapPlanVersion(rows[0]);
     });
   }
 
@@ -835,10 +853,10 @@ class PostgresStore implements AppStore {
       if (!versionRows[0]) return null;
       const rows = await query`
         insert into calculation_runs (organization_id, plan_id, plan_version_id, engine_version, seed, result)
-        values (${input.organizationId}, ${input.planId}, ${input.planVersionId}, ${input.engineVersion}, ${input.seed}, ${query.json(input.result as any)})
+        values (${input.organizationId}, ${input.planId}, ${input.planVersionId}, ${input.engineVersion}, ${input.seed}, ${query.json(this.encryptJson(input.result) as any)})
         returning *
       `;
-      return mapCalculationRun(rows[0]);
+      return this.mapCalculationRun(rows[0]);
     });
   }
 
@@ -850,7 +868,7 @@ class PostgresStore implements AppStore {
         order by created_at desc
         limit 1
       `;
-      return mapCalculationRun(rows[0]);
+      return this.mapCalculationRun(rows[0]);
     });
   }
 
@@ -928,7 +946,12 @@ class PostgresStore implements AppStore {
             where r.organization_id = ${organizationId}
             order by r.created_at desc
           `;
-      return rows.map(mapReport);
+      return rows.map((row) => mapReport({
+        ...row,
+        first_name: this.decryptText(row.first_name),
+        last_name: this.decryptText(row.last_name),
+        preferred_name: this.decryptText(row.preferred_name),
+      }));
     });
   }
 
@@ -966,7 +989,7 @@ class PostgresStore implements AppStore {
       `;
       if (!rows[0]) return null;
       const clientRows = await query`select first_name, last_name, preferred_name from clients where id = ${rows[0].client_id}`;
-      return mapReport({ ...rows[0], ...clientRows[0] });
+      return mapReport({ ...rows[0], first_name: this.decryptText(clientRows[0]?.first_name), last_name: this.decryptText(clientRows[0]?.last_name), preferred_name: this.decryptText(clientRows[0]?.preferred_name) });
     });
   }
   private async mapClient(row: any, query: Sql = this.sql): Promise<ClientRecord> {
@@ -979,14 +1002,14 @@ class PostgresStore implements AppStore {
     return {
       id: row.id,
       householdId: row.household_id,
-      firstName: row.first_name,
-      lastName: row.last_name,
-      preferredName: row.preferred_name,
-      email: row.email,
-      phone: row.phone,
-      dateOfBirth: row.date_of_birth,
-      maritalStatus: row.marital_status,
-      notes: row.notes,
+      firstName: this.decryptText(row.first_name) ?? '',
+      lastName: this.decryptText(row.last_name) ?? '',
+      preferredName: this.decryptText(row.preferred_name),
+      email: this.decryptText(row.email),
+      phone: this.decryptText(row.phone),
+      dateOfBirth: this.decryptText(row.date_of_birth),
+      maritalStatus: this.decryptText(row.marital_status),
+      notes: this.decryptText(row.notes),
       status: row.status,
       assignedPractitioners: assignments.map((assignment) => ({
         userId: assignment.user_id,
@@ -1009,8 +1032,16 @@ class PostgresStore implements AppStore {
       name: row.name,
       status: row.status,
       currentVersionId: row.current_version_id,
-      versions: versions.map(mapPlanVersion),
+      versions: versions.map((version) => this.mapPlanVersion(version)),
     };
+  }
+
+  private mapPlanVersion(row: any): PlanVersion {
+    return { id: row.id, versionNumber: row.version_number, inputSnapshot: this.decryptJson(row.input_snapshot), assumptionsSnapshot: this.decryptJson(row.assumptions_snapshot) };
+  }
+
+  private mapCalculationRun(row: any): CalculationRun | null {
+    return row ? { id: row.id, planId: row.plan_id, planVersionId: row.plan_version_id, engineVersion: row.engine_version, seed: row.seed, result: this.decryptJson(row.result), createdAt: new Date(row.created_at).toISOString() } : null;
   }
 }
 
@@ -1025,15 +1056,6 @@ function mapClientDraft(row: any): ClientDraft | null {
 
 function mapMembership(row: any): Membership {
   return { organizationId: row.organization_id, organizationName: row.organization_name, role: row.role };
-}
-
-function mapPlanVersion(row: any): PlanVersion {
-  return {
-    id: row.id,
-    versionNumber: row.version_number,
-    inputSnapshot: row.input_snapshot ?? {},
-    assumptionsSnapshot: row.assumptions_snapshot ?? {},
-  };
 }
 
 function mapInvitation(row: any): Invitation | null {
@@ -1064,19 +1086,6 @@ function mapReport(row: any): ReportRecord {
   };
 }
 
-function mapCalculationRun(row: any): CalculationRun | null {
-  return row
-    ? {
-        id: row.id,
-        planId: row.plan_id,
-        planVersionId: row.plan_version_id,
-        engineVersion: row.engine_version,
-        seed: row.seed,
-        result: row.result ?? {},
-        createdAt: new Date(row.created_at).toISOString(),
-      }
-    : null;
-}
 
 function mapAuditEvent(row: any): AuditEvent | null {
   return row
