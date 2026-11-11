@@ -1,17 +1,48 @@
-import { useMemo } from 'react';
-import { Repeat, Download, ArrowLeftRight, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
-import { Input } from '../ui/Input';
+import { useMemo, useEffect } from 'react';
+import { Repeat, Download, ArrowLeftRight, CheckCircle2, AlertTriangle, ShieldCheck, Plus, Trash2 } from 'lucide-react';
 import { NumberInput } from '../ui/NumberInput';
-import { Select } from '../ui/Select';
 import { Slider } from '../ui/Slider';
 import { Field, FieldGrid } from '../ui/Field';
 import { FormSection } from '../ui/FormSection';
-import { Repeater } from '../ui/Repeater';
-import { formatCurrency } from '../../lib/formatters';
+import { formatReportingCurrency } from '../../lib/formatters';
 import { calculateRetirementCorpus, calculateSustainableSWP } from '../../lib/calculators';
 import { cn } from '../../lib/utils';
 import type { IncomeSource, MasterPlanInputs } from '../../types';
 import { useCalculator } from '../../context/CalculatorContext';
+
+const advanceCell = (
+  event: React.KeyboardEvent<HTMLTableSectionElement | HTMLDivElement>,
+  onAddRow?: () => void,
+) => {
+  if (event.key !== 'Enter' || event.defaultPrevented) return;
+  const target = event.target as HTMLElement | null;
+  if (!target || !target.matches('input, select, textarea, button')) return;
+
+  const container = event.currentTarget;
+  const cells = Array.from(
+    container.querySelectorAll<HTMLElement>(
+      'input:not([disabled]):not([type="checkbox"]), select:not([disabled]), input[type="checkbox"]:not([disabled])',
+    ),
+  );
+  const currentIndex = cells.indexOf(target);
+  if (currentIndex === -1) return;
+
+  event.preventDefault();
+  if (event.shiftKey) {
+    const previous = cells[currentIndex - 1];
+    previous?.focus();
+    if (previous instanceof HTMLInputElement && previous.type !== 'checkbox') previous.select?.();
+    return;
+  }
+
+  const next = cells[currentIndex + 1];
+  if (next) {
+    next.focus();
+    if (next instanceof HTMLInputElement && next.type !== 'checkbox') next.select?.();
+  } else if (onAddRow) {
+    onAddRow();
+  }
+};
 
 interface CashflowsStepProps {
   inputs: MasterPlanInputs;
@@ -31,9 +62,29 @@ export const CashflowsStep = ({
   updateSWP,
 }: CashflowsStepProps) => {
   const { assumptions, wealthResult } = useCalculator();
-  const currencyOptions = Object.keys(assumptions.fx);
+  const currencyOptions = Object.keys(assumptions.fx).sort((a, b) => (a === 'INR' ? -1 : b === 'INR' ? 1 : a.localeCompare(b)));
   const toInr = (amount: number, currency: string) =>
-    amount * (assumptions.fx[currency || 'INR']?.spotRate ?? 0);
+    amount * (assumptions.fx[currency || 'INR']?.spotRate ?? (currency === 'INR' ? 1 : 0));
+  const sipInr = toInr(inputs.sip.amount, inputs.sip.currency || 'INR');
+  const stpLumpsumInr = toInr(inputs.stp.lumpsum, inputs.stp.currency || 'INR');
+  const stpTransferInr = toInr(inputs.stp.monthlyTransfer, inputs.stp.currency || 'INR');
+  const swpNeedInr = toInr(inputs.swp.monthlyNeedToday, inputs.swp.currency || 'INR');
+  const directAnnualIncomeInr = toInr(inputs.annualIncome, inputs.annualIncomeCurrency || 'INR');
+  const directLivingSpendInr = toInr(inputs.monthlyLivingExpenses, inputs.monthlyLivingExpensesCurrency || 'INR');
+  const monthlyEmiInr = (inputs.liabilities || [])
+    .filter((liability) => liability.includeInExpenses)
+    .reduce((sum, liability) => {
+      const principal = Math.max(0, Number(liability.principal) || 0);
+      const rate = Math.max(0, Number(liability.rate) || 0) / 1200;
+      const months = Math.max(1, (Number(liability.tenureYears) || 1) * 12);
+      const nativeEmi = Number(liability.monthlyPayment) > 0
+        ? Number(liability.monthlyPayment)
+        : rate === 0 ? principal / months : principal * rate * Math.pow(1 + rate, months) / (Math.pow(1 + rate, months) - 1);
+      return sum + toInr(nativeEmi, liability.currency || 'INR');
+    }, 0);
+  const monthlyHouseholdSpendInr = directLivingSpendInr + monthlyEmiInr;
+  const formatOutput = (amountInInr: number) =>
+    formatReportingCurrency(amountInInr, inputs.reportingCurrency, assumptions.fx);
 
   const incomeSources = inputs.client.incomeSources || [];
   const annualIncomeFromSources = (sources: IncomeSource[]) => sources.reduce((total, source) => {
@@ -41,15 +92,41 @@ export const CashflowsStep = ({
     const baseAmount = source.amount * spotRate;
     return total + Math.max(0, baseAmount) * (source.frequency === 'monthly' ? 12 : 1);
   }, 0);
-  const annualIncome = incomeSources.length > 0 ? annualIncomeFromSources(incomeSources) : inputs.annualIncome;
+  const annualIncome = incomeSources.length > 0 ? annualIncomeFromSources(incomeSources) : directAnnualIncomeInr;
   const monthlyIncome = Math.round(annualIncome / 12);
-  const monthlySavingsSurplus = monthlyIncome - inputs.monthlyExpenditure;
+  const monthlySavingsSurplus = monthlyIncome - monthlyHouseholdSpendInr;
   const savingsRate = monthlyIncome > 0 ? (monthlySavingsSurplus / monthlyIncome) * 100 : 0;
 
   const replaceIncomeSources = (sources: IncomeSource[]) => {
     updateClient({ incomeSources: sources });
     updateInputs({ annualIncome: annualIncomeFromSources(sources) });
   };
+
+  const handleQuickAddIncome = () => {
+    replaceIncomeSources([
+      ...incomeSources,
+      {
+        id: `income-${Date.now()}`,
+        name: '',
+        amount: 0,
+        amountInBaseCurrency: 0,
+        currency: inputs.reportingCurrency || 'INR',
+        frequency: 'monthly',
+        notes: '',
+      },
+    ]);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && (e.key === 'i' || e.key === 'I')) {
+        e.preventDefault();
+        handleQuickAddIncome();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [incomeSources, inputs.reportingCurrency]);
 
   const updateIncomeSource = (id: string, patch: Partial<IncomeSource>) => {
     const sources = incomeSources.map((source) => {
@@ -67,8 +144,8 @@ export const CashflowsStep = ({
   const distributionYears = Math.max(0, swpEndAge - swpStartAge);
 
   const monthlyNeedAtRetirement = useMemo(
-    () => (inputs.swp.monthlyNeedToday || 0) * Math.pow(1 + inputs.inflation / 100, yearsToRetirement),
-    [inputs.swp.monthlyNeedToday, inputs.inflation, yearsToRetirement],
+    () => swpNeedInr * Math.pow(1 + inputs.inflation / 100, yearsToRetirement),
+    [swpNeedInr, inputs.inflation, yearsToRetirement],
   );
 
   const grossAnnualAtRetirement = useMemo(() => {
@@ -84,12 +161,12 @@ export const CashflowsStep = ({
   }, [wealthResult.snapshots, inputs.retirementAge]);
 
   const requiredCorpus = useMemo(() => {
-    if (!inputs.swp.monthlyNeedToday || distributionYears <= 0) return 0;
+    if (!swpNeedInr || distributionYears <= 0) return 0;
     return calculateRetirementCorpus(
       inputs.currentAge,
       swpStartAge,
       swpEndAge,
-      inputs.swp.monthlyNeedToday,
+      swpNeedInr,
       inputs.inflation,
       inputs.swp.postRetirementReturn,
     ).requiredCorpus;
@@ -97,7 +174,7 @@ export const CashflowsStep = ({
     inputs.currentAge,
     swpStartAge,
     swpEndAge,
-    inputs.swp.monthlyNeedToday,
+    swpNeedInr,
     inputs.inflation,
     inputs.swp.postRetirementReturn,
     distributionYears,
@@ -141,10 +218,10 @@ export const CashflowsStep = ({
       <FormSection
         index="01"
         title="Income & expenditure"
-        description="Baseline household burn against earned income."
+        description="Baseline household burn against earned income. Fill in directly like a spreadsheet."
         meta={
           monthlyIncome > 0
-            ? `${formatCurrency(monthlyIncome)}/mo · savings rate ${savingsRate.toFixed(1)}%`
+            ? `${formatOutput(monthlyIncome)}/mo · savings rate ${savingsRate.toFixed(1)}%`
             : undefined
         }
       >
@@ -164,7 +241,10 @@ export const CashflowsStep = ({
               label="Annual gross income"
               value={inputs.annualIncome}
               onChange={(val) => updateInputs({ annualIncome: val })}
-              helper={`Approx ${formatCurrency(monthlyIncome)} per month`}
+              currency={inputs.annualIncomeCurrency || 'INR'}
+              currencyOptions={currencyOptions}
+              onCurrencyChange={(currency) => updateInputs({ annualIncomeCurrency: currency })}
+              helper={`Plan value: ${formatOutput(directAnnualIncomeInr)}/yr`}
             />
             <NumberInput
               kind="currency"
@@ -172,37 +252,168 @@ export const CashflowsStep = ({
               label="Monthly living spend"
               value={inputs.monthlyLivingExpenses}
               onChange={(val) => updateInputs({ monthlyLivingExpenses: val })}
-              helper={`Linked total with EMIs: ${formatCurrency(inputs.monthlyExpenditure)}/mo`}
+              currency={inputs.monthlyLivingExpensesCurrency || 'INR'}
+              currencyOptions={currencyOptions}
+              onCurrencyChange={(currency) => updateInputs({ monthlyLivingExpensesCurrency: currency })}
+              helper={`Plan value: ${formatOutput(directLivingSpendInr)}/mo; total with EMIs ${formatOutput(monthlyHouseholdSpendInr)}/mo`}
             />
           </FieldGrid>
         </Field>
 
         <div className="mt-6">
-          <Repeater<IncomeSource>
-            items={incomeSources}
-            getKey={(source) => source.id}
-            emptyLabel="No income sources added here — manage the breakdown in Client profile, or add an inflow directly."
-            addLabel="Add income"
-            onAdd={() => replaceIncomeSources([...incomeSources, { id: `income-${Date.now()}`, name: '', amount: 0, amountInBaseCurrency: 0, currency: 'INR', frequency: 'monthly', notes: '' }])}
-            onRemove={(source) => replaceIncomeSources(incomeSources.filter((item) => item.id !== source.id))}
-            renderSummary={(source) => (
-              <span className="flex items-baseline gap-3 min-w-0 text-sm">
-                <span className="truncate font-medium text-ink">{source.name || 'Unnamed source'}</span>
-                <span className="truncate text-xs text-muted">{source.frequency}</span>
-                <span className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted">
-                  {formatCurrency(toInr(source.amount, source.currency))}
-                </span>
-              </span>
-            )}
-            renderEditor={(source) => (
-              <FieldGrid cols={{ md: 3 }}>
-                <Input layout="inline" label="Source" value={source.name} onChange={(event) => updateIncomeSource(source.id, { name: event.target.value })} placeholder="Salary, rental…" />
-                <NumberInput kind="currency" layout="inline" label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} currency={source.currency} currencyOptions={currencyOptions} onCurrencyChange={(value) => updateIncomeSource(source.id, { currency: value })} />
-                <NumberInput kind="currency" layout="inline" label="INR equivalent" value={toInr(source.amount, source.currency)} onChange={() => {}} disabled helper="Live reference rate · all plan outputs use INR" />
-                <Select layout="inline" label="Frequency" value={source.frequency} onChange={(value) => updateIncomeSource(source.id, { frequency: value as IncomeSource['frequency'] })} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'annual', label: 'Annual' }]} />
-              </FieldGrid>
-            )}
-          />
+          <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+            <span className="text-xs font-medium text-ink">Inflow Breakdown</span>
+            <button
+              type="button"
+              onClick={handleQuickAddIncome}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-accent text-on-inkfill hover:bg-accent-strong transition-colors cursor-pointer"
+            >
+              <Plus size={14} aria-hidden="true" />
+              <span>Add income</span>
+              <kbd className="ml-1 text-[10px] font-mono opacity-80">Alt+I</kbd>
+            </button>
+          </div>
+
+          <div className="spreadsheet-wrap" tabIndex={0} role="region" aria-label="Income sources spreadsheet table">
+            <table className="spreadsheet-table">
+              <thead>
+                <tr>
+                  <th className="spreadsheet-th w-10 text-center">#</th>
+                  <th className="spreadsheet-th min-w-[200px]">Source Name</th>
+                  <th className="spreadsheet-th w-24">Currency</th>
+                  <th className="spreadsheet-th min-w-[130px] text-right">Amount</th>
+                  <th className="spreadsheet-th w-32">Frequency</th>
+                  <th className="spreadsheet-th min-w-[130px] text-right">Plan Eq. (Annual)</th>
+                  <th className="spreadsheet-th min-w-[160px]">Notes</th>
+                  <th className="spreadsheet-th w-12 text-center" aria-label="Actions"></th>
+                </tr>
+              </thead>
+              <tbody onKeyDown={(e) => advanceCell(e, handleQuickAddIncome)}>
+                {incomeSources.map((source, index) => {
+                  const spotRate = assumptions?.fx?.[source.currency || 'INR']?.spotRate || 1.0;
+                  const inrAmount = (Number(source.amount) || 0) * spotRate;
+                  const inrAnnual = inrAmount * (source.frequency === 'monthly' ? 12 : 1);
+
+                  return (
+                    <tr key={source.id} className="spreadsheet-tr">
+                      <td className="spreadsheet-td text-center font-mono text-xs text-muted">
+                        {index + 1}
+                      </td>
+                      <td className="spreadsheet-td">
+                        <input
+                          type="text"
+                          className="spreadsheet-control font-medium"
+                          value={source.name}
+                          onChange={(e) => updateIncomeSource(source.id, { name: e.target.value })}
+                          placeholder="e.g. Salary, Consulting, Rental"
+                          aria-label={`Income source ${index + 1} name`}
+                        />
+                      </td>
+                      <td className="spreadsheet-td">
+                        <select
+                          className="spreadsheet-control font-mono font-semibold text-xs"
+                          value={source.currency || 'INR'}
+                          onChange={(e) => updateIncomeSource(source.id, { currency: e.target.value })}
+                          aria-label={`Income source ${index + 1} currency`}
+                        >
+                          {currencyOptions.map((curr) => (
+                            <option key={curr} value={curr} className="bg-raised text-ink">
+                              {curr}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="spreadsheet-td text-right">
+                        <input
+                          type="number"
+                          min={0}
+                          step={5000}
+                          className="spreadsheet-control text-right font-mono tabular-nums"
+                          value={source.amount === 0 ? '' : source.amount}
+                          onChange={(e) =>
+                            updateIncomeSource(source.id, {
+                              amount: Math.max(0, Number(e.target.value) || 0),
+                            })
+                          }
+                          placeholder="0"
+                          aria-label={`Income source ${index + 1} amount`}
+                        />
+                      </td>
+                      <td className="spreadsheet-td">
+                        <select
+                          className="spreadsheet-control text-xs"
+                          value={source.frequency}
+                          onChange={(e) =>
+                            updateIncomeSource(source.id, {
+                              frequency: e.target.value as IncomeSource['frequency'],
+                            })
+                          }
+                          aria-label={`Income source ${index + 1} frequency`}
+                        >
+                          <option value="monthly" className="bg-raised text-ink">Monthly</option>
+                          <option value="annual" className="bg-raised text-ink">Annual</option>
+                        </select>
+                      </td>
+                      <td className="spreadsheet-td text-right">
+                        <span className="spreadsheet-pill font-mono tabular-nums">
+                          {formatOutput(inrAnnual)}/yr
+                        </span>
+                      </td>
+                      <td className="spreadsheet-td">
+                        <input
+                          type="text"
+                          className="spreadsheet-control text-xs"
+                          value={source.notes || ''}
+                          onChange={(e) => updateIncomeSource(source.id, { notes: e.target.value })}
+                          placeholder="Optional details"
+                          aria-label={`Income source ${index + 1} notes`}
+                        />
+                      </td>
+                      <td className="spreadsheet-td text-center">
+                        <button
+                          type="button"
+                          onClick={() => replaceIncomeSources(incomeSources.filter((item) => item.id !== source.id))}
+                          className="spreadsheet-delete-btn"
+                          title="Remove income source"
+                          aria-label={`Remove income source ${source.name || index + 1}`}
+                        >
+                          <Trash2 size={13} aria-hidden="true" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {incomeSources.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-xs text-muted">
+                      No income breakdown added yet.{' '}
+                      <button
+                        type="button"
+                        onClick={handleQuickAddIncome}
+                        className="text-accent underline font-medium cursor-pointer"
+                      >
+                        Add an income source
+                      </button>{' '}
+                      or press{' '}
+                      <kbd className="px-1.5 py-0.5 rounded bg-sunken border border-border text-[10px] font-mono">
+                        Alt+I
+                      </kbd>
+                      .
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <p className="identity-sheet-shortcuts mt-3">
+            <span>Fast entry</span>
+            <span>
+              <kbd>Enter</kbd> next cell <i>·</i> <kbd>Shift</kbd> + <kbd>Enter</kbd> previous <i>·</i>{' '}
+              <kbd>Enter</kbd> on last cell auto-adds row <i>·</i> <kbd>Alt</kbd> + <kbd>I</kbd> add income <i>·</i>{' '}
+              <kbd>Tab</kbd> navigate <i>·</i> <kbd>Ctrl/⌘</kbd> + <kbd>S</kbd> save
+            </span>
+          </p>
         </div>
       </FormSection>
 
@@ -210,8 +421,8 @@ export const CashflowsStep = ({
         index="02"
         title="Systematic investment"
         description={
-          inputs.sip.amount > 0
-            ? `${formatCurrency(inputs.sip.amount)}/mo accumulating during the career phase.`
+          sipInr > 0
+            ? `${formatOutput(sipInr)}/mo accumulating during the career phase.`
             : 'Monthly accumulation during the career phase.'
         }
         className="mt-8"
@@ -227,6 +438,10 @@ export const CashflowsStep = ({
             label="Monthly SIP amount"
             value={inputs.sip.amount}
             onChange={(val) => updateSIP({ amount: val })}
+            currency={inputs.sip.currency || 'INR'}
+            currencyOptions={currencyOptions}
+            onCurrencyChange={(currency) => updateSIP({ currency })}
+            helper={`Plan value: ${formatOutput(sipInr)}/mo`}
           />
           <NumberInput
             layout="inline"
@@ -271,7 +486,7 @@ export const CashflowsStep = ({
         index="02b"
         title="Systematic Transfer Plan (STP)"
         description="Gradually deploy idle liquid lumpsums into long-term equity/debt."
-        meta={inputs.stp?.active ? `Active · ${formatCurrency(inputs.stp.monthlyTransfer)}/mo` : 'Inactive'}
+        meta={inputs.stp?.active ? `Active · ${formatOutput(stpTransferInr)}/mo` : 'Inactive'}
         className="mt-8"
       >
         <div className="flex items-center justify-between gap-4 mb-4">
@@ -301,7 +516,8 @@ export const CashflowsStep = ({
               label="Source liquid capital"
               value={inputs.stp.lumpsum}
               onChange={(val) => updateSTP?.({ lumpsum: val })}
-              helper="Total capital to gradually deploy"
+              currency={inputs.stp.currency || 'INR'} currencyOptions={currencyOptions} onCurrencyChange={(currency) => updateSTP?.({ currency })}
+              helper={`Plan value: ${formatOutput(stpLumpsumInr)}`}
             />
             <NumberInput
               kind="currency"
@@ -309,7 +525,8 @@ export const CashflowsStep = ({
               label="Monthly transfer"
               value={inputs.stp.monthlyTransfer}
               onChange={(val) => updateSTP?.({ monthlyTransfer: val })}
-              helper="Transfer amount per month"
+              currency={inputs.stp.currency || 'INR'} currencyOptions={currencyOptions} onCurrencyChange={(currency) => updateSTP?.({ currency })}
+              helper={`Plan value: ${formatOutput(stpTransferInr)}/mo`}
             />
             <NumberInput
               layout="inline"
@@ -334,38 +551,38 @@ export const CashflowsStep = ({
         className="mt-8"
       >
         {/* Living expense benchmark actions */}
-        {inputs.monthlyExpenditure > 0 && (
+        {monthlyHouseholdSpendInr > 0 && (
           <div className="mb-4 p-3 rounded-lg bg-surface border border-border flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <Download size={15} strokeWidth={1.8} className="text-accent shrink-0" aria-hidden="true" />
               <span className="text-xs text-ink font-medium">
-                Benchmark retirement SWP from current household expenses ({formatCurrency(inputs.monthlyExpenditure)}/mo):
+                Benchmark retirement SWP from current household expenses ({formatOutput(monthlyHouseholdSpendInr)}/mo):
               </span>
             </div>
             <div className="flex items-center gap-1.5 flex-wrap">
               <button
                 type="button"
-                onClick={() => updateSWP({ monthlyNeedToday: inputs.monthlyExpenditure })}
+                onClick={() => updateSWP({ monthlyNeedToday: monthlyHouseholdSpendInr, currency: 'INR' })}
                 className="px-2.5 py-1 text-xs rounded-md bg-sunken hover:bg-border text-ink font-medium transition-colors"
                 title="100% replacement ratio"
               >
-                100% ({formatCurrency(inputs.monthlyExpenditure)})
+                100% ({formatOutput(monthlyHouseholdSpendInr)})
               </button>
               <button
                 type="button"
-                onClick={() => updateSWP({ monthlyNeedToday: Math.round(inputs.monthlyExpenditure * 0.8) })}
+                onClick={() => updateSWP({ monthlyNeedToday: Math.round(monthlyHouseholdSpendInr * 0.8), currency: 'INR' })}
                 className="px-2.5 py-1 text-xs rounded-md bg-sunken hover:bg-border text-ink font-medium transition-colors"
                 title="80% replacement ratio (standard post-mortgage/work expense drop)"
               >
-                80% ({formatCurrency(Math.round(inputs.monthlyExpenditure * 0.8))})
+                80% ({formatOutput(Math.round(monthlyHouseholdSpendInr * 0.8))})
               </button>
               <button
                 type="button"
-                onClick={() => updateSWP({ monthlyNeedToday: Math.round(inputs.monthlyExpenditure * 0.7) })}
+                onClick={() => updateSWP({ monthlyNeedToday: Math.round(monthlyHouseholdSpendInr * 0.7), currency: 'INR' })}
                 className="px-2.5 py-1 text-xs rounded-md bg-sunken hover:bg-border text-ink font-medium transition-colors"
                 title="70% replacement ratio (frugal lifestyle)"
               >
-                70% ({formatCurrency(Math.round(inputs.monthlyExpenditure * 0.7))})
+                70% ({formatOutput(Math.round(monthlyHouseholdSpendInr * 0.7))})
               </button>
             </div>
           </div>
@@ -378,7 +595,8 @@ export const CashflowsStep = ({
             label="Monthly need (today's terms)"
             value={inputs.swp.monthlyNeedToday}
             onChange={(val) => updateSWP({ monthlyNeedToday: val })}
-            helper="Baseline target retirement drawdown"
+            currency={inputs.swp.currency || 'INR'} currencyOptions={currencyOptions} onCurrencyChange={(currency) => updateSWP({ currency })}
+            helper={`Plan value: ${formatOutput(swpNeedInr)}/mo`}
           />
           <NumberInput
             layout="inline"
@@ -458,7 +676,7 @@ export const CashflowsStep = ({
                   ) : (
                     <>
                       <AlertTriangle size={13} />
-                      Shortfall of {formatCurrency(Math.abs(corpusGap))}
+                      Shortfall of {formatOutput(Math.abs(corpusGap))}
                     </>
                   )}
                 </span>
@@ -469,7 +687,7 @@ export const CashflowsStep = ({
               <div className="p-2.5 rounded-md bg-sunken border border-border">
                 <span className="text-muted block text-[11px] mb-1">Monthly Drawdown at Retirement</span>
                 <strong className="text-ink text-sm font-semibold block font-mono">
-                  {formatCurrency(monthlyNeedAtRetirement)}/mo
+                  {formatOutput(monthlyNeedAtRetirement)}/mo
                 </strong>
                 <span className="text-[10px] text-muted block mt-0.5">
                   Inflated at {inputs.inflation}% over {yearsToRetirement} yrs
@@ -478,7 +696,7 @@ export const CashflowsStep = ({
               <div className="p-2.5 rounded-md bg-sunken border border-border">
                 <span className="text-muted block text-[11px] mb-1">Gross Annual Outflow</span>
                 <strong className="text-ink text-sm font-semibold block font-mono">
-                  {formatCurrency(grossAnnualAtRetirement)}/yr
+                  {formatOutput(grossAnnualAtRetirement)}/yr
                 </strong>
                 <span className="text-[10px] text-muted block mt-0.5">
                   Pre-tax at {inputs.swp.taxRate}% tax rate
@@ -487,16 +705,16 @@ export const CashflowsStep = ({
               <div className="p-2.5 rounded-md bg-sunken border border-border">
                 <span className="text-muted block text-[11px] mb-1">Required Corpus</span>
                 <strong className="text-ink text-sm font-semibold block font-mono">
-                  {formatCurrency(requiredCorpus)}
+                  {formatOutput(requiredCorpus)}
                 </strong>
                 <span className="text-[10px] text-muted block mt-0.5">
-                  Projected: {formatCurrency(projectedCorpusAtRetirement)}
+                  Projected: {formatOutput(projectedCorpusAtRetirement)}
                 </span>
               </div>
               <div className="p-2.5 rounded-md bg-sunken border border-border">
                 <span className="text-muted block text-[11px] mb-1">Safe Max Sustainable SWP</span>
                 <strong className="text-accent text-sm font-semibold block font-mono">
-                  {sustainableMonthlyNeed > 0 ? `${formatCurrency(sustainableMonthlyNeed)}/mo` : '—'}
+                  {sustainableMonthlyNeed > 0 ? `${formatOutput(sustainableMonthlyNeed)}/mo` : '—'}
                 </strong>
                 <span className="text-[10px] text-muted block mt-0.5">
                   In today's value terms

@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { SlidersHorizontal, Save, Activity, X } from 'lucide-react';
+import { SlidersHorizontal, Save, Activity, X, Globe } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useCalculator } from '../context/CalculatorContext';
 import { planStatus } from '../lib/planState';
 import { SaveIndicator } from '../components/ui/SaveIndicator';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { Button } from '../components/ui/Button';
-import { formatCurrencyCompact } from '../lib/formatters';
+import { formatReportingCurrency, toInr } from '../lib/formatters';
 import { cn } from '../lib/utils';
 import { WorkflowFooter } from '../components/layout/WorkflowFooter';
 import { PlanningAssumptionsModal } from '../components/analytics/PlanningAssumptionsModal';
@@ -147,6 +147,7 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
     updateGoal,
     removeGoal,
     wealthResult,
+    assumptions,
     riskProfile,
     riskScore,
     hasRiskAnswers,
@@ -181,9 +182,27 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
   const [isAssumptionsModalOpen, setIsAssumptionsModalOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
 
-  const totalLiabilities = useMemo(() => (inputs.liabilities || []).reduce((sum, liability) => sum + (Number(liability.principal) || 0), 0), [inputs.liabilities]);
+  const totalLiabilities = useMemo(
+    () =>
+      (inputs.liabilities || []).reduce((sum, liability) => {
+        const spotRate = assumptions?.fx?.[liability.currency || 'INR']?.spotRate || 1.0;
+        return sum + (Number(liability.principal) * spotRate || 0);
+      }, 0),
+    [inputs.liabilities, assumptions?.fx],
+  );
   const netBalanceSheet = wealthResult.netWorth - totalLiabilities;
   const debtToAssetRatio = wealthResult.netWorth > 0 ? (totalLiabilities / wealthResult.netWorth) * 100 : 0;
+  const currencyOptions = useMemo(
+    () =>
+      Object.keys(assumptions?.fx || {}).sort((a, b) =>
+        a === 'INR' ? -1 : b === 'INR' ? 1 : a.localeCompare(b),
+      ),
+    [assumptions?.fx],
+  );
+  const formatOutputCompact = (amountInInr: number) =>
+    formatReportingCurrency(amountInInr, inputs.reportingCurrency, assumptions.fx, true);
+  const annualIncomeInInr = wealthResult.annualIncome;
+  const swpNeedInInr = toInr(inputs.swp.monthlyNeedToday, inputs.swp.currency, assumptions.fx);
 
   const handleSave = async () => {
     setSaveStatus('saving');
@@ -232,7 +251,7 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
             <div className="plan-header-metrics mt-4">
               {wealthResult.isConfigured && (
                 <div><span>Net worth</span><strong>
-                    {formatCurrencyCompact(wealthResult.netWorth)}
+                    {formatOutputCompact(wealthResult.netWorth)}
                   </strong></div>
               )}
               {inputs.currentAge > 0 && inputs.retirementAge > 0 && (
@@ -240,14 +259,14 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
                     {inputs.currentAge} → {inputs.retirementAge} yrs ({Math.max(0, inputs.retirementAge - inputs.currentAge)}y to ret)
                   </strong></div>
               )}
-              {inputs.annualIncome > 0 && (
+              {annualIncomeInInr > 0 && (
                 <div><span>Annual income</span><strong>
-                    {formatCurrencyCompact(inputs.annualIncome)}/yr
+                    {formatOutputCompact(annualIncomeInInr)}/yr
                   </strong></div>
               )}
               {inputs.swp.monthlyNeedToday > 0 && (
                 <div><span>Target SWP</span><strong>
-                    {formatCurrencyCompact(inputs.swp.monthlyNeedToday)}/mo
+                    {formatOutputCompact(swpNeedInInr)}/mo
                   </strong></div>
               )}
               {wealthResult.isConfigured && inputs.swp.monthlyNeedToday > 0 && (
@@ -259,6 +278,23 @@ export const MasterPlan = ({ defaultStep = 'profile' }: { defaultStep?: string }
           </div>
 
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            {/* Live Presentation Currency Selector */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-surface text-xs shadow-xs" title="Presentation Currency (converts all plan outputs live)">
+              <Globe size={13} className="text-accent shrink-0" aria-hidden="true" />
+              <label htmlFor="master-plan-currency-select" className="text-[10px] font-mono uppercase tracking-wider text-muted font-medium">Currency</label>
+              <select
+                id="master-plan-currency-select"
+                value={inputs.reportingCurrency || 'INR'}
+                onChange={(e) => updateInputs({ reportingCurrency: e.target.value })}
+                className="bg-transparent text-ink font-semibold border-none focus:outline-none cursor-pointer text-xs pr-1"
+                aria-label="Plan presentation currency"
+              >
+                {currencyOptions.map((code) => (
+                  <option key={code} value={code} className="bg-raised text-ink">{code}</option>
+                ))}
+              </select>
+            </div>
+
             <SaveIndicator status={saveStatus} />
             <Button
               variant="outline"

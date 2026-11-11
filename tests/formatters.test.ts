@@ -7,6 +7,8 @@ import {
   formatNumber,
   formatDate,
   parseCurrencyInput,
+  fromInr,
+  formatReportingCurrency,
 } from '../src/lib/formatters';
 
 describe('formatters', () => {
@@ -41,6 +43,13 @@ describe('formatters', () => {
     assert.equal(parseCurrencyInput('₹1,25,000'), 125000);
     assert.equal(parseCurrencyInput('  ₹ 50,000.50  '), 50000.5);
     assert.equal(parseCurrencyInput('abc'), 0);
+  });
+
+  it('converts INR-normalized outputs into the selected reporting currency', () => {
+    const fx = { INR: { spotRate: 1 }, USD: { spotRate: 84 } };
+    assert.equal(fromInr(840_000, 'USD', fx), 10_000);
+    assert.ok(formatReportingCurrency(840_000, 'USD', fx).includes('$10,000'));
+    assert.equal(formatReportingCurrency(840_000, 'INR', fx, true), '₹8.40L');
   });
 
   it('formatDate formats dates reliably', () => {

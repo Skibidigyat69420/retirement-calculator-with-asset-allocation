@@ -78,6 +78,31 @@ export const formatCurrencyCompact = (
 // Alias matching the audit-plan naming; same Lakhs/Crores-by-magnitude logic.
 export const formatCompactCurrency = formatCurrencyCompact;
 
+type FxRateMap = Record<string, { spotRate?: number }>;
+
+/** Converts a native amount to the INR planning base using the active reference-rate set. */
+export const toInr = (amount: number, currency: string | undefined, fx: FxRateMap): number =>
+  amount * (fx[currency || 'INR']?.spotRate ?? (currency === 'INR' || !currency ? 1 : 0));
+
+/** Converts an INR planning result into the selected reporting currency. */
+export const fromInr = (amount: number, currency: string | undefined, fx: FxRateMap): number => {
+  const code = currency || 'INR';
+  const rate = fx[code]?.spotRate ?? (code === 'INR' ? 1 : 0);
+  return rate > 0 ? amount / rate : 0;
+};
+
+/** Formats an INR-normalized plan output in its selected reporting currency. */
+export const formatReportingCurrency = (
+  amountInInr: number,
+  reportingCurrency: string | undefined,
+  fx: FxRateMap,
+  compact = false,
+): string => {
+  const currency = reportingCurrency || 'INR';
+  const amount = fromInr(amountInInr, currency, fx);
+  return compact ? formatCurrencyCompact(amount, currency) : formatCurrency(amount, currency);
+};
+
 export const formatPercent = (val: number, fractionDigits = 1): string => {
   if (val === undefined || val === null || Number.isNaN(val)) return '0%';
   return `${val.toFixed(fractionDigits)}%`;

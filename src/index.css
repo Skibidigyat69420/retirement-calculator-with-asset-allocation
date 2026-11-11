@@ -1101,6 +1101,104 @@ select option { background: var(--color-raised); color: var(--color-ink); }
   .identity-sheet-cell { min-height: 4.5rem; }
 }
 
+/* Spreadsheet-style direct data table for high-speed input entry */
+.spreadsheet-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-raised);
+}
+.spreadsheet-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  text-align: left;
+}
+.spreadsheet-th {
+  padding: 0.6rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  background: var(--color-sunken);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+.spreadsheet-tr {
+  border-bottom: 1px solid var(--color-border-subtle);
+  transition: background var(--duration-fast) ease;
+}
+.spreadsheet-tr:last-child {
+  border-bottom: none;
+}
+.spreadsheet-tr:hover {
+  background: color-mix(in srgb, var(--color-raised) 94%, var(--color-sunken));
+}
+.spreadsheet-tr:focus-within {
+  background: color-mix(in srgb, var(--color-raised) 90%, var(--color-accent-soft));
+}
+.spreadsheet-td {
+  padding: 0.35rem 0.5rem;
+  vertical-align: middle;
+}
+.spreadsheet-control {
+  width: 100%;
+  min-width: 0;
+  height: 2.1rem;
+  padding: 0 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-ink);
+  font-size: 0.82rem;
+  transition: all var(--duration-fast) ease;
+}
+.spreadsheet-control:hover {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+}
+.spreadsheet-control:focus {
+  border-color: var(--color-accent);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 1px var(--color-accent);
+  outline: none;
+}
+.spreadsheet-control.font-mono {
+  font-family: var(--font-mono);
+}
+.spreadsheet-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--color-muted);
+  background: var(--color-sunken);
+  white-space: nowrap;
+}
+.spreadsheet-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-faint);
+  cursor: pointer;
+  transition: all var(--duration-fast) ease;
+}
+.spreadsheet-delete-btn:hover {
+  background: var(--color-negative-soft);
+  color: var(--color-negative);
+}
+
 /* Policy chapter: conclusion first, evidence second, routes as a ranked list. */
 .policy-decision,
 .policy-evidence {

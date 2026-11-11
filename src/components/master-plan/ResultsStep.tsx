@@ -20,7 +20,8 @@ import { ScenarioLab } from '../analytics/ScenarioLab';
 import { ResultsCharts } from './ResultsCharts';
 import { ASSET_COLORS, ASSET_LABELS } from '../../lib/constants';
 import { guardNumber, formatOrDash } from '../../lib/planState';
-import { formatCurrency, formatCurrencyCompact, formatPercent } from '../../lib/formatters';
+import { formatReportingCurrency, formatPercent, toInr } from '../../lib/formatters';
+import { useCalculator } from '../../context/CalculatorContext';
 import type { MasterPlanInputs, RiskProfile } from '../../types';
 import type { WealthEngineResult } from '../../lib/wealthEngine';
 
@@ -39,8 +40,12 @@ export const ResultsStep = ({
   hasRiskAnswers,
   onStart,
 }: ResultsStepProps) => {
+  const { assumptions } = useCalculator();
   const configured = wealthResult.isConfigured;
   const answered = hasRiskAnswers !== false;
+  const formatOutput = (amountInInr: number, compact = false) =>
+    formatReportingCurrency(amountInInr, inputs.reportingCurrency, assumptions.fx, compact);
+  const swpNeedInInr = toInr(inputs.swp.monthlyNeedToday, inputs.swp.currency, assumptions.fx);
 
   const growthMultiple =
     wealthResult.totalInvested > 0
@@ -49,12 +54,12 @@ export const ResultsStep = ({
 
   const monthlyNeedAtRetirement = useMemo(() => {
     const years = Math.max(0, inputs.retirementAge - inputs.currentAge);
-    return inputs.swp.monthlyNeedToday * Math.pow(1 + inputs.inflation / 100, years);
-  }, [inputs.swp.monthlyNeedToday, inputs.inflation, inputs.retirementAge, inputs.currentAge]);
+    return swpNeedInInr * Math.pow(1 + inputs.inflation / 100, years);
+  }, [swpNeedInInr, inputs.inflation, inputs.retirementAge, inputs.currentAge]);
 
   const distributionMonthlyNeed = (year: number) => {
     const accYears = Math.max(0, inputs.retirementAge - inputs.currentAge);
-    return inputs.swp.monthlyNeedToday * Math.pow(1 + inputs.inflation / 100, accYears + year);
+    return swpNeedInInr * Math.pow(1 + inputs.inflation / 100, accYears + year);
   };
 
   const netWorth = wealthResult.netWorth;
@@ -127,12 +132,12 @@ export const ResultsStep = ({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <MetricCard
               label="Terminal wealth (nominal)"
-              value={formatOrDash(guardNumber(wealthResult.terminalValue), formatCurrency)}
+              value={formatOrDash(guardNumber(wealthResult.terminalValue), formatOutput)}
               subtext={`At age ${inputs.lifeExpectancy || '—'}`}
             />
             <MetricCard
               label="Terminal wealth (real)"
-              value={formatOrDash(guardNumber(wealthResult.terminalRealValue), formatCurrency)}
+              value={formatOrDash(guardNumber(wealthResult.terminalRealValue), formatOutput)}
               subtext="Inflation-adjusted"
             />
             <MetricCard
@@ -167,17 +172,17 @@ export const ResultsStep = ({
               label="Monthly need at retirement"
               value={formatOrDash(
                 inputs.swp.monthlyNeedToday > 0 ? guardNumber(monthlyNeedAtRetirement) : null,
-                formatCurrency,
+                formatOutput,
               )}
               subtext={
                 inputs.swp.monthlyNeedToday > 0
-                  ? `From ${formatCurrency(inputs.swp.monthlyNeedToday)} today`
+                  ? `From ${formatOutput(swpNeedInInr)} today`
                   : 'Set the SWP need in Step 03'
               }
             />
             <MetricCard
               label="Capital contributed"
-              value={formatOrDash(guardNumber(wealthResult.totalInvested), formatCurrency)}
+              value={formatOrDash(guardNumber(wealthResult.totalInvested), formatOutput)}
               subtext={growthMultiple > 0 ? `${growthMultiple.toFixed(1)}× growth multiple` : 'Over accumulation'}
             />
           </div>
@@ -239,18 +244,18 @@ export const ResultsStep = ({
               />
               <MetricCard
                 label="Median terminal (P50)"
-                value={formatOrDash(guardNumber(wealthResult.monteCarlo.medianTerminal), formatCurrencyCompact)}
+                value={formatOrDash(guardNumber(wealthResult.monteCarlo.medianTerminal), (v) => formatOutput(v, true))}
                 subtext="50th percentile"
               />
               <MetricCard
                 label="P5 terminal (stress)"
-                value={formatOrDash(guardNumber(wealthResult.monteCarlo.percentile5), formatCurrencyCompact)}
+                value={formatOrDash(guardNumber(wealthResult.monteCarlo.percentile5), (v) => formatOutput(v, true))}
                 subtext="5th percentile tail"
                 variant="danger"
               />
               <MetricCard
                 label="P95 terminal (bull)"
-                value={formatOrDash(guardNumber(wealthResult.monteCarlo.percentile95), formatCurrencyCompact)}
+                value={formatOrDash(guardNumber(wealthResult.monteCarlo.percentile95), (v) => formatOutput(v, true))}
                 subtext="95th percentile"
                 variant="success"
               />
@@ -289,9 +294,9 @@ export const ResultsStep = ({
                           <span className="w-2.5 h-2.5 rounded-full mr-2 shrink-0" style={{ backgroundColor: ASSET_COLORS[r.category] }} aria-hidden="true" />
                           {ASSET_LABELS[r.category]}
                         </td>
-                        <td className="py-2.5 pr-3 text-right font-mono tabular-nums text-muted">{formatCurrencyCompact(r.current)}</td>
-                        <td className="py-2.5 pr-3 text-right font-mono tabular-nums text-muted">{formatCurrencyCompact(r.target)}</td>
-                        <td className="py-2.5 pr-3 text-right font-mono tabular-nums font-medium text-ink">{formatCurrencyCompact(r.trade)}</td>
+                        <td className="py-2.5 pr-3 text-right font-mono tabular-nums text-muted">{formatOutput(r.current, true)}</td>
+                        <td className="py-2.5 pr-3 text-right font-mono tabular-nums text-muted">{formatOutput(r.target, true)}</td>
+                        <td className="py-2.5 pr-3 text-right font-mono tabular-nums font-medium text-ink">{formatOutput(r.trade, true)}</td>
                         <td className="py-2.5 pr-3 text-center">
                           {Math.abs(r.trade) < netWorth * 0.02 ? (
                             <span className="text-muted text-[11px] font-medium">Hold</span>
@@ -319,7 +324,7 @@ export const ResultsStep = ({
                     <div>
                       <span className="font-mono text-xs font-semibold text-ink">{c.currency}</span>
                       <span className="block text-[11px] font-mono tabular-nums text-muted">
-                        {formatCurrency(c.amount)}
+                        {formatOutput(c.amount)}
                       </span>
                     </div>
                     <Badge tone={c.currency === 'INR' ? 'neutral' : 'info'}>
@@ -364,19 +369,19 @@ export const ResultsStep = ({
                           </Badge>
                         </td>
                         <td className="py-2 pr-3 text-right font-mono tabular-nums font-medium text-ink">
-                          {formatCurrencyCompact(s.total)}
+                          {formatOutput(s.total, true)}
                         </td>
                         <td className="py-2 pr-3 text-right font-mono tabular-nums text-muted">
-                          {formatCurrencyCompact(s.realTotal)}
+                          {formatOutput(s.realTotal, true)}
                         </td>
                         <td className="py-2 pr-3 text-right font-mono tabular-nums text-ink">
-                          {monthlyNeed ? formatCurrencyCompact(monthlyNeed) : '—'}
+                          {monthlyNeed ? formatOutput(monthlyNeed, true) : '—'}
                         </td>
                         <td className="py-2 pr-3 text-right font-mono tabular-nums text-muted">
-                          {formatCurrencyCompact(s.invested)}
+                          {formatOutput(s.invested, true)}
                         </td>
                         <td className="py-2 pr-3 text-right font-mono tabular-nums text-muted">
-                          {formatCurrencyCompact(s.withdrawn)}
+                          {formatOutput(s.withdrawn, true)}
                         </td>
                       </tr>
                     );

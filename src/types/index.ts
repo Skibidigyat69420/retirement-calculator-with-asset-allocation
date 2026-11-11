@@ -27,6 +27,7 @@ export interface Liability {
 
 export interface SIPConfig {
   amount: number;
+  currency?: string;
   equitySplit: number;
   debtSplit: number;
   stepUp: number;
@@ -39,6 +40,7 @@ export interface STPConfig {
   source: 'idle-cash' | 'land-sale' | 'custom';
   lumpsum: number;
   monthlyTransfer: number;
+  currency?: string;
   liquidReturn: number;
   equitySplit: number;
   debtSplit: number;
@@ -47,6 +49,7 @@ export interface STPConfig {
 
 export interface SWPConfig {
   monthlyNeedToday: number;
+  currency?: string;
   postRetirementReturn: number;
   taxRate: number;
   startAge: number;
@@ -267,19 +270,26 @@ export interface InsurancePolicy {
   provider?: string;
   coverage?: string;
   premium?: number;
+  currency?: string;
   premiumFrequency?: 'monthly' | 'annual';
   notes?: string;
 }
 
 export interface MasterPlanInputs {
   client: ClientProfile;
+  /** Display-only currency for plan outputs. The engine remains INR-normalized. */
+  reportingCurrency?: string;
   currentAge: number;
   retirementAge: number;
   lifeExpectancy: number;
   inflation: number;
   annualIncome: number;
+  /** Currency used for the direct annual-income entry when no income sources are listed. */
+  annualIncomeCurrency?: string;
   /** Household living costs before debt repayments. */
   monthlyLivingExpenses: number;
+  /** Currency used for the direct household-living-cost entry. */
+  monthlyLivingExpensesCurrency?: string;
   /** Derived linked total: living costs + included liability EMIs. */
   monthlyExpenditure: number;
   assets: Asset[];

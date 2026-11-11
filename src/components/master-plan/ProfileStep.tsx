@@ -1,13 +1,10 @@
-import { UserRound } from 'lucide-react';
-import type { KeyboardEvent } from 'react';
-import { Input } from '../ui/Input';
+import { UserRound, Plus, Trash2 } from 'lucide-react';
+import { useEffect, type KeyboardEvent } from 'react';
 import { NumberInput } from '../ui/NumberInput';
-import { Select } from '../ui/Select';
 
 import { FormSection } from '../ui/FormSection';
-import { Repeater } from '../ui/Repeater';
 import { formatOrDash, isProfileConfigured } from '../../lib/planState';
-import { formatCurrency } from '../../lib/formatters';
+import { formatReportingCurrency } from '../../lib/formatters';
 import type { FamilyMember, IncomeSource, InsurancePolicy, MasterPlanInputs } from '../../types';
 import { useCalculator } from '../../context/CalculatorContext';
 
@@ -55,6 +52,40 @@ const advanceIdentityCell = (event: KeyboardEvent<HTMLDivElement>) => {
   cells[nextIndex]?.focus();
 };
 
+const advanceCell = (
+  event: React.KeyboardEvent<HTMLTableSectionElement | HTMLDivElement>,
+  onAddRow?: () => void,
+) => {
+  if (event.key !== 'Enter' || event.defaultPrevented) return;
+  const target = event.target as HTMLElement | null;
+  if (!target || !target.matches('input, select, textarea, button')) return;
+
+  const container = event.currentTarget;
+  const cells = Array.from(
+    container.querySelectorAll<HTMLElement>(
+      'input:not([disabled]):not([type="checkbox"]), select:not([disabled]), input[type="checkbox"]:not([disabled])',
+    ),
+  );
+  const currentIndex = cells.indexOf(target);
+  if (currentIndex === -1) return;
+
+  event.preventDefault();
+  if (event.shiftKey) {
+    const previous = cells[currentIndex - 1];
+    previous?.focus();
+    if (previous instanceof HTMLInputElement && previous.type !== 'checkbox') previous.select?.();
+    return;
+  }
+
+  const next = cells[currentIndex + 1];
+  if (next) {
+    next.focus();
+    if (next instanceof HTMLInputElement && next.type !== 'checkbox') next.select?.();
+  } else if (onAddRow) {
+    onAddRow();
+  }
+};
+
 export const ProfileStep = ({
   inputs,
   updateInputs,
@@ -69,8 +100,13 @@ export const ProfileStep = ({
   const familyMembers = inputs.client?.familyMembers || [];
   const incomeSources = inputs.client?.incomeSources || [];
   const insurancePolicies = inputs.client?.insurancePolicies || [];
+
+  const formatOutput = (amountInInr: number) =>
+    formatReportingCurrency(amountInInr, inputs.reportingCurrency || 'INR', assumptions.fx);
+
   const toInr = (amount: number, currency: string) =>
     amount * (assumptions.fx[currency || 'INR']?.spotRate ?? 0);
+
   const profileFields = [
     inputs.client?.name,
     inputs.client?.email,
@@ -116,6 +152,72 @@ export const ProfileStep = ({
   const updateInsurancePolicy = (id: string, patch: Partial<InsurancePolicy>) => {
     updateClient({ insurancePolicies: insurancePolicies.map((policy) => policy.id === id ? { ...policy, ...patch } : policy) });
   };
+
+  const handleQuickAddFamilyMember = () => {
+    updateClient({
+      familyMembers: [
+        ...familyMembers,
+        {
+          id: `family-${Date.now()}`,
+          name: '',
+          relationship: '',
+          dateOfBirth: '',
+          status: '',
+          goal: '',
+        },
+      ],
+    });
+  };
+
+  const handleQuickAddIncome = () => {
+    replaceIncomeSources([
+      ...incomeSources,
+      {
+        id: `income-${Date.now()}`,
+        name: '',
+        amount: 0,
+        amountInBaseCurrency: 0,
+        currency: inputs.reportingCurrency || 'INR',
+        frequency: 'monthly',
+        notes: '',
+      },
+    ]);
+  };
+
+  const handleQuickAddPolicy = () => {
+    updateClient({
+      insurancePolicies: [
+        ...insurancePolicies,
+        {
+          id: `insurance-${Date.now()}`,
+          type: '',
+          provider: '',
+          coverage: '',
+          premium: 0,
+          currency: inputs.reportingCurrency || 'INR',
+          premiumFrequency: 'annual',
+          notes: '',
+        },
+      ],
+    });
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.altKey && (e.key === 'f' || e.key === 'F')) {
+        e.preventDefault();
+        handleQuickAddFamilyMember();
+      } else if (e.altKey && (e.key === 'i' || e.key === 'I')) {
+        e.preventDefault();
+        handleQuickAddIncome();
+      } else if (e.altKey && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault();
+        handleQuickAddPolicy();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [familyMembers, incomeSources, insurancePolicies, inputs.reportingCurrency]);
 
   const timeline = [
     { label: 'Accumulation phase', value: formatOrDash(configured ? yearsToRetire : null, (v) => `${v} yrs left`) },
@@ -227,40 +329,120 @@ export const ProfileStep = ({
         description="The people and responsibilities around the plan."
         meta={`${familyMembers.length} member${familyMembers.length === 1 ? '' : 's'}`}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4 mb-5">
           <TextAreaField label="Household overview" value={inputs.client?.familyComposition || ''} onChange={(value) => updateClient({ familyComposition: value })} placeholder="Anything important about dependants, family structure, or support responsibilities" helper="Use the editable family rows below for individual members." />
           <TextAreaField label="Health context" value={inputs.client?.healthStatus || ''} onChange={(value) => updateClient({ healthStatus: value })} placeholder="Current health concerns, coverage gaps, or simply ‘no current concerns’" />
         </div>
-        <div className="mt-6">
-          <Repeater<FamilyMember>
-            items={familyMembers}
-            getKey={(member) => member.id}
-            emptyLabel="No family members added yet."
-            addLabel="Add family member"
-            onAdd={() => updateClient({ familyMembers: [...familyMembers, { id: `family-${Date.now()}`, name: '', relationship: '', dateOfBirth: '', status: '', goal: '' }] })}
-            onRemove={(member) => updateClient({ familyMembers: familyMembers.filter((item) => item.id !== member.id) })}
-            renderSummary={(member) => {
-              const age = ageFromDob(member.dateOfBirth);
-              return (
-                <span className="flex items-baseline gap-3 min-w-0 text-sm">
-                  <span className="truncate font-medium text-ink">{member.name || 'Unnamed member'}</span>
-                  <span className="truncate text-xs text-muted">{member.relationship || '—'}</span>
-                  <span className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted">
-                    {age !== null ? `${age} yrs` : member.dateOfBirth || '—'}
-                  </span>
-                </span>
-              );
-            }}
-            renderEditor={(member) => (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">
-                <Input layout="inline" label="Name" value={member.name} onChange={(event) => updateFamilyMember(member.id, { name: event.target.value })} placeholder="Full name" />
-                <Input layout="inline" label="Relationship" value={member.relationship} onChange={(event) => updateFamilyMember(member.id, { relationship: event.target.value })} placeholder="Child, spouse…" />
-                <Input layout="inline" label="Date of birth" type="date" value={member.dateOfBirth || ''} onChange={(event) => updateFamilyMember(member.id, { dateOfBirth: event.target.value })} />
-                <Input layout="inline" label="Current status" value={member.status || ''} onChange={(event) => updateFamilyMember(member.id, { status: event.target.value })} placeholder="Student, working…" />
-                <Input layout="inline" label="Goal / responsibility" value={member.goal || ''} onChange={(event) => updateFamilyMember(member.id, { goal: event.target.value })} placeholder="Education, support, legacy…" />
-              </div>
-            )}
-          />
+
+        <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+          <p className="text-xs text-muted">
+            Family members and dependants. Add rows directly and move with <kbd className="font-mono">Enter</kbd>.
+          </p>
+          <button
+            type="button"
+            onClick={handleQuickAddFamilyMember}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-accent text-on-inkfill hover:bg-accent-strong transition-colors cursor-pointer"
+          >
+            <Plus size={14} aria-hidden="true" />
+            <span>Add member</span>
+            <kbd className="ml-1 text-[10px] font-mono opacity-80">Alt+F</kbd>
+          </button>
+        </div>
+
+        <div className="spreadsheet-wrap" tabIndex={0} role="region" aria-label="Family members table">
+          <table className="spreadsheet-table">
+            <thead>
+              <tr>
+                <th className="spreadsheet-th w-10 text-center">#</th>
+                <th className="spreadsheet-th min-w-[160px]">Full Name</th>
+                <th className="spreadsheet-th w-36">Relationship</th>
+                <th className="spreadsheet-th w-40">Date of Birth</th>
+                <th className="spreadsheet-th w-36">Status</th>
+                <th className="spreadsheet-th min-w-[200px]">Goal / Responsibility</th>
+                <th className="spreadsheet-th w-12 text-center">Del</th>
+              </tr>
+            </thead>
+            <tbody onKeyDown={(e) => advanceCell(e, handleQuickAddFamilyMember)}>
+              {familyMembers.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-6 text-xs text-muted">
+                    No family members added yet. Press <button type="button" onClick={handleQuickAddFamilyMember} className="text-accent underline font-semibold">Add member</button> or <kbd className="font-mono bg-sunken px-1 rounded">Alt+F</kbd> to begin.
+                  </td>
+                </tr>
+              ) : (
+                familyMembers.map((member, index) => {
+                  const age = ageFromDob(member.dateOfBirth);
+                  return (
+                    <tr key={member.id} className="spreadsheet-tr">
+                      <td className="spreadsheet-td text-center text-xs text-muted font-mono">{index + 1}</td>
+                      <td className="spreadsheet-td">
+                        <input
+                          type="text"
+                          value={member.name}
+                          onChange={(e) => updateFamilyMember(member.id, { name: e.target.value })}
+                          placeholder="Full name"
+                          className="spreadsheet-control font-medium"
+                        />
+                      </td>
+                      <td className="spreadsheet-td">
+                        <input
+                          type="text"
+                          value={member.relationship}
+                          onChange={(e) => updateFamilyMember(member.id, { relationship: e.target.value })}
+                          placeholder="e.g. Spouse, Child"
+                          className="spreadsheet-control"
+                        />
+                      </td>
+                      <td className="spreadsheet-td">
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="date"
+                            value={member.dateOfBirth || ''}
+                            onChange={(e) => updateFamilyMember(member.id, { dateOfBirth: e.target.value })}
+                            className="spreadsheet-control w-auto flex-1"
+                          />
+                          {age !== null && (
+                            <span className="spreadsheet-pill shrink-0">
+                              {age}y
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="spreadsheet-td">
+                        <input
+                          type="text"
+                          value={member.status || ''}
+                          onChange={(e) => updateFamilyMember(member.id, { status: e.target.value })}
+                          placeholder="Student, Working…"
+                          className="spreadsheet-control"
+                        />
+                      </td>
+                      <td className="spreadsheet-td">
+                        <input
+                          type="text"
+                          value={member.goal || ''}
+                          onChange={(e) => updateFamilyMember(member.id, { goal: e.target.value })}
+                          placeholder="Education, support, legacy…"
+                          className="spreadsheet-control"
+                        />
+                      </td>
+                      <td className="spreadsheet-td text-center">
+                        <button
+                          type="button"
+                          onClick={() => updateClient({ familyMembers: familyMembers.filter((item) => item.id !== member.id) })}
+                          className="spreadsheet-delete-btn"
+                          title="Delete member"
+                          aria-label={`Delete ${member.name || 'member'}`}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </FormSection>
 
@@ -268,35 +450,122 @@ export const ProfileStep = ({
         index="03"
         title="Income sources"
         description="Where household cashflow comes from — feeds annual income in Cashflow."
-        meta={`${incomeSources.length} source${incomeSources.length === 1 ? '' : 's'} · ${formatCurrency(monthlyIncomeTotal)}/mo`}
+        meta={`${incomeSources.length} source${incomeSources.length === 1 ? '' : 's'} · ${formatOutput(monthlyIncomeTotal)}/mo`}
       >
-        <Repeater<IncomeSource>
-          items={incomeSources}
-          getKey={(source) => source.id}
-          emptyLabel="No income sources added yet."
-          addLabel="Add income source"
-          onAdd={() => replaceIncomeSources([...incomeSources, { id: `income-${Date.now()}`, name: '', amount: 0, amountInBaseCurrency: 0, currency: 'INR', frequency: 'monthly', notes: '' }])}
-          onRemove={(source) => replaceIncomeSources(incomeSources.filter((item) => item.id !== source.id))}
-          renderSummary={(source) => (
-            <span className="flex items-baseline gap-3 min-w-0 text-sm">
-              <span className="truncate font-medium text-ink">{source.name || 'Unnamed source'}</span>
-              <span className="truncate text-xs text-muted">{source.frequency}</span>
-              <span className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted">
-                {formatCurrency(toInr(source.amount, source.currency))}
-                {source.currency !== 'INR' && <span className="text-faint"> {source.currency}</span>}
-              </span>
-            </span>
-          )}
-          renderEditor={(source) => (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">
-              <Input layout="inline" label="Source" value={source.name} onChange={(event) => updateIncomeSource(source.id, { name: event.target.value })} placeholder="Salary, rental, freelance…" />
-              <NumberInput kind="currency" layout="inline" label="Amount" value={source.amount} onChange={(value) => updateIncomeSource(source.id, { amount: value })} currency={source.currency} currencyOptions={currencyOptions} onCurrencyChange={(value) => updateIncomeSource(source.id, { currency: value })} />
-              <NumberInput kind="currency" layout="inline" label="INR equivalent" value={toInr(source.amount, source.currency)} onChange={() => {}} disabled helper="Live reference rate · all plan outputs use INR" />
-              <Select layout="inline" label="Frequency" value={source.frequency} onChange={(value) => updateIncomeSource(source.id, { frequency: value as IncomeSource['frequency'] })} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'annual', label: 'Annual' }]} />
-              <Input layout="inline" label="Notes" value={source.notes || ''} onChange={(event) => updateIncomeSource(source.id, { notes: event.target.value })} placeholder="Clients, rental property…" />
-            </div>
-          )}
-        />
+        <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+          <p className="text-xs text-muted">
+            Track all inflow streams in their native currency. Annual totals convert to plan base automatically.
+          </p>
+          <button
+            type="button"
+            onClick={handleQuickAddIncome}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-accent text-on-inkfill hover:bg-accent-strong transition-colors cursor-pointer"
+          >
+            <Plus size={14} aria-hidden="true" />
+            <span>Add income</span>
+            <kbd className="ml-1 text-[10px] font-mono opacity-80">Alt+I</kbd>
+          </button>
+        </div>
+
+        <div className="spreadsheet-wrap" tabIndex={0} role="region" aria-label="Income sources table">
+          <table className="spreadsheet-table">
+            <thead>
+              <tr>
+                <th className="spreadsheet-th w-10 text-center">#</th>
+                <th className="spreadsheet-th min-w-[160px]">Source / Earner</th>
+                <th className="spreadsheet-th w-36">Amount</th>
+                <th className="spreadsheet-th w-24">Curr</th>
+                <th className="spreadsheet-th w-32">Frequency</th>
+                <th className="spreadsheet-th w-36">Plan Equiv</th>
+                <th className="spreadsheet-th min-w-[180px]">Notes</th>
+                <th className="spreadsheet-th w-12 text-center">Del</th>
+              </tr>
+            </thead>
+            <tbody onKeyDown={(e) => advanceCell(e, handleQuickAddIncome)}>
+              {incomeSources.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="text-center py-6 text-xs text-muted">
+                    No income sources recorded yet. Press <button type="button" onClick={handleQuickAddIncome} className="text-accent underline font-semibold">Add income</button> or <kbd className="font-mono bg-sunken px-1 rounded">Alt+I</kbd> to begin.
+                  </td>
+                </tr>
+              ) : (
+                incomeSources.map((source, index) => {
+                  const inrEquiv = toInr(source.amount, source.currency);
+                  return (
+                    <tr key={source.id} className="spreadsheet-tr">
+                      <td className="spreadsheet-td text-center text-xs text-muted font-mono">{index + 1}</td>
+                      <td className="spreadsheet-td">
+                        <input
+                          type="text"
+                          value={source.name}
+                          onChange={(e) => updateIncomeSource(source.id, { name: e.target.value })}
+                          placeholder="Salary, rental, consulting…"
+                          className="spreadsheet-control font-medium"
+                        />
+                      </td>
+                      <td className="spreadsheet-td">
+                        <input
+                          type="number"
+                          value={source.amount || ''}
+                          onChange={(e) => updateIncomeSource(source.id, { amount: parseFloat(e.target.value) || 0 })}
+                          placeholder="0"
+                          className="spreadsheet-control text-right font-mono"
+                        />
+                      </td>
+                      <td className="spreadsheet-td">
+                        <select
+                          value={source.currency || 'INR'}
+                          onChange={(e) => updateIncomeSource(source.id, { currency: e.target.value })}
+                          className="spreadsheet-control font-mono text-xs"
+                        >
+                          {currencyOptions.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="spreadsheet-td">
+                        <select
+                          value={source.frequency}
+                          onChange={(e) => updateIncomeSource(source.id, { frequency: e.target.value as IncomeSource['frequency'] })}
+                          className="spreadsheet-control text-xs"
+                        >
+                          <option value="monthly">Monthly</option>
+                          <option value="annual">Annual</option>
+                        </select>
+                      </td>
+                      <td className="spreadsheet-td">
+                        <span className="spreadsheet-pill font-mono">
+                          {formatOutput(inrEquiv)}
+                          <span className="text-[10px] opacity-70 ml-1">/{source.frequency === 'monthly' ? 'mo' : 'yr'}</span>
+                        </span>
+                      </td>
+                      <td className="spreadsheet-td">
+                        <input
+                          type="text"
+                          value={source.notes || ''}
+                          onChange={(e) => updateIncomeSource(source.id, { notes: e.target.value })}
+                          placeholder="Employer, tax treatment, bonus…"
+                          className="spreadsheet-control text-xs"
+                        />
+                      </td>
+                      <td className="spreadsheet-td text-center">
+                        <button
+                          type="button"
+                          onClick={() => replaceIncomeSources(incomeSources.filter((item) => item.id !== source.id))}
+                          className="spreadsheet-delete-btn"
+                          title="Delete source"
+                          aria-label={`Delete ${source.name || 'source'}`}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </FormSection>
 
       <FormSection
@@ -386,34 +655,143 @@ export const ProfileStep = ({
           <TextAreaField label="Advisor discovery notes" value={inputs.client?.notes || ''} onChange={(value) => updateClient({ notes: value })} placeholder="Risk reservations, family circumstances, liquidity needs, or legacy intentions" />
         </div>
         <div className="mt-6">
-          <Repeater<InsurancePolicy>
-            items={insurancePolicies}
-            getKey={(policy) => policy.id}
-            emptyLabel="No insurance policies added yet."
-            addLabel="Add policy"
-            onAdd={() => updateClient({ insurancePolicies: [...insurancePolicies, { id: `insurance-${Date.now()}`, type: '', provider: '', coverage: '', premium: 0, premiumFrequency: 'annual', notes: '' }] })}
-            onRemove={(policy) => updateClient({ insurancePolicies: insurancePolicies.filter((item) => item.id !== policy.id) })}
-            renderSummary={(policy) => (
-              <span className="flex items-baseline gap-3 min-w-0 text-sm">
-                <span className="truncate font-medium text-ink">{policy.type || 'Policy'}</span>
-                <span className="truncate text-xs text-muted">{policy.provider || '—'}</span>
-                <span className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted">
-                  {formatCurrency(policy.premium || 0)}
-                  <span className="text-faint"> {policy.premiumFrequency === 'monthly' ? '/mo' : '/yr'}</span>
-                </span>
-              </span>
-            )}
-            renderEditor={(policy) => (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">
-                <Input layout="inline" label="Policy type" value={policy.type} onChange={(event) => updateInsurancePolicy(policy.id, { type: event.target.value })} placeholder="Life, health…" />
-                <Input layout="inline" label="Provider" value={policy.provider || ''} onChange={(event) => updateInsurancePolicy(policy.id, { provider: event.target.value })} placeholder="Insurer" />
-                <Input layout="inline" label="Coverage" value={policy.coverage || ''} onChange={(event) => updateInsurancePolicy(policy.id, { coverage: event.target.value })} placeholder="₹1 Cr / USD 100k" />
-                <NumberInput kind="currency" layout="inline" label="Premium" value={policy.premium || 0} onChange={(value) => updateInsurancePolicy(policy.id, { premium: value })} />
-                <Select layout="inline" label="Frequency" value={policy.premiumFrequency || 'annual'} onChange={(value) => updateInsurancePolicy(policy.id, { premiumFrequency: value as InsurancePolicy['premiumFrequency'] })} options={[{ value: 'annual', label: 'Annual' }, { value: 'monthly', label: 'Monthly' }]} />
-                <Input layout="inline" label="Notes" value={policy.notes || ''} onChange={(event) => updateInsurancePolicy(policy.id, { notes: event.target.value })} placeholder="Term, renewal, exclusions…" />
-              </div>
-            )}
-          />
+          <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+            <div>
+              <h3 className="text-sm font-semibold text-ink">Insurance Coverage & Policies</h3>
+              <p className="text-xs text-muted">
+                Life, health, and asset protection. Add coverage rows directly.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleQuickAddPolicy}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-accent text-on-inkfill hover:bg-accent-strong transition-colors cursor-pointer"
+            >
+              <Plus size={14} aria-hidden="true" />
+              <span>Add policy</span>
+              <kbd className="ml-1 text-[10px] font-mono opacity-80">Alt+P</kbd>
+            </button>
+          </div>
+
+          <div className="spreadsheet-wrap" tabIndex={0} role="region" aria-label="Insurance policies table">
+            <table className="spreadsheet-table">
+              <thead>
+                <tr>
+                  <th className="spreadsheet-th w-10 text-center">#</th>
+                  <th className="spreadsheet-th w-36">Policy Type</th>
+                  <th className="spreadsheet-th w-36">Provider</th>
+                  <th className="spreadsheet-th w-36">Coverage / Sum</th>
+                  <th className="spreadsheet-th w-32">Premium</th>
+                  <th className="spreadsheet-th w-24">Curr</th>
+                  <th className="spreadsheet-th w-28">Frequency</th>
+                  <th className="spreadsheet-th w-36">Plan Equiv</th>
+                  <th className="spreadsheet-th min-w-[160px]">Notes</th>
+                  <th className="spreadsheet-th w-12 text-center">Del</th>
+                </tr>
+              </thead>
+              <tbody onKeyDown={(e) => advanceCell(e, handleQuickAddPolicy)}>
+                {insurancePolicies.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="text-center py-6 text-xs text-muted">
+                      No insurance policies added yet. Press <button type="button" onClick={handleQuickAddPolicy} className="text-accent underline font-semibold">Add policy</button> or <kbd className="font-mono bg-sunken px-1 rounded">Alt+P</kbd> to begin.
+                    </td>
+                  </tr>
+                ) : (
+                  insurancePolicies.map((policy, index) => {
+                    const inrPremium = toInr(policy.premium || 0, policy.currency || 'INR');
+                    return (
+                      <tr key={policy.id} className="spreadsheet-tr">
+                        <td className="spreadsheet-td text-center text-xs text-muted font-mono">{index + 1}</td>
+                        <td className="spreadsheet-td">
+                          <input
+                            type="text"
+                            value={policy.type}
+                            onChange={(e) => updateInsurancePolicy(policy.id, { type: e.target.value })}
+                            placeholder="e.g. Term Life, Health"
+                            className="spreadsheet-control font-medium"
+                          />
+                        </td>
+                        <td className="spreadsheet-td">
+                          <input
+                            type="text"
+                            value={policy.provider || ''}
+                            onChange={(e) => updateInsurancePolicy(policy.id, { provider: e.target.value })}
+                            placeholder="e.g. HDFC Life"
+                            className="spreadsheet-control"
+                          />
+                        </td>
+                        <td className="spreadsheet-td">
+                          <input
+                            type="text"
+                            value={policy.coverage || ''}
+                            onChange={(e) => updateInsurancePolicy(policy.id, { coverage: e.target.value })}
+                            placeholder="₹1 Cr / $500k"
+                            className="spreadsheet-control"
+                          />
+                        </td>
+                        <td className="spreadsheet-td">
+                          <input
+                            type="number"
+                            value={policy.premium || ''}
+                            onChange={(e) => updateInsurancePolicy(policy.id, { premium: parseFloat(e.target.value) || 0 })}
+                            placeholder="0"
+                            className="spreadsheet-control text-right font-mono"
+                          />
+                        </td>
+                        <td className="spreadsheet-td">
+                          <select
+                            value={policy.currency || 'INR'}
+                            onChange={(e) => updateInsurancePolicy(policy.id, { currency: e.target.value })}
+                            className="spreadsheet-control font-mono text-xs"
+                          >
+                            {currencyOptions.map((c) => (
+                              <option key={c} value={c}>{c}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="spreadsheet-td">
+                          <select
+                            value={policy.premiumFrequency || 'annual'}
+                            onChange={(e) => updateInsurancePolicy(policy.id, { premiumFrequency: e.target.value as InsurancePolicy['premiumFrequency'] })}
+                            className="spreadsheet-control text-xs"
+                          >
+                            <option value="annual">Annual</option>
+                            <option value="monthly">Monthly</option>
+                          </select>
+                        </td>
+                        <td className="spreadsheet-td">
+                          <span className="spreadsheet-pill font-mono">
+                            {formatOutput(inrPremium)}
+                            <span className="text-[10px] opacity-70 ml-1">/{policy.premiumFrequency === 'monthly' ? 'mo' : 'yr'}</span>
+                          </span>
+                        </td>
+                        <td className="spreadsheet-td">
+                          <input
+                            type="text"
+                            value={policy.notes || ''}
+                            onChange={(e) => updateInsurancePolicy(policy.id, { notes: e.target.value })}
+                            placeholder="Term, renewal date…"
+                            className="spreadsheet-control text-xs"
+                          />
+                        </td>
+                        <td className="spreadsheet-td text-center">
+                          <button
+                            type="button"
+                            onClick={() => updateClient({ insurancePolicies: insurancePolicies.filter((item) => item.id !== policy.id) })}
+                            className="spreadsheet-delete-btn"
+                            title="Delete policy"
+                            aria-label={`Delete ${policy.type || 'policy'}`}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </FormSection>
     </div>

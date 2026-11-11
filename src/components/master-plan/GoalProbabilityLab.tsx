@@ -5,7 +5,7 @@ import { FormSection } from '../ui/FormSection';
 import { GoalLabFanChart } from '../charts/GoalLabFanChart';
 import { useCalculator } from '../../context/CalculatorContext';
 import { simulateGoalPlan } from '../../lib/goalMonteCarlo';
-import { formatCurrency, formatCurrencyCompact } from '../../lib/formatters';
+import { formatReportingCurrency, toInr } from '../../lib/formatters';
 import { cn } from '../../lib/utils';
 import type { GoalPriority } from '../../types';
 
@@ -33,13 +33,19 @@ export const GoalProbabilityLab = ({ index }: { index?: string } = {}) => {
   const [simulations, setSimulations] = useState(1000);
   const [seed, setSeed] = useState(() => Date.now().toString(36));
 
-  const planSIP = inputs.sip.amount || 0;
+  const planSIP = toInr(inputs.sip.amount || 0, inputs.sip.currency || 'INR', assumptions.fx);
   const effectiveSIP = sipOverride ?? planSIP;
   const deferredSIP = useDeferredValue(effectiveSIP);
+  const formatOutput = (amountInInr: number, compact = false) =>
+    formatReportingCurrency(amountInInr, inputs.reportingCurrency, assumptions.fx, compact);
 
   const investable = useMemo(
-    () => inputs.assets.reduce((sum, a) => sum + (a.value || 0), 0),
-    [inputs.assets],
+    () =>
+      inputs.assets.reduce((sum, a) => {
+        const spotRate = assumptions?.fx?.[a.currency || 'INR']?.spotRate || 1.0;
+        return sum + (Number(a.value) * spotRate || 0);
+      }, 0),
+    [inputs.assets, assumptions?.fx],
   );
 
   const weights = wealthResult.targetAllocation;
@@ -108,7 +114,7 @@ export const GoalProbabilityLab = ({ index }: { index?: string } = {}) => {
             max={1000000}
             step={5000}
             slider="focus"
-            helper={sipOverride !== null && sipOverride !== planSIP ? `Plan SIP is ${formatCurrency(planSIP)}/mo — this override is local to the lab` : undefined}
+            helper={sipOverride !== null && sipOverride !== planSIP ? `Plan SIP is ${formatOutput(planSIP)}/mo — this override is local to the lab` : undefined}
           />
         </div>
         <div className="md:col-span-3">
@@ -185,14 +191,14 @@ export const GoalProbabilityLab = ({ index }: { index?: string } = {}) => {
         <div className="bg-surface px-4 py-3">
           <div className="text-xs font-medium text-muted">Required SIP</div>
           <div className="mt-1 font-display text-2xl tabular-nums text-ink">
-            {formatCurrencyCompact(result.requiredSIP)}
+            {formatOutput(result.requiredSIP, true)}
             <span className="text-muted text-sm font-sans"> /mo</span>
           </div>
           <div className="text-[11px] text-muted mt-0.5">
             {sipDelta > 0 ? (
               <span className="inline-flex items-center gap-1 text-negative">
                 <TriangleAlert size={11} strokeWidth={1.8} aria-hidden="true" />
-                {formatCurrencyCompact(sipDelta)}/mo above plan
+                {formatOutput(sipDelta, true)}/mo above plan
               </span>
             ) : (
               'plan SIP already suffices'
@@ -202,7 +208,7 @@ export const GoalProbabilityLab = ({ index }: { index?: string } = {}) => {
         <div className="bg-surface px-4 py-3">
           <div className="text-xs font-medium text-muted">Total goal cost</div>
           <div className="mt-1 font-display text-2xl tabular-nums text-ink">
-            {formatCurrencyCompact(result.totalCostAtFinalHorizon)}
+            {formatOutput(result.totalCostAtFinalHorizon, true)}
           </div>
           <div className="text-[11px] text-muted mt-0.5">inflated, across all horizons</div>
         </div>
@@ -226,7 +232,7 @@ export const GoalProbabilityLab = ({ index }: { index?: string } = {}) => {
           {markers.map((m) => (
             <span key={`${m.year}-${m.name}`} className="inline-flex items-center gap-1.5" title={`${m.name} — deducted at year ${m.year}`}>
               <span className="w-1.5 h-1.5 rounded-full bg-brass" aria-hidden="true" />
-              {m.name} · y{m.year} · {formatCurrencyCompact(m.cost)}
+              {m.name} · y{m.year} · {formatOutput(m.cost, true)}
             </span>
           ))}
         </div>
@@ -258,15 +264,15 @@ export const GoalProbabilityLab = ({ index }: { index?: string } = {}) => {
                 </div>
               </div>
               <div className="col-span-4 sm:col-span-2 font-mono text-xs tabular-nums text-muted">
-                cost {formatCurrencyCompact(g.costAtHorizon)}
+                cost {formatOutput(g.costAtHorizon, true)}
               </div>
               <div className="col-span-3 sm:col-span-2 font-mono text-xs tabular-nums text-muted">
-                median {formatCurrencyCompact(g.medianCorpusAtHorizon)}
+                median {formatOutput(g.medianCorpusAtHorizon, true)}
               </div>
               <div className="col-span-12 sm:col-span-1 font-mono text-xs tabular-nums text-right">
                 {g.expectedShortfall > 0 ? (
                   <span className="text-negative" title="Mean shortfall across failing paths">
-                    −{formatCurrencyCompact(g.expectedShortfall)}
+                    −{formatOutput(g.expectedShortfall, true)}
                   </span>
                 ) : (
                   <span className="text-positive">funded</span>

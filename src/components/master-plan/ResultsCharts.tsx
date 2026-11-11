@@ -7,7 +7,8 @@ import { DonutChart } from '../charts/DonutChart';
 import { NetWorthInvestedChart } from '../charts/NetWorthInvestedChart';
 import { CashFlowTimelineChart } from '../charts/CashFlowTimelineChart';
 import { ASSET_COLORS, ASSET_LABELS } from '../../lib/constants';
-import { formatCurrency } from '../../lib/formatters';
+import { formatReportingCurrency } from '../../lib/formatters';
+import { useCalculator } from '../../context/CalculatorContext';
 import type { MasterPlanInputs, AssetCategory } from '../../types';
 import type { WealthEngineResult } from '../../lib/wealthEngine';
 
@@ -21,6 +22,9 @@ interface ResultsChartsProps {
  * output only — all simulation math lives in src/lib.
  */
 export const ResultsCharts = ({ inputs, wealthResult }: ResultsChartsProps) => {
+  const { assumptions } = useCalculator();
+  const formatOutput = (amountInInr: number) =>
+    formatReportingCurrency(amountInInr, inputs.reportingCurrency, assumptions.fx);
   const accData = useMemo(
     () =>
       wealthResult.snapshots
@@ -109,7 +113,7 @@ export const ResultsCharts = ({ inputs, wealthResult }: ResultsChartsProps) => {
           </div>
           <p className="mt-2.5 text-xs text-muted leading-relaxed">
             {wealthResult.totalInvested > 0
-              ? `Compounding creates ${formatCurrency(wealthResult.terminalValue)} from ${formatCurrency(wealthResult.totalInvested)} contributed.`
+              ? `Compounding creates ${formatOutput(wealthResult.terminalValue)} from ${formatOutput(wealthResult.totalInvested)} contributed.`
               : 'Add a monthly SIP in Step 03 to project capital contributions.'}
           </p>
         </figure>

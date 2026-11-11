@@ -1,5 +1,6 @@
 import { Sparkles } from 'lucide-react';
 import { NumberInput } from '../ui/NumberInput';
+import { Select } from '../ui/Select';
 import { Badge } from '../ui/Badge';
 import { FormSection } from '../ui/FormSection';
 import { formatOrDash } from '../../lib/planState';
@@ -24,6 +25,10 @@ export const AssumptionsStep = ({
   const { assumptions } = useCalculator();
   const inflation = inputs.inflation;
   const fxCurrencyCount = Object.keys(assumptions.fx).length;
+  const reportingCurrency = inputs.reportingCurrency || 'INR';
+  const currencyOptions = Object.keys(assumptions.fx)
+    .sort((a, b) => (a === 'INR' ? -1 : b === 'INR' ? 1 : a.localeCompare(b)))
+    .map((currency) => ({ value: currency, label: currency }));
   const fxSource = assumptions.fxSource === 'bundled-fallback' ? 'Bundled fallback' : 'Frankfurter reference feed';
   const fxAsOf = assumptions.fxAsOf
     ? new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium' }).format(new Date(`${assumptions.fxAsOf}T00:00:00Z`))
@@ -126,16 +131,25 @@ export const AssumptionsStep = ({
       <FormSection
         index="03"
         title="Currency normalization"
-        description="Foreign-currency assets, liabilities, income, and goals are converted to INR before planning calculations."
+        description="Every input is normalized to INR for calculation. Select any supported currency to view live plan outputs in that currency."
         className="mt-8"
       >
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-px overflow-hidden rounded-md border border-border bg-border">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-px overflow-hidden rounded-md border border-border bg-border">
           <div className="bg-raised px-4 py-3"><span className="block text-[10px] font-mono uppercase tracking-wide text-muted">Planning base</span><strong className="mt-1 block text-sm text-ink">INR</strong></div>
+          <div className="bg-raised px-4 py-3">
+            <Select
+              layout="inline"
+              label="Reporting currency"
+              value={reportingCurrency}
+              onChange={(currency) => updateInputs({ reportingCurrency: currency })}
+              options={currencyOptions}
+            />
+          </div>
           <div className="bg-raised px-4 py-3"><span className="block text-[10px] font-mono uppercase tracking-wide text-muted">Coverage</span><strong className="mt-1 block text-sm text-ink">{fxCurrencyCount} currencies</strong></div>
           <div className="bg-raised px-4 py-3"><span className="block text-[10px] font-mono uppercase tracking-wide text-muted">Reference date</span><strong className="mt-1 block text-sm text-ink">{fxAsOf}</strong></div>
         </div>
         <p className="mt-3 text-xs leading-relaxed text-muted">
-          Source: {fxSource}{assumptions.fxStale ? ' (last available rate set).' : '.'} Rates are daily reference rates, not executable trading quotes.
+          Output currency updates immediately and is saved with this plan. Source: {fxSource}{assumptions.fxStale ? ' (last available rate set).' : '.'} Rates are daily reference rates, not executable trading quotes.
         </p>
       </FormSection>
     </div>

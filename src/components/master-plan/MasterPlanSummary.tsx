@@ -4,7 +4,8 @@ import { FinancialMetric } from '../ui/FinancialMetric';
 import { Button } from '../ui/Button';
 import { guardNumber } from '../../lib/planState';
 import { calculateRetirementCorpus } from '../../lib/calculators';
-import { formatCurrencyCompact, formatPercent } from '../../lib/formatters';
+import { formatReportingCurrency, formatPercent, toInr } from '../../lib/formatters';
+import { useCalculator } from '../../context/CalculatorContext';
 import type { MasterPlanInputs } from '../../types';
 import type { WealthEngineResult } from '../../lib/wealthEngine';
 
@@ -27,6 +28,9 @@ export const MasterPlanSummary = ({
   onViewDetails,
 }: MasterPlanSummaryProps) => {
   const [saving, setSaving] = useState(false);
+  const { assumptions } = useCalculator();
+  const formatOutputCompact = (amountInInr: number) =>
+    formatReportingCurrency(amountInInr, inputs.reportingCurrency, assumptions.fx, true);
 
   const configured = wealthResult.isConfigured;
 
@@ -48,7 +52,7 @@ export const MasterPlanSummary = ({
         inputs.currentAge,
         inputs.retirementAge,
         inputs.lifeExpectancy,
-        inputs.swp.monthlyNeedToday,
+        toInr(inputs.swp.monthlyNeedToday, inputs.swp.currency, assumptions.fx),
         inputs.inflation,
         inputs.swp.postRetirementReturn,
       ).requiredCorpus
@@ -70,12 +74,12 @@ export const MasterPlanSummary = ({
   const metrics = [
     {
       label: 'Projected',
-      value: projected === null ? null : formatCurrencyCompact(projected),
+      value: projected === null ? null : formatOutputCompact(projected),
       hint: configured ? `Terminal wealth at age ${inputs.lifeExpectancy || '—'}` : undefined,
     },
     {
       label: 'Required',
-      value: required === null ? null : formatCurrencyCompact(required),
+      value: required === null ? null : formatOutputCompact(required),
       hint: required !== null ? 'Retirement corpus needed' : undefined,
     },
     {

@@ -1,18 +1,12 @@
-import { useMemo, type ReactNode } from 'react';
-import { Input } from '../ui/Input';
-import { NumberInput } from '../ui/NumberInput';
-import { Select } from '../ui/Select';
-import { FieldGrid } from '../ui/Field';
+import { useMemo, useEffect } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
 import { FormSection } from '../ui/FormSection';
-import { Repeater } from '../ui/Repeater';
 import { calculateEMI } from '../../lib/calculators';
 import { guardNumber, formatOrDash } from '../../lib/planState';
-import { formatCurrency, formatCurrencyCompact } from '../../lib/formatters';
+import { formatReportingCurrency } from '../../lib/formatters';
 import { ASSET_LABELS, ASSET_COLORS } from '../../lib/constants';
-import { useDraft } from '../../hooks/useDraft';
 import type { MasterPlanInputs, Asset, AssetCategory, Liability } from '../../types';
 import { useCalculator } from '../../context/CalculatorContext';
-import { cn } from '../../lib/utils';
 
 interface FinancialsStepProps {
   inputs: MasterPlanInputs;
@@ -29,58 +23,38 @@ const CATEGORY_OPTIONS: { value: AssetCategory; label: string }[] = (
   ['equity', 'debt', 'gold', 'realestate', 'liquid', 'other'] as AssetCategory[]
 ).map((cat) => ({ value: cat, label: ASSET_LABELS[cat] }));
 
-const CheckboxField = ({
-  checked,
-  onChange,
-  children,
-  className,
-}: {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  children: ReactNode;
-  className?: string;
-}) => (
-  <label className={cn('flex items-center gap-2 text-xs text-muted cursor-pointer select-none', className)}>
-    <input
-      type="checkbox"
-      checked={checked}
-      onChange={(e) => onChange(e.target.checked)}
-      className="accent-accent"
-    />
-    {children}
-  </label>
-);
+const advanceCell = (
+  event: React.KeyboardEvent<HTMLTableSectionElement | HTMLDivElement>,
+  onAddRow?: () => void,
+) => {
+  if (event.key !== 'Enter' || event.defaultPrevented) return;
+  const target = event.target as HTMLElement | null;
+  if (!target || !target.matches('input, select, textarea, button')) return;
 
-interface AssetDraft {
-  name: string;
-  category: AssetCategory;
-  value: number;
-  returnRate: number;
-  currency: string;
-}
+  const container = event.currentTarget;
+  const cells = Array.from(
+    container.querySelectorAll<HTMLElement>(
+      'input:not([disabled]):not([type="checkbox"]), select:not([disabled]), input[type="checkbox"]:not([disabled])',
+    ),
+  );
+  const currentIndex = cells.indexOf(target);
+  if (currentIndex === -1) return;
 
-const INITIAL_ASSET_DRAFT: AssetDraft = {
-  name: '',
-  category: 'equity',
-  value: 0,
-  returnRate: 0,
-  currency: 'INR',
-};
+  event.preventDefault();
+  if (event.shiftKey) {
+    const previous = cells[currentIndex - 1];
+    previous?.focus();
+    if (previous instanceof HTMLInputElement && previous.type !== 'checkbox') previous.select?.();
+    return;
+  }
 
-interface LoanDraft {
-  name: string;
-  principal: number;
-  rate: number;
-  tenure: number;
-  currency: string;
-}
-
-const INITIAL_LOAN_DRAFT: LoanDraft = {
-  name: '',
-  principal: 0,
-  rate: 0,
-  tenure: 0,
-  currency: 'INR',
+  const next = cells[currentIndex + 1];
+  if (next) {
+    next.focus();
+    if (next instanceof HTMLInputElement && next.type !== 'checkbox') next.select?.();
+  } else if (onAddRow) {
+    onAddRow();
+  }
 };
 
 export const FinancialsStep = ({
@@ -94,15 +68,15 @@ export const FinancialsStep = ({
   onRemoveAsset,
 }: FinancialsStepProps) => {
   const { assumptions } = useCalculator();
-  const currencyOptions = useMemo(() => Object.keys(assumptions.fx), [assumptions.fx]);
-
-  // New Asset Form State — zero defaults, never pre-seeded demo amounts
-  const assetDraft = useDraft(INITIAL_ASSET_DRAFT, { validate: (d) => !!d.name.trim() });
-  const { name: newAssetName, category: newAssetCategory, value: newAssetValue, returnRate: newAssetReturn, currency: newAssetCurrency } = assetDraft.values;
-
-  // New Loan Form State
-  const loanDraft = useDraft(INITIAL_LOAN_DRAFT, { validate: (d) => !!d.name.trim() });
-  const { name: newLoanName, principal: newLoanPrincipal, rate: newLoanRate, tenure: newLoanTenure, currency: newLoanCurrency } = loanDraft.values;
+  const currencyOptions = useMemo(
+    () =>
+      Object.keys(assumptions.fx || {}).sort((a, b) =>
+        a === 'INR' ? -1 : b === 'INR' ? 1 : a.localeCompare(b),
+      ),
+    [assumptions.fx],
+  );
+  const formatOutput = (amountInInr: number, compact = false) =>
+    formatReportingCurrency(amountInInr, inputs.reportingCurrency, assumptions.fx, compact);
 
   const fx = assumptions?.fx;
 
@@ -120,7 +94,10 @@ export const FinancialsStep = ({
       const t = Math.max(1, Number(loan.tenureYears) || 1);
       const spotRate = fx?.[loan.currency || 'INR']?.spotRate || 1.0;
 
-      const res = p > 0 ? calculateEMI(p * spotRate, r, t) : { emi: 0, totalPayment: 0, totalInterest: 0, principal: 0, yearlyData: [] };
+      const res =
+        p > 0
+          ? calculateEMI(p * spotRate, r, t)
+          : { emi: 0, totalPayment: 0, totalInterest: 0, principal: 0, yearlyData: [] };
       return {
         ...loan,
         emi: res.emi,
@@ -146,56 +123,65 @@ export const FinancialsStep = ({
   const netBalanceSheet = totalAssets - totalLiabilities;
   const debtToAsset = totalAssets > 0 ? (totalLiabilities / totalAssets) * 100 : 0;
 
-  const handleAddAsset = () => {
-    if (!assetDraft.isValid) return;
+  const handleQuickAddAsset = () => {
     onAddAsset({
-      name: newAssetName.trim(),
-      category: newAssetCategory,
-      value: newAssetValue,
-      returnRate: newAssetReturn,
-      currency: newAssetCurrency,
+      name: '',
+      category: 'equity',
+      value: 0,
+      returnRate: 12,
+      currency: inputs.reportingCurrency || 'INR',
       liquidateAtRetirement: true,
     });
-    assetDraft.reset();
   };
 
-  const handleAddLoan = () => {
-    if (!loanDraft.isValid) return;
-    const newLoan: Liability = {
+  const handleQuickAddLoan = () => {
+    onAddLiability({
       id: `loan-${Date.now()}`,
-      name: newLoanName.trim(),
-      principal: newLoanPrincipal,
-      rate: newLoanRate,
-      tenureYears: Math.max(1, newLoanTenure || 1),
+      name: '',
+      principal: 0,
+      rate: 8.5,
+      tenureYears: 10,
       includeInExpenses: true,
-      currency: newLoanCurrency,
-    };
-    onAddLiability(newLoan);
-    loanDraft.reset();
+      currency: inputs.reportingCurrency || 'INR',
+    });
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && (e.key === 'a' || e.key === 'A')) {
+        e.preventDefault();
+        handleQuickAddAsset();
+      } else if (e.altKey && (e.key === 'l' || e.key === 'L')) {
+        e.preventDefault();
+        handleQuickAddLoan();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [inputs.reportingCurrency]);
 
   const summaryRows = [
     {
       label: 'Gross assets',
-      value: formatOrDash(totalAssets > 0 ? totalAssets : null, formatCurrency),
+      value: formatOrDash(totalAssets > 0 ? totalAssets : null, formatOutput),
       note: `${inputs.assets.length} item${inputs.assets.length === 1 ? '' : 's'} recorded`,
     },
     {
       label: 'Liabilities',
-      value: formatOrDash(totalLiabilities > 0 ? totalLiabilities : null, formatCurrency),
+      value: formatOrDash(totalLiabilities > 0 ? totalLiabilities : null, formatOutput),
       note: `${liabilities.length} active loan${liabilities.length === 1 ? '' : 's'}`,
     },
     {
       label: 'Net balance sheet',
       value: formatOrDash(
         totalAssets > 0 || totalLiabilities > 0 ? guardNumber(netBalanceSheet) : null,
-        formatCurrency,
+        formatOutput,
       ),
       note: 'Net household equity',
     },
     {
       label: 'Monthly EMI',
-      value: formatOrDash(totalMonthlyEMI > 0 ? totalMonthlyEMI : null, (v) => `${formatCurrency(v)}/mo`),
+      value: formatOrDash(totalMonthlyEMI > 0 ? totalMonthlyEMI : null, (v) => `${formatOutput(v)}/mo`),
       note: totalAssets > 0 ? `Debt-to-asset ${debtToAsset.toFixed(1)}%` : undefined,
     },
   ];
@@ -222,188 +208,379 @@ export const FinancialsStep = ({
         ))}
       </div>
 
+      {/* Section 01: Assets Spreadsheet Table */}
       <FormSection
         index="01"
         title="Assets"
-        description="Holdings that compound toward net worth."
+        description="Holdings that compound toward net worth. Fill in directly like a spreadsheet."
         meta={`${inputs.assets.length} recorded`}
         className="mt-8"
       >
-        <Repeater<Asset>
-          items={inputs.assets}
-          getKey={(asset) => asset.id}
-          emptyLabel="No assets yet — add the first asset below."
-          addLabel="Add asset"
-          addCommitLabel="Add asset"
-          onAdd={() => {}}
-          onAddCommit={handleAddAsset}
-          addCommitDisabled={!assetDraft.isValid}
-          onRemove={(asset) => onRemoveAsset(asset.id)}
-          renderSummary={(asset) => (
-            <span className="flex items-center gap-3 min-w-0 text-sm">
-              <span
-                className="w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: ASSET_COLORS[asset.category] }}
-                aria-hidden="true"
-              />
-              <span className="truncate font-medium text-ink">{asset.name || 'Unnamed asset'}</span>
-              <span className="truncate text-xs text-muted">{ASSET_LABELS[asset.category]}</span>
-              <span className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted">
-                {formatCurrency(asset.value, 0, asset.currency || 'INR')}
-              </span>
-            </span>
-          )}
-          renderEditor={(asset) => (
-            <FieldGrid cols={{ md: 3 }}>
-              <Input layout="inline" label="Asset name" value={asset.name} onChange={(e) => updateAsset(asset.id, { name: e.target.value })} placeholder="e.g. Parag Parikh Flexi Cap" />
-              <Select layout="inline" label="Category" value={asset.category} onChange={(value) => updateAsset(asset.id, { category: value as AssetCategory })} options={CATEGORY_OPTIONS} />
-              <NumberInput kind="currency" layout="inline" label="Current value" value={asset.value} onChange={(value) => updateAsset(asset.id, { value })} currency={asset.currency} currencyOptions={currencyOptions} onCurrencyChange={(currency) => updateAsset(asset.id, { currency })} />
-              <NumberInput layout="inline" label="Expected return" value={asset.returnRate} onChange={(value) => updateAsset(asset.id, { returnRate: value })} suffix="%" step={0.5} min={0} max={30} slider="focus" />
-              <CheckboxField
-                className="md:col-span-2"
-                checked={asset.liquidateAtRetirement}
-                onChange={(checked) => updateAsset(asset.id, { liquidateAtRetirement: checked })}
-              >
-                Liquidate at retirement
-              </CheckboxField>
-            </FieldGrid>
-          )}
-          renderAddEditor={(
-            <FieldGrid cols={{ sm: 2, lg: 4 }} className="gap-x-4">
-              <Input
-                id="mp-asset-name"
-                label="Asset name"
-                value={newAssetName}
-                onChange={(e) => assetDraft.set('name', e.target.value)}
-                placeholder="e.g. Parag Parikh Flexi Cap"
-              />
-              <Select
-                label="Category"
-                value={newAssetCategory}
-                onChange={(val) => assetDraft.set('category', val as AssetCategory)}
-                options={CATEGORY_OPTIONS}
-              />
-              <NumberInput
-                kind="currency"
-                label="Current value"
-                value={newAssetValue}
-                onChange={(val) => assetDraft.set('value', val)}
-                currency={newAssetCurrency}
-                currencyOptions={currencyOptions}
-                onCurrencyChange={(curr) => assetDraft.set('currency', curr)}
-                presets={[
-                  { label: '₹1L', value: 100000 },
-                  { label: '₹10L', value: 1000000 },
-                  { label: '₹50L', value: 5000000 },
-                ]}
-              />
-              <NumberInput
-                label="Expected return"
-                value={newAssetReturn}
-                onChange={(val) => assetDraft.set('returnRate', val)}
-                suffix="%"
-                step={0.5}
-                min={0}
-                max={30}
-                slider
-              />
-            </FieldGrid>
-          )}
-        />
+        <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+          <p className="text-xs text-muted">
+            Enter values in any currency. The plan equivalent calculates live using normalized reference rates.
+          </p>
+          <button
+            type="button"
+            onClick={handleQuickAddAsset}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-accent text-on-inkfill hover:bg-accent-strong transition-colors cursor-pointer"
+          >
+            <Plus size={14} aria-hidden="true" />
+            <span>Add asset</span>
+            <kbd className="ml-1 text-[10px] font-mono opacity-80">Alt+A</kbd>
+          </button>
+        </div>
+
+        <div className="spreadsheet-wrap" tabIndex={0} role="region" aria-label="Assets spreadsheet table">
+          <table className="spreadsheet-table">
+            <thead>
+              <tr>
+                <th className="spreadsheet-th w-10 text-center">#</th>
+                <th className="spreadsheet-th min-w-[200px]">Asset Name</th>
+                <th className="spreadsheet-th min-w-[140px]">Category</th>
+                <th className="spreadsheet-th w-24">Currency</th>
+                <th className="spreadsheet-th min-w-[140px] text-right">Current Value</th>
+                <th className="spreadsheet-th min-w-[130px] text-right">Plan Eq.</th>
+                <th className="spreadsheet-th w-28 text-right">Return (%)</th>
+                <th className="spreadsheet-th w-32 text-center">Liquidate @ Ret.</th>
+                <th className="spreadsheet-th w-12 text-center" aria-label="Actions"></th>
+              </tr>
+            </thead>
+            <tbody onKeyDown={(e) => advanceCell(e, handleQuickAddAsset)}>
+              {inputs.assets.map((asset, index) => {
+                const spotRate = fx?.[asset.currency || 'INR']?.spotRate || 1.0;
+                const inrValue = (Number(asset.value) || 0) * spotRate;
+                return (
+                  <tr key={asset.id} className="spreadsheet-tr">
+                    <td className="spreadsheet-td text-center font-mono text-xs text-muted">
+                      {index + 1}
+                    </td>
+                    <td className="spreadsheet-td">
+                      <input
+                        id={index === 0 ? 'mp-asset-name' : undefined}
+                        type="text"
+                        className="spreadsheet-control font-medium"
+                        value={asset.name}
+                        onChange={(e) => updateAsset(asset.id, { name: e.target.value })}
+                        placeholder="e.g. Parag Parikh Flexi Cap"
+                        aria-label={`Asset ${index + 1} name`}
+                      />
+                    </td>
+                    <td className="spreadsheet-td">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: ASSET_COLORS[asset.category] }}
+                          aria-hidden="true"
+                        />
+                        <select
+                          className="spreadsheet-control"
+                          value={asset.category}
+                          onChange={(e) =>
+                            updateAsset(asset.id, { category: e.target.value as AssetCategory })
+                          }
+                          aria-label={`Asset ${index + 1} category`}
+                        >
+                          {CATEGORY_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value} className="bg-raised text-ink">
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </td>
+                    <td className="spreadsheet-td">
+                      <select
+                        className="spreadsheet-control font-mono font-semibold text-xs"
+                        value={asset.currency || 'INR'}
+                        onChange={(e) => updateAsset(asset.id, { currency: e.target.value })}
+                        aria-label={`Asset ${index + 1} currency`}
+                      >
+                        {currencyOptions.map((curr) => (
+                          <option key={curr} value={curr} className="bg-raised text-ink">
+                            {curr}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="spreadsheet-td text-right">
+                      <input
+                        type="number"
+                        min={0}
+                        step={1000}
+                        className="spreadsheet-control text-right font-mono tabular-nums"
+                        value={asset.value === 0 ? '' : asset.value}
+                        onChange={(e) =>
+                          updateAsset(asset.id, {
+                            value: Math.max(0, Number(e.target.value) || 0),
+                          })
+                        }
+                        placeholder="0"
+                        aria-label={`Asset ${index + 1} value`}
+                      />
+                    </td>
+                    <td className="spreadsheet-td text-right">
+                      <span className="spreadsheet-pill font-mono tabular-nums">
+                        {formatOutput(inrValue)}
+                      </span>
+                    </td>
+                    <td className="spreadsheet-td text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <input
+                          type="number"
+                          min={0}
+                          max={30}
+                          step={0.5}
+                          className="spreadsheet-control text-right font-mono tabular-nums w-16"
+                          value={asset.returnRate}
+                          onChange={(e) =>
+                            updateAsset(asset.id, { returnRate: Number(e.target.value) || 0 })
+                          }
+                          aria-label={`Asset ${index + 1} return rate`}
+                        />
+                        <span className="text-xs text-muted font-mono">%</span>
+                      </div>
+                    </td>
+                    <td className="spreadsheet-td text-center">
+                      <input
+                        type="checkbox"
+                        className="accent-accent cursor-pointer w-4 h-4"
+                        checked={asset.liquidateAtRetirement}
+                        onChange={(e) =>
+                          updateAsset(asset.id, { liquidateAtRetirement: e.target.checked })
+                        }
+                        aria-label={`Liquidate asset ${index + 1} at retirement`}
+                      />
+                    </td>
+                    <td className="spreadsheet-td text-center">
+                      <button
+                        type="button"
+                        onClick={() => onRemoveAsset(asset.id)}
+                        className="spreadsheet-delete-btn"
+                        title="Remove asset"
+                        aria-label={`Remove asset ${asset.name || index + 1}`}
+                      >
+                        <Trash2 size={13} aria-hidden="true" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {inputs.assets.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="py-8 text-center text-xs text-muted">
+                    No assets recorded yet.{' '}
+                    <button
+                      type="button"
+                      onClick={handleQuickAddAsset}
+                      className="text-accent underline font-medium cursor-pointer"
+                    >
+                      Add the first asset
+                    </button>{' '}
+                    or press{' '}
+                    <kbd className="px-1.5 py-0.5 rounded bg-sunken border border-border text-[10px] font-mono">
+                      Alt+A
+                    </kbd>
+                    .
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <p className="identity-sheet-shortcuts mt-3">
+          <span>Fast entry</span>
+          <span>
+            <kbd>Enter</kbd> next cell <i>·</i> <kbd>Shift</kbd> + <kbd>Enter</kbd> previous <i>·</i>{' '}
+            <kbd>Enter</kbd> on last cell auto-adds row <i>·</i> <kbd>Alt</kbd> + <kbd>A</kbd> add asset <i>·</i>{' '}
+            <kbd>Tab</kbd> navigate <i>·</i> <kbd>Ctrl/⌘</kbd> + <kbd>S</kbd> save
+          </span>
+        </p>
       </FormSection>
 
+      {/* Section 02: Liabilities Spreadsheet Table */}
       <FormSection
         index="02"
         title="Loans & liabilities"
-        description="Amortized obligations with recurring EMI."
-        meta={`${liabilities.length} recorded · ${formatCurrency(totalMonthlyEMI)}/mo EMI`}
+        description="Amortized obligations with recurring EMI. Fill in directly like a spreadsheet."
+        meta={`${liabilities.length} recorded · ${formatOutput(totalMonthlyEMI)}/mo EMI`}
         className="mt-8"
       >
-        <Repeater<Liability & { emi: number; totalPayment: number; totalInterest: number }>
-          items={activeLoansWithEMI}
-          getKey={(loan) => loan.id}
-          emptyLabel="No debt recorded — add a loan below if the household carries EMIs."
-          addLabel="Add loan"
-          addCommitLabel="Add loan"
-          onAdd={() => {}}
-          onAddCommit={handleAddLoan}
-          addCommitDisabled={!loanDraft.isValid}
-          onRemove={(loan) => onRemoveLiability(loan.id)}
-          renderSummary={(loan) => (
-            <span className="flex items-baseline gap-3 min-w-0 text-sm">
-              <span className="truncate font-medium text-ink">{loan.name || 'Unnamed loan'}</span>
-              <span className="truncate text-xs text-muted">
-                {formatOrDash(loan.tenureYears, (v) => `${v} yrs`)} · EMI {formatOrDash(loan.emi > 0 ? loan.emi : null, formatCurrency)}
-              </span>
-              <span className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted">
-                {formatCurrency(loan.principal, 0, loan.currency || 'INR')}
-              </span>
-            </span>
-          )}
-          renderEditor={(loan) => (
-            <FieldGrid cols={{ md: 3 }}>
-              <Input layout="inline" label="Loan name" value={loan.name} onChange={(e) => updateLiability(loan.id, { name: e.target.value })} placeholder="e.g. HDFC Home Loan" />
-              <NumberInput kind="currency" layout="inline" label="Principal" value={loan.principal} onChange={(value) => updateLiability(loan.id, { principal: value })} currency={loan.currency || 'INR'} currencyOptions={currencyOptions} onCurrencyChange={(currency) => updateLiability(loan.id, { currency })} />
-              <NumberInput layout="inline" label="Interest rate" value={loan.rate} onChange={(value) => updateLiability(loan.id, { rate: value })} suffix="%" step={0.25} min={0} max={30} slider="focus" />
-              <NumberInput layout="inline" label="Remaining tenure" value={loan.tenureYears} onChange={(value) => updateLiability(loan.id, { tenureYears: value })} suffix="yrs" step={1} min={1} max={40} />
-              <div className="flex items-center gap-4 md:col-span-2">
-                <CheckboxField
-                  checked={loan.includeInExpenses}
-                  onChange={(checked) => updateLiability(loan.id, { includeInExpenses: checked })}
-                >
-                  Include EMI in monthly expenses
-                </CheckboxField>
-                <span className="font-mono text-[11px] tabular-nums text-faint">
-                  Interest {formatCurrencyCompact(loan.totalInterest)}
-                </span>
-              </div>
-            </FieldGrid>
-          )}
-          renderAddEditor={(
-            <FieldGrid cols={{ sm: 2, lg: 4 }} className="gap-x-4">
-              <Input
-                label="Loan name"
-                value={newLoanName}
-                onChange={(e) => loanDraft.set('name', e.target.value)}
-                placeholder="e.g. HDFC Home Loan"
-              />
-              <NumberInput
-                kind="currency"
-                label="Principal outstanding"
-                value={newLoanPrincipal}
-                onChange={(val) => loanDraft.set('principal', val)}
-                currency={newLoanCurrency}
-                currencyOptions={currencyOptions}
-                onCurrencyChange={(curr) => loanDraft.set('currency', curr)}
-                presets={[
-                  { label: '₹10L', value: 1000000 },
-                  { label: '₹50L', value: 5000000 },
-                  { label: '₹1Cr', value: 10000000 },
-                ]}
-              />
-              <NumberInput
-                label="Interest rate"
-                value={newLoanRate}
-                onChange={(val) => loanDraft.set('rate', val)}
-                suffix="%"
-                step={0.25}
-                min={0}
-                max={30}
-                slider
-              />
-              <NumberInput
-                label="Remaining tenure"
-                value={newLoanTenure}
-                onChange={(val) => loanDraft.set('tenure', val)}
-                suffix="yrs"
-                step={1}
-                min={0}
-                max={40}
-                slider
-              />
-            </FieldGrid>
-          )}
-        />
+        <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+          <p className="text-xs text-muted">
+            Enter debt in any currency. EMIs automatically amortize into monthly household expenditure.
+          </p>
+          <button
+            type="button"
+            onClick={handleQuickAddLoan}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-accent text-on-inkfill hover:bg-accent-strong transition-colors cursor-pointer"
+          >
+            <Plus size={14} aria-hidden="true" />
+            <span>Add loan</span>
+            <kbd className="ml-1 text-[10px] font-mono opacity-80">Alt+L</kbd>
+          </button>
+        </div>
+
+        <div className="spreadsheet-wrap" tabIndex={0} role="region" aria-label="Liabilities spreadsheet table">
+          <table className="spreadsheet-table">
+            <thead>
+              <tr>
+                <th className="spreadsheet-th w-10 text-center">#</th>
+                <th className="spreadsheet-th min-w-[200px]">Loan / Liability Name</th>
+                <th className="spreadsheet-th w-24">Currency</th>
+                <th className="spreadsheet-th min-w-[140px] text-right">Principal Outstanding</th>
+                <th className="spreadsheet-th w-28 text-right">Rate (%)</th>
+                <th className="spreadsheet-th w-28 text-right">Tenure (Yrs)</th>
+                <th className="spreadsheet-th w-28 text-center">In Expenses?</th>
+                <th className="spreadsheet-th min-w-[130px] text-right">Est. Monthly EMI</th>
+                <th className="spreadsheet-th w-12 text-center" aria-label="Actions"></th>
+              </tr>
+            </thead>
+            <tbody onKeyDown={(e) => advanceCell(e, handleQuickAddLoan)}>
+              {activeLoansWithEMI.map((loan, index) => {
+                return (
+                  <tr key={loan.id} className="spreadsheet-tr">
+                    <td className="spreadsheet-td text-center font-mono text-xs text-muted">
+                      {index + 1}
+                    </td>
+                    <td className="spreadsheet-td">
+                      <input
+                        type="text"
+                        className="spreadsheet-control font-medium"
+                        value={loan.name}
+                        onChange={(e) => updateLiability(loan.id, { name: e.target.value })}
+                        placeholder="e.g. HDFC Home Loan, Auto Loan"
+                        aria-label={`Loan ${index + 1} name`}
+                      />
+                    </td>
+                    <td className="spreadsheet-td">
+                      <select
+                        className="spreadsheet-control font-mono font-semibold text-xs"
+                        value={loan.currency || 'INR'}
+                        onChange={(e) => updateLiability(loan.id, { currency: e.target.value })}
+                        aria-label={`Loan ${index + 1} currency`}
+                      >
+                        {currencyOptions.map((curr) => (
+                          <option key={curr} value={curr} className="bg-raised text-ink">
+                            {curr}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="spreadsheet-td text-right">
+                      <input
+                        type="number"
+                        min={0}
+                        step={10000}
+                        className="spreadsheet-control text-right font-mono tabular-nums"
+                        value={loan.principal === 0 ? '' : loan.principal}
+                        onChange={(e) =>
+                          updateLiability(loan.id, {
+                            principal: Math.max(0, Number(e.target.value) || 0),
+                          })
+                        }
+                        placeholder="0"
+                        aria-label={`Loan ${index + 1} principal`}
+                      />
+                    </td>
+                    <td className="spreadsheet-td text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <input
+                          type="number"
+                          min={0}
+                          max={30}
+                          step={0.25}
+                          className="spreadsheet-control text-right font-mono tabular-nums w-16"
+                          value={loan.rate}
+                          onChange={(e) =>
+                            updateLiability(loan.id, { rate: Number(e.target.value) || 0 })
+                          }
+                          aria-label={`Loan ${index + 1} interest rate`}
+                        />
+                        <span className="text-xs text-muted font-mono">%</span>
+                      </div>
+                    </td>
+                    <td className="spreadsheet-td text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <input
+                          type="number"
+                          min={1}
+                          max={40}
+                          step={1}
+                          className="spreadsheet-control text-right font-mono tabular-nums w-14"
+                          value={loan.tenureYears}
+                          onChange={(e) =>
+                            updateLiability(loan.id, {
+                              tenureYears: Math.max(1, Number(e.target.value) || 1),
+                            })
+                          }
+                          aria-label={`Loan ${index + 1} tenure`}
+                        />
+                        <span className="text-xs text-muted font-mono">y</span>
+                      </div>
+                    </td>
+                    <td className="spreadsheet-td text-center">
+                      <input
+                        type="checkbox"
+                        className="accent-accent cursor-pointer w-4 h-4"
+                        checked={loan.includeInExpenses}
+                        onChange={(e) =>
+                          updateLiability(loan.id, { includeInExpenses: e.target.checked })
+                        }
+                        aria-label={`Include loan ${index + 1} in expenses`}
+                      />
+                    </td>
+                    <td className="spreadsheet-td text-right">
+                      <span className="spreadsheet-pill font-mono tabular-nums font-semibold text-ink">
+                        {loan.emi > 0 ? `${formatOutput(loan.emi)}/mo` : '—'}
+                      </span>
+                    </td>
+                    <td className="spreadsheet-td text-center">
+                      <button
+                        type="button"
+                        onClick={() => onRemoveLiability(loan.id)}
+                        className="spreadsheet-delete-btn"
+                        title="Remove loan"
+                        aria-label={`Remove loan ${loan.name || index + 1}`}
+                      >
+                        <Trash2 size={13} aria-hidden="true" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {liabilities.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="py-8 text-center text-xs text-muted">
+                    No loans or liabilities recorded.{' '}
+                    <button
+                      type="button"
+                      onClick={handleQuickAddLoan}
+                      className="text-accent underline font-medium cursor-pointer"
+                    >
+                      Add a loan
+                    </button>{' '}
+                    or press{' '}
+                    <kbd className="px-1.5 py-0.5 rounded bg-sunken border border-border text-[10px] font-mono">
+                      Alt+L
+                    </kbd>
+                    .
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <p className="identity-sheet-shortcuts mt-3">
+          <span>Fast entry</span>
+          <span>
+            <kbd>Enter</kbd> next cell <i>·</i> <kbd>Shift</kbd> + <kbd>Enter</kbd> previous <i>·</i>{' '}
+            <kbd>Enter</kbd> on last cell auto-adds loan <i>·</i> <kbd>Alt</kbd> + <kbd>L</kbd> add loan <i>·</i>{' '}
+            <kbd>Tab</kbd> navigate <i>·</i> <kbd>Ctrl/⌘</kbd> + <kbd>S</kbd> save
+          </span>
+        </p>
       </FormSection>
     </div>
   );

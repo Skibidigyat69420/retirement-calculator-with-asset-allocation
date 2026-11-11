@@ -154,6 +154,16 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
+function monthlyLiabilityPayment(liability: MasterPlanInputs['liabilities'][number]): number {
+  if (liability.monthlyPayment && liability.monthlyPayment > 0) return liability.monthlyPayment;
+  if (liability.principal <= 0) return 0;
+  const months = Math.max(1, liability.tenureYears * 12);
+  const monthlyRate = Math.max(0, liability.rate) / 1200;
+  return monthlyRate === 0
+    ? liability.principal / months
+    : liability.principal * monthlyRate * Math.pow(1 + monthlyRate, months) / (Math.pow(1 + monthlyRate, months) - 1);
+}
+
 /** Recursively replaces any non-finite number (NaN/±Infinity) with 0. */
 function sanitizeFinite<T>(value: T): T {
   if (typeof value === 'number') return (Number.isFinite(value) ? value : 0) as T;
@@ -724,26 +734,48 @@ export function runWealthEngine(
 ): WealthEngineResult {
   const seededRandom = createSeededRandom(seed);
   const randomSource = seededRandom ? seededRandom.random : Math.random;
+  const toInr = (amount: number, currency?: string) =>
+    amount * (assumptions?.fx?.[currency || 'INR']?.spotRate || 1.0);
+  const convertedLiabilities = inputs.liabilities.map((liability) => ({
+    ...liability,
+    principal: toInr(liability.principal, liability.currency),
+    monthlyPayment: toInr(liability.monthlyPayment || 0, liability.currency),
+  }));
+  const monthlyExpenseInInr = toInr(inputs.monthlyLivingExpenses, inputs.monthlyLivingExpensesCurrency)
+    + convertedLiabilities
+      .filter((liability) => liability.includeInExpenses)
+      .reduce((sum, liability) => sum + monthlyLiabilityPayment(liability), 0);
 
   // Pre-process inputs: Normalize amounts to base currency using spot rates.
   const convertedInputs = {
     ...inputs,
+    monthlyLivingExpenses: toInr(inputs.monthlyLivingExpenses, inputs.monthlyLivingExpensesCurrency),
+    monthlyExpenditure: monthlyExpenseInInr,
+    sip: {
+      ...inputs.sip,
+      amount: toInr(inputs.sip.amount, inputs.sip.currency),
+    },
+    stp: {
+      ...inputs.stp,
+      lumpsum: toInr(inputs.stp.lumpsum, inputs.stp.currency),
+      monthlyTransfer: toInr(inputs.stp.monthlyTransfer, inputs.stp.currency),
+    },
+    swp: {
+      ...inputs.swp,
+      monthlyNeedToday: toInr(inputs.swp.monthlyNeedToday, inputs.swp.currency),
+    },
     annualIncome: (inputs.client.incomeSources || []).length > 0
       ? (inputs.client.incomeSources || []).reduce((total, source) => {
           const spotRate = assumptions?.fx?.[source.currency || 'INR']?.spotRate || 1.0;
           const baseAmount = source.amount * spotRate;
           return total + Math.max(0, baseAmount) * (source.frequency === 'monthly' ? 12 : 1);
         }, 0)
-      : inputs.annualIncome,
+      : toInr(inputs.annualIncome, inputs.annualIncomeCurrency),
     assets: inputs.assets.map(a => ({
       ...a,
       value: a.value * (assumptions?.fx?.[a.currency || 'INR']?.spotRate || 1.0)
     })),
-    liabilities: inputs.liabilities.map(l => ({
-      ...l,
-      principal: l.principal * (assumptions?.fx?.[l.currency || 'INR']?.spotRate || 1.0),
-      monthlyPayment: (l.monthlyPayment || 0) * (assumptions?.fx?.[l.currency || 'INR']?.spotRate || 1.0)
-    })),
+    liabilities: convertedLiabilities,
     goals: inputs.goals.map(g => ({
       ...g,
       targetAmount: g.targetAmount * (assumptions?.fx?.[g.currency || 'INR']?.spotRate || 1.0)

@@ -83,6 +83,43 @@ describe('wealthEngine', () => {
     assert.equal(result.currencyExposure[0]?.amount, 840_000);
   });
 
+  it('normalizes direct cashflow, SIP, and STP inputs in their selected currencies', () => {
+    const inputs = demoClientInputs();
+    inputs.assets = [];
+    inputs.liabilities = [];
+    inputs.client.incomeSources = [];
+    inputs.annualIncome = 120_000;
+    inputs.annualIncomeCurrency = 'USD';
+    inputs.monthlyLivingExpenses = 1_000;
+    inputs.monthlyLivingExpensesCurrency = 'USD';
+    inputs.monthlyExpenditure = 1_000;
+    inputs.sip = { ...inputs.sip, amount: 100, currency: 'USD' };
+    inputs.stp = { ...inputs.stp, active: true, lumpsum: 5_000, monthlyTransfer: 10, currency: 'USD' };
+    inputs.swp = { ...inputs.swp, monthlyNeedToday: 500, currency: 'USD' };
+    const assumptions = getDefaultAssumptions();
+    assumptions.fx.USD.spotRate = 84;
+
+    const result = runWealthEngine(inputs, assumptions, undefined, null, 'cashflow-fx-normalization');
+
+    assert.equal(result.annualIncome, 10_080_000);
+    assert.equal(result.annualExpenses, 1_008_000);
+    assert.equal(result.monthlySIP, 8_400);
+    assert.equal(result.annualInvested, 110_880);
+
+    const inrInputs = {
+      ...inputs,
+      annualIncome: 10_080_000,
+      annualIncomeCurrency: 'INR',
+      monthlyLivingExpenses: 84_000,
+      monthlyLivingExpensesCurrency: 'INR',
+      sip: { ...inputs.sip, amount: 8_400, currency: 'INR' },
+      stp: { ...inputs.stp, lumpsum: 420_000, monthlyTransfer: 840, currency: 'INR' },
+      swp: { ...inputs.swp, monthlyNeedToday: 42_000, currency: 'INR' },
+    };
+    const equivalentInrResult = runWealthEngine(inrInputs, assumptions, undefined, null, 'cashflow-fx-normalization');
+    assert.equal(result.terminalValue, equivalentInrResult.terminalValue);
+  });
+
   it('runWealthEngine returns financially sensible value ranges', () => {
     const inputs = demoClientInputs();
     const assumptions = getDefaultAssumptions();
