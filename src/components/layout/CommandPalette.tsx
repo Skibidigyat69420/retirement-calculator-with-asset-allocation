@@ -10,6 +10,9 @@ import {
   Moon,
   Monitor,
   CornerDownLeft,
+  Plus,
+  Save,
+  Printer,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -39,7 +42,7 @@ const matches = (query: string, ...fields: (string | undefined)[]) =>
 
 export const CommandPalette = ({ open, onClose, onRequestReset }: CommandPaletteProps) => {
   const navigate = useNavigate();
-  const { savedPlans, loadSavedPlan, loadPersona } = useCalculator();
+  const { savedPlans, loadSavedPlan, loadPersona, saveCurrentPlan } = useCalculator();
   const { theme, setTheme } = useTheme();
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
@@ -103,6 +106,30 @@ export const CommandPalette = ({ open, onClose, onRequestReset }: CommandPalette
     ].filter((o) => theme !== o.value);
 
     const actions: PaletteEntry[] = [
+      {
+        id: 'action:save-plan',
+        group: 'Actions' as const,
+        label: 'Save current plan',
+        sublabel: 'Shortcut: Ctrl / ⌘ + S',
+        icon: Save,
+        run: () => { void saveCurrentPlan(); },
+      },
+      {
+        id: 'action:new-household',
+        group: 'Actions' as const,
+        label: 'Add household',
+        sublabel: 'Create a relationship before starting a plan',
+        icon: Plus,
+        run: () => navigate('/clients?add=1'),
+      },
+      {
+        id: 'action:dossier',
+        group: 'Actions' as const,
+        label: 'Open dossier',
+        sublabel: 'Prepare the client narrative and export',
+        icon: Printer,
+        run: () => navigate('/dossier'),
+      },
       ...PERSONAS.map(
         (persona): PaletteEntry => ({
           id: `action:persona-${persona.id}`,
@@ -134,7 +161,7 @@ export const CommandPalette = ({ open, onClose, onRequestReset }: CommandPalette
     // Empty query: quiet defaults — a few navigate targets + all actions.
     if (!q) return [...navigateEntries.slice(0, 6), ...actions];
     return [...plans, ...navigateEntries, ...actions];
-  }, [query, savedPlans, theme, navigate, loadSavedPlan, loadPersona, setTheme, onRequestReset]);
+  }, [query, savedPlans, theme, navigate, loadSavedPlan, loadPersona, saveCurrentPlan, setTheme, onRequestReset]);
 
   // Clamp the active row instead of resetting it in an effect.
   const clampedIndex = entries.length === 0 ? 0 : Math.min(activeIndex, entries.length - 1);
@@ -195,7 +222,7 @@ export const CommandPalette = ({ open, onClose, onRequestReset }: CommandPalette
                   setActiveIndex(0);
                 }}
                 onKeyDown={handleInputKeyDown}
-                placeholder="Search plans, pages, actions…"
+                placeholder="Search pages, households, actions…"
                 aria-label="Search commands"
                 className="flex-1 min-w-0 py-3 text-sm text-ink placeholder:text-faint bg-transparent outline-none border-none focus:outline-none focus-visible:outline-none"
               />

@@ -67,8 +67,8 @@ export const ThemeToggle = ({ variant = 'segmented', className }: ThemeTogglePro
             {active && (
               <motion.span
                 layoutId={`theme-${layoutId}`}
-                className="absolute inset-0 rounded-md bg-raised shadow-card border border-border-subtle"
-                transition={{ type: 'spring', stiffness: 500, damping: 42, mass: 0.7 }}
+                className="absolute inset-0 rounded-md bg-raised border border-border-subtle"
+                transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
                 aria-hidden="true"
               />
             )}

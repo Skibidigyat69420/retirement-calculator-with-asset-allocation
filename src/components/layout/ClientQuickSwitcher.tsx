@@ -20,6 +20,7 @@ export function ClientQuickSwitcher() {
   const [clients, setClients] = useState<CRMClient[]>(() => getCRMClients());
   const [activeClient, setActiveClient] = useState<CRMClient | null>(() => getActiveCRMClient());
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   // Sync client list & active client whenever events fire
   useEffect(() => {
@@ -44,7 +45,16 @@ export function ClientQuickSwitcher() {
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      triggerRef.current?.focus();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [open]);
 
   const currentDisplayName = inputs.client.name?.trim() || activeClient?.name || 'Sample Household';
@@ -91,8 +101,12 @@ export function ClientQuickSwitcher() {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => {
+          if (!open) setSearch('');
+          setOpen((prev) => !prev);
+        }}
         className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-border bg-surface/90 hover:bg-raised hover:border-border-strong text-ink transition-all shadow-xs cursor-pointer group"
         aria-label="Active client household switcher"
         aria-expanded={open}

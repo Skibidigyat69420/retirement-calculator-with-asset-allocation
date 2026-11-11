@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
-import { Menu, Search, Wallet, ShieldCheck, User, FlaskConical, RotateCcw, ChevronDown, LogOut, Save, Printer } from 'lucide-react';
+import { Menu, Search, User, FlaskConical, RotateCcw, ChevronDown, LogOut, Save, Printer } from 'lucide-react';
 import { navItems } from './navItems';
 import { LogoMark } from './BrandMark';
 import { CommandPalette } from './CommandPalette';
-import { PersonaMenu } from './PersonaMenu';
 import { Avatar } from '../ui/Avatar';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { useCalculator } from '../../context/CalculatorContext';
-import { formatCurrencyCompact } from '../../lib/formatters';
 import { useAuth } from '../../context/AuthContext';
 
 import { ClientQuickSwitcher } from './ClientQuickSwitcher';
@@ -29,7 +27,7 @@ const isEditableTarget = (el: EventTarget | null): boolean => {
 export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { inputs, riskProfile, riskScore, hasRiskAnswers, wealthResult, loadPersona, resetToDefaults, saveCurrentPlan } =
+  const { inputs, loadPersona, resetToDefaults, saveCurrentPlan } =
     useCalculator();
   const { user, organizationName, organizationId, memberships, logout } = useAuth();
 
@@ -43,18 +41,29 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
   const label = current?.label || 'Dashboard';
   const section = current?.section || 'Workspace';
 
-  // Global ⌘K / Ctrl+K — ignored while typing in a field.
+  // Keyboard shortcuts stay out of fields, where their native behaviour wins.
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         if (isEditableTarget(e.target)) return;
         e.preventDefault();
         setPaletteOpen((prev) => !prev);
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        if (isEditableTarget(e.target)) return;
+        e.preventDefault();
+        void saveCurrentPlan();
+        return;
+      }
+      if (e.key === '/' && !isEditableTarget(e.target)) {
+        e.preventDefault();
+        setPaletteOpen(true);
       }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, []);
+  }, [saveCurrentPlan]);
 
   // Close the profile menu on outside interaction.
   useEffect(() => {
@@ -150,7 +159,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
 
           {/* Desktop: breadcrumb */}
           <div className="hidden lg:flex items-center gap-1.5 min-w-0">
-            <Link to="/" className="text-xs font-medium text-muted hover:text-ink transition-colors">Workspace</Link>
+            <Link to="/" className="text-xs font-medium text-muted hover:text-ink transition-colors">SoundThesis</Link>
             <span className="text-muted text-xs" aria-hidden="true">/</span>
             <span className="text-xs text-muted font-medium">{section}</span>
             <span className="text-muted text-xs" aria-hidden="true">/</span>
@@ -173,48 +182,7 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
               <kbd>⌘K</kbd>
             </button>
 
-            {/* Demo personas */}
-            <div className="flex items-center gap-1.5 border-r border-border pr-2 sm:pr-2.5 mr-0.5">
-              <PersonaMenu />
-            </div>
-
-            {/* Net worth — only when a plan is configured */}
-            {wealthResult.isConfigured && (
-              <div
-                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-surface/80 text-ink"
-                title="Net worth"
-              >
-                <Wallet size={14} strokeWidth={1.7} className="text-accent-strong shrink-0" />
-                <span className="text-[13px] font-semibold tabular-nums">
-                  {formatCurrencyCompact(wealthResult.netWorth)}
-                </span>
-              </div>
-            )}
-
-            {/* Risk profile — only when the questionnaire has real answers */}
-            {hasRiskAnswers && (
-              <Link
-                to="/risk"
-                title={`Risk profile: ${riskProfile.label} (${riskScore}/100)`}
-                className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-surface/80 text-ink hover:border-border-strong transition-colors"
-              >
-                <ShieldCheck size={14} strokeWidth={1.7} className="text-accent-strong shrink-0" />
-                <span className="text-[13px] font-medium capitalize">{riskProfile.label}</span>
-                <span className="text-[11px] text-muted tabular-nums">{riskScore}</span>
-              </Link>
-            )}
-
-            {/* Dossier quick export pill */}
-            <Link
-              to="/dossier"
-              title="Open or export wealth dossier slide deck"
-              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-surface/80 text-ink hover:border-border-strong hover:bg-raised transition-colors text-[13px] font-medium"
-            >
-              <Printer size={14} strokeWidth={1.7} className="text-accent-strong shrink-0" />
-              <span>Dossier</span>
-            </Link>
-
-            <ThemeToggle variant="segmented" className="hidden sm:inline-flex" />
+            <ThemeToggle variant="icon" className="hidden sm:inline-flex" />
 
             {/* Profile menu */}
             <div ref={menuRef} className="relative">
@@ -269,6 +237,10 @@ export const TopBar = ({ onMenuClick, mobileOpen }: TopBarProps) => {
                   <div className="border-t border-border-subtle px-3 py-2">
                     <p className="truncate text-[11px] text-muted">{user?.email ?? 'Local workspace'}</p>
                     <p className="mt-0.5 truncate text-[11px] text-faint">{organizationName ?? 'Personal practice'}</p>
+                    <div className="mt-2.5 flex items-center justify-between gap-3">
+                      <span className="text-[11px] font-medium text-muted">Appearance</span>
+                      <ThemeToggle variant="segmented" />
+                    </div>
                   </div>
                 </div>
               )}

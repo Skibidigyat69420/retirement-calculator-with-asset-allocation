@@ -173,9 +173,9 @@
   --color-border-strong: #BFC8C0;
   --color-border-subtle: #E8EBE5;
   --color-ink: #17201D;
-  --color-ink-soft: #44504A;
-  --color-muted: #6B7770;
-  --color-faint: #8C9790;
+  --color-ink-soft: #39463F;
+  --color-muted: #617067;
+  --color-faint: #738178;
   --color-accent: #176B5B;
   --color-accent-strong: #105446;
   --color-accent-soft: #E1F0EA;
@@ -216,13 +216,13 @@
   --color-inkfill: #F0F4EF;
   --color-on-inkfill: #101714;
   --color-overlay: rgba(7, 12, 10, 0.76);
-  --color-border: #2D3933;
-  --color-border-strong: #445249;
+  --color-border: #34423B;
+  --color-border-strong: #526158;
   --color-border-subtle: #25312C;
   --color-ink: #F0F4EF;
-  --color-ink-soft: #CBD4CD;
-  --color-muted: #94A299;
-  --color-faint: #718077;
+  --color-ink-soft: #D6DED8;
+  --color-muted: #B2BEB6;
+  --color-faint: #95A39A;
   --color-accent: #63BEA7;
   --color-accent-strong: #8BD4C0;
   --color-accent-soft: #173D34;
@@ -911,6 +911,24 @@ button:not(:disabled):active {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
+.dark .glass-header { background: color-mix(in srgb, var(--color-canvas) 98%, transparent); }
+
+/* Controls are deliberately quiet in both themes; focus and selected state
+   carry direction while the surrounding surface remains calm. */
+input, select, textarea { caret-color: var(--color-accent); }
+select option { background: var(--color-raised); color: var(--color-ink); }
+::selection { background: var(--color-accent-soft); color: var(--color-ink); }
+.dark ::selection { background: var(--color-accent); color: var(--color-on-inkfill); }
+
+/* A concise global header keeps the client context and page conclusion as the
+   stable points of reference instead of repeating plan metrics everywhere. */
+.glass-header [aria-label="Open search (Command K)"] {
+  border-radius: 6px;
+  background: transparent;
+}
+.glass-header [aria-label="Open search (Command K)"]:hover { background: var(--color-sunken); }
+.glass-header [aria-label="Workspace menu"] { min-height: 2.25rem; min-width: 2.25rem; justify-content: center; }
+.dark kbd { background: var(--color-sunken); border-color: var(--color-border); color: var(--color-muted); }
 .glass-bento,
 .metric-strip,
 .hero-orbit {
