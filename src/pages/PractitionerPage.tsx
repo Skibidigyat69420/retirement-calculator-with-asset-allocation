@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowUpRight, ChevronRight, Download, LayoutGrid, List, RefreshCw, Search, UserPlus, Users, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -24,6 +24,10 @@ export function PractitionerPage() {
   const [exporting, setExporting] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  // State updates are asynchronous. Keep a synchronous guard too, so a
+  // second submit cannot issue another create request before the button has
+  // rendered as disabled.
+  const creatingRef = useRef(false);
   const [newClient, setNewClient] = useState({ firstName: '', lastName: '', email: '', phone: '' });
 
   useEffect(() => {
@@ -73,7 +77,8 @@ export function PractitionerPage() {
 
   const submitNewClient = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!newClient.firstName.trim() || !newClient.lastName.trim()) return;
+    if (creatingRef.current || !newClient.firstName.trim() || !newClient.lastName.trim()) return;
+    creatingRef.current = true;
     setCreating(true);
     setError(null);
     try {
@@ -86,17 +91,17 @@ export function PractitionerPage() {
       await loadClients();
       setSelectedId(created.id);
       setActiveCRMClient(created.id);
-      updateClient({
-        name: `${created.firstName} ${created.lastName}`.trim(),
-        email: created.email ?? undefined,
-        phone: created.phone ?? undefined,
-      });
+      // Do not call CalculatorContext.updateClient here. Its callback closes
+      // over the previously active client ID until React processes the
+      // active-client event, which can overwrite the household just viewed.
+      // The selected client is hydrated from the API after navigation.
       setNewClient({ firstName: '', lastName: '', email: '', phone: '' });
       setAddOpen(false);
       navigate('/master-plan');
     } catch (cause) {
       setError(cause instanceof ApiRequestError ? cause.message : 'Could not create client.');
     } finally {
+      creatingRef.current = false;
       setCreating(false);
     }
   };
