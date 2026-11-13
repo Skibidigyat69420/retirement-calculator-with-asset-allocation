@@ -16,6 +16,8 @@ All notable product changes are documented here. Commit IDs are included when a 
 ### Visual refinement
 
 - Refined the existing advisory workspace appearance: app shell, client directory, client cards, dialogs, active controls, and authentication entry screen.
+- Rebased the product palette on the live Sound Thesis system: paper `#F7F2E8`, ink `#242B34`, sage `#7C8F73`, and soft sage `#DFE5D5`.
+- Matched the brand’s typography direction with Inter for interface text and Poppins for display hierarchy; refined radii, elevation, hero proportion, and dark-mode surfaces.
 - Preserved the information architecture, routes, and workflow order.
 
 ### Verification
