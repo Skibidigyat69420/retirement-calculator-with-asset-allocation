@@ -7,6 +7,14 @@ import { ApiRequestError, createClient, exportClientBundle, listClients, listCli
 import { formatCurrencyCompact } from '../lib/formatters';
 
 import { setActiveCRMClient } from '../lib/crm';
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@ui-sdk/react/dialog';
 
 const initials = (name: string) => name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
 
@@ -125,7 +133,7 @@ export function PractitionerPage() {
         <div className="directory-hero-actions"><button className="directory-icon-button" onClick={() => void loadClients()} aria-label="Refresh households"><RefreshCw size={17} className={loading ? 'animate-spin' : ''} /></button><button className="directory-new-button" onClick={handleAddClient} disabled={loading}><UserPlus size={16} /> Add household</button></div>
       </header>
 
-      <section className="directory-toolbar"><div className="directory-toolbar-title"><h2>All households <span>{filtered.length}</span></h2></div><div className="directory-controls"><label className="directory-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search households" aria-label="Search households" /></label><div className="directory-view-toggle"><button className={view === 'grid' ? 'active' : ''} onClick={() => setView('grid')} aria-label="Grid view"><LayoutGrid size={16} /></button><button className={view === 'list' ? 'active' : ''} onClick={() => setView('list')} aria-label="List view"><List size={16} /></button></div></div></section>
+      <section className="directory-toolbar"><div className="directory-toolbar-title"><h2>All households <span>{filtered.length}</span></h2></div><div className="directory-controls"><label className="directory-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search households" aria-label="Search households" /></label><div className="directory-view-toggle" aria-label="Directory view"><button className={view === 'grid' ? 'active' : ''} onClick={() => setView('grid')} aria-label="Grid view" aria-pressed={view === 'grid'}><LayoutGrid size={16} /></button><button className={view === 'list' ? 'active' : ''} onClick={() => setView('list')} aria-label="List view" aria-pressed={view === 'list'}><List size={16} /></button></div></div></section>
 
       {selected && (
         <aside className="client-selected-banner" aria-label={`Actions for ${selected.name}`}>
@@ -173,28 +181,29 @@ export function PractitionerPage() {
         </section>
       </div>
 
-      {addOpen && <div className="client-create-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !creating) setAddOpen(false); }}>
-        <section className="client-create-dialog" role="dialog" aria-modal="true" aria-labelledby="create-client-title">
-          <header><div><h2 id="create-client-title">Add client</h2></div><button type="button" onClick={() => setAddOpen(false)} disabled={creating} aria-label="Close add client form"><X size={18} /></button></header>
-          <p className="client-create-intro">Create the household record and its first master plan. Financial data can be added next inside the planning workspace.</p>
+      <Dialog open={addOpen} onOpenChange={(open, details) => { if (!open && creating) details.cancel(); else setAddOpen(open); }}>
+        <DialogBackdrop className="client-create-backdrop" />
+        <DialogContent className="client-create-dialog" initialFocus="#new-client-first-name">
+          <header><div><DialogTitle id="create-client-title">Add client</DialogTitle></div><DialogClose disabled={creating} aria-label="Close add client form"><X size={18} /></DialogClose></header>
+          <DialogDescription className="client-create-intro">Create the household record and its first master plan. Financial data can be added next inside the planning workspace.</DialogDescription>
           <form onSubmit={submitNewClient}>
-            <label><span>First name *</span><input autoFocus required value={newClient.firstName} onChange={(event) => setNewClient((value) => ({ ...value, firstName: event.target.value }))} placeholder="Aarav" /></label>
+            <label><span>First name *</span><input id="new-client-first-name" required value={newClient.firstName} onChange={(event) => setNewClient((value) => ({ ...value, firstName: event.target.value }))} placeholder="Aarav" /></label>
             <label><span>Last name *</span><input required value={newClient.lastName} onChange={(event) => setNewClient((value) => ({ ...value, lastName: event.target.value }))} placeholder="Mehta" /></label>
             <label><span>Email</span><input type="email" value={newClient.email} onChange={(event) => setNewClient((value) => ({ ...value, email: event.target.value }))} placeholder="aarav@example.com" /></label>
             <label><span>Phone</span><input type="tel" value={newClient.phone} onChange={(event) => setNewClient((value) => ({ ...value, phone: event.target.value }))} placeholder="+91 98765 43210" /></label>
             <div className="client-create-note"><UserPlus size={18} /><span>{user ? 'The signed-in adviser is assigned as primary. A versioned starter plan is created automatically.' : 'This client is saved in the local workspace. Add financial details in the planning workspace.'}</span></div>
             <div className="client-create-actions"><button type="button" onClick={() => setAddOpen(false)} disabled={creating}>Cancel</button><button type="submit" disabled={creating || !newClient.firstName.trim() || !newClient.lastName.trim()}>{creating ? 'Creating…' : 'Create client'} <ArrowUpRight size={15} /></button></div>
           </form>
-        </section>
-      </div>}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
 function ClientCard({ client, selected, onSelect, onExport, exporting }: { client: ClientSummary; index?: number; selected: boolean; onSelect: () => void; onExport: () => void; exporting: boolean }) {
-  return <article className={`client-card ${selected ? 'selected' : ''}`} onClick={onSelect}><div className="client-card-top"><span className="client-avatar">{initials(client.name)}</span><span className="client-status"><i /> {client.status || 'Active'}</span></div><h3>{client.name}</h3><p className="client-card-email">{client.assignedPractitioners[0]?.fullName ?? 'Advisor relationship'}</p><div className="client-card-value"><span>Net worth</span><strong>{formatCurrencyCompact(client.financialSummary.netWorth)}</strong></div><div className="client-card-bottom"><span className="client-tag">{client.name.split(' ')[0]} plan</span><button onClick={(event) => { event.stopPropagation(); onExport(); }} disabled={exporting} aria-label={`Export ${client.name}`}><Download size={14} /></button><ChevronRight size={16} /></div></article>;
+  return <article className={`client-card ${selected ? 'selected' : ''}`}><button type="button" className="client-card-select" onClick={onSelect} aria-pressed={selected} aria-label={`Select ${client.name}`}><div className="client-card-top"><span className="client-avatar">{initials(client.name)}</span><span className="client-status"><i /> {client.status || 'Active'}</span></div><h3>{client.name}</h3><p className="client-card-email">{client.assignedPractitioners[0]?.fullName ?? 'Advisor relationship'}</p><div className="client-card-value"><span>Net worth</span><strong>{formatCurrencyCompact(client.financialSummary.netWorth)}</strong></div><div className="client-card-bottom"><span className="client-tag">{client.name.split(' ')[0]} plan</span><ChevronRight size={16} /></div></button><button className="client-card-export" onClick={() => onExport()} disabled={exporting} aria-label={`Export ${client.name}`}><Download size={14} /></button></article>;
 }
 
 function ClientRow({ client, selected, onSelect }: { client: ClientSummary; index?: number; selected: boolean; onSelect: () => void }) {
-  return <button className={`client-row ${selected ? 'selected' : ''}`} onClick={onSelect}><span className="client-row-name"><span className="client-avatar small">{initials(client.name)}</span><span><strong>{client.name}</strong><small>{client.assignedPractitioners[0]?.fullName ?? 'Assigned relationship'}</small></span></span><strong>{formatCurrencyCompact(client.financialSummary.netWorth)}</strong><span>{client.assignedPractitioners[0]?.assignmentRole ?? 'Primary'}</span><span className="client-status"><i /> {client.status || 'Active'}</span><ChevronRight size={16} /></button>;
+  return <button className={`client-row ${selected ? 'selected' : ''}`} onClick={onSelect} aria-pressed={selected}><span className="client-row-name"><span className="client-avatar small">{initials(client.name)}</span><span><strong>{client.name}</strong><small>{client.assignedPractitioners[0]?.fullName ?? 'Assigned relationship'}</small></span></span><strong>{formatCurrencyCompact(client.financialSummary.netWorth)}</strong><span>{client.assignedPractitioners[0]?.assignmentRole ?? 'Primary'}</span><span className="client-status"><i /> {client.status || 'Active'}</span><ChevronRight size={16} /></button>;
 }

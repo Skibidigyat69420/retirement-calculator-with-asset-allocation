@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, MotionConfig } from 'framer-motion';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
@@ -12,6 +13,14 @@ interface LayoutProps {
 
 export const Layout = ({ children }: LayoutProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      document.getElementById('main-content')?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [location.pathname]);
 
   return (
     <MotionConfig reducedMotion="user">
@@ -28,6 +37,7 @@ export const Layout = ({ children }: LayoutProps) => {
           <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
             <motion.main
               id="main-content"
+              tabIndex={-1}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}

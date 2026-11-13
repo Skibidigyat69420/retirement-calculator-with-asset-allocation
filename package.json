@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "test:qa": "node scripts/headless-qa.js",
     "test:unit": "npx tsx --test tests/**/*.test.ts",
+    "test:ui": "vitest run src/components/layout/ClientQuickSwitcher.test.tsx src/components/ui/Repeater.test.tsx",
     "fetch:data": ".venv/bin/python scripts/fetch_historical.py",
     "fetch:yahoo": ".venv/bin/python scripts/fetch_historical.py",
     "test:onboarding:ui": "node scripts/test-onboarding-ui.mjs"
@@ -20,6 +21,8 @@
     "@fastify/cors": "^11.3.0",
     "@supabase/supabase-js": "^2.116.0",
     "@tailwindcss/vite": "^4.3.3",
+    "@ui-sdk/core": "^0.1.0-beta.1",
+    "@ui-sdk/react": "^0.1.0-beta.1",
     "autoprefixer": "^10.5.4",
     "clsx": "^2.1.1",
     "fastify": "^5.12.5",
@@ -37,16 +40,21 @@
   },
   "devDependencies": {
     "@axe-core/puppeteer": "^4.13.0",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.10",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vercel/node": "^12.0.1",
     "@vitejs/plugin-react": "^6.1.0",
     "axe-core": "^4.13.0",
+    "jsdom": "^31.0.0",
     "oxlint": "^1.79.0",
     "puppeteer-core": "^25.9.0",
     "tsx": "^4.23.13",
     "typescript": "~6.0.2",
-    "vite": "^8.2.2"
+    "vite": "^8.2.2",
+    "vitest": "^5.1.0"
   }
 }

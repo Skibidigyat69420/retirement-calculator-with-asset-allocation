@@ -90,20 +90,24 @@ export const Repeater = <T,>({
         const isOpen = expandedKey === key;
         return (
           <div key={key} className="border-t border-border">
-            <div
-              role="button"
-              tabIndex={0}
-              aria-expanded={isOpen}
-              onClick={() => toggle(key)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  toggle(key);
-                }
-              }}
-              className="flex items-center gap-3 min-h-11 px-1 -mx-1 rounded-sm cursor-pointer select-none transition-colors hover:bg-sunken/50"
-            >
-              <div className="flex-1 min-w-0">{renderSummary(item)}</div>
+            <div className="flex items-center gap-1 -mx-1 rounded-sm hover:bg-sunken/50 transition-colors">
+              <button
+                type="button"
+                aria-expanded={isOpen}
+                onClick={() => toggle(key)}
+                className="flex flex-1 items-center gap-3 min-h-11 px-1 text-left cursor-pointer select-none"
+              >
+                <div className="flex-1 min-w-0">{renderSummary(item)}</div>
+                <ChevronDown
+                  size={14}
+                  strokeWidth={1.8}
+                  aria-hidden="true"
+                  className={cn(
+                    'text-muted transition-transform duration-200 shrink-0',
+                    isOpen && 'rotate-180',
+                  )}
+                />
+              </button>
               {onRemove && (
                 <button
                   type="button"
@@ -117,15 +121,6 @@ export const Repeater = <T,>({
                   <Trash2 size={14} strokeWidth={1.7} aria-hidden="true" />
                 </button>
               )}
-              <ChevronDown
-                size={14}
-                strokeWidth={1.8}
-                aria-hidden="true"
-                className={cn(
-                  'text-muted transition-transform duration-200 shrink-0',
-                  isOpen && 'rotate-180',
-                )}
-              />
             </div>
             {renderExpanded(
               key,
