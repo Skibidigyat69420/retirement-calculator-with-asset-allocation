@@ -42,7 +42,8 @@ already-required `FIELD_ENCRYPTION_KEY`.
    secret.
 3. Run `server/db/migrations/0009_risk_assessments.sql`,
    `server/db/migrations/0010_client_risk_profiles.sql`, and
-   `server/db/migrations/0011_risk_profile_imports.sql` on the shared Postgres
+   `server/db/migrations/0011_risk_profile_imports.sql`, and
+   `server/db/migrations/0012_risk_profile_collaboration.sql` on the shared Postgres
    database before issuing links or portable transfers.
 4. If the API is a separate origin, include both the main application origin
    and `https://risk.yourdomain.com` in the server-only `CORS_ORIGIN` list.

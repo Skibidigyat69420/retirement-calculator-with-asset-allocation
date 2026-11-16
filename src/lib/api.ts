@@ -230,9 +230,16 @@ export interface RiskAssessmentRecord {
   recipientName: string | null;
   status: RiskAssessmentStatus;
   answers: Record<string, number>;
+  answerDetails: Record<string, { owner: 'advisor' | 'client' | 'joint'; note?: string; uncertain?: boolean }>;
   riskScore: number | null;
   riskVerdict: string | null;
   expiresAt: string;
+  sentAt: string | null;
+  openedAt: string | null;
+  reminderSentAt: string | null;
+  revokedAt: string | null;
+  workflowStatus: RiskWorkflowStatus | null;
+  clientConfirmedAt: string | null;
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -247,10 +254,17 @@ export interface ClientRiskProfileRecord {
   id: string;
   status: 'in_progress' | 'completed';
   source: 'advisor' | 'client' | 'imported';
+  workflowStatus: RiskWorkflowStatus;
   answers: Record<string, number>;
+  answerDetails: Record<string, { owner: 'advisor' | 'client' | 'joint'; note?: string; uncertain?: boolean }>;
   riskScore: number | null;
   riskVerdict: string | null;
   completedAt: string | null;
+  submittedAt: string | null;
+  reviewedAt: string | null;
+  appliedAt: string | null;
+  clientConfirmedAt: string | null;
+  version: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -259,6 +273,9 @@ export interface AdviserRiskProfileRecord extends ClientRiskProfileRecord {
   clientId: string;
   clientName: string;
 }
+
+export type RiskWorkflowStatus = 'draft' | 'sent' | 'client_in_progress' | 'submitted' | 'reviewed' | 'applied';
+export interface ClientRiskProfileVersion extends ClientRiskProfileRecord { profileId: string; }
 
 // ------------------------------------------------------------- endpoints
 
@@ -355,9 +372,12 @@ export function getClientRiskProfile(clientId: string): Promise<ClientRiskProfil
   return request<ClientRiskProfileRecord | { data: null }>(`/clients/${clientId}/risk-profile`);
 }
 
-export function saveClientRiskProfile(clientId: string, answers: Record<string, number>): Promise<ClientRiskProfileRecord> {
-  return request<ClientRiskProfileRecord>(`/clients/${clientId}/risk-profile`, { method: 'PUT', body: { answers } });
+export function saveClientRiskProfile(clientId: string, answers: Record<string, number>, answerDetails?: ClientRiskProfileRecord['answerDetails']): Promise<ClientRiskProfileRecord> {
+  return request<ClientRiskProfileRecord>(`/clients/${clientId}/risk-profile`, { method: 'PUT', body: { answers, answerDetails } });
 }
+
+export function listClientRiskProfileHistory(clientId: string): Promise<{ data: ClientRiskProfileVersion[] }> { return request(`/clients/${clientId}/risk-profile/history`); }
+export function updateClientRiskProfileWorkflow(clientId: string, action: 'reviewed' | 'applied'): Promise<ClientRiskProfileRecord> { return request(`/clients/${clientId}/risk-profile/${action}`, { method: 'POST' }); }
 
 export function exportClientRiskProfile(clientId: string): Promise<{ exportCode: string; expiresAt: string; profile: ClientRiskProfileRecord }> {
   return request<{ exportCode: string; expiresAt: string; profile: ClientRiskProfileRecord }>(`/clients/${clientId}/risk-profile/export`, { method: 'POST' });
@@ -381,6 +401,10 @@ export function createRiskAssessment(
   );
 }
 
+export function updateRiskAssessmentLifecycle(clientId: string, assessmentId: string, action: 'shared' | 'reminded' | 'revoked'): Promise<RiskAssessmentRecord> {
+  return request(`/clients/${clientId}/risk-assessments/${assessmentId}/${action}`, { method: 'POST' });
+}
+
 export function getPublicRiskAssessment(token: string): Promise<RiskAssessmentRecord> {
   return request<RiskAssessmentRecord>(`/public/risk-assessments/${encodeURIComponent(token)}`);
 }
@@ -388,21 +412,27 @@ export function getPublicRiskAssessment(token: string): Promise<RiskAssessmentRe
 export function submitPublicRiskAssessment(
   token: string,
   answers: Record<string, number>,
+  answerDetails?: RiskAssessmentRecord['answerDetails'],
 ): Promise<RiskAssessmentRecord> {
   return request<RiskAssessmentRecord>(`/public/risk-assessments/${encodeURIComponent(token)}/submit`, {
     method: 'POST',
-    body: { answers },
+    body: { answers, answerDetails },
   });
 }
 
 export function savePublicRiskAssessmentDraft(
   token: string,
   answers: Record<string, number>,
+  answerDetails?: RiskAssessmentRecord['answerDetails'],
 ): Promise<RiskAssessmentRecord> {
   return request<RiskAssessmentRecord>(`/public/risk-assessments/${encodeURIComponent(token)}/draft`, {
     method: 'PATCH',
-    body: { answers },
+    body: { answers, answerDetails },
   });
+}
+
+export function confirmPublicRiskAssessment(token: string): Promise<RiskAssessmentRecord> {
+  return request(`/public/risk-assessments/${encodeURIComponent(token)}/confirm`, { method: 'POST' });
 }
 
 export function calculatePlan(planId: string): Promise<CalculateResponse> {

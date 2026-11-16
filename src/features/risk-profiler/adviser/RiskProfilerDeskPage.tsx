@@ -10,7 +10,12 @@ import {
   createRiskAssessment,
   exportClientRiskProfile,
   importClientRiskProfile,
+  listClientRiskProfileHistory,
   listPracticeRiskProfiles,
+  updateClientRiskProfileWorkflow,
+  updateRiskAssessmentLifecycle,
+  type ClientRiskProfileVersion,
+  type RiskAssessmentRecord,
   type AdviserRiskProfileRecord,
 } from '../../../lib/api';
 import { calculateRiskScore, getRiskProfile, isComplete } from '../../../lib/riskQuestionnaire';
@@ -20,7 +25,7 @@ import { setActiveCRMClient } from '../../../lib/crm';
 /** Adviser-only control surface for the separate, client-facing Risk Profiler. */
 export function RiskProfilerDesk() {
   const { user } = useAuth();
-  const { inputs, riskAnswers, setRiskAnswers, refreshSharedRiskProfile, logDecision, showToast } = useCalculator();
+  const { inputs, riskAnswers, setRiskAnswers, riskAnswerDetails, setRiskAnswerDetails, refreshSharedRiskProfile, logDecision, showToast } = useCalculator();
   const [activeClientId, setActiveClientId] = useState<string | null>(() => localStorage.getItem('stw.activeClientId'));
   const [records, setRecords] = useState<AdviserRiskProfileRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -32,6 +37,8 @@ export function RiskProfilerDesk() {
   const [importCode, setImportCode] = useState('');
   const [transferring, setTransferring] = useState(false);
   const [assessmentMode, setAssessmentMode] = useState(false);
+  const [activeAssessment, setActiveAssessment] = useState<RiskAssessmentRecord | null>(null);
+  const [history, setHistory] = useState<ClientRiskProfileVersion[]>([]);
 
   const refresh = useCallback(async () => {
     if (!user) return;
@@ -49,6 +56,10 @@ export function RiskProfilerDesk() {
 
   useEffect(() => { void refresh(); }, [refresh]);
   useEffect(() => {
+    if (!activeClientId) { setHistory([]); return; }
+    void listClientRiskProfileHistory(activeClientId).then((response) => setHistory(response.data)).catch(() => setHistory([]));
+  }, [activeClientId, records.length]);
+  useEffect(() => {
     const syncClient = () => setActiveClientId(localStorage.getItem('stw.activeClientId'));
     window.addEventListener('stw:active-client-changed', syncClient);
     return () => window.removeEventListener('stw:active-client-changed', syncClient);
@@ -59,11 +70,12 @@ export function RiskProfilerDesk() {
     setCreating(true);
     setError(null);
     try {
-      const { accessToken } = await createRiskAssessment(activeClientId, {
+      const { accessToken, assessment } = await createRiskAssessment(activeClientId, {
         recipientName: inputs.client.name.trim() || undefined,
         initialAnswers: riskAnswers,
       });
       const url = riskProfilerLink(accessToken);
+      setActiveAssessment(assessment);
       setShareUrl(url);
       try {
         await navigator.clipboard.writeText(url);
@@ -77,6 +89,18 @@ export function RiskProfilerDesk() {
     } finally {
       setCreating(false);
     }
+  };
+
+  const runWorkflowAction = async (action: 'reviewed' | 'applied') => {
+    if (!activeClientId || transferring) return;
+    setTransferring(true);
+    try { await updateClientRiskProfileWorkflow(activeClientId, action); await refreshSharedRiskProfile(); await refresh(); showToast(action === 'reviewed' ? 'Risk profile marked as adviser-reviewed.' : 'Reviewed profile applied to the plan.', 'success'); } catch (cause) { setError(cause instanceof ApiRequestError ? cause.message : 'Could not update the review status.'); } finally { setTransferring(false); }
+  };
+
+  const updateLifecycle = async (action: 'shared' | 'reminded' | 'revoked') => {
+    if (!activeClientId || !activeAssessment || transferring) return;
+    setTransferring(true);
+    try { const next = await updateRiskAssessmentLifecycle(activeClientId, activeAssessment.id, action); setActiveAssessment(next); showToast(action === 'shared' ? 'Link marked as shared.' : action === 'reminded' ? 'Reminder recorded; copy the same link to send it.' : 'Client link revoked.', 'success'); } catch (cause) { setError(cause instanceof ApiRequestError ? cause.message : 'Could not update the client link.'); } finally { setTransferring(false); }
   };
 
   const exportProfile = async () => {
@@ -118,6 +142,7 @@ export function RiskProfilerDesk() {
   };
 
   const activeClientName = inputs.client.name.trim() || 'the selected household';
+  const activeProfile = records.find((record) => record.clientId === activeClientId) ?? null;
   const summary = useMemo(() => ({
     completed: records.filter((record) => record.status === 'completed' && isComplete(record.answers)).length,
     awaiting: records.filter((record) => record.status === 'in_progress').length,
@@ -138,6 +163,8 @@ export function RiskProfilerDesk() {
         <Metric label="Selected household" value={activeClientId ? activeClientName : 'Choose a household'} />
       </section>
 
+      {activeClientId && <section className="rounded-xl border border-border bg-raised p-5 sm:p-6"><div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><div className="eyebrow mb-2">Collaboration status</div><h2 className="text-lg font-semibold text-ink">{activeClientName}</h2><p className="mt-1 text-sm text-muted">The plan uses the shared answers; review and apply make the adviser sign-off explicit.</p></div><div className="flex gap-2"><Button variant="outline" size="sm" onClick={() => void runWorkflowAction('reviewed')} disabled={!activeProfile || activeProfile.workflowStatus === 'reviewed' || activeProfile.workflowStatus === 'applied' || transferring}>Mark reviewed</Button><Button size="sm" onClick={() => void runWorkflowAction('applied')} disabled={!activeProfile || activeProfile.workflowStatus !== 'reviewed' || transferring}>Apply to plan</Button></div></div><WorkflowTimeline status={activeProfile?.workflowStatus ?? 'draft'} profile={activeProfile} assessment={activeAssessment} /></section>}
+
       <section className="rounded-xl border border-border bg-raised p-5 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -147,7 +174,7 @@ export function RiskProfilerDesk() {
           {activeClientId && <Button variant="outline" onClick={() => setAssessmentMode((value) => !value)}>{assessmentMode ? 'Close assessment' : isComplete(riskAnswers) ? 'Review or edit' : 'Fill with client'}</Button>}
         </div>
         {!activeClientId && <p className="mt-4 text-sm text-muted">Select a household first to start its shared risk assessment.</p>}
-        {assessmentMode && activeClientId && <div className="mt-6 border-t border-border pt-6"><RiskAssessment riskAnswers={riskAnswers} setRiskAnswers={setRiskAnswers} onLogDecision={logDecision} onViewReport={() => { setAssessmentMode(false); showToast('Shared risk profile saved.', 'success'); }} /></div>}
+        {assessmentMode && activeClientId && <div className="mt-6 border-t border-border pt-6"><RiskAssessment riskAnswers={riskAnswers} setRiskAnswers={setRiskAnswers} answerDetails={riskAnswerDetails} setAnswerDetails={setRiskAnswerDetails} onLogDecision={logDecision} onViewReport={() => { setAssessmentMode(false); showToast('Shared risk profile saved.', 'success'); }} /></div>}
       </section>
 
       <section className="rounded-xl border border-border bg-raised p-5 sm:p-6">
@@ -159,6 +186,7 @@ export function RiskProfilerDesk() {
           <Button onClick={() => void createLink()} disabled={!activeClientId || creating}><Link2 size={14} className="mr-1" />{creating ? 'Creating…' : 'Create link'}</Button>
         </div>
         {shareUrl && <div className="mt-5 rounded-md border border-accent/30 bg-accent-soft p-3"><div className="flex items-center gap-2 text-xs font-semibold text-ink"><ClipboardCopy size={14} /> Send this client link</div><input readOnly value={shareUrl} onFocus={(event) => event.currentTarget.select()} className="mt-2 w-full rounded border border-border bg-surface px-3 py-2 font-mono text-xs text-ink" aria-label="Client risk-profiler link" /></div>}
+        {activeAssessment && activeAssessment.status === 'invited' && <div className="mt-4 flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={() => void updateLifecycle('shared')} disabled={transferring}>{activeAssessment.sentAt ? 'Shared' : 'Mark as shared'}</Button><Button variant="outline" size="sm" onClick={() => void updateLifecycle('reminded')} disabled={transferring}>Record reminder</Button><Button variant="ghost" size="sm" onClick={() => void updateLifecycle('revoked')} disabled={transferring}>Revoke link</Button></div>}
         {error && <p className="mt-4 text-sm text-negative">{error}</p>}
       </section>
 
@@ -187,12 +215,22 @@ export function RiskProfilerDesk() {
         {!loading && !error && records.length === 0 && <p className="rounded-lg border border-dashed border-border p-5 text-sm text-muted">No profiles have been sent yet. Select a household, then create its first link.</p>}
         {records.length > 0 && <div className="overflow-hidden rounded-lg border border-border bg-raised"><div className="hidden grid-cols-[1.2fr_1fr_0.75fr_auto] gap-4 border-b border-border bg-sunken/40 px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted md:grid"><span>Client</span><span>Risk verdict</span><span>Source / status</span><span /></div>{records.map((record) => <RiskProfileRow key={record.id} record={record} activeClientId={activeClientId} onSelectClient={() => setActiveCRMClient(record.clientId)} />)}</div>}
       </section>
+
+      {activeClientId && <section className="rounded-xl border border-border bg-raised p-5 sm:p-6"><div className="eyebrow mb-2">Version history</div><h2 className="text-lg font-semibold text-ink">Risk-profile record</h2><div className="mt-4 space-y-2">{history.length === 0 ? <p className="text-sm text-muted">No recorded profile versions yet.</p> : history.slice(0, 8).map((item) => <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-border-subtle pt-2 text-sm"><span className="font-medium text-ink">v{item.version} · {item.workflowStatus.replaceAll('_', ' ')}</span><span className="text-muted">{item.riskVerdict ?? 'In progress'} · {new Date(item.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</span></div>)}</div></section>}
     </div>
   );
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
   return <div><div className="text-[11px] font-semibold uppercase tracking-wider text-muted">{label}</div><div className="mt-1 truncate text-sm font-semibold text-ink">{value}</div></div>;
+}
+
+function WorkflowTimeline({ status, profile, assessment }: { status: string; profile: AdviserRiskProfileRecord | null; assessment: RiskAssessmentRecord | null }) {
+  const steps = [
+    ['draft', 'Drafted by adviser'], ['sent', 'Shared with client'], ['client_in_progress', 'Client in progress'], ['submitted', 'Client submitted'], ['reviewed', 'Adviser reviewed'], ['applied', 'Applied to plan'],
+  ] as const;
+  const current = Math.max(0, steps.findIndex(([id]) => id === status));
+  return <ol className="mt-5 grid gap-2 sm:grid-cols-3 lg:grid-cols-6">{steps.map(([id, label], index) => <li key={id} className={`rounded-md border px-3 py-2 text-xs ${index <= current ? 'border-accent/30 bg-accent-soft text-ink' : 'border-border bg-surface text-faint'}`}><span className="block font-semibold">{index + 1}. {label}</span>{id === 'sent' && assessment?.sentAt && <span>Recorded</span>}{id === 'client_in_progress' && assessment?.openedAt && <span>Opened</span>}{id === 'submitted' && profile?.submittedAt && <span>Received</span>}{id === 'reviewed' && profile?.reviewedAt && <span>Signed off</span>}{id === 'applied' && profile?.appliedAt && <span>Current plan</span>}</li>)}</ol>;
 }
 
 function RiskProfileRow({ record, activeClientId, onSelectClient }: { record: AdviserRiskProfileRecord; activeClientId: string | null; onSelectClient: () => void }) {

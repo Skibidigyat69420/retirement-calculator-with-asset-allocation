@@ -3,9 +3,12 @@ export type InviteRole = Exclude<Role, 'practice_owner'>;
 export type ResourceType = 'assets' | 'liabilities' | 'cashflows' | 'goals';
 export type ReportKind = 'plan-report' | 'dossier';
 export type ReportStatus = 'draft' | 'review' | 'approved' | 'archived';
-export type RiskAssessmentStatus = 'invited' | 'completed' | 'expired';
+export type RiskAssessmentStatus = 'invited' | 'completed' | 'revoked' | 'expired';
 export type RiskProfileStatus = 'in_progress' | 'completed';
 export type RiskProfileSource = 'advisor' | 'client' | 'imported';
+export type RiskWorkflowStatus = 'draft' | 'sent' | 'client_in_progress' | 'submitted' | 'reviewed' | 'applied';
+export type RiskAnswerOwner = 'advisor' | 'client' | 'joint';
+export type RiskAnswerDetails = Record<string, { owner: RiskAnswerOwner; note?: string; uncertain?: boolean }>;
 
 export type UserRecord = { id: string; authUserId: string; email: string; fullName: string | null };
 export type Membership = { organizationId: string; organizationName: string; role: Role };
@@ -78,9 +81,14 @@ export type RiskAssessment = {
   recipientName: string | null;
   status: RiskAssessmentStatus;
   answers: Record<string, number>;
+  answerDetails: RiskAnswerDetails;
   riskScore: number | null;
   riskVerdict: string | null;
   expiresAt: string;
+  sentAt: string | null;
+  openedAt: string | null;
+  reminderSentAt: string | null;
+  revokedAt: string | null;
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -93,12 +101,26 @@ export type ClientRiskProfile = {
   clientId: string;
   status: RiskProfileStatus;
   source: RiskProfileSource;
+  workflowStatus: RiskWorkflowStatus;
   answers: Record<string, number>;
+  answerDetails: RiskAnswerDetails;
   riskScore: number | null;
   riskVerdict: string | null;
   completedAt: string | null;
+  submittedAt: string | null;
+  reviewedAt: string | null;
+  reviewedByUserId: string | null;
+  appliedAt: string | null;
+  clientConfirmedAt: string | null;
+  version: number;
   createdAt: string;
   updatedAt: string;
+};
+
+export type ClientRiskProfileVersion = Omit<ClientRiskProfile, 'id' | 'createdAt' | 'updatedAt'> & {
+  id: string;
+  profileId: string;
+  createdAt: string;
 };
 
 export type CalculationRun = {

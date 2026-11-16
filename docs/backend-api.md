@@ -57,8 +57,12 @@ Errors use this envelope:
 | `PATCH` | `/api/v1/clients/:clientId` | Update client demographics. |
 | `GET` | `/api/v1/clients/:clientId/risk-assessments` | List standalone risk-profiler records for one household. |
 | `POST` | `/api/v1/clients/:clientId/risk-assessments` | Create a client bearer link; response includes its one-time plaintext token. |
+| `POST` | `/api/v1/clients/:clientId/risk-assessments/:assessmentId/{shared,reminded,revoked}` | Record link activity or revoke an outstanding link. |
 | `GET` | `/api/v1/clients/:clientId/risk-profile` | Get the household’s current shared risk profile. |
 | `PUT` | `/api/v1/clients/:clientId/risk-profile` | Save adviser-entered risk answers to the shared profile. |
+| `GET` | `/api/v1/clients/:clientId/risk-profile/history` | List retained collaboration versions. |
+| `POST` | `/api/v1/clients/:clientId/risk-profile/reviewed` | Record the adviser review gate. |
+| `POST` | `/api/v1/clients/:clientId/risk-profile/applied` | Mark a reviewed profile as applied to the plan. |
 | `POST` | `/api/v1/clients/:clientId/risk-profile/export` | Create a signed, risk-only portable transfer code (valid for 180 days). |
 | `POST` | `/api/v1/clients/:clientId/risk-profile/import` | Validate a portable transfer code and apply it to the selected household’s shared profile. |
 | `GET` | `/api/v1/clients/:clientId/export?format=json` | Export a client bundle. |
@@ -103,6 +107,7 @@ Errors use this envelope:
 | `GET` | `/api/v1/public/risk-assessments/:token` | Open a client’s standalone risk questionnaire. |
 | `PATCH` | `/api/v1/public/risk-assessments/:token/draft` | Save partial questionnaire progress without changing the main plan. |
 | `POST` | `/api/v1/public/risk-assessments/:token/submit` | Submit the completed questionnaire once. |
+| `POST` | `/api/v1/public/risk-assessments/:token/confirm` | Client confirms an adviser-reviewed profile. |
 
 ## Reports
 

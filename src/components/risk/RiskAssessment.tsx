@@ -21,6 +21,9 @@ interface RiskAssessmentProps {
   onViewReport: () => void;
   /** Public-profiler copy never refers to an adviser workspace or allocations. */
   clientMode?: boolean;
+  /** Collaboration annotations travel with an answer but do not affect scoring. */
+  answerDetails?: Record<string, { owner: 'advisor' | 'client' | 'joint'; note?: string; uncertain?: boolean }>;
+  setAnswerDetails?: Dispatch<SetStateAction<Record<string, { owner: 'advisor' | 'client' | 'joint'; note?: string; uncertain?: boolean }>>>;
 }
 
 /**
@@ -34,6 +37,8 @@ export const RiskAssessment = ({
   onLogDecision,
   onViewReport,
   clientMode = false,
+  answerDetails = {},
+  setAnswerDetails,
 }: RiskAssessmentProps) => {
   const answeredCount = Object.keys(riskAnswers).length;
   const complete = isComplete(riskAnswers);
@@ -43,6 +48,10 @@ export const RiskAssessment = ({
     const wasComplete = isComplete(riskAnswers);
 
     setRiskAnswers((prev) => ({ ...prev, [question.id]: score }));
+    setAnswerDetails?.((previousDetails) => ({
+      ...previousDetails,
+      [question.id]: { ...previousDetails[question.id], owner: previousDetails[question.id]?.owner ?? (clientMode ? 'client' : 'advisor') },
+    }));
 
     // Editing an answer on an already-completed profile is a decision — log it.
     if (wasComplete && typeof previous === 'number' && previous !== score) {
@@ -163,6 +172,16 @@ export const RiskAssessment = ({
                         );
                       })}
                     </div>
+                    {setAnswerDetails && typeof selected === 'number' && (
+                      <div className="mt-3 rounded-md border border-border-subtle bg-sunken/30 p-3">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+                          <span className="font-medium text-ink-soft">Response owner</span>
+                          {(clientMode ? (['client', 'joint'] as const) : (['advisor', 'client', 'joint'] as const)).map((owner) => <button key={owner} type="button" onClick={() => setAnswerDetails((previous) => ({ ...previous, [question.id]: { ...previous[question.id], owner } }))} className={cn('rounded-full border px-2 py-0.5 capitalize', answerDetails[question.id]?.owner === owner ? 'border-accent bg-accent-soft text-accent-strong' : 'border-border bg-raised text-muted')}>{owner}</button>)}
+                          <label className="ml-auto inline-flex items-center gap-1"><input type="checkbox" checked={Boolean(answerDetails[question.id]?.uncertain)} onChange={(event) => setAnswerDetails((previous) => ({ ...previous, [question.id]: { ...previous[question.id], owner: previous[question.id]?.owner ?? (clientMode ? 'client' : 'advisor'), uncertain: event.target.checked } }))} /> Not sure</label>
+                        </div>
+                        <input value={answerDetails[question.id]?.note ?? ''} onChange={(event) => setAnswerDetails((previous) => ({ ...previous, [question.id]: { ...previous[question.id], owner: previous[question.id]?.owner ?? (clientMode ? 'client' : 'advisor'), note: event.target.value } }))} maxLength={500} placeholder={clientMode ? 'Optional note for your adviser' : 'Optional discussion note'} className="mt-2 w-full border-0 bg-transparent p-0 text-xs text-ink outline-none placeholder:text-faint" />
+                      </div>
+                    )}
                   </fieldset>
                 );
               },

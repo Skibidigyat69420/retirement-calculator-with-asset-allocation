@@ -46,6 +46,7 @@ import {
   patchClient,
   patchFinancialResource,
   saveClientRiskProfile,
+  type ClientRiskProfileRecord,
   fetchInrFxRates,
 } from '../lib/api';
 import { getActiveCRMClient, saveCRMClient } from '../lib/crm';
@@ -78,6 +79,8 @@ interface CalculatorContextType {
   setAssumptions: React.Dispatch<React.SetStateAction<AssumptionSet>>;
   riskAnswers: RiskAnswers;
   setRiskAnswers: React.Dispatch<React.SetStateAction<RiskAnswers>>;
+  riskAnswerDetails: ClientRiskProfileRecord['answerDetails'];
+  setRiskAnswerDetails: React.Dispatch<React.SetStateAction<ClientRiskProfileRecord['answerDetails']>>;
   refreshSharedRiskProfile: () => Promise<void>;
   riskProfile: RiskProfile;
   riskScore: number;
@@ -338,6 +341,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
   });
   const [assumptions, setAssumptions] = useState<AssumptionSet>(() => loadAssumptions());
   const [riskAnswers, setRiskAnswersState] = useState<RiskAnswers>(() => loadRiskAnswers());
+  const [riskAnswerDetails, setRiskAnswerDetails] = useState<ClientRiskProfileRecord['answerDetails']>({});
   const [manualTargets, setManualTargetsState] = useState<Record<AssetCategory, number> | null>(() => loadManualTargets());
   const [manualAllocationPolicy, setManualAllocationPolicyState] = useState<ManualAllocationPolicy | null>(() => loadManualAllocationPolicy());
   const [decisionHistory, setDecisionHistory] = useState<DecisionLogEntry[]>(() => loadDecisionHistory());
@@ -433,7 +437,8 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         const sharedAnswers = 'answers' in sharedRiskProfile ? sharedRiskProfile.answers : null;
         const nextRiskAnswers = (sharedAnswers ?? snapshot.riskAnswers ?? {}) as RiskAnswers;
         setRiskAnswersState(nextRiskAnswers);
-        syncedRiskAnswersRef.current = sharedAnswers ? JSON.stringify(sharedAnswers) : null;
+        setRiskAnswerDetails('answerDetails' in sharedRiskProfile ? sharedRiskProfile.answerDetails : {});
+        syncedRiskAnswersRef.current = sharedAnswers ? JSON.stringify({ riskAnswers: sharedAnswers, riskAnswerDetails: 'answerDetails' in sharedRiskProfile ? sharedRiskProfile.answerDetails : {} }) : null;
         backendLoadedRef.current = true;
       } catch (error) {
         console.warn('Could not hydrate the selected client from the backend:', error);
@@ -656,23 +661,24 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
   // record is the live shared view used by both adviser and client flows.
   useEffect(() => {
     if (!backendEnabled || !activeClientId || !backendLoadedRef.current || backendHydratingRef.current || Object.keys(riskAnswers).length === 0) return;
-    const serialized = JSON.stringify(riskAnswers);
+    const serialized = JSON.stringify({ riskAnswers, riskAnswerDetails });
     if (syncedRiskAnswersRef.current === serialized) return;
     const timer = window.setTimeout(() => {
-      void saveClientRiskProfile(activeClientId, riskAnswers)
+      void saveClientRiskProfile(activeClientId, riskAnswers, riskAnswerDetails)
         .then(() => { syncedRiskAnswersRef.current = serialized; })
         .catch((error) => console.warn('Shared risk-profile save failed:', error));
     }, 650);
     return () => window.clearTimeout(timer);
-  }, [activeClientId, backendEnabled, riskAnswers]);
+  }, [activeClientId, backendEnabled, riskAnswers, riskAnswerDetails]);
 
   const refreshSharedRiskProfile = useCallback(async () => {
     if (!backendEnabled || !activeClientId) return;
     const profile = await getClientRiskProfile(activeClientId);
     if (!('answers' in profile)) return;
     const answers = profile.answers as RiskAnswers;
-    syncedRiskAnswersRef.current = JSON.stringify(answers);
+    syncedRiskAnswersRef.current = JSON.stringify({ riskAnswers: answers, riskAnswerDetails: profile.answerDetails });
     setRiskAnswersState(answers);
+    setRiskAnswerDetails(profile.answerDetails);
   }, [activeClientId, backendEnabled]);
 
   // Auto-calibrate assumptions using extracted historical market-data CSV bundle
@@ -1294,6 +1300,8 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       setAssumptions,
       riskAnswers,
       setRiskAnswers,
+      riskAnswerDetails,
+      setRiskAnswerDetails,
       refreshSharedRiskProfile,
       riskProfile,
       riskScore,
@@ -1350,6 +1358,8 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       assumptions,
       riskAnswers,
       setRiskAnswers,
+      riskAnswerDetails,
+      setRiskAnswerDetails,
       refreshSharedRiskProfile,
       riskProfile,
       riskScore,

@@ -112,15 +112,22 @@ function readPortableRiskProfile(code: string): PortableRiskProfile | null {
   }
 }
 
-function publicRiskAssessmentResponse(assessment: RiskAssessment) {
+function publicRiskAssessmentResponse(assessment: RiskAssessment, profile?: ClientRiskProfile | null) {
   return {
     id: assessment.id,
     recipientName: assessment.recipientName,
     status: assessment.status,
     answers: assessment.answers,
+    answerDetails: assessment.answerDetails,
     riskScore: assessment.riskScore,
     riskVerdict: assessment.riskVerdict,
     expiresAt: assessment.expiresAt,
+    sentAt: assessment.sentAt,
+    openedAt: assessment.openedAt,
+    reminderSentAt: assessment.reminderSentAt,
+    revokedAt: assessment.revokedAt,
+    workflowStatus: profile?.workflowStatus ?? null,
+    clientConfirmedAt: profile?.clientConfirmedAt ?? null,
     completedAt: assessment.completedAt,
     createdAt: assessment.createdAt,
     updatedAt: assessment.updatedAt,
@@ -140,10 +147,17 @@ function sharedRiskProfileResponse(profile: ClientRiskProfile) {
     id: profile.id,
     status: profile.status,
     source: profile.source,
+    workflowStatus: profile.workflowStatus,
     answers: profile.answers,
+    answerDetails: profile.answerDetails,
     riskScore: profile.riskScore,
     riskVerdict: profile.riskVerdict,
     completedAt: profile.completedAt,
+    submittedAt: profile.submittedAt,
+    reviewedAt: profile.reviewedAt,
+    appliedAt: profile.appliedAt,
+    clientConfirmedAt: profile.clientConfirmedAt,
+    version: profile.version,
     createdAt: profile.createdAt,
     updatedAt: profile.updatedAt,
   };
@@ -383,10 +397,12 @@ export async function buildApp(store: AppStore = createStore()) {
   // text and no client identity, plan, allocation or practice data is exposed.
   app.get('/api/v1/public/risk-assessments/:token', async (request, reply) => {
     const { token } = z.object({ token: z.string().min(32).max(256) }).parse(request.params);
-    const assessment = await store.getRiskAssessmentByTokenHash(tokenHash(token));
+    const hash = tokenHash(token);
+    const assessment = await store.markRiskAssessmentOpened(hash) ?? await store.getRiskAssessmentByTokenHash(hash);
     if (!assessment) return error(reply, 404, 'RISK_ASSESSMENT_NOT_FOUND', 'This risk questionnaire link is not available.');
     if (assessment.status === 'expired') return error(reply, 410, 'RISK_ASSESSMENT_EXPIRED', 'This risk questionnaire link has expired.');
-    return publicRiskAssessmentResponse(assessment);
+    if (assessment.status === 'revoked') return error(reply, 410, 'RISK_ASSESSMENT_REVOKED', 'This risk questionnaire link has been revoked.');
+    return publicRiskAssessmentResponse(assessment, await store.getClientRiskProfile(assessment.organizationId, assessment.clientId));
   });
 
   // A client can safely pause and resume the bearer-link questionnaire. Draft
@@ -394,28 +410,30 @@ export async function buildApp(store: AppStore = createStore()) {
   // complete questionnaire; only then do they update the household plan.
   app.patch('/api/v1/public/risk-assessments/:token/draft', async (request, reply) => {
     const { token } = z.object({ token: z.string().min(32).max(256) }).parse(request.params);
-    const body = z.object({ answers: z.record(z.string(), z.number().int().min(1).max(10)) }).parse(request.body);
+    const body = z.object({ answers: z.record(z.string(), z.number().int().min(1).max(10)), answerDetails: z.record(z.string(), z.object({ owner: z.enum(['advisor', 'client', 'joint']), note: z.string().trim().max(500).optional(), uncertain: z.boolean().optional() })).optional() }).parse(request.body);
     if (!hasValidRiskAnswers(body.answers, false)) {
       return error(reply, 400, 'RISK_ANSWERS_INVALID', 'A risk answer is not one of the available questionnaire options.');
     }
-    const assessment = await store.saveRiskAssessmentDraft(tokenHash(token), body.answers);
+    const assessment = await store.saveRiskAssessmentDraft(tokenHash(token), body.answers, body.answerDetails);
     if (!assessment) return error(reply, 410, 'RISK_ASSESSMENT_UNAVAILABLE', 'This risk questionnaire link is unavailable or has expired.');
-    return publicRiskAssessmentResponse(assessment);
+    const profile = await store.updateClientRiskProfileWorkflow(assessment.organizationId, assessment.clientId, 'client_in_progress');
+    return publicRiskAssessmentResponse(assessment, profile);
   });
 
   app.post('/api/v1/public/risk-assessments/:token/submit', async (request, reply) => {
     const { token } = z.object({ token: z.string().min(32).max(256) }).parse(request.params);
     const body = z.object({
       answers: z.record(z.string(), z.number().int().min(1).max(10)),
+      answerDetails: z.record(z.string(), z.object({ owner: z.enum(['advisor', 'client', 'joint']), note: z.string().trim().max(500).optional(), uncertain: z.boolean().optional() })).optional(),
     }).parse(request.body);
     if (!hasValidRiskAnswers(body.answers, true)) {
       return error(reply, 400, 'RISK_ANSWERS_INCOMPLETE', 'Answer each risk-profile question before submitting.');
     }
     const result = calculateRiskVerdict(body.answers);
-    const assessment = await store.submitRiskAssessment(tokenHash(token), body.answers, result);
+    const assessment = await store.submitRiskAssessment(tokenHash(token), body.answers, result, body.answerDetails);
     if (!assessment) return error(reply, 410, 'RISK_ASSESSMENT_UNAVAILABLE', 'This risk questionnaire link is unavailable or has expired.');
     await store.upsertClientRiskProfile(assessment.organizationId, assessment.clientId, {
-      answers: body.answers, source: 'client', score: result.score, verdict: result.verdict,
+      answers: body.answers, answerDetails: body.answerDetails, source: 'client', score: result.score, verdict: result.verdict, workflowStatus: 'submitted',
     });
     await store.recordAuditEvent({
       organizationId: assessment.organizationId,
@@ -425,7 +443,18 @@ export async function buildApp(store: AppStore = createStore()) {
       subjectId: assessment.id,
       metadata: { clientId: assessment.clientId },
     });
-    return publicRiskAssessmentResponse(assessment);
+    return publicRiskAssessmentResponse(assessment, await store.getClientRiskProfile(assessment.organizationId, assessment.clientId));
+  });
+
+  app.post('/api/v1/public/risk-assessments/:token/confirm', async (request, reply) => {
+    const { token } = z.object({ token: z.string().min(32).max(256) }).parse(request.params);
+    const assessment = await store.getRiskAssessmentByTokenHash(tokenHash(token));
+    if (!assessment || assessment.status !== 'completed') return error(reply, 410, 'RISK_ASSESSMENT_UNAVAILABLE', 'This completed questionnaire is unavailable.');
+    const profile = await store.getClientRiskProfile(assessment.organizationId, assessment.clientId);
+    if (!profile || !['reviewed', 'applied'].includes(profile.workflowStatus)) return error(reply, 409, 'RISK_PROFILE_NOT_REVIEWED', 'Your adviser has not reviewed this profile yet.');
+    const confirmed = await store.confirmClientRiskProfile(assessment.organizationId, assessment.clientId);
+    await store.recordAuditEvent({ organizationId: assessment.organizationId, actorUserId: null, eventType: 'risk_profile.client_confirmed', subjectType: 'risk_profile', subjectId: confirmed!.id, metadata: { clientId: assessment.clientId } });
+    return publicRiskAssessmentResponse(assessment, confirmed);
   });
 
   app.get('/api/v1/clients', async (request, reply) => {
@@ -516,17 +545,38 @@ export async function buildApp(store: AppStore = createStore()) {
     if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
     const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
     if (!await requireClientAccess(store, scoped, reply, clientId)) return;
-    const body = z.object({ answers: z.record(z.string(), z.number().int().min(1).max(10)) }).parse(request.body);
+    const body = z.object({ answers: z.record(z.string(), z.number().int().min(1).max(10)), answerDetails: z.record(z.string(), z.object({ owner: z.enum(['advisor', 'client', 'joint']), note: z.string().trim().max(500).optional(), uncertain: z.boolean().optional() })).optional() }).parse(request.body);
     if (!hasValidRiskAnswers(body.answers, false)) return error(reply, 400, 'RISK_ANSWERS_INVALID', 'A risk answer is not one of the available questionnaire options.');
     const complete = hasValidRiskAnswers(body.answers, true);
     const result = complete ? calculateRiskVerdict(body.answers) : { score: null, verdict: null };
     const profile = await store.upsertClientRiskProfile(scoped.organizationId, clientId, {
-      answers: body.answers, source: 'advisor', score: result.score, verdict: result.verdict,
+      answers: body.answers, answerDetails: body.answerDetails, source: 'advisor', score: result.score, verdict: result.verdict,
     });
     if (!profile) return error(reply, 404, 'CLIENT_NOT_FOUND', 'Client was not found.');
     await audit(store, scoped.actor, scoped.organizationId, 'risk_profile.advisor_updated', 'risk_profile', profile.id, { clientId, status: profile.status });
     return sharedRiskProfileResponse(profile);
   });
+
+  app.get('/api/v1/clients/:clientId/risk-profile/history', async (request, reply) => {
+    const scoped = await requireOrganization(store, request, reply);
+    if (!scoped) return;
+    const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
+    if (!await requireClientAccess(store, scoped, reply, clientId)) return;
+    return { data: await store.listClientRiskProfileVersions(scoped.organizationId, clientId) };
+  });
+
+  for (const workflowStatus of ['reviewed', 'applied'] as const) {
+    app.post(`/api/v1/clients/:clientId/risk-profile/${workflowStatus}`, async (request, reply) => {
+      const scoped = await requireOrganization(store, request, reply);
+      if (!scoped || !requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
+      const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
+      if (!await requireClientAccess(store, scoped, reply, clientId)) return;
+      const profile = await store.updateClientRiskProfileWorkflow(scoped.organizationId, clientId, workflowStatus, scoped.actor.user.id);
+      if (!profile) return error(reply, 404, 'RISK_PROFILE_NOT_FOUND', 'There is no risk profile to review.');
+      await audit(store, scoped.actor, scoped.organizationId, `risk_profile.${workflowStatus}`, 'risk_profile', profile.id, { clientId });
+      return sharedRiskProfileResponse(profile);
+    });
+  }
 
   app.post('/api/v1/clients/:clientId/risk-profile/export', async (request, reply) => {
     const scoped = await requireOrganization(store, request, reply);
@@ -620,7 +670,7 @@ export async function buildApp(store: AppStore = createStore()) {
     const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
     if (!await requireClientAccess(store, scoped, reply, clientId)) return;
     const assessments = await store.listRiskAssessments(scoped.organizationId, clientId);
-    return { data: assessments.map(publicRiskAssessmentResponse) };
+    return { data: assessments.map((assessment) => publicRiskAssessmentResponse(assessment)) };
   });
 
   // Practice-level register for the isolated adviser Risk Profiler desk.
@@ -679,16 +729,33 @@ export async function buildApp(store: AppStore = createStore()) {
     const accessToken = randomBytes(32).toString('base64url');
     const expiresAt = new Date(Date.now() + body.expiresInDays * 24 * 60 * 60 * 1000).toISOString();
     const currentProfile = await store.getClientRiskProfile(scoped.organizationId, clientId);
+    const initialAnswers = body.initialAnswers ?? currentProfile?.answers ?? {};
+    const initialDetails = currentProfile?.answerDetails ?? Object.fromEntries(Object.keys(initialAnswers).map((id) => [id, { owner: 'advisor' as const }]));
+    const initialResult = hasValidRiskAnswers(initialAnswers, true) ? calculateRiskVerdict(initialAnswers) : { score: null, verdict: null };
+    await store.upsertClientRiskProfile(scoped.organizationId, clientId, { answers: initialAnswers, answerDetails: initialDetails, source: 'advisor', score: initialResult.score, verdict: initialResult.verdict, workflowStatus: 'sent' });
     const assessment = await store.createRiskAssessment(scoped.organizationId, clientId, {
       recipientName: body.recipientName,
       tokenHash: tokenHash(accessToken),
       expiresAt,
-      answers: body.initialAnswers ?? currentProfile?.answers ?? {},
+      answers: initialAnswers, answerDetails: initialDetails,
     });
     if (!assessment) return error(reply, 404, 'CLIENT_NOT_FOUND', 'Client was not found.');
     await audit(store, scoped.actor, scoped.organizationId, 'risk_assessment.created', 'risk_assessment', assessment.id, { clientId, expiresAt });
     return reply.status(201).send({ assessment: publicRiskAssessmentResponse(assessment), accessToken });
   });
+
+  for (const action of ['shared', 'reminded', 'revoked'] as const) {
+    app.post(`/api/v1/clients/:clientId/risk-assessments/:assessmentId/${action}`, async (request, reply) => {
+      const scoped = await requireOrganization(store, request, reply);
+      if (!scoped || !requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
+      const { clientId, assessmentId } = z.object({ clientId: z.string(), assessmentId: z.string() }).parse(request.params);
+      if (!await requireClientAccess(store, scoped, reply, clientId)) return;
+      const assessment = await store.updateRiskAssessmentLifecycle(scoped.organizationId, assessmentId, action);
+      if (!assessment || assessment.clientId !== clientId) return error(reply, 404, 'RISK_ASSESSMENT_NOT_FOUND', 'This risk questionnaire is not available.');
+      await audit(store, scoped.actor, scoped.organizationId, `risk_assessment.${action}`, 'risk_assessment', assessment.id, { clientId });
+      return publicRiskAssessmentResponse(assessment);
+    });
+  }
 
   app.get('/api/v1/reports', async (request, reply) => {
     const scoped = await requireOrganization(store, request, reply);

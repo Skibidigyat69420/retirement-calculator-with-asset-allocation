@@ -158,6 +158,9 @@ test('client risk-profiler links retain a separate completed questionnaire that 
     assert.equal(typeof created.body.accessToken, 'string');
     assert.equal(created.body.assessment.status, 'invited');
     assert.equal(created.body.assessment.clientId, undefined);
+    const shared = await request(app, { method: 'POST', url: `/api/v1/clients/${client.body.id}/risk-assessments/${created.body.assessment.id}/shared`, headers });
+    assert.equal(shared.response.statusCode, 200);
+    assert.ok(shared.body.sentAt);
 
     const publicAssessment = await request(app, {
       method: 'GET', url: `/api/v1/public/risk-assessments/${created.body.accessToken}`,
@@ -208,6 +211,20 @@ test('client risk-profiler links retain a separate completed questionnaire that 
     assert.equal(clientProfile.response.statusCode, 200);
     assert.equal(clientProfile.body.source, 'client');
     assert.equal(clientProfile.body.riskVerdict, 'Growth');
+    assert.equal(clientProfile.body.workflowStatus, 'submitted');
+
+    const reviewed = await request(app, { method: 'POST', url: `/api/v1/clients/${client.body.id}/risk-profile/reviewed`, headers });
+    assert.equal(reviewed.response.statusCode, 200);
+    assert.equal(reviewed.body.workflowStatus, 'reviewed');
+    const confirmed = await request(app, { method: 'POST', url: `/api/v1/public/risk-assessments/${created.body.accessToken}/confirm` });
+    assert.equal(confirmed.response.statusCode, 200);
+    assert.ok(confirmed.body.clientConfirmedAt);
+    const applied = await request(app, { method: 'POST', url: `/api/v1/clients/${client.body.id}/risk-profile/applied`, headers });
+    assert.equal(applied.response.statusCode, 200);
+    assert.equal(applied.body.workflowStatus, 'applied');
+    const history = await request(app, { method: 'GET', url: `/api/v1/clients/${client.body.id}/risk-profile/history`, headers });
+    assert.equal(history.response.statusCode, 200);
+    assert.ok(history.body.data.length >= 3);
 
     const advisorAnswers = {
       'time-horizon-main': 1, 'time-horizon-retirement': 1, 'loss-reaction': 1, 'drawdown-tolerance': 1,

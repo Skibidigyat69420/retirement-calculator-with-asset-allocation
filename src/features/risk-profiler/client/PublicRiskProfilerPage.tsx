@@ -6,6 +6,7 @@ import { ClientRiskReport } from './ClientRiskReport';
 import { isComplete, type RiskAnswers } from '../../../lib/riskQuestionnaire';
 import {
   ApiRequestError,
+  confirmPublicRiskAssessment,
   getPublicRiskAssessment,
   savePublicRiskAssessmentDraft,
   submitPublicRiskAssessment,
@@ -23,6 +24,7 @@ export function PublicRiskProfiler() {
   const [screen, setScreen] = useState<Screen>(token ? 'loading' : 'landing');
   const [assessment, setAssessment] = useState<RiskAssessmentRecord | null>(null);
   const [answers, setAnswers] = useState<RiskAnswers>({});
+  const [answerDetails, setAnswerDetails] = useState<RiskAssessmentRecord['answerDetails']>({});
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
@@ -36,6 +38,7 @@ export function PublicRiskProfiler() {
         if (!active) return;
         setAssessment(record);
         setAnswers(record.answers);
+        setAnswerDetails(record.answerDetails ?? {});
         savedDraftRef.current = JSON.stringify(record.answers);
         setScreen(record.status === 'completed' && isComplete(record.answers) ? 'report' : 'assessment');
       })
@@ -56,7 +59,7 @@ export function PublicRiskProfiler() {
     if (savedDraftRef.current === serialized) return;
     const timer = window.setTimeout(() => {
       setSavingDraft(true);
-      void savePublicRiskAssessmentDraft(token, answers)
+      void savePublicRiskAssessmentDraft(token, answers, answerDetails)
         .then((record) => {
           savedDraftRef.current = JSON.stringify(record.answers);
           setAssessment(record);
@@ -68,16 +71,17 @@ export function PublicRiskProfiler() {
         .finally(() => setSavingDraft(false));
     }, 700);
     return () => window.clearTimeout(timer);
-  }, [answers, assessment, screen, token]);
+  }, [answers, answerDetails, assessment, screen, token]);
 
   const submit = async () => {
     if (!isComplete(answers) || submitting) return;
     setSubmitting(true);
     setError(null);
     try {
-      const record = await submitPublicRiskAssessment(token, answers);
+      const record = await submitPublicRiskAssessment(token, answers, answerDetails);
       setAssessment(record);
       setAnswers(record.answers);
+        setAnswerDetails(record.answerDetails ?? {});
       setScreen('report');
     } catch (cause) {
       setError(cause instanceof ApiRequestError ? cause.message : 'Your responses could not be saved. Please try again.');
@@ -126,6 +130,8 @@ export function PublicRiskProfiler() {
             <RiskAssessment
               riskAnswers={answers}
               setRiskAnswers={setAnswers}
+              answerDetails={answerDetails}
+              setAnswerDetails={setAnswerDetails}
               onLogDecision={() => undefined}
               onViewReport={() => void submit()}
               clientMode
@@ -134,8 +140,15 @@ export function PublicRiskProfiler() {
           </>
         )}
 
-        {screen === 'report' && <ClientRiskReport answers={answers} />}
+        {screen === 'report' && <><ClientRiskReport answers={answers} />{assessment?.workflowStatus && ['reviewed', 'applied'].includes(assessment.workflowStatus) && <ClientConfirmation token={token} confirmedAt={assessment.clientConfirmedAt} onConfirmed={(record) => setAssessment(record)} />}{assessment?.workflowStatus === 'submitted' && <p className="mx-auto mt-6 max-w-2xl rounded-lg border border-border bg-raised p-4 text-sm text-muted">Your adviser has received your assessment and will review it before it is applied to your plan.</p>}</>}
       </div>
     </main>
   );
+}
+
+function ClientConfirmation({ token, confirmedAt, onConfirmed }: { token: string; confirmedAt: string | null; onConfirmed: (record: RiskAssessmentRecord) => void }) {
+  const [working, setWorking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (confirmedAt) return <p className="mx-auto mt-6 max-w-2xl rounded-lg border border-positive/30 bg-positive/5 p-4 text-sm text-positive">You confirmed this reviewed risk profile on {new Date(confirmedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}.</p>;
+  return <section className="mx-auto mt-6 max-w-2xl rounded-lg border border-accent/30 bg-accent-soft p-5"><h2 className="font-semibold text-ink">Your adviser has reviewed this profile</h2><p className="mt-1 text-sm text-muted">Please confirm that this reflects your current circumstances, or contact your adviser if it does not.</p>{error && <p className="mt-3 text-sm text-negative">{error}</p>}<button type="button" onClick={() => { setWorking(true); setError(null); void confirmPublicRiskAssessment(token).then(onConfirmed).catch((cause) => setError(cause instanceof ApiRequestError ? cause.message : 'Could not record your confirmation.')).finally(() => setWorking(false)); }} disabled={working} className="mt-4 rounded-md bg-ink px-3 py-2 text-sm font-medium text-white disabled:opacity-60">{working ? 'Confirming…' : 'Confirm this profile'}</button></section>;
 }
