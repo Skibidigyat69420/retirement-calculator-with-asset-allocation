@@ -55,6 +55,10 @@ Errors use this envelope:
 | `POST` | `/api/v1/clients` | Create a client. |
 | `GET` | `/api/v1/clients/:clientId` | Load one client. |
 | `PATCH` | `/api/v1/clients/:clientId` | Update client demographics. |
+| `GET` | `/api/v1/clients/:clientId/risk-assessments` | List standalone risk-profiler records for one household. |
+| `POST` | `/api/v1/clients/:clientId/risk-assessments` | Create a client bearer link; response includes its one-time plaintext token. |
+| `GET` | `/api/v1/clients/:clientId/risk-profile` | Get the household’s current shared risk profile. |
+| `PUT` | `/api/v1/clients/:clientId/risk-profile` | Save adviser-entered risk answers to the shared profile. |
 | `GET` | `/api/v1/clients/:clientId/export?format=json` | Export a client bundle. |
 
 ## Financial Profile
@@ -92,6 +96,10 @@ Errors use this envelope:
 | --- | --- | --- |
 | `GET` | `/api/v1/fx/rates` | Return INR-per-unit conversion rates for every available currency. Uses the free Frankfurter daily reference-rate feed, cached for six hours with a bundled fallback. |
 | `GET` | `/api/v1/audit-events?limit=50` | List tenant-scoped audit history for the active practice. |
+| `GET` | `/api/v1/risk-assessments` | Adviser-only practice register of risk-profiler records, client mappings and answers. |
+| `GET` | `/api/v1/risk-profiles` | Adviser-only register of each household’s current shared risk profile. |
+| `GET` | `/api/v1/public/risk-assessments/:token` | Open a client’s standalone risk questionnaire. |
+| `POST` | `/api/v1/public/risk-assessments/:token/submit` | Submit the completed questionnaire once. |
 
 ## Reports
 

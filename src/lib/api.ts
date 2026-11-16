@@ -58,7 +58,7 @@ export interface ClientDraft {
 }
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   token?: string;
   sessionRequest?: boolean;
@@ -222,6 +222,44 @@ export interface ReportRecord {
   status: ReportStatus;
 }
 
+export type RiskAssessmentStatus = 'invited' | 'completed' | 'expired';
+
+/** A standalone client-completed risk questionnaire, retained outside plan versions. */
+export interface RiskAssessmentRecord {
+  id: string;
+  recipientName: string | null;
+  status: RiskAssessmentStatus;
+  answers: Record<string, number>;
+  riskScore: number | null;
+  riskVerdict: string | null;
+  expiresAt: string;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdviserRiskAssessmentRecord extends RiskAssessmentRecord {
+  clientId: string;
+  clientName: string;
+}
+
+export interface ClientRiskProfileRecord {
+  id: string;
+  status: 'in_progress' | 'completed';
+  source: 'advisor' | 'client';
+  answers: Record<string, number>;
+  riskScore: number | null;
+  riskVerdict: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdviserRiskProfileRecord extends ClientRiskProfileRecord {
+  clientId: string;
+  clientName: string;
+}
+
 // ------------------------------------------------------------- endpoints
 
 export function devLogin(email: string): Promise<DevLoginResponse> {
@@ -303,6 +341,50 @@ export function archiveFinancialResource(clientId: string, resource: FinancialRe
 
 export function listPlans(clientId: string): Promise<{ data: PlanSummary[] }> {
   return request<{ data: PlanSummary[] }>(`/clients/${clientId}/plans`);
+}
+
+export function listRiskAssessments(clientId: string): Promise<{ data: RiskAssessmentRecord[] }> {
+  return request<{ data: RiskAssessmentRecord[] }>(`/clients/${clientId}/risk-assessments`);
+}
+
+export function listPracticeRiskAssessments(): Promise<{ data: AdviserRiskAssessmentRecord[] }> {
+  return request<{ data: AdviserRiskAssessmentRecord[] }>('/risk-assessments');
+}
+
+export function getClientRiskProfile(clientId: string): Promise<ClientRiskProfileRecord | { data: null }> {
+  return request<ClientRiskProfileRecord | { data: null }>(`/clients/${clientId}/risk-profile`);
+}
+
+export function saveClientRiskProfile(clientId: string, answers: Record<string, number>): Promise<ClientRiskProfileRecord> {
+  return request<ClientRiskProfileRecord>(`/clients/${clientId}/risk-profile`, { method: 'PUT', body: { answers } });
+}
+
+export function listPracticeRiskProfiles(): Promise<{ data: AdviserRiskProfileRecord[] }> {
+  return request<{ data: AdviserRiskProfileRecord[] }>('/risk-profiles');
+}
+
+export function createRiskAssessment(
+  clientId: string,
+  body: { recipientName?: string; expiresInDays?: number } = {},
+): Promise<{ assessment: RiskAssessmentRecord; accessToken: string }> {
+  return request<{ assessment: RiskAssessmentRecord; accessToken: string }>(
+    `/clients/${clientId}/risk-assessments`,
+    { method: 'POST', body },
+  );
+}
+
+export function getPublicRiskAssessment(token: string): Promise<RiskAssessmentRecord> {
+  return request<RiskAssessmentRecord>(`/public/risk-assessments/${encodeURIComponent(token)}`);
+}
+
+export function submitPublicRiskAssessment(
+  token: string,
+  answers: Record<string, number>,
+): Promise<RiskAssessmentRecord> {
+  return request<RiskAssessmentRecord>(`/public/risk-assessments/${encodeURIComponent(token)}/submit`, {
+    method: 'POST',
+    body: { answers },
+  });
 }
 
 export function calculatePlan(planId: string): Promise<CalculateResponse> {

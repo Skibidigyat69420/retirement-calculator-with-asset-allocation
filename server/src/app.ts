@@ -1,16 +1,55 @@
 import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
 import { createClient, type SupabaseClient, type User as SupabaseUser } from '@supabase/supabase-js';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { createStore, emptyProfile, type AppStore } from './store.js';
 import { calculatePlan } from './calculations.js';
 import { getInrFxRates } from './fx.js';
-import type { Actor, ClientRecord, Plan, UserRecord } from './types.js';
+import type { Actor, ClientRecord, ClientRiskProfile, Plan, RiskAssessment, UserRecord } from './types.js';
 
 const isProduction = process.env.NODE_ENV === 'production';
 const supabaseUrl = process.env.SUPABASE_URL?.trim();
 const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY?.trim();
+
+// Kept server-side so a bearer-link submission cannot manufacture a score that
+// is not one of the options presented by the shared questionnaire.
+const RISK_QUESTION_SCORES: Record<string, number[]> = {
+  'time-horizon-main': [1, 3, 5, 8, 10], 'time-horizon-retirement': [1, 3, 5, 8, 10],
+  'loss-reaction': [1, 3, 6, 9, 10], 'drawdown-tolerance': [1, 3, 5, 8, 10],
+  'income-stability': [1, 3, 5, 7, 10], 'net-worth-income': [1, 3, 5, 8, 10],
+  experience: [1, 3, 5, 8, 10], 'understanding-risk': [1, 3, 5, 8, 10],
+  'emergency-fund': [1, 3, 5, 8, 10], 'liquidity-needs': [1, 3, 5, 8, 10],
+  'goal-timing-flexibility': [1, 3, 5, 8, 10], 'past-behavior': [1, 3, 5, 8, 10],
+  'regret-reaction': [1, 3, 7, 10], 'portfolio-concentration': [1, 3, 5, 8, 10],
+};
+
+const RISK_DIMENSIONS = [
+  { ids: ['time-horizon-main', 'time-horizon-retirement'], weight: 0.15 },
+  { ids: ['loss-reaction', 'drawdown-tolerance'], weight: 0.25 },
+  { ids: ['income-stability', 'net-worth-income'], weight: 0.20 },
+  { ids: ['experience', 'understanding-risk'], weight: 0.15 },
+  { ids: ['emergency-fund', 'liquidity-needs'], weight: 0.10 },
+  { ids: ['goal-timing-flexibility'], weight: 0.05 },
+  { ids: ['past-behavior', 'regret-reaction'], weight: 0.05 },
+  { ids: ['portfolio-concentration'], weight: 0.05 },
+] as const;
+
+function calculateRiskVerdict(answers: Record<string, number>) {
+  const score = Math.round(RISK_DIMENSIONS.reduce((total, dimension) => {
+    const raw = dimension.ids.reduce((sum, id) => sum + answers[id], 0);
+    const max = dimension.ids.length * 10;
+    return total + (raw / max) * 100 * dimension.weight;
+  }, 0));
+  const verdict = score >= 70 ? 'Aggressive' : score >= 55 ? 'Growth' : score >= 40 ? 'Balanced' : score >= 25 ? 'Moderate' : 'Conservative';
+  return { score, verdict };
+}
+
+function hasValidRiskAnswers(answers: Record<string, number>, requireComplete: boolean): boolean {
+  const ids = Object.keys(RISK_QUESTION_SCORES);
+  if (requireComplete && Object.keys(answers).length !== ids.length) return false;
+  return Object.entries(answers).every(([id, score]) => RISK_QUESTION_SCORES[id]?.includes(score));
+}
 
 let supabase: SupabaseClient | null = null;
 if (supabaseUrl && supabaseKey) {
@@ -23,6 +62,43 @@ if (isProduction && !supabase) {
 
 function tokenHash(token: string): string {
   return createHash('sha256').update(token).digest('hex');
+}
+
+function publicRiskAssessmentResponse(assessment: RiskAssessment) {
+  return {
+    id: assessment.id,
+    recipientName: assessment.recipientName,
+    status: assessment.status,
+    answers: assessment.answers,
+    riskScore: assessment.riskScore,
+    riskVerdict: assessment.riskVerdict,
+    expiresAt: assessment.expiresAt,
+    completedAt: assessment.completedAt,
+    createdAt: assessment.createdAt,
+    updatedAt: assessment.updatedAt,
+  };
+}
+
+function adviserRiskAssessmentResponse(assessment: RiskAssessment, client: ClientRecord) {
+  return {
+    ...publicRiskAssessmentResponse(assessment),
+    clientId: client.id,
+    clientName: client.preferredName || `${client.firstName} ${client.lastName}`.trim(),
+  };
+}
+
+function sharedRiskProfileResponse(profile: ClientRiskProfile) {
+  return {
+    id: profile.id,
+    status: profile.status,
+    source: profile.source,
+    answers: profile.answers,
+    riskScore: profile.riskScore,
+    riskVerdict: profile.riskVerdict,
+    completedAt: profile.completedAt,
+    createdAt: profile.createdAt,
+    updatedAt: profile.updatedAt,
+  };
 }
 
 function normalizeEmail(email: string): string {
@@ -255,6 +331,41 @@ export async function buildApp(store: AppStore = createStore()) {
 
   app.get('/api/v1/fx/rates', async () => getInrFxRates());
 
+  // Public, bearer-link risk profiler. The token is never persisted in clear
+  // text and no client identity, plan, allocation or practice data is exposed.
+  app.get('/api/v1/public/risk-assessments/:token', async (request, reply) => {
+    const { token } = z.object({ token: z.string().min(32).max(256) }).parse(request.params);
+    const assessment = await store.getRiskAssessmentByTokenHash(tokenHash(token));
+    if (!assessment) return error(reply, 404, 'RISK_ASSESSMENT_NOT_FOUND', 'This risk questionnaire link is not available.');
+    if (assessment.status === 'expired') return error(reply, 410, 'RISK_ASSESSMENT_EXPIRED', 'This risk questionnaire link has expired.');
+    return publicRiskAssessmentResponse(assessment);
+  });
+
+  app.post('/api/v1/public/risk-assessments/:token/submit', async (request, reply) => {
+    const { token } = z.object({ token: z.string().min(32).max(256) }).parse(request.params);
+    const body = z.object({
+      answers: z.record(z.string(), z.number().int().min(1).max(10)),
+    }).parse(request.body);
+    if (!hasValidRiskAnswers(body.answers, true)) {
+      return error(reply, 400, 'RISK_ANSWERS_INCOMPLETE', 'Answer each risk-profile question before submitting.');
+    }
+    const result = calculateRiskVerdict(body.answers);
+    const assessment = await store.submitRiskAssessment(tokenHash(token), body.answers, result);
+    if (!assessment) return error(reply, 410, 'RISK_ASSESSMENT_UNAVAILABLE', 'This risk questionnaire link is unavailable or has expired.');
+    await store.upsertClientRiskProfile(assessment.organizationId, assessment.clientId, {
+      answers: body.answers, source: 'client', score: result.score, verdict: result.verdict,
+    });
+    await store.recordAuditEvent({
+      organizationId: assessment.organizationId,
+      actorUserId: null,
+      eventType: 'risk_assessment.completed',
+      subjectType: 'risk_assessment',
+      subjectId: assessment.id,
+      metadata: { clientId: assessment.clientId },
+    });
+    return publicRiskAssessmentResponse(assessment);
+  });
+
   app.get('/api/v1/clients', async (request, reply) => {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
@@ -328,6 +439,33 @@ export async function buildApp(store: AppStore = createStore()) {
     return { ...profile, netWorth: sumAmount(profile.assets) - sumAmount(profile.liabilities), totals: { assets: sumAmount(profile.assets), liabilities: sumAmount(profile.liabilities) } };
   });
 
+  app.get('/api/v1/clients/:clientId/risk-profile', async (request, reply) => {
+    const scoped = await requireOrganization(store, request, reply);
+    if (!scoped) return;
+    const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
+    if (!await requireClientAccess(store, scoped, reply, clientId)) return;
+    const profile = await store.getClientRiskProfile(scoped.organizationId, clientId);
+    return profile ? sharedRiskProfileResponse(profile) : { data: null };
+  });
+
+  app.put('/api/v1/clients/:clientId/risk-profile', async (request, reply) => {
+    const scoped = await requireOrganization(store, request, reply);
+    if (!scoped) return;
+    if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
+    const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
+    if (!await requireClientAccess(store, scoped, reply, clientId)) return;
+    const body = z.object({ answers: z.record(z.string(), z.number().int().min(1).max(10)) }).parse(request.body);
+    if (!hasValidRiskAnswers(body.answers, false)) return error(reply, 400, 'RISK_ANSWERS_INVALID', 'A risk answer is not one of the available questionnaire options.');
+    const complete = hasValidRiskAnswers(body.answers, true);
+    const result = complete ? calculateRiskVerdict(body.answers) : { score: null, verdict: null };
+    const profile = await store.upsertClientRiskProfile(scoped.organizationId, clientId, {
+      answers: body.answers, source: 'advisor', score: result.score, verdict: result.verdict,
+    });
+    if (!profile) return error(reply, 404, 'CLIENT_NOT_FOUND', 'Client was not found.');
+    await audit(store, scoped.actor, scoped.organizationId, 'risk_profile.advisor_updated', 'risk_profile', profile.id, { clientId, status: profile.status });
+    return sharedRiskProfileResponse(profile);
+  });
+
   for (const resource of ['assets', 'liabilities', 'cashflows', 'goals'] as const) {
     app.post(`/api/v1/clients/:clientId/${resource}`, async (request, reply) => {
       const scoped = await requireOrganization(store, request, reply);
@@ -375,6 +513,76 @@ export async function buildApp(store: AppStore = createStore()) {
     if (!await requireClientAccess(store, scoped, reply, clientId)) return;
     const rows = await store.listPlans(scoped.organizationId, clientId);
     return { data: rows.map((plan) => ({ id: plan.id, clientId: plan.clientId, name: plan.name, status: plan.status })) };
+  });
+
+  app.get('/api/v1/clients/:clientId/risk-assessments', async (request, reply) => {
+    const scoped = await requireOrganization(store, request, reply);
+    if (!scoped) return;
+    const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
+    if (!await requireClientAccess(store, scoped, reply, clientId)) return;
+    const assessments = await store.listRiskAssessments(scoped.organizationId, clientId);
+    return { data: assessments.map(publicRiskAssessmentResponse) };
+  });
+
+  // Practice-level register for the isolated adviser Risk Profiler desk.
+  // Unlike the bearer-link routes, this returns the client mapping, but only
+  // for households the signed-in adviser is permitted to view.
+  app.get('/api/v1/risk-assessments', async (request, reply) => {
+    const scoped = await requireOrganization(store, request, reply);
+    if (!scoped) return;
+    const assessments = await store.listRiskAssessments(scoped.organizationId);
+    const rows = await Promise.all(assessments.map(async (assessment) => ({
+      assessment,
+      client: await store.getClient(scoped.organizationId, assessment.clientId),
+    })));
+    const visible = rows.filter(({ client }) => client && (
+      hasPracticeWideClientAccess(scoped.actor, scoped.organizationId)
+      || client.assignedPractitioners.some((assignment) => assignment.userId === scoped.actor.user.id)
+    ));
+    return { data: visible.map(({ assessment, client }) => adviserRiskAssessmentResponse(assessment, client!)) };
+  });
+
+  app.get('/api/v1/risk-profiles', async (request, reply) => {
+    const scoped = await requireOrganization(store, request, reply);
+    if (!scoped) return;
+    const profiles = await store.listClientRiskProfiles(scoped.organizationId);
+    const rows = await Promise.all(profiles.map(async (profile) => ({
+      profile,
+      client: await store.getClient(scoped.organizationId, profile.clientId),
+    })));
+    const visible = rows.filter(({ client }) => client && (
+      hasPracticeWideClientAccess(scoped.actor, scoped.organizationId)
+      || client.assignedPractitioners.some((assignment) => assignment.userId === scoped.actor.user.id)
+    ));
+    return {
+      data: visible.map(({ profile, client }) => ({
+        ...sharedRiskProfileResponse(profile),
+        clientId: client!.id,
+        clientName: client!.preferredName || `${client!.firstName} ${client!.lastName}`.trim(),
+      })),
+    };
+  });
+
+  app.post('/api/v1/clients/:clientId/risk-assessments', async (request, reply) => {
+    const scoped = await requireOrganization(store, request, reply);
+    if (!scoped) return;
+    if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
+    const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
+    if (!await requireClientAccess(store, scoped, reply, clientId)) return;
+    const body = z.object({
+      recipientName: z.string().trim().min(1).max(120).optional(),
+      expiresInDays: z.coerce.number().int().min(1).max(90).default(30),
+    }).parse(request.body ?? {});
+    const accessToken = randomBytes(32).toString('base64url');
+    const expiresAt = new Date(Date.now() + body.expiresInDays * 24 * 60 * 60 * 1000).toISOString();
+    const assessment = await store.createRiskAssessment(scoped.organizationId, clientId, {
+      recipientName: body.recipientName,
+      tokenHash: tokenHash(accessToken),
+      expiresAt,
+    });
+    if (!assessment) return error(reply, 404, 'CLIENT_NOT_FOUND', 'Client was not found.');
+    await audit(store, scoped.actor, scoped.organizationId, 'risk_assessment.created', 'risk_assessment', assessment.id, { clientId, expiresAt });
+    return reply.status(201).send({ assessment: publicRiskAssessmentResponse(assessment), accessToken });
   });
 
   app.get('/api/v1/reports', async (request, reply) => {

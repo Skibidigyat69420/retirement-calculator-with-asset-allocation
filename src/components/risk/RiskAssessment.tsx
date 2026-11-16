@@ -19,6 +19,8 @@ interface RiskAssessmentProps {
   setRiskAnswers: Dispatch<SetStateAction<RiskAnswers>>;
   onLogDecision: LogDecisionFn;
   onViewReport: () => void;
+  /** Public-profiler copy never refers to an adviser workspace or allocations. */
+  clientMode?: boolean;
 }
 
 /**
@@ -31,6 +33,7 @@ export const RiskAssessment = ({
   setRiskAnswers,
   onLogDecision,
   onViewReport,
+  clientMode = false,
 }: RiskAssessmentProps) => {
   const answeredCount = Object.keys(riskAnswers).length;
   const complete = isComplete(riskAnswers);
@@ -76,10 +79,10 @@ export const RiskAssessment = ({
           >
             <div className="flex items-center gap-2 text-sm text-positive">
               <ShieldCheck size={16} strokeWidth={1.7} aria-hidden="true" />
-              <span>Assessment complete — the profile report is ready.</span>
+              <span>{clientMode ? 'Assessment complete — submit to view your profile.' : 'Assessment complete — the profile report is ready.'}</span>
             </div>
             <Button size="sm" onClick={onViewReport}>
-              View report <ArrowRight size={14} strokeWidth={1.7} className="ml-1" aria-hidden="true" />
+              {clientMode ? 'Submit & view profile' : 'View report'} <ArrowRight size={14} strokeWidth={1.7} className="ml-1" aria-hidden="true" />
             </Button>
           </motion.div>
         )}
@@ -169,9 +172,9 @@ export const RiskAssessment = ({
       ))}
 
       <p className="text-xs text-faint leading-relaxed border-t border-border-subtle pt-4">
-        This questionnaire is for planning purposes. It does not constitute investment advice.
-        Answers are stored with the workspace and can be revised at any time; revisions to a
-        completed profile are recorded in the decision log.
+        {clientMode
+          ? 'This questionnaire is for planning purposes and is not investment advice. Your completed responses are shared with your adviser for review.'
+          : 'This questionnaire is for planning purposes. It does not constitute investment advice. Answers are stored with the workspace and can be revised at any time; revisions to a completed profile are recorded in the decision log.'}
       </p>
     </div>
   );

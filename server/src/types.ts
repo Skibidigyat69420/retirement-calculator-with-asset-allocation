@@ -3,6 +3,9 @@ export type InviteRole = Exclude<Role, 'practice_owner'>;
 export type ResourceType = 'assets' | 'liabilities' | 'cashflows' | 'goals';
 export type ReportKind = 'plan-report' | 'dossier';
 export type ReportStatus = 'draft' | 'review' | 'approved' | 'archived';
+export type RiskAssessmentStatus = 'invited' | 'completed' | 'expired';
+export type RiskProfileStatus = 'in_progress' | 'completed';
+export type RiskProfileSource = 'advisor' | 'client';
 
 export type UserRecord = { id: string; authUserId: string; email: string; fullName: string | null };
 export type Membership = { organizationId: string; organizationName: string; role: Role };
@@ -59,6 +62,41 @@ export type ReportRecord = {
   clientName: string;
   version: number;
   status: ReportStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/**
+ * A separately retained client-completed risk questionnaire. It is deliberately
+ * independent of a plan version: an adviser may review and import it into a
+ * plan, while the original client response remains an auditable record.
+ */
+export type RiskAssessment = {
+  id: string;
+  organizationId: string;
+  clientId: string;
+  recipientName: string | null;
+  status: RiskAssessmentStatus;
+  answers: Record<string, number>;
+  riskScore: number | null;
+  riskVerdict: string | null;
+  expiresAt: string;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** The one current, shared risk profile for a household. */
+export type ClientRiskProfile = {
+  id: string;
+  organizationId: string;
+  clientId: string;
+  status: RiskProfileStatus;
+  source: RiskProfileSource;
+  answers: Record<string, number>;
+  riskScore: number | null;
+  riskVerdict: string | null;
+  completedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };

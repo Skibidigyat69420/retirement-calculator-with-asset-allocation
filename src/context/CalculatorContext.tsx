@@ -40,10 +40,12 @@ import {
   createPlanVersion,
   getClient,
   getClientProfile,
+  getClientRiskProfile,
   getPlan,
   listPlans as listBackendPlans,
   patchClient,
   patchFinancialResource,
+  saveClientRiskProfile,
   fetchInrFxRates,
 } from '../lib/api';
 import { getActiveCRMClient, saveCRMClient } from '../lib/crm';
@@ -346,6 +348,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
   const backendCashflowIdsRef = useRef<Partial<Record<'income' | 'expense' | 'sip' | 'swp', string>>>({});
   const backendLoadedRef = useRef(false);
   const backendHydratingRef = useRef(false);
+  const syncedRiskAnswersRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!backendEnabled || !activeClientId) return;
@@ -355,10 +358,11 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     backendCashflowIdsRef.current = {};
     (async () => {
       try {
-        const [client, profile, plans] = await Promise.all([
+        const [client, profile, plans, sharedRiskProfile] = await Promise.all([
           getClient(activeClientId),
           getClientProfile(activeClientId),
           listBackendPlans(activeClientId),
+          getClientRiskProfile(activeClientId),
         ]);
         let plan = plans.data[0] ? await getPlan(plans.data[0].id) : null;
         if (!plan && backendEnabled) {
@@ -377,6 +381,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         const snapshot = (rawSnapshot.inputs && typeof rawSnapshot.inputs === 'object'
           ? { ...rawSnapshot.inputs, ...rawSnapshot }
           : rawSnapshot) as Partial<MasterPlanInputs> & {
+          riskAnswers?: RiskAnswers;
           manualTargets?: Record<AssetCategory, number> | null;
           manualAllocationPolicy?: ManualAllocationPolicy | null;
         };
@@ -421,6 +426,13 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
         }));
         setManualTargetsState(snapshot.manualTargets ?? null);
         setManualAllocationPolicyState(snapshot.manualAllocationPolicy ?? null);
+        // The separate Risk Profiler owns the current household profile. A
+        // legacy plan snapshot is promoted on first load when no shared
+        // profile exists, preserving existing adviser work.
+        const sharedAnswers = 'answers' in sharedRiskProfile ? sharedRiskProfile.answers : null;
+        const nextRiskAnswers = (sharedAnswers ?? snapshot.riskAnswers ?? {}) as RiskAnswers;
+        setRiskAnswersState(nextRiskAnswers);
+        syncedRiskAnswersRef.current = sharedAnswers ? JSON.stringify(sharedAnswers) : null;
         backendLoadedRef.current = true;
       } catch (error) {
         console.warn('Could not hydrate the selected client from the backend:', error);
@@ -637,6 +649,21 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     }, 700);
     return () => clearTimeout(timer);
   }, [activeClientId, backendEnabled, inputs, manualTargets, manualAllocationPolicy, riskAnswers]);
+
+  // Keep the standalone Risk Profiler and the main plan on one current
+  // household record. The main plan still versions a snapshot above; this
+  // record is the live shared view used by both adviser and client flows.
+  useEffect(() => {
+    if (!backendEnabled || !activeClientId || !backendLoadedRef.current || backendHydratingRef.current || Object.keys(riskAnswers).length === 0) return;
+    const serialized = JSON.stringify(riskAnswers);
+    if (syncedRiskAnswersRef.current === serialized) return;
+    const timer = window.setTimeout(() => {
+      void saveClientRiskProfile(activeClientId, riskAnswers)
+        .then(() => { syncedRiskAnswersRef.current = serialized; })
+        .catch((error) => console.warn('Shared risk-profile save failed:', error));
+    }, 650);
+    return () => window.clearTimeout(timer);
+  }, [activeClientId, backendEnabled, riskAnswers]);
 
   // Auto-calibrate assumptions using extracted historical market-data CSV bundle
   useEffect(() => {

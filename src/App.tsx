@@ -9,6 +9,7 @@ import { Skeleton } from './components/Skeleton';
 
 import { AuthPage } from './pages/AuthPage';
 import { OnboardingPage } from './pages/OnboardingPage';
+import { PublicRiskProfiler } from './pages/PublicRiskProfiler';
 
 function lazyNamed<T extends ComponentType<any>>(
   factory: () => Promise<Record<string, unknown>>,
@@ -46,6 +47,7 @@ const IPSTemplate = lazy(async () => {
 });
 const IPSWorkspace = lazyNamed(() => import('./pages/IPSWorkspacePage'), 'IPSWorkspacePage');
 const RiskQuestionnaire = lazyNamed(() => import('./pages/RiskQuestionnaire'), 'RiskQuestionnaire');
+const RiskProfilerDesk = lazyNamed(() => import('./pages/RiskProfilerDesk'), 'RiskProfilerDesk');
 const Dossier = lazyNamed(() => import('./pages/Dossier'), 'Dossier');
 const ReportsPage = lazyNamed(() => import('./pages/ReportsPage'), 'ReportsPage');
 const Calculators = lazyNamed(() => import('./pages/Calculators'), 'Calculators');
@@ -92,6 +94,7 @@ function AnimatedRoutes() {
           <Route path="/clients" element={<Practitioner />} />
           <Route path="/overview" element={<Dashboard />} />
           <Route path="/risk" element={<RiskQuestionnaire />} />
+          <Route path="/risk-profiler" element={<RiskProfilerDesk />} />
           <Route path="/master-plan" element={<MasterPlan />} />
           <Route path="/client-profile" element={<MasterPlan defaultStep="profile" />} />
           <Route path="/balance-sheet" element={<MasterPlan defaultStep="financials" />} />
@@ -134,12 +137,19 @@ function WorkspaceRoutes() {
 }
 
 function App() {
+  const riskProfilerHost = typeof window !== 'undefined' && window.location.hostname.startsWith('risk.');
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <BrowserRouter><AuthenticatedApplication /></BrowserRouter>
-      </ThemeProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/r" element={<PublicRiskProfiler />} />
+          <Route path="/r/:token" element={<PublicRiskProfiler />} />
+          <Route path="/risk-profiler/:token" element={<PublicRiskProfiler />} />
+          {riskProfilerHost && <Route path="/" element={<PublicRiskProfiler />} />}
+          <Route path="*" element={<AuthProvider><AuthenticatedApplication /></AuthProvider>} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 

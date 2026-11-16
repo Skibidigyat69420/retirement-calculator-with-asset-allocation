@@ -103,6 +103,13 @@ export const navItems: NavItem[] = [
     description: 'Psychometric risk score & asset constraints',
   },
   {
+    path: '/risk-profiler',
+    label: 'Risk profiler',
+    icon: Shield,
+    section: 'Households',
+    description: 'Client links, risk verdicts and household mapping',
+  },
+  {
     path: '/retirement',
     label: 'Retirement & SWP',
     icon: PiggyBank,
@@ -209,7 +216,7 @@ export const chapterNavItems: ChapterNavItem[] = [
     label: 'Households',
     icon: Users,
     description: 'Relationships, readiness and active households',
-    paths: ['/clients', '/practitioner'],
+    paths: ['/clients', '/practitioner', '/risk-profiler'],
   },
   {
     path: '/master-plan',
@@ -248,7 +255,7 @@ export const toolPaths = ['/calculators', '/team'] as const;
  * underneath its chapter instead of hiding specialist work in a generic menu.
  */
 export const chapterMenuItems: Record<string, string[]> = {
-  Households: ['/clients', '/practitioner'],
+  Households: ['/clients', '/practitioner', '/risk-profiler'],
   Plan: ['/master-plan', '/client-profile', '/balance-sheet', '/goal', '/risk', '/retirement', '/reverse-planning'],
   Policy: ['/policy', '/planning', '/allocation', '/', '/ips/editor'],
   Dossier: ['/dossier', '/reports', '/meeting-workflow'],

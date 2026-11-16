@@ -3,6 +3,7 @@ import postgres, { type Sql } from 'postgres';
 import { createFieldCipher, type FieldCipher } from './fieldEncryption.js';
 import type {
   AuditEvent,
+  ClientRiskProfile,
   ClientDraft,
   CalculationRun,
   ClientRecord,
@@ -16,6 +17,7 @@ import type {
   ReportKind,
   ReportRecord,
   ReportStatus,
+  RiskAssessment,
   ResourceType,
   Role,
   UserRecord,
@@ -60,6 +62,13 @@ export interface AppStore {
   listReports(organizationId: string, clientId?: string): Promise<ReportRecord[]>;
   createReport(organizationId: string, clientId: string, kind: ReportKind, name?: string): Promise<ReportRecord | null>;
   updateReportStatus(organizationId: string, id: string, status: ReportStatus): Promise<ReportRecord | null>;
+  getClientRiskProfile(organizationId: string, clientId: string): Promise<ClientRiskProfile | null>;
+  listClientRiskProfiles(organizationId: string): Promise<ClientRiskProfile[]>;
+  upsertClientRiskProfile(organizationId: string, clientId: string, input: { answers: Record<string, number>; source: 'advisor' | 'client'; score: number | null; verdict: string | null }): Promise<ClientRiskProfile | null>;
+  createRiskAssessment(organizationId: string, clientId: string, input: { recipientName?: string; tokenHash: string; expiresAt: string }): Promise<RiskAssessment | null>;
+  listRiskAssessments(organizationId: string, clientId?: string): Promise<RiskAssessment[]>;
+  getRiskAssessmentByTokenHash(tokenHash: string): Promise<RiskAssessment | null>;
+  submitRiskAssessment(tokenHash: string, answers: Record<string, number>, result: { score: number; verdict: string }): Promise<RiskAssessment | null>;
 }
 
 export function emptyProfile(): Profile {
@@ -195,6 +204,8 @@ class MemoryStore implements AppStore {
   private clientDrafts = new Map<string, ClientDraft & { organizationId: string }>();
   private sampleCatalog = new Map<string, ClientDraft>();
   private sampleWorkspaceClientIds = new Map<string, string>();
+  private riskAssessments = new Map<string, RiskAssessment & { tokenHash: string }>();
+  private clientRiskProfiles = new Map<string, ClientRiskProfile>();
 
   constructor() {
     const org = { id: 'demo-practice', name: 'Sound Thesis Demo Practice' };
@@ -484,6 +495,78 @@ class MemoryStore implements AppStore {
     report.updatedAt = new Date().toISOString();
     return report;
   }
+
+  async getClientRiskProfile(organizationId: string, clientId: string) {
+    const profile = this.clientRiskProfiles.get(clientId);
+    return profile?.organizationId === organizationId ? { ...profile } : null;
+  }
+
+  async listClientRiskProfiles(organizationId: string) {
+    return Array.from(this.clientRiskProfiles.values())
+      .filter((profile) => profile.organizationId === organizationId)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .map((profile) => ({ ...profile }));
+  }
+
+  async upsertClientRiskProfile(organizationId: string, clientId: string, input: { answers: Record<string, number>; source: 'advisor' | 'client'; score: number | null; verdict: string | null }) {
+    if (!(await this.getClient(organizationId, clientId))) return null;
+    const existing = await this.getClientRiskProfile(organizationId, clientId);
+    const now = new Date().toISOString();
+    const profile: ClientRiskProfile = {
+      id: existing?.id ?? randomUUID(), organizationId, clientId,
+      status: input.score === null ? 'in_progress' : 'completed', source: input.source,
+      answers: input.answers, riskScore: input.score, riskVerdict: input.verdict,
+      completedAt: input.score === null ? null : now,
+      createdAt: existing?.createdAt ?? now, updatedAt: now,
+    };
+    this.clientRiskProfiles.set(clientId, profile);
+    return { ...profile };
+  }
+
+  async createRiskAssessment(organizationId: string, clientId: string, input: { recipientName?: string; tokenHash: string; expiresAt: string }) {
+    if (!(await this.getClient(organizationId, clientId))) return null;
+    const now = new Date().toISOString();
+    const assessment = {
+      id: randomUUID(), organizationId, clientId, recipientName: input.recipientName?.trim() || null,
+      tokenHash: input.tokenHash, status: 'invited' as const, answers: {}, riskScore: null, riskVerdict: null, expiresAt: input.expiresAt,
+      completedAt: null, createdAt: now, updatedAt: now,
+    };
+    this.riskAssessments.set(assessment.id, assessment);
+    return this.riskAssessmentView(assessment);
+  }
+
+  async listRiskAssessments(organizationId: string, clientId?: string) {
+    return Array.from(this.riskAssessments.values())
+      .filter((assessment) => assessment.organizationId === organizationId && (!clientId || assessment.clientId === clientId))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map((assessment) => this.riskAssessmentView(assessment));
+  }
+
+  async getRiskAssessmentByTokenHash(tokenHash: string) {
+    const assessment = Array.from(this.riskAssessments.values()).find((item) => item.tokenHash === tokenHash);
+    return assessment ? this.riskAssessmentView(assessment) : null;
+  }
+
+  async submitRiskAssessment(tokenHash: string, answers: Record<string, number>, result: { score: number; verdict: string }) {
+    const assessment = Array.from(this.riskAssessments.values()).find((item) => item.tokenHash === tokenHash);
+    if (!assessment || assessment.status !== 'invited' || Date.parse(assessment.expiresAt) < Date.now()) return null;
+    const now = new Date().toISOString();
+    assessment.answers = answers;
+    assessment.riskScore = result.score;
+    assessment.riskVerdict = result.verdict;
+    assessment.status = 'completed';
+    assessment.completedAt = now;
+    assessment.updatedAt = now;
+    return this.riskAssessmentView(assessment);
+  }
+
+  private riskAssessmentView(assessment: RiskAssessment): RiskAssessment {
+    const { tokenHash: _tokenHash, ...safeAssessment } = assessment as RiskAssessment & { tokenHash?: string };
+    if (assessment.status === 'invited' && Date.parse(assessment.expiresAt) < Date.now()) {
+      return { ...safeAssessment, status: 'expired' };
+    }
+    return safeAssessment;
+  }
 }
 
 class PostgresStore implements AppStore {
@@ -523,6 +606,14 @@ class PostgresStore implements AppStore {
   private async withOrganization<T>(organizationId: string, fn: (query: Sql) => Promise<T>): Promise<T> {
     const result = await this.sql.begin(async (tx) => {
       await tx`select set_config('app.organization_id', ${organizationId}, true)`;
+      return fn(tx as unknown as Sql);
+    });
+    return result as T;
+  }
+
+  private async withRiskToken<T>(tokenHash: string, fn: (query: Sql) => Promise<T>): Promise<T> {
+    const result = await this.sql.begin(async (tx) => {
+      await tx`select set_config('app.risk_access_token_hash', ${tokenHash}, true)`;
       return fn(tx as unknown as Sql);
     });
     return result as T;
@@ -992,6 +1083,119 @@ class PostgresStore implements AppStore {
       const clientRows = await query`select first_name, last_name, preferred_name from clients where id = ${rows[0].client_id}`;
       return mapReport({ ...rows[0], first_name: this.decryptText(clientRows[0]?.first_name), last_name: this.decryptText(clientRows[0]?.last_name), preferred_name: this.decryptText(clientRows[0]?.preferred_name) });
     });
+  }
+
+  async getClientRiskProfile(organizationId: string, clientId: string) {
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = await query`select * from client_risk_profiles where organization_id = ${organizationId} and client_id = ${clientId} limit 1`;
+      return rows[0] ? this.mapClientRiskProfile(rows[0]) : null;
+    });
+  }
+
+  async listClientRiskProfiles(organizationId: string) {
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = await query`select * from client_risk_profiles where organization_id = ${organizationId} order by updated_at desc`;
+      return rows.map((row) => this.mapClientRiskProfile(row));
+    });
+  }
+
+  async upsertClientRiskProfile(organizationId: string, clientId: string, input: { answers: Record<string, number>; source: 'advisor' | 'client'; score: number | null; verdict: string | null }) {
+    return this.withOrganization(organizationId, async (query) => {
+      const client = await query`select id from clients where organization_id = ${organizationId} and id = ${clientId} limit 1`;
+      if (!client[0]) return null;
+      const rows = await query`
+        insert into client_risk_profiles (organization_id, client_id, status, source, answers, risk_score, risk_verdict, completed_at)
+        values (${organizationId}, ${clientId}, ${input.score === null ? 'in_progress' : 'completed'}, ${input.source}, ${query.json(this.encryptJson(input.answers) as any)}, ${input.score}, ${input.verdict}, ${input.score === null ? null : new Date().toISOString()})
+        on conflict (client_id) do update set
+          status = excluded.status, source = excluded.source, answers = excluded.answers,
+          risk_score = excluded.risk_score, risk_verdict = excluded.risk_verdict,
+          completed_at = excluded.completed_at, updated_at = now()
+        returning *
+      `;
+      return this.mapClientRiskProfile(rows[0]);
+    });
+  }
+
+  async createRiskAssessment(organizationId: string, clientId: string, input: { recipientName?: string; tokenHash: string; expiresAt: string }) {
+    return this.withOrganization(organizationId, async (query) => {
+      const client = await query`select id from clients where organization_id = ${organizationId} and id = ${clientId} limit 1`;
+      if (!client[0]) return null;
+      const rows = await query`
+        insert into risk_assessments (organization_id, client_id, recipient_name, access_token_hash, expires_at)
+        values (${organizationId}, ${clientId}, ${this.encryptText(input.recipientName?.trim() || null)}, ${input.tokenHash}, ${input.expiresAt})
+        returning *
+      `;
+      return this.mapRiskAssessment(rows[0]);
+    });
+  }
+
+  async listRiskAssessments(organizationId: string, clientId?: string) {
+    return this.withOrganization(organizationId, async (query) => {
+      const rows = clientId
+        ? await query`
+          select * from risk_assessments
+          where organization_id = ${organizationId} and client_id = ${clientId}
+          order by created_at desc
+        `
+        : await query`
+          select * from risk_assessments
+          where organization_id = ${organizationId}
+          order by created_at desc
+        `;
+      return rows.map((row) => this.mapRiskAssessment(row));
+    });
+  }
+
+  async getRiskAssessmentByTokenHash(tokenHash: string) {
+    return this.withRiskToken(tokenHash, async (query) => {
+      const rows = await query`
+        select * from risk_assessments
+        where access_token_hash = ${tokenHash}
+        limit 1
+      `;
+      return rows[0] ? this.mapRiskAssessment(rows[0]) : null;
+    });
+  }
+
+  async submitRiskAssessment(tokenHash: string, answers: Record<string, number>, result: { score: number; verdict: string }) {
+    return this.withRiskToken(tokenHash, async (query) => {
+      const rows = await query`
+        update risk_assessments
+        set answers = ${query.json(this.encryptJson(answers) as any)}, risk_score = ${result.score}, risk_verdict = ${result.verdict}, status = 'completed', completed_at = now(), updated_at = now()
+        where access_token_hash = ${tokenHash} and status = 'invited' and expires_at > now()
+        returning *
+      `;
+      return rows[0] ? this.mapRiskAssessment(rows[0]) : null;
+    });
+  }
+
+  private mapRiskAssessment(row: any): RiskAssessment {
+    const expired = row.status === 'invited' && new Date(row.expires_at).getTime() < Date.now();
+    return {
+      id: row.id, organizationId: row.organization_id, clientId: row.client_id,
+      recipientName: this.decryptText(row.recipient_name),
+      status: expired ? 'expired' : row.status,
+      answers: this.decryptJson(row.answers) as Record<string, number>,
+      riskScore: typeof row.risk_score === 'number' ? row.risk_score : null,
+      riskVerdict: typeof row.risk_verdict === 'string' ? row.risk_verdict : null,
+      expiresAt: new Date(row.expires_at).toISOString(),
+      completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
+      createdAt: new Date(row.created_at).toISOString(),
+      updatedAt: new Date(row.updated_at).toISOString(),
+    };
+  }
+
+  private mapClientRiskProfile(row: any): ClientRiskProfile {
+    return {
+      id: row.id, organizationId: row.organization_id, clientId: row.client_id,
+      status: row.status, source: row.source,
+      answers: this.decryptJson(row.answers) as Record<string, number>,
+      riskScore: typeof row.risk_score === 'number' ? row.risk_score : null,
+      riskVerdict: typeof row.risk_verdict === 'string' ? row.risk_verdict : null,
+      completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
+      createdAt: new Date(row.created_at).toISOString(),
+      updatedAt: new Date(row.updated_at).toISOString(),
+    };
   }
   private async mapClient(row: any, query: Sql = this.sql): Promise<ClientRecord> {
     const assignments = await query`

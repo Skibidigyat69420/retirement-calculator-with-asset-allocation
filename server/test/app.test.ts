@@ -131,6 +131,92 @@ test('API rejects requests without a valid session', async () => {
   }
 });
 
+test('client risk-profiler links retain a separate completed questionnaire that an adviser can import', async () => {
+  const app = await buildApp(createInMemoryStore());
+  try {
+    const login = await request(app, {
+      method: 'POST', url: '/api/v1/auth/dev-login', payload: { email: 'adviser@soundthesis.local' },
+    });
+    const headers = {
+      authorization: `Bearer ${login.body.token}`,
+      'x-organization-id': login.body.memberships[0].organizationId,
+    };
+    const client = await request(app, {
+      method: 'POST', url: '/api/v1/clients', headers, payload: { firstName: 'Risk', lastName: 'Client' },
+    });
+    const created = await request(app, {
+      method: 'POST', url: `/api/v1/clients/${client.body.id}/risk-assessments`, headers,
+      payload: { recipientName: 'Risk Client', expiresInDays: 30 },
+    });
+    assert.equal(created.response.statusCode, 201);
+    assert.equal(typeof created.body.accessToken, 'string');
+    assert.equal(created.body.assessment.status, 'invited');
+    assert.equal(created.body.assessment.clientId, undefined);
+
+    const publicAssessment = await request(app, {
+      method: 'GET', url: `/api/v1/public/risk-assessments/${created.body.accessToken}`,
+    });
+    assert.equal(publicAssessment.response.statusCode, 200);
+    assert.equal(publicAssessment.body.recipientName, 'Risk Client');
+    assert.equal(publicAssessment.body.clientId, undefined);
+
+    const answers = {
+      'time-horizon-main': 8, 'time-horizon-retirement': 8, 'loss-reaction': 6, 'drawdown-tolerance': 5,
+      'income-stability': 7, 'net-worth-income': 5, experience: 5, 'understanding-risk': 5,
+      'emergency-fund': 8, 'liquidity-needs': 8, 'goal-timing-flexibility': 5, 'past-behavior': 5,
+      'regret-reaction': 7, 'portfolio-concentration': 5,
+    };
+    const submitted = await request(app, {
+      method: 'POST', url: `/api/v1/public/risk-assessments/${created.body.accessToken}/submit`, payload: { answers },
+    });
+    assert.equal(submitted.response.statusCode, 200);
+    assert.equal(submitted.body.status, 'completed');
+    assert.equal(submitted.body.riskVerdict, 'Growth');
+    assert.equal(typeof submitted.body.riskScore, 'number');
+    assert.deepEqual(submitted.body.answers, answers);
+
+    const list = await request(app, {
+      method: 'GET', url: `/api/v1/clients/${client.body.id}/risk-assessments`, headers,
+    });
+    assert.equal(list.response.statusCode, 200);
+    assert.equal(list.body.data.length, 1);
+    assert.equal(list.body.data[0].status, 'completed');
+    assert.deepEqual(list.body.data[0].answers, answers);
+
+    const register = await request(app, { method: 'GET', url: '/api/v1/risk-assessments', headers });
+    assert.equal(register.response.statusCode, 200);
+    assert.equal(register.body.data[0].clientId, client.body.id);
+    assert.equal(register.body.data[0].clientName, 'Risk Client');
+
+    const clientProfile = await request(app, {
+      method: 'GET', url: `/api/v1/clients/${client.body.id}/risk-profile`, headers,
+    });
+    assert.equal(clientProfile.response.statusCode, 200);
+    assert.equal(clientProfile.body.source, 'client');
+    assert.equal(clientProfile.body.riskVerdict, 'Growth');
+
+    const advisorAnswers = {
+      'time-horizon-main': 1, 'time-horizon-retirement': 1, 'loss-reaction': 1, 'drawdown-tolerance': 1,
+      'income-stability': 1, 'net-worth-income': 1, experience: 1, 'understanding-risk': 1,
+      'emergency-fund': 1, 'liquidity-needs': 1, 'goal-timing-flexibility': 1, 'past-behavior': 1,
+      'regret-reaction': 1, 'portfolio-concentration': 1,
+    };
+    const advisorSaved = await request(app, {
+      method: 'PUT', url: `/api/v1/clients/${client.body.id}/risk-profile`, headers, payload: { answers: advisorAnswers },
+    });
+    assert.equal(advisorSaved.response.statusCode, 200);
+    assert.equal(advisorSaved.body.source, 'advisor');
+    assert.equal(advisorSaved.body.riskVerdict, 'Conservative');
+
+    const profiles = await request(app, { method: 'GET', url: '/api/v1/risk-profiles', headers });
+    assert.equal(profiles.response.statusCode, 200);
+    assert.equal(profiles.body.data[0].clientId, client.body.id);
+    assert.equal(profiles.body.data[0].riskVerdict, 'Conservative');
+  } finally {
+    await app.close();
+  }
+});
+
 test('sample catalog is stable and exposes an isolated usable workspace', async () => {
   const app = await buildApp(createInMemoryStore());
   try {
