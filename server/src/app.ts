@@ -1,7 +1,7 @@
 import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
 import { createClient, type SupabaseClient, type User as SupabaseUser } from '@supabase/supabase-js';
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { createStore, emptyProfile, type AppStore } from './store.js';
 import { calculatePlan } from './calculations.js';
@@ -62,6 +62,54 @@ if (isProduction && !supabase) {
 
 function tokenHash(token: string): string {
   return createHash('sha256').update(token).digest('hex');
+}
+
+type PortableRiskProfile = {
+  version: 1;
+  type: 'soundthesis-risk-profile';
+  exportedAt: string;
+  expiresAt: string;
+  answers: Record<string, number>;
+};
+
+function riskProfileExportKey(): string | null {
+  // Production database deployments already require FIELD_ENCRYPTION_KEY. It
+  // is safe to derive a separate HMAC key from that secret, while allowing a
+  // dedicated rotation key if the practice supplies one.
+  const key = process.env.RISK_PROFILE_EXPORT_KEY?.trim() || process.env.FIELD_ENCRYPTION_KEY?.trim();
+  if (key) return key;
+  return isProduction ? null : 'soundthesis-development-risk-profile-export-key';
+}
+
+function signPortableRiskProfile(payload: PortableRiskProfile): string | null {
+  const key = riskProfileExportKey();
+  if (!key) return null;
+  const encoded = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = createHmac('sha256', key).update(encoded).digest('base64url');
+  return `${encoded}.${signature}`;
+}
+
+function readPortableRiskProfile(code: string): PortableRiskProfile | null {
+  const key = riskProfileExportKey();
+  const [encoded, signature, ...rest] = code.trim().split('.');
+  if (!key || !encoded || !signature || rest.length > 0) return null;
+  const expected = createHmac('sha256', key).update(encoded).digest('base64url');
+  const actualBuffer = Buffer.from(signature);
+  const expectedBuffer = Buffer.from(expected);
+  if (actualBuffer.length !== expectedBuffer.length || !timingSafeEqual(actualBuffer, expectedBuffer)) return null;
+  try {
+    const payload = z.object({
+      version: z.literal(1),
+      type: z.literal('soundthesis-risk-profile'),
+      exportedAt: z.string().datetime(),
+      expiresAt: z.string().datetime(),
+      answers: z.record(z.string(), z.number().int().min(1).max(10)),
+    }).parse(JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8')));
+    if (Date.parse(payload.expiresAt) <= Date.now() || !hasValidRiskAnswers(payload.answers, false)) return null;
+    return payload;
+  } catch {
+    return null;
+  }
 }
 
 function publicRiskAssessmentResponse(assessment: RiskAssessment) {
@@ -341,6 +389,20 @@ export async function buildApp(store: AppStore = createStore()) {
     return publicRiskAssessmentResponse(assessment);
   });
 
+  // A client can safely pause and resume the bearer-link questionnaire. Draft
+  // answers belong only to the assessment record until the client submits a
+  // complete questionnaire; only then do they update the household plan.
+  app.patch('/api/v1/public/risk-assessments/:token/draft', async (request, reply) => {
+    const { token } = z.object({ token: z.string().min(32).max(256) }).parse(request.params);
+    const body = z.object({ answers: z.record(z.string(), z.number().int().min(1).max(10)) }).parse(request.body);
+    if (!hasValidRiskAnswers(body.answers, false)) {
+      return error(reply, 400, 'RISK_ANSWERS_INVALID', 'A risk answer is not one of the available questionnaire options.');
+    }
+    const assessment = await store.saveRiskAssessmentDraft(tokenHash(token), body.answers);
+    if (!assessment) return error(reply, 410, 'RISK_ASSESSMENT_UNAVAILABLE', 'This risk questionnaire link is unavailable or has expired.');
+    return publicRiskAssessmentResponse(assessment);
+  });
+
   app.post('/api/v1/public/risk-assessments/:token/submit', async (request, reply) => {
     const { token } = z.object({ token: z.string().min(32).max(256) }).parse(request.params);
     const body = z.object({
@@ -466,6 +528,43 @@ export async function buildApp(store: AppStore = createStore()) {
     return sharedRiskProfileResponse(profile);
   });
 
+  app.post('/api/v1/clients/:clientId/risk-profile/export', async (request, reply) => {
+    const scoped = await requireOrganization(store, request, reply);
+    if (!scoped) return;
+    if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
+    const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
+    if (!await requireClientAccess(store, scoped, reply, clientId)) return;
+    const profile = await store.getClientRiskProfile(scoped.organizationId, clientId);
+    if (!profile || Object.keys(profile.answers).length === 0) return error(reply, 404, 'RISK_PROFILE_NOT_FOUND', 'There is no risk profile to export for this household.');
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000).toISOString();
+    const exportCode = signPortableRiskProfile({
+      version: 1, type: 'soundthesis-risk-profile', exportedAt: now.toISOString(), expiresAt, answers: profile.answers,
+    });
+    if (!exportCode) return error(reply, 503, 'RISK_PROFILE_EXPORT_UNAVAILABLE', 'Risk-profile export signing is not configured on this server.');
+    await audit(store, scoped.actor, scoped.organizationId, 'risk_profile.exported', 'risk_profile', profile.id, { clientId, expiresAt });
+    return { exportCode, expiresAt, profile: sharedRiskProfileResponse(profile) };
+  });
+
+  app.post('/api/v1/clients/:clientId/risk-profile/import', async (request, reply) => {
+    const scoped = await requireOrganization(store, request, reply);
+    if (!scoped) return;
+    if (!requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
+    const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
+    if (!await requireClientAccess(store, scoped, reply, clientId)) return;
+    const { exportCode } = z.object({ exportCode: z.string().trim().min(40).max(10_000) }).parse(request.body);
+    const portableProfile = readPortableRiskProfile(exportCode);
+    if (!portableProfile) return error(reply, 400, 'RISK_PROFILE_IMPORT_INVALID', 'This risk-profile export is invalid, expired, or was not created by this application.');
+    const complete = hasValidRiskAnswers(portableProfile.answers, true);
+    const result = complete ? calculateRiskVerdict(portableProfile.answers) : { score: null, verdict: null };
+    const profile = await store.upsertClientRiskProfile(scoped.organizationId, clientId, {
+      answers: portableProfile.answers, source: 'imported', score: result.score, verdict: result.verdict,
+    });
+    if (!profile) return error(reply, 404, 'CLIENT_NOT_FOUND', 'Client was not found.');
+    await audit(store, scoped.actor, scoped.organizationId, 'risk_profile.imported', 'risk_profile', profile.id, { clientId, exportedAt: portableProfile.exportedAt });
+    return sharedRiskProfileResponse(profile);
+  });
+
   for (const resource of ['assets', 'liabilities', 'cashflows', 'goals'] as const) {
     app.post(`/api/v1/clients/:clientId/${resource}`, async (request, reply) => {
       const scoped = await requireOrganization(store, request, reply);
@@ -572,13 +671,19 @@ export async function buildApp(store: AppStore = createStore()) {
     const body = z.object({
       recipientName: z.string().trim().min(1).max(120).optional(),
       expiresInDays: z.coerce.number().int().min(1).max(90).default(30),
+      initialAnswers: z.record(z.string(), z.number().int().min(1).max(10)).optional(),
     }).parse(request.body ?? {});
+    if (body.initialAnswers && !hasValidRiskAnswers(body.initialAnswers, false)) {
+      return error(reply, 400, 'RISK_ANSWERS_INVALID', 'A risk answer is not one of the available questionnaire options.');
+    }
     const accessToken = randomBytes(32).toString('base64url');
     const expiresAt = new Date(Date.now() + body.expiresInDays * 24 * 60 * 60 * 1000).toISOString();
+    const currentProfile = await store.getClientRiskProfile(scoped.organizationId, clientId);
     const assessment = await store.createRiskAssessment(scoped.organizationId, clientId, {
       recipientName: body.recipientName,
       tokenHash: tokenHash(accessToken),
       expiresAt,
+      answers: body.initialAnswers ?? currentProfile?.answers ?? {},
     });
     if (!assessment) return error(reply, 404, 'CLIENT_NOT_FOUND', 'Client was not found.');
     await audit(store, scoped.actor, scoped.organizationId, 'risk_assessment.created', 'risk_assessment', assessment.id, { clientId, expiresAt });

@@ -1,15 +1,15 @@
 import { useMemo } from 'react';
 import { CheckCircle2, ShieldCheck } from 'lucide-react';
-import { Badge } from '../ui/Badge';
-import { SectionHeader } from '../ui/SectionHeader';
-import { RiskRadar } from './RiskRadar';
+import { Badge } from '../../../components/ui/Badge';
+import { SectionHeader } from '../../../components/ui/SectionHeader';
+import { RiskRadar } from '../../../components/risk/RiskRadar';
 import {
   calculateRiskScore,
   getDimensionBreakdown,
   getRiskProfile,
   type RiskAnswers,
-} from '../../lib/riskQuestionnaire';
-import { DIMENSION_LABELS, ORDERED_DIMENSIONS } from './assessmentGroups';
+} from '../../../lib/riskQuestionnaire';
+import { DIMENSION_LABELS, ORDERED_DIMENSIONS } from '../../../components/risk/assessmentGroups';
 
 const scoreBand = (score: number): string =>
   score >= 70 ? 'Growth-seeking band' : score >= 45 ? 'Balanced band' : score >= 25 ? 'Conservative-leaning band' : 'Capital-preservation band';

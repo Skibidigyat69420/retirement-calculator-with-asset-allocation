@@ -64,10 +64,11 @@ export interface AppStore {
   updateReportStatus(organizationId: string, id: string, status: ReportStatus): Promise<ReportRecord | null>;
   getClientRiskProfile(organizationId: string, clientId: string): Promise<ClientRiskProfile | null>;
   listClientRiskProfiles(organizationId: string): Promise<ClientRiskProfile[]>;
-  upsertClientRiskProfile(organizationId: string, clientId: string, input: { answers: Record<string, number>; source: 'advisor' | 'client'; score: number | null; verdict: string | null }): Promise<ClientRiskProfile | null>;
-  createRiskAssessment(organizationId: string, clientId: string, input: { recipientName?: string; tokenHash: string; expiresAt: string }): Promise<RiskAssessment | null>;
+  upsertClientRiskProfile(organizationId: string, clientId: string, input: { answers: Record<string, number>; source: 'advisor' | 'client' | 'imported'; score: number | null; verdict: string | null }): Promise<ClientRiskProfile | null>;
+  createRiskAssessment(organizationId: string, clientId: string, input: { recipientName?: string; tokenHash: string; expiresAt: string; answers?: Record<string, number> }): Promise<RiskAssessment | null>;
   listRiskAssessments(organizationId: string, clientId?: string): Promise<RiskAssessment[]>;
   getRiskAssessmentByTokenHash(tokenHash: string): Promise<RiskAssessment | null>;
+  saveRiskAssessmentDraft(tokenHash: string, answers: Record<string, number>): Promise<RiskAssessment | null>;
   submitRiskAssessment(tokenHash: string, answers: Record<string, number>, result: { score: number; verdict: string }): Promise<RiskAssessment | null>;
 }
 
@@ -508,7 +509,7 @@ class MemoryStore implements AppStore {
       .map((profile) => ({ ...profile }));
   }
 
-  async upsertClientRiskProfile(organizationId: string, clientId: string, input: { answers: Record<string, number>; source: 'advisor' | 'client'; score: number | null; verdict: string | null }) {
+  async upsertClientRiskProfile(organizationId: string, clientId: string, input: { answers: Record<string, number>; source: 'advisor' | 'client' | 'imported'; score: number | null; verdict: string | null }) {
     if (!(await this.getClient(organizationId, clientId))) return null;
     const existing = await this.getClientRiskProfile(organizationId, clientId);
     const now = new Date().toISOString();
@@ -523,12 +524,12 @@ class MemoryStore implements AppStore {
     return { ...profile };
   }
 
-  async createRiskAssessment(organizationId: string, clientId: string, input: { recipientName?: string; tokenHash: string; expiresAt: string }) {
+  async createRiskAssessment(organizationId: string, clientId: string, input: { recipientName?: string; tokenHash: string; expiresAt: string; answers?: Record<string, number> }) {
     if (!(await this.getClient(organizationId, clientId))) return null;
     const now = new Date().toISOString();
     const assessment = {
       id: randomUUID(), organizationId, clientId, recipientName: input.recipientName?.trim() || null,
-      tokenHash: input.tokenHash, status: 'invited' as const, answers: {}, riskScore: null, riskVerdict: null, expiresAt: input.expiresAt,
+      tokenHash: input.tokenHash, status: 'invited' as const, answers: input.answers ?? {}, riskScore: null, riskVerdict: null, expiresAt: input.expiresAt,
       completedAt: null, createdAt: now, updatedAt: now,
     };
     this.riskAssessments.set(assessment.id, assessment);
@@ -545,6 +546,14 @@ class MemoryStore implements AppStore {
   async getRiskAssessmentByTokenHash(tokenHash: string) {
     const assessment = Array.from(this.riskAssessments.values()).find((item) => item.tokenHash === tokenHash);
     return assessment ? this.riskAssessmentView(assessment) : null;
+  }
+
+  async saveRiskAssessmentDraft(tokenHash: string, answers: Record<string, number>) {
+    const assessment = Array.from(this.riskAssessments.values()).find((item) => item.tokenHash === tokenHash);
+    if (!assessment || assessment.status !== 'invited' || Date.parse(assessment.expiresAt) < Date.now()) return null;
+    assessment.answers = answers;
+    assessment.updatedAt = new Date().toISOString();
+    return this.riskAssessmentView(assessment);
   }
 
   async submitRiskAssessment(tokenHash: string, answers: Record<string, number>, result: { score: number; verdict: string }) {
@@ -1099,7 +1108,7 @@ class PostgresStore implements AppStore {
     });
   }
 
-  async upsertClientRiskProfile(organizationId: string, clientId: string, input: { answers: Record<string, number>; source: 'advisor' | 'client'; score: number | null; verdict: string | null }) {
+  async upsertClientRiskProfile(organizationId: string, clientId: string, input: { answers: Record<string, number>; source: 'advisor' | 'client' | 'imported'; score: number | null; verdict: string | null }) {
     return this.withOrganization(organizationId, async (query) => {
       const client = await query`select id from clients where organization_id = ${organizationId} and id = ${clientId} limit 1`;
       if (!client[0]) return null;
@@ -1116,13 +1125,13 @@ class PostgresStore implements AppStore {
     });
   }
 
-  async createRiskAssessment(organizationId: string, clientId: string, input: { recipientName?: string; tokenHash: string; expiresAt: string }) {
+  async createRiskAssessment(organizationId: string, clientId: string, input: { recipientName?: string; tokenHash: string; expiresAt: string; answers?: Record<string, number> }) {
     return this.withOrganization(organizationId, async (query) => {
       const client = await query`select id from clients where organization_id = ${organizationId} and id = ${clientId} limit 1`;
       if (!client[0]) return null;
       const rows = await query`
-        insert into risk_assessments (organization_id, client_id, recipient_name, access_token_hash, expires_at)
-        values (${organizationId}, ${clientId}, ${this.encryptText(input.recipientName?.trim() || null)}, ${input.tokenHash}, ${input.expiresAt})
+        insert into risk_assessments (organization_id, client_id, recipient_name, access_token_hash, answers, expires_at)
+        values (${organizationId}, ${clientId}, ${this.encryptText(input.recipientName?.trim() || null)}, ${input.tokenHash}, ${query.json(this.encryptJson(input.answers ?? {}) as any)}, ${input.expiresAt})
         returning *
       `;
       return this.mapRiskAssessment(rows[0]);
@@ -1152,6 +1161,18 @@ class PostgresStore implements AppStore {
         select * from risk_assessments
         where access_token_hash = ${tokenHash}
         limit 1
+      `;
+      return rows[0] ? this.mapRiskAssessment(rows[0]) : null;
+    });
+  }
+
+  async saveRiskAssessmentDraft(tokenHash: string, answers: Record<string, number>) {
+    return this.withRiskToken(tokenHash, async (query) => {
+      const rows = await query`
+        update risk_assessments
+        set answers = ${query.json(this.encryptJson(answers) as any)}, updated_at = now()
+        where access_token_hash = ${tokenHash} and status = 'invited' and expires_at > now()
+        returning *
       `;
       return rows[0] ? this.mapRiskAssessment(rows[0]) : null;
     });

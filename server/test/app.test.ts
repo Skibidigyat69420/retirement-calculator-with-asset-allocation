@@ -144,6 +144,12 @@ test('client risk-profiler links retain a separate completed questionnaire that 
     const client = await request(app, {
       method: 'POST', url: '/api/v1/clients', headers, payload: { firstName: 'Risk', lastName: 'Client' },
     });
+    const adviserStarterAnswers = { 'time-horizon-main': 8, 'time-horizon-retirement': 8 };
+    const adviserStarter = await request(app, {
+      method: 'PUT', url: `/api/v1/clients/${client.body.id}/risk-profile`, headers, payload: { answers: adviserStarterAnswers },
+    });
+    assert.equal(adviserStarter.response.statusCode, 200);
+    assert.equal(adviserStarter.body.status, 'in_progress');
     const created = await request(app, {
       method: 'POST', url: `/api/v1/clients/${client.body.id}/risk-assessments`, headers,
       payload: { recipientName: 'Risk Client', expiresInDays: 30 },
@@ -159,6 +165,14 @@ test('client risk-profiler links retain a separate completed questionnaire that 
     assert.equal(publicAssessment.response.statusCode, 200);
     assert.equal(publicAssessment.body.recipientName, 'Risk Client');
     assert.equal(publicAssessment.body.clientId, undefined);
+    assert.deepEqual(publicAssessment.body.answers, adviserStarterAnswers);
+
+    const clientDraftAnswers = { ...adviserStarterAnswers, 'loss-reaction': 6 };
+    const savedDraft = await request(app, {
+      method: 'PATCH', url: `/api/v1/public/risk-assessments/${created.body.accessToken}/draft`, payload: { answers: clientDraftAnswers },
+    });
+    assert.equal(savedDraft.response.statusCode, 200);
+    assert.deepEqual(savedDraft.body.answers, clientDraftAnswers);
 
     const answers = {
       'time-horizon-main': 8, 'time-horizon-retirement': 8, 'loss-reaction': 6, 'drawdown-tolerance': 5,
@@ -212,6 +226,24 @@ test('client risk-profiler links retain a separate completed questionnaire that 
     assert.equal(profiles.response.statusCode, 200);
     assert.equal(profiles.body.data[0].clientId, client.body.id);
     assert.equal(profiles.body.data[0].riskVerdict, 'Conservative');
+
+    const exported = await request(app, {
+      method: 'POST', url: `/api/v1/clients/${client.body.id}/risk-profile/export`, headers,
+    });
+    assert.equal(exported.response.statusCode, 200);
+    assert.equal(typeof exported.body.exportCode, 'string');
+
+    const receivingClient = await request(app, {
+      method: 'POST', url: '/api/v1/clients', headers, payload: { firstName: 'Imported', lastName: 'Household' },
+    });
+    const imported = await request(app, {
+      method: 'POST', url: `/api/v1/clients/${receivingClient.body.id}/risk-profile/import`, headers,
+      payload: { exportCode: exported.body.exportCode },
+    });
+    assert.equal(imported.response.statusCode, 200);
+    assert.equal(imported.body.source, 'imported');
+    assert.equal(imported.body.riskVerdict, 'Conservative');
+    assert.deepEqual(imported.body.answers, advisorAnswers);
   } finally {
     await app.close();
   }

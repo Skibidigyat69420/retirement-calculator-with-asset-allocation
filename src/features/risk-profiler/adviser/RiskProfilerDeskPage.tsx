@@ -1,30 +1,36 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ClipboardCopy, Link2, RefreshCw, Shield, UserRound } from 'lucide-react';
-import { PageHeader } from '../components/ui/PageHeader';
-import { Button } from '../components/ui/Button';
-import { RiskAssessment } from '../components/risk/RiskAssessment';
-import { useCalculator } from '../context/CalculatorContext';
-import { useAuth } from '../context/AuthContext';
+import { ClipboardCopy, Download, Link2, RefreshCw, Shield, Upload, UserRound } from 'lucide-react';
+import { PageHeader } from '../../../components/ui/PageHeader';
+import { Button } from '../../../components/ui/Button';
+import { RiskAssessment } from '../../../components/risk/RiskAssessment';
+import { useCalculator } from '../../../context/CalculatorContext';
+import { useAuth } from '../../../context/AuthContext';
 import {
   ApiRequestError,
   createRiskAssessment,
+  exportClientRiskProfile,
+  importClientRiskProfile,
   listPracticeRiskProfiles,
   type AdviserRiskProfileRecord,
-} from '../lib/api';
-import { calculateRiskScore, getRiskProfile, isComplete } from '../lib/riskQuestionnaire';
-import { riskProfilerLink } from '../lib/riskProfilerUrl';
-import { setActiveCRMClient } from '../lib/crm';
+} from '../../../lib/api';
+import { calculateRiskScore, getRiskProfile, isComplete } from '../../../lib/riskQuestionnaire';
+import { riskProfilerLink } from '../riskProfilerLink';
+import { setActiveCRMClient } from '../../../lib/crm';
 
 /** Adviser-only control surface for the separate, client-facing Risk Profiler. */
 export function RiskProfilerDesk() {
   const { user } = useAuth();
-  const { inputs, riskAnswers, setRiskAnswers, logDecision, showToast } = useCalculator();
+  const { inputs, riskAnswers, setRiskAnswers, refreshSharedRiskProfile, logDecision, showToast } = useCalculator();
   const [activeClientId, setActiveClientId] = useState<string | null>(() => localStorage.getItem('stw.activeClientId'));
   const [records, setRecords] = useState<AdviserRiskProfileRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [exportCode, setExportCode] = useState<string | null>(null);
+  const [exportExpiresAt, setExportExpiresAt] = useState<string | null>(null);
+  const [importCode, setImportCode] = useState('');
+  const [transferring, setTransferring] = useState(false);
   const [assessmentMode, setAssessmentMode] = useState(false);
 
   const refresh = useCallback(async () => {
@@ -55,6 +61,7 @@ export function RiskProfilerDesk() {
     try {
       const { accessToken } = await createRiskAssessment(activeClientId, {
         recipientName: inputs.client.name.trim() || undefined,
+        initialAnswers: riskAnswers,
       });
       const url = riskProfilerLink(accessToken);
       setShareUrl(url);
@@ -69,6 +76,44 @@ export function RiskProfilerDesk() {
       setError(cause instanceof ApiRequestError ? cause.message : 'Could not create the risk-profiler link.');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const exportProfile = async () => {
+    if (!activeClientId || transferring) return;
+    setTransferring(true);
+    setError(null);
+    try {
+      const result = await exportClientRiskProfile(activeClientId);
+      setExportCode(result.exportCode);
+      setExportExpiresAt(result.expiresAt);
+      try {
+        await navigator.clipboard.writeText(result.exportCode);
+        showToast('Portable risk-profile export copied.', 'success');
+      } catch {
+        showToast('Portable export is ready to copy below.', 'info');
+      }
+    } catch (cause) {
+      setError(cause instanceof ApiRequestError ? cause.message : 'Could not export the risk profile.');
+    } finally {
+      setTransferring(false);
+    }
+  };
+
+  const importProfile = async () => {
+    if (!activeClientId || !importCode.trim() || transferring) return;
+    setTransferring(true);
+    setError(null);
+    try {
+      await importClientRiskProfile(activeClientId, importCode);
+      await refreshSharedRiskProfile();
+      setImportCode('');
+      await refresh();
+      showToast('Risk profile imported into this household plan.', 'success');
+    } catch (cause) {
+      setError(cause instanceof ApiRequestError ? cause.message : 'Could not import that risk profile.');
+    } finally {
+      setTransferring(false);
     }
   };
 
@@ -109,12 +154,28 @@ export function RiskProfilerDesk() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm font-semibold text-ink"><Link2 size={17} className="text-accent" /> Client questionnaire link</div>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">Create a private link for {activeClientId ? activeClientName : 'a household selected in All households'}. It expires after 30 days and can only be submitted once.</p>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">Create a private link for {activeClientId ? activeClientName : 'a household selected in All households'}. Existing adviser answers are prefilled; the client can finish later because progress saves to this link. The completed submission updates the plan automatically.</p>
           </div>
           <Button onClick={() => void createLink()} disabled={!activeClientId || creating}><Link2 size={14} className="mr-1" />{creating ? 'Creating…' : 'Create link'}</Button>
         </div>
         {shareUrl && <div className="mt-5 rounded-md border border-accent/30 bg-accent-soft p-3"><div className="flex items-center gap-2 text-xs font-semibold text-ink"><ClipboardCopy size={14} /> Send this client link</div><input readOnly value={shareUrl} onFocus={(event) => event.currentTarget.select()} className="mt-2 w-full rounded border border-border bg-surface px-3 py-2 font-mono text-xs text-ink" aria-label="Client risk-profiler link" /></div>}
         {error && <p className="mt-4 text-sm text-negative">{error}</p>}
+      </section>
+
+      <section className="rounded-xl border border-border bg-raised p-5 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-semibold text-ink"><Download size={17} className="text-accent" /> Portable import / export</div>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">Use this only when the profile needs to move between separate adviser workspaces. Export creates a signed, risk-only code with no client name or contact details; select the receiving household, then paste the code to import it into that plan.</p>
+          </div>
+          <Button variant="outline" onClick={() => void exportProfile()} disabled={!activeClientId || transferring || Object.keys(riskAnswers).length === 0}><Download size={14} className="mr-1" />{transferring ? 'Working…' : 'Export current profile'}</Button>
+        </div>
+        {exportCode && <div className="mt-5 rounded-md border border-accent/30 bg-accent-soft p-3"><div className="flex items-center gap-2 text-xs font-semibold text-ink"><ClipboardCopy size={14} /> Signed transfer code {exportExpiresAt ? `· valid until ${new Date(exportExpiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}` : ''}</div><textarea readOnly value={exportCode} onFocus={(event) => event.currentTarget.select()} className="mt-2 min-h-20 w-full rounded border border-border bg-surface px-3 py-2 font-mono text-xs text-ink" aria-label="Portable risk-profile export code" /></div>}
+        <div className="mt-5 border-t border-border pt-5">
+          <label htmlFor="risk-profile-import" className="flex items-center gap-2 text-sm font-semibold text-ink"><Upload size={15} className="text-accent" /> Import into {activeClientId ? activeClientName : 'the selected household'}</label>
+          <textarea id="risk-profile-import" value={importCode} onChange={(event) => setImportCode(event.target.value)} placeholder="Paste a signed risk-profile transfer code" className="mt-2 min-h-24 w-full rounded border border-border bg-surface px-3 py-2 font-mono text-xs text-ink placeholder:text-faint" disabled={!activeClientId || transferring} />
+          <div className="mt-3 flex justify-end"><Button onClick={() => void importProfile()} disabled={!activeClientId || !importCode.trim() || transferring}><Upload size={14} className="mr-1" />{transferring ? 'Importing…' : 'Import into plan'}</Button></div>
+        </div>
       </section>
 
       <section>

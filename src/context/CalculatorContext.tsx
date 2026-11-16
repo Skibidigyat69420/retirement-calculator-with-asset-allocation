@@ -78,6 +78,7 @@ interface CalculatorContextType {
   setAssumptions: React.Dispatch<React.SetStateAction<AssumptionSet>>;
   riskAnswers: RiskAnswers;
   setRiskAnswers: React.Dispatch<React.SetStateAction<RiskAnswers>>;
+  refreshSharedRiskProfile: () => Promise<void>;
   riskProfile: RiskProfile;
   riskScore: number;
   hasRiskAnswers: boolean;
@@ -664,6 +665,15 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     }, 650);
     return () => window.clearTimeout(timer);
   }, [activeClientId, backendEnabled, riskAnswers]);
+
+  const refreshSharedRiskProfile = useCallback(async () => {
+    if (!backendEnabled || !activeClientId) return;
+    const profile = await getClientRiskProfile(activeClientId);
+    if (!('answers' in profile)) return;
+    const answers = profile.answers as RiskAnswers;
+    syncedRiskAnswersRef.current = JSON.stringify(answers);
+    setRiskAnswersState(answers);
+  }, [activeClientId, backendEnabled]);
 
   // Auto-calibrate assumptions using extracted historical market-data CSV bundle
   useEffect(() => {
@@ -1284,6 +1294,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       setAssumptions,
       riskAnswers,
       setRiskAnswers,
+      refreshSharedRiskProfile,
       riskProfile,
       riskScore,
       hasRiskAnswers,
@@ -1339,6 +1350,7 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
       assumptions,
       riskAnswers,
       setRiskAnswers,
+      refreshSharedRiskProfile,
       riskProfile,
       riskScore,
       hasRiskAnswers,

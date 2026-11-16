@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertCircle, ClipboardList, LoaderCircle } from 'lucide-react';
 import { useParams } from 'react-router-dom';
-import { RiskAssessment } from '../components/risk/RiskAssessment';
-import { ClientRiskReport } from '../components/risk/ClientRiskReport';
-import { isComplete, type RiskAnswers } from '../lib/riskQuestionnaire';
+import { RiskAssessment } from '../../../components/risk/RiskAssessment';
+import { ClientRiskReport } from './ClientRiskReport';
+import { isComplete, type RiskAnswers } from '../../../lib/riskQuestionnaire';
 import {
   ApiRequestError,
   getPublicRiskAssessment,
+  savePublicRiskAssessmentDraft,
   submitPublicRiskAssessment,
   type RiskAssessmentRecord,
-} from '../lib/api';
+} from '../../../lib/api';
 
 type Screen = 'landing' | 'loading' | 'assessment' | 'report' | 'error';
 
@@ -24,6 +25,8 @@ export function PublicRiskProfiler() {
   const [answers, setAnswers] = useState<RiskAnswers>({});
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const savedDraftRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -33,6 +36,7 @@ export function PublicRiskProfiler() {
         if (!active) return;
         setAssessment(record);
         setAnswers(record.answers);
+        savedDraftRef.current = JSON.stringify(record.answers);
         setScreen(record.status === 'completed' && isComplete(record.answers) ? 'report' : 'assessment');
       })
       .catch((cause) => {
@@ -42,6 +46,29 @@ export function PublicRiskProfiler() {
       });
     return () => { active = false; };
   }, [token]);
+
+  // Linked questionnaires are resumable: each partial response is saved back
+  // to this private assessment, but it does not update the adviser plan until
+  // the client explicitly completes the questionnaire.
+  useEffect(() => {
+    if (!token || !assessment || assessment.status !== 'invited' || screen !== 'assessment') return;
+    const serialized = JSON.stringify(answers);
+    if (savedDraftRef.current === serialized) return;
+    const timer = window.setTimeout(() => {
+      setSavingDraft(true);
+      void savePublicRiskAssessmentDraft(token, answers)
+        .then((record) => {
+          savedDraftRef.current = JSON.stringify(record.answers);
+          setAssessment(record);
+        })
+        .catch(() => {
+          // The final submission remains available; avoid interrupting a
+          // client who temporarily lost connectivity while answering.
+        })
+        .finally(() => setSavingDraft(false));
+    }, 700);
+    return () => window.clearTimeout(timer);
+  }, [answers, assessment, screen, token]);
 
   const submit = async () => {
     if (!isComplete(answers) || submitting) return;
@@ -93,7 +120,7 @@ export function PublicRiskProfiler() {
           <>
             <section className="mb-8 max-w-3xl">
               <div className="flex items-center gap-2 text-sm font-semibold text-ink"><ClipboardList size={17} className="text-accent" aria-hidden="true" /> A short, private questionnaire</div>
-              <p className="mt-3 text-sm leading-relaxed text-muted">There are fourteen questions about your financial time horizon, ability to take risk, comfort with market changes and investing experience. Please answer based on your own circumstances. It usually takes five to seven minutes.</p>
+              <p className="mt-3 text-sm leading-relaxed text-muted">There are fourteen questions about your financial time horizon, ability to take risk, comfort with market changes and investing experience. Please answer based on your own circumstances. Your progress is saved automatically, so you can return to this link later.</p>
             </section>
             {error && <div className="mb-5 rounded-md border border-negative/30 bg-negative/5 px-4 py-3 text-sm text-negative">{error}</div>}
             <RiskAssessment
@@ -103,7 +130,7 @@ export function PublicRiskProfiler() {
               onViewReport={() => void submit()}
               clientMode
             />
-            {submitting && <div className="fixed inset-x-0 bottom-5 z-50 mx-auto w-fit rounded-full bg-ink px-4 py-2 text-sm text-white shadow-lg">Saving your responses…</div>}
+            {(submitting || savingDraft) && <div className="fixed inset-x-0 bottom-5 z-50 mx-auto w-fit rounded-full bg-ink px-4 py-2 text-sm text-white shadow-lg">{submitting ? 'Submitting your responses…' : 'Saving your progress…'}</div>}
           </>
         )}
 

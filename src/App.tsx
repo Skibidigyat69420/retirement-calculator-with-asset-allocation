@@ -9,7 +9,7 @@ import { Skeleton } from './components/Skeleton';
 
 import { AuthPage } from './pages/AuthPage';
 import { OnboardingPage } from './pages/OnboardingPage';
-import { PublicRiskProfiler } from './pages/PublicRiskProfiler';
+import { PublicRiskProfiler } from './features/risk-profiler/client/PublicRiskProfilerPage';
 
 function lazyNamed<T extends ComponentType<any>>(
   factory: () => Promise<Record<string, unknown>>,
@@ -47,7 +47,7 @@ const IPSTemplate = lazy(async () => {
 });
 const IPSWorkspace = lazyNamed(() => import('./pages/IPSWorkspacePage'), 'IPSWorkspacePage');
 const RiskQuestionnaire = lazyNamed(() => import('./pages/RiskQuestionnaire'), 'RiskQuestionnaire');
-const RiskProfilerDesk = lazyNamed(() => import('./pages/RiskProfilerDesk'), 'RiskProfilerDesk');
+const RiskProfilerDesk = lazyNamed(() => import('./features/risk-profiler/adviser/RiskProfilerDeskPage'), 'RiskProfilerDesk');
 const Dossier = lazyNamed(() => import('./pages/Dossier'), 'Dossier');
 const ReportsPage = lazyNamed(() => import('./pages/ReportsPage'), 'ReportsPage');
 const Calculators = lazyNamed(() => import('./pages/Calculators'), 'Calculators');

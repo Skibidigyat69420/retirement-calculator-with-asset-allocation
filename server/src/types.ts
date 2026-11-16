@@ -5,7 +5,7 @@ export type ReportKind = 'plan-report' | 'dossier';
 export type ReportStatus = 'draft' | 'review' | 'approved' | 'archived';
 export type RiskAssessmentStatus = 'invited' | 'completed' | 'expired';
 export type RiskProfileStatus = 'in_progress' | 'completed';
-export type RiskProfileSource = 'advisor' | 'client';
+export type RiskProfileSource = 'advisor' | 'client' | 'imported';
 
 export type UserRecord = { id: string; authUserId: string; email: string; fullName: string | null };
 export type Membership = { organizationId: string; organizationName: string; role: Role };

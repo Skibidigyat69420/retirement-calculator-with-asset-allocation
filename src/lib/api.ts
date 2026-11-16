@@ -246,7 +246,7 @@ export interface AdviserRiskAssessmentRecord extends RiskAssessmentRecord {
 export interface ClientRiskProfileRecord {
   id: string;
   status: 'in_progress' | 'completed';
-  source: 'advisor' | 'client';
+  source: 'advisor' | 'client' | 'imported';
   answers: Record<string, number>;
   riskScore: number | null;
   riskVerdict: string | null;
@@ -359,13 +359,21 @@ export function saveClientRiskProfile(clientId: string, answers: Record<string, 
   return request<ClientRiskProfileRecord>(`/clients/${clientId}/risk-profile`, { method: 'PUT', body: { answers } });
 }
 
+export function exportClientRiskProfile(clientId: string): Promise<{ exportCode: string; expiresAt: string; profile: ClientRiskProfileRecord }> {
+  return request<{ exportCode: string; expiresAt: string; profile: ClientRiskProfileRecord }>(`/clients/${clientId}/risk-profile/export`, { method: 'POST' });
+}
+
+export function importClientRiskProfile(clientId: string, exportCode: string): Promise<ClientRiskProfileRecord> {
+  return request<ClientRiskProfileRecord>(`/clients/${clientId}/risk-profile/import`, { method: 'POST', body: { exportCode } });
+}
+
 export function listPracticeRiskProfiles(): Promise<{ data: AdviserRiskProfileRecord[] }> {
   return request<{ data: AdviserRiskProfileRecord[] }>('/risk-profiles');
 }
 
 export function createRiskAssessment(
   clientId: string,
-  body: { recipientName?: string; expiresInDays?: number } = {},
+  body: { recipientName?: string; expiresInDays?: number; initialAnswers?: Record<string, number> } = {},
 ): Promise<{ assessment: RiskAssessmentRecord; accessToken: string }> {
   return request<{ assessment: RiskAssessmentRecord; accessToken: string }>(
     `/clients/${clientId}/risk-assessments`,
@@ -383,6 +391,16 @@ export function submitPublicRiskAssessment(
 ): Promise<RiskAssessmentRecord> {
   return request<RiskAssessmentRecord>(`/public/risk-assessments/${encodeURIComponent(token)}/submit`, {
     method: 'POST',
+    body: { answers },
+  });
+}
+
+export function savePublicRiskAssessmentDraft(
+  token: string,
+  answers: Record<string, number>,
+): Promise<RiskAssessmentRecord> {
+  return request<RiskAssessmentRecord>(`/public/risk-assessments/${encodeURIComponent(token)}/draft`, {
+    method: 'PATCH',
     body: { answers },
   });
 }
