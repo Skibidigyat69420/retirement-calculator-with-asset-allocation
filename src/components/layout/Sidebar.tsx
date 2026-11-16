@@ -75,6 +75,18 @@ const NavSections = ({ collapsed, onClick }: { collapsed?: boolean; onClick?: ()
   const toolItems = navItems.filter((item) => !chapterNavItems.some((chapter) => chapter.paths.includes(item.path)));
   const currentIsTool = toolItems.some((item) => item.path === location.pathname);
   const [toolsOpen, setToolsOpen] = useState(currentIsTool);
+  const toolsGroupRef = useRef<HTMLDivElement>(null);
+
+  const toggleTools = () => {
+    const next = !toolsOpen;
+    setToolsOpen(next);
+    if (next) {
+      // The navigation rail has its own scroll container. The expandable
+      // items can otherwise render below the visible edge and make the
+      // button appear to do nothing.
+      requestAnimationFrame(() => toolsGroupRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
+    }
+  };
 
   return (
     <nav aria-label="Primary" className="flex-1 overflow-y-auto py-2" style={{ scrollbarWidth: 'none' }}>
@@ -103,10 +115,10 @@ const NavSections = ({ collapsed, onClick }: { collapsed?: boolean; onClick?: ()
         </div>
       )}
       <div className="mt-4 pt-3 border-t border-border-subtle">
-        <div className="sidebar-tool-group">
+        <div ref={toolsGroupRef} className="sidebar-tool-group">
             <button
               type="button"
-              onClick={() => setToolsOpen((open) => !open)}
+              onClick={toggleTools}
               aria-expanded={toolsOpen}
               title={collapsed ? 'Tools & practice' : undefined}
               className={cn('sidebar-tool-group-button', collapsed && 'justify-center px-0', currentIsTool && 'text-accent-strong')}
