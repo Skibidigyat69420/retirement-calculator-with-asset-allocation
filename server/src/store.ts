@@ -223,23 +223,6 @@ class MemoryStore implements AppStore {
     this.organizations.set(org.id, org);
     this.users.set(user.id, user);
     this.addMembershipSync(user, org, 'practice_owner');
-    const client: ClientRecord & { organizationId: string } = {
-      id: '00000000-0000-0000-0000-000000000000',
-      organizationId: org.id,
-      householdId: 'demo-household',
-      firstName: 'Demo',
-      lastName: 'Client',
-      preferredName: null,
-      email: 'client@example.com',
-      phone: null,
-      dateOfBirth: null,
-      maritalStatus: null,
-      notes: null,
-      status: 'active',
-      assignedPractitioners: [{ userId: user.id, fullName: user.fullName, assignmentRole: 'lead' }],
-    };
-    this.clients.set(client.id, client);
-    this.profiles.set(client.id, emptyProfile());
   }
 
   async close() {}

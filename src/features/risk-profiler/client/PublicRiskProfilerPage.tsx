@@ -39,7 +39,7 @@ export function PublicRiskProfiler() {
         setAssessment(record);
         setAnswers(record.answers);
         setAnswerDetails(record.answerDetails ?? {});
-        savedDraftRef.current = JSON.stringify(record.answers);
+        savedDraftRef.current = JSON.stringify({ answers: record.answers, answerDetails: record.answerDetails ?? {} });
         setScreen(record.status === 'completed' && isComplete(record.answers) ? 'report' : 'assessment');
       })
       .catch((cause) => {
@@ -55,13 +55,15 @@ export function PublicRiskProfiler() {
   // the client explicitly completes the questionnaire.
   useEffect(() => {
     if (!token || !assessment || assessment.status !== 'invited' || screen !== 'assessment') return;
-    const serialized = JSON.stringify(answers);
+    // A note, ownership label, or uncertainty flag can change without a
+    // numerical answer changing. Save the complete collaboration response.
+    const serialized = JSON.stringify({ answers, answerDetails });
     if (savedDraftRef.current === serialized) return;
     const timer = window.setTimeout(() => {
       setSavingDraft(true);
       void savePublicRiskAssessmentDraft(token, answers, answerDetails)
         .then((record) => {
-          savedDraftRef.current = JSON.stringify(record.answers);
+          savedDraftRef.current = JSON.stringify({ answers: record.answers, answerDetails: record.answerDetails ?? {} });
           setAssessment(record);
         })
         .catch(() => {
@@ -81,7 +83,7 @@ export function PublicRiskProfiler() {
       const record = await submitPublicRiskAssessment(token, answers, answerDetails);
       setAssessment(record);
       setAnswers(record.answers);
-        setAnswerDetails(record.answerDetails ?? {});
+      setAnswerDetails(record.answerDetails ?? {});
       setScreen('report');
     } catch (cause) {
       setError(cause instanceof ApiRequestError ? cause.message : 'Your responses could not be saved. Please try again.');

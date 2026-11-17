@@ -222,7 +222,7 @@ export interface ReportRecord {
   status: ReportStatus;
 }
 
-export type RiskAssessmentStatus = 'invited' | 'completed' | 'expired';
+export type RiskAssessmentStatus = 'invited' | 'completed' | 'revoked' | 'expired';
 
 /** A standalone client-completed risk questionnaire, retained outside plan versions. */
 export interface RiskAssessmentRecord {

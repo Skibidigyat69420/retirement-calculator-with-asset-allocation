@@ -681,6 +681,23 @@ export const CalculatorProvider = ({ children }: { children: React.ReactNode }) 
     setRiskAnswerDetails(profile.answerDetails);
   }, [activeClientId, backendEnabled]);
 
+  // The public questionnaire is a separate page. Refresh the shared record
+  // when an adviser returns, so the live plan does not retain stale answers.
+  useEffect(() => {
+    if (!backendEnabled || !activeClientId) return;
+    const refreshOnReturn = () => {
+      if (document.visibilityState === 'visible') {
+        void refreshSharedRiskProfile().catch((error) => console.warn('Could not refresh the shared risk profile:', error));
+      }
+    };
+    window.addEventListener('focus', refreshOnReturn);
+    document.addEventListener('visibilitychange', refreshOnReturn);
+    return () => {
+      window.removeEventListener('focus', refreshOnReturn);
+      document.removeEventListener('visibilitychange', refreshOnReturn);
+    };
+  }, [activeClientId, backendEnabled, refreshSharedRiskProfile]);
+
   // Auto-calibrate assumptions using extracted historical market-data CSV bundle
   useEffect(() => {
     let active = true;

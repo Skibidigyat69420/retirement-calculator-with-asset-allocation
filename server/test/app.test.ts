@@ -158,6 +158,8 @@ test('client risk-profiler links retain a separate completed questionnaire that 
     assert.equal(typeof created.body.accessToken, 'string');
     assert.equal(created.body.assessment.status, 'invited');
     assert.equal(created.body.assessment.clientId, undefined);
+    const prematureReview = await request(app, { method: 'POST', url: `/api/v1/clients/${client.body.id}/risk-profile/reviewed`, headers });
+    assert.equal(prematureReview.response.statusCode, 409);
     const shared = await request(app, { method: 'POST', url: `/api/v1/clients/${client.body.id}/risk-assessments/${created.body.assessment.id}/shared`, headers });
     assert.equal(shared.response.statusCode, 200);
     assert.ok(shared.body.sentAt);
@@ -172,10 +174,14 @@ test('client risk-profiler links retain a separate completed questionnaire that 
 
     const clientDraftAnswers = { ...adviserStarterAnswers, 'loss-reaction': 6 };
     const savedDraft = await request(app, {
-      method: 'PATCH', url: `/api/v1/public/risk-assessments/${created.body.accessToken}/draft`, payload: { answers: clientDraftAnswers },
+      method: 'PATCH', url: `/api/v1/public/risk-assessments/${created.body.accessToken}/draft`, payload: {
+        answers: clientDraftAnswers,
+        answerDetails: { 'loss-reaction': { owner: 'client', uncertain: true, note: 'I would like to discuss this.' } },
+      },
     });
     assert.equal(savedDraft.response.statusCode, 200);
     assert.deepEqual(savedDraft.body.answers, clientDraftAnswers);
+    assert.equal(savedDraft.body.answerDetails['loss-reaction'].note, 'I would like to discuss this.');
 
     const answers = {
       'time-horizon-main': 8, 'time-horizon-retirement': 8, 'loss-reaction': 6, 'drawdown-tolerance': 5,
@@ -289,6 +295,25 @@ test('client drafts do not inject hardcoded sample households into a practice', 
     assert.equal(clients.response.statusCode, 200);
     assert.ok(clients.body.data.some((row: { name: string }) => row.name === 'Real Household'));
     assert.ok(!clients.body.data.some((row: { name: string }) => row.name === 'Sample Household'));
+  } finally {
+    await app.close();
+  }
+});
+
+test('creating a replacement risk link revokes the unfinished previous link', async () => {
+  const app = await buildApp(createInMemoryStore());
+  try {
+    const login = await request(app, { method: 'POST', url: '/api/v1/auth/dev-login', payload: { email: 'adviser@soundthesis.local' } });
+    const headers = { authorization: `Bearer ${login.body.token}`, 'x-organization-id': login.body.memberships[0].organizationId };
+    const client = await request(app, { method: 'POST', url: '/api/v1/clients', headers, payload: { firstName: 'Link', lastName: 'Owner' } });
+    const first = await request(app, { method: 'POST', url: `/api/v1/clients/${client.body.id}/risk-assessments`, headers, payload: {} });
+    const second = await request(app, { method: 'POST', url: `/api/v1/clients/${client.body.id}/risk-assessments`, headers, payload: {} });
+    assert.equal(first.response.statusCode, 201);
+    assert.equal(second.response.statusCode, 201);
+    const oldLink = await request(app, { method: 'GET', url: `/api/v1/public/risk-assessments/${first.body.accessToken}` });
+    assert.equal(oldLink.response.statusCode, 410);
+    const currentLink = await request(app, { method: 'GET', url: `/api/v1/public/risk-assessments/${second.body.accessToken}` });
+    assert.equal(currentLink.response.statusCode, 200);
   } finally {
     await app.close();
   }

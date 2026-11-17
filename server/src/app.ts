@@ -570,8 +570,16 @@ export async function buildApp(store: AppStore = createStore()) {
       if (!scoped || !requireWriteAccess(reply, scoped.actor, scoped.organizationId)) return;
       const { clientId } = z.object({ clientId: z.string() }).parse(request.params);
       if (!await requireClientAccess(store, scoped, reply, clientId)) return;
+      const currentProfile = await store.getClientRiskProfile(scoped.organizationId, clientId);
+      if (!currentProfile) return error(reply, 404, 'RISK_PROFILE_NOT_FOUND', 'There is no risk profile to review.');
+      if (workflowStatus === 'reviewed' && (currentProfile.status !== 'completed' || currentProfile.workflowStatus !== 'submitted')) {
+        return error(reply, 409, 'RISK_PROFILE_NOT_READY_FOR_REVIEW', 'A completed client submission is required before adviser review.');
+      }
+      if (workflowStatus === 'applied' && currentProfile.workflowStatus !== 'reviewed') {
+        return error(reply, 409, 'RISK_PROFILE_NOT_REVIEWED', 'Review this risk profile before applying it to the plan.');
+      }
       const profile = await store.updateClientRiskProfileWorkflow(scoped.organizationId, clientId, workflowStatus, scoped.actor.user.id);
-      if (!profile) return error(reply, 404, 'RISK_PROFILE_NOT_FOUND', 'There is no risk profile to review.');
+      if (!profile) return error(reply, 404, 'RISK_PROFILE_NOT_FOUND', 'There is no risk profile to update.');
       await audit(store, scoped.actor, scoped.organizationId, `risk_profile.${workflowStatus}`, 'risk_profile', profile.id, { clientId });
       return sharedRiskProfileResponse(profile);
     });
@@ -725,6 +733,12 @@ export async function buildApp(store: AppStore = createStore()) {
     if (body.initialAnswers && !hasValidRiskAnswers(body.initialAnswers, false)) {
       return error(reply, 400, 'RISK_ANSWERS_INVALID', 'A risk answer is not one of the available questionnaire options.');
     }
+    // A new link replaces an unfinished one. Otherwise two client sessions
+    // could independently overwrite the shared household profile.
+    const previous = await store.listRiskAssessments(scoped.organizationId, clientId);
+    await Promise.all(previous
+      .filter((assessment) => assessment.status === 'invited')
+      .map((assessment) => store.updateRiskAssessmentLifecycle(scoped.organizationId, assessment.id, 'revoked')));
     const accessToken = randomBytes(32).toString('base64url');
     const expiresAt = new Date(Date.now() + body.expiresInDays * 24 * 60 * 60 * 1000).toISOString();
     const currentProfile = await store.getClientRiskProfile(scoped.organizationId, clientId);

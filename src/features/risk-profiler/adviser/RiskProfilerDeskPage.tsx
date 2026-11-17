@@ -70,10 +70,10 @@ export function RiskProfilerDesk() {
     setCreating(true);
     setError(null);
     try {
-      const { accessToken, assessment } = await createRiskAssessment(activeClientId, {
-        recipientName: inputs.client.name.trim() || undefined,
-        initialAnswers: riskAnswers,
-      });
+      // The server reads the selected household's current shared profile.
+      // Passing page-local answers could prefill this link from a household
+      // selected immediately before the current one.
+      const { accessToken, assessment } = await createRiskAssessment(activeClientId);
       const url = riskProfilerLink(accessToken);
       setActiveAssessment(assessment);
       setShareUrl(url);
@@ -153,6 +153,8 @@ export function RiskProfilerDesk() {
 
   const activeClientName = inputs.client.name.trim() || 'the selected household';
   const activeProfile = records.find((record) => record.clientId === activeClientId) ?? null;
+  const canReview = activeProfile?.workflowStatus === 'submitted';
+  const canApply = activeProfile?.workflowStatus === 'reviewed';
   const summary = useMemo(() => ({
     completed: records.filter((record) => record.status === 'completed' && isComplete(record.answers)).length,
     awaiting: records.filter((record) => record.status === 'in_progress').length,
@@ -173,7 +175,7 @@ export function RiskProfilerDesk() {
         <Metric label="Selected household" value={activeClientId ? activeClientName : 'Choose a household'} />
       </section>
 
-      {activeClientId && <section className="rounded-xl border border-border bg-raised p-5 sm:p-6"><div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><div className="eyebrow mb-2">Collaboration status</div><h2 className="text-lg font-semibold text-ink">{activeClientName}</h2><p className="mt-1 text-sm text-muted">The plan uses the shared answers; review and apply make the adviser sign-off explicit.</p></div><div className="flex gap-2"><Button variant="outline" size="sm" onClick={() => void runWorkflowAction('reviewed')} disabled={!activeProfile || activeProfile.workflowStatus === 'reviewed' || activeProfile.workflowStatus === 'applied' || transferring}>Mark reviewed</Button><Button size="sm" onClick={() => void runWorkflowAction('applied')} disabled={!activeProfile || activeProfile.workflowStatus !== 'reviewed' || transferring}>Apply to plan</Button></div></div><WorkflowTimeline status={activeProfile?.workflowStatus ?? 'draft'} profile={activeProfile} assessment={activeAssessment} /></section>}
+      {activeClientId && <section className="rounded-xl border border-border bg-raised p-5 sm:p-6"><div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><div className="eyebrow mb-2">Collaboration status</div><h2 className="text-lg font-semibold text-ink">{activeClientName}</h2><p className="mt-1 text-sm text-muted">The plan uses the shared answers; review and apply make the adviser sign-off explicit.</p></div><div className="flex gap-2"><Button variant="outline" size="sm" onClick={() => void runWorkflowAction('reviewed')} disabled={!canReview || transferring} title={canReview ? undefined : 'Available after the client submits a completed questionnaire.'}>Mark reviewed</Button><Button size="sm" onClick={() => void runWorkflowAction('applied')} disabled={!canApply || transferring} title={canApply ? undefined : 'Review the submitted questionnaire first.'}>Apply to plan</Button></div></div><WorkflowTimeline status={activeProfile?.workflowStatus ?? 'draft'} profile={activeProfile} assessment={activeAssessment} /></section>}
 
       <section className="rounded-xl border border-border bg-raised p-5 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -191,11 +193,11 @@ export function RiskProfilerDesk() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm font-semibold text-ink"><Link2 size={17} className="text-accent" /> Client questionnaire link</div>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">Create a private link for {activeClientId ? activeClientName : 'a household selected in All households'}. Existing adviser answers are prefilled; the client can finish later because progress saves to this link. The completed submission updates the plan automatically.</p>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">Create a private link for {activeClientId ? activeClientName : 'a household selected in All households'}. The selected household’s existing answers are prefilled and client progress saves to this link. A replacement revokes an unfinished earlier link, so there is always one current questionnaire.</p>
           </div>
-          <Button onClick={() => void createLink()} disabled={!activeClientId || creating}><Link2 size={14} className="mr-1" />{creating ? 'Creating…' : 'Create link'}</Button>
+          <Button onClick={() => void createLink()} disabled={!activeClientId || creating}><Link2 size={14} className="mr-1" />{creating ? 'Creating…' : activeAssessment?.status === 'invited' ? 'Create replacement link' : 'Create link'}</Button>
         </div>
-        {shareUrl && <div className="mt-5 rounded-md border border-accent/30 bg-accent-soft p-3"><div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-ink"><span className="inline-flex items-center gap-2"><ClipboardCopy size={14} /> Private client link — copy this now</span><span className="text-muted">Works by WhatsApp, SMS, or email</span></div><input readOnly value={shareUrl} onFocus={(event) => event.currentTarget.select()} className="mt-2 w-full rounded border border-border bg-surface px-3 py-2 font-mono text-xs text-ink" aria-label="Client risk-profiler link" /><div className="mt-3 flex flex-wrap gap-2"><Button size="sm" onClick={() => void copyClientLink()}><ClipboardCopy size={14} className="mr-1" />Copy link</Button><a href={shareUrl} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-md border border-border bg-surface px-3 py-2 text-xs font-semibold text-ink hover:bg-sunken"><ExternalLink size={14} className="mr-1" />Preview client view</a></div></div>}
+        {shareUrl && <div className="mt-5 rounded-md border border-accent/30 bg-accent-soft p-3"><div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-ink"><span className="inline-flex items-center gap-2"><ClipboardCopy size={14} /> Private client link — copy this now</span><span className="text-muted">Works by WhatsApp, SMS, or email</span></div><input readOnly value={shareUrl} onFocus={(event) => event.currentTarget.select()} className="mt-2 w-full rounded border border-border bg-surface px-3 py-2 font-mono text-xs text-ink" aria-label="Client risk-profiler link" /><div className="mt-3 flex flex-wrap gap-2"><Button size="sm" onClick={() => void copyClientLink()}><ClipboardCopy size={14} className="mr-1" />Copy link</Button><a href={shareUrl} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-md border border-border bg-surface px-3 py-2 text-xs font-semibold text-ink hover:bg-sunken"><ExternalLink size={14} className="mr-1" />Preview client view</a></div><p className="mt-3 text-xs text-muted">For security, this private URL is shown only when it is created. Copy it before leaving this page; if it is lost, create a replacement link.</p></div>}
         {activeAssessment && activeAssessment.status === 'invited' && <div className="mt-4 flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={() => void updateLifecycle('shared')} disabled={transferring}>{activeAssessment.sentAt ? 'Shared' : 'Mark as shared'}</Button><Button variant="outline" size="sm" onClick={() => void updateLifecycle('reminded')} disabled={transferring}>Record reminder</Button><Button variant="ghost" size="sm" onClick={() => void updateLifecycle('revoked')} disabled={transferring}>Revoke link</Button></div>}
         {error && <p className="mt-4 text-sm text-negative">{error}</p>}
       </section>
