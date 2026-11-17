@@ -56,6 +56,7 @@ export const RiskQuestionnaire = () => {
           title="Risk Profile"
           variant="hero"
           description="The risk profile establishes a recommended risk budget: strategic allocation, volatility constraints and goal-success thresholds. You can accept that starting point, refine it for the client, or write an independent IPS after the assessment."
+          actions={<Button variant="outline" onClick={() => navigate('/risk-profiler')}>Create client link</Button>}
         />
 
         <EmptyState
@@ -103,15 +104,7 @@ export const RiskQuestionnaire = () => {
           title="Risk Questionnaire"
           description="Fourteen questions across eight dimensions. Answers persist with the workspace; a completed profile feeds the strategic allocation, volatility constraints, and goal success thresholds."
           actions={
-            <Button
-              variant="outline"
-              disabled={!complete}
-              onClick={() => setMode('report')}
-              title={complete ? undefined : 'Answer every question to view the report'}
-            >
-              View report
-              <ArrowRight size={15} strokeWidth={1.7} className="ml-1.5" aria-hidden="true" />
-            </Button>
+            <div className="flex gap-2"><Button variant="outline" onClick={() => navigate('/risk-profiler')}>Create client link</Button><Button variant="outline" disabled={!complete} onClick={() => setMode('report')} title={complete ? undefined : 'Answer every question to view the report'}>View report<ArrowRight size={15} strokeWidth={1.7} className="ml-1.5" aria-hidden="true" /></Button></div>
           }
         />
 

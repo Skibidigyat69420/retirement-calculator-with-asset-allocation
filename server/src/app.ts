@@ -467,7 +467,6 @@ export async function buildApp(store: AppStore = createStore()) {
   app.get('/api/v1/client-drafts', async (request, reply) => {
     const scoped = await requireOrganization(store, request, reply);
     if (!scoped) return;
-    await store.ensureClientDraftSamples(scoped.organizationId, scoped.actor.user.id);
     return { data: await store.listClientDrafts(scoped.organizationId) };
   });
 

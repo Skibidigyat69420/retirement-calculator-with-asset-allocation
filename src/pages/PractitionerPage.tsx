@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowUpRight, ChevronRight, Download, LayoutGrid, List, RefreshCw, Search, UserPlus, Users, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCalculator } from '../context/CalculatorContext';
-import { ApiRequestError, createClient, exportClientBundle, listClients, listClientDrafts, type ClientSummary } from '../lib/api';
+import { ApiRequestError, createClient, exportClientBundle, listClients, type ClientSummary } from '../lib/api';
 import { formatCurrencyCompact } from '../lib/formatters';
 
 import { setActiveCRMClient } from '../lib/crm';
@@ -48,21 +48,26 @@ export function PractitionerPage() {
   const loadClients = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const [response, draftResponse] = await Promise.all([listClients(), listClientDrafts()]);
-      const assigned = response.data.filter((client) => client.assignedPractitioners.some((advisor) => advisor.userId === user?.id));
-      const drafts = draftResponse.data.filter((draft) => Boolean(draft.clientId)).map((draft): ClientSummary => ({ id: draft.clientId!, name: draft.name, status: 'Sample', householdId: draft.clientId!, assignedPractitioners: [], financialSummary: (draft.data.financialSummary as ClientSummary['financialSummary'] | undefined) ?? { netWorth: 0, investableAssets: 0, totalAssets: 0, totalLiabilities: 0, assetCount: 0 } }));
-      const directory = [...new Map([...assigned, ...drafts].map((client) => [client.id, client])).values()];
+      const response = await listClients();
+      // The API has already applied organisation and assignment access rules.
+      // Do not merge sample drafts into a live practice directory.
+      const directory = response.data;
       setClients(directory);
       setSelectedId((current) => current ?? directory[0]?.id ?? null);
+      const activeId = localStorage.getItem('stw.activeClientId');
+      if (activeId && !directory.some((client) => client.id === activeId)) {
+        if (directory[0]) setActiveCRMClient(directory[0].id);
+        else localStorage.removeItem('stw.activeClientId');
+      }
     } catch (cause) {
       setError(cause instanceof ApiRequestError ? cause.message : 'Could not load the client database.');
     } finally { setLoading(false); }
-  }, [user]);
+  }, []);
 
   useEffect(() => { if (ready) void loadClients(); }, [ready, loadClients]);
 
   const filtered = useMemo(() => clients.filter((client) => client.name.toLowerCase().includes(query.toLowerCase()) || client.assignedPractitioners.some((advisor) => advisor.fullName?.toLowerCase().includes(query.toLowerCase()))), [clients, query]);
-  const attentionCount = useMemo(() => clients.filter((client) => client.status && !['Active', 'Sample'].includes(client.status)).length, [clients]);
+  const attentionCount = useMemo(() => clients.filter((client) => client.status && client.status !== 'Active').length, [clients]);
   const selected = clients.find((client) => client.id === selectedId) ?? filtered[0] ?? null;
 
   const handleExport = async (client: ClientSummary) => {
@@ -80,8 +85,6 @@ export function PractitionerPage() {
     setActiveCRMClient(client.id);
     if (!user) updateClient({ name: client.name });
   };
-
-  const addSampleClient = () => { void loadClients(); };
 
   const submitNewClient = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -175,7 +178,7 @@ export function PractitionerPage() {
         <section className="client-results" aria-label="Client list">
           {error && <div className="directory-error">{error}</div>}
           {loading && clients.length === 0 && <div className="directory-empty">Loading clients…</div>}
-          {!loading && !error && filtered.length === 0 && <div className="directory-empty"><Users size={26} /><h3>{clients.length ? 'No clients match this search' : 'Start your client list'}</h3><p>{clients.length ? 'Clear the search or add another client.' : 'Add a real household, or explore the complete workflow with a fictional sample.'}</p>{!clients.length && <div className="directory-empty-actions"><button type="button" onClick={handleAddClient}>Add a client</button><button type="button" onClick={addSampleClient}>Explore a sample</button></div>}</div>}
+          {!loading && !error && filtered.length === 0 && <div className="directory-empty"><Users size={26} /><h3>{clients.length ? 'No clients match this search' : 'Start your client list'}</h3><p>{clients.length ? 'Clear the search or add another client.' : 'Add the first real household to begin planning.'}</p>{!clients.length && <div className="directory-empty-actions"><button type="button" onClick={handleAddClient}>Add a client</button></div>}</div>}
           {view === 'grid' && filtered.length > 0 && <div className="client-grid">{filtered.map((client, index) => <ClientCard key={client.id} client={client} index={index} selected={selected?.id === client.id} onSelect={() => selectClient(client)} onExport={() => void handleExport(client)} exporting={exporting === client.id} />)}</div>}
           {view === 'list' && filtered.length > 0 && <div className="client-table"><div className="client-table-head"><span>Client</span><span>Portfolio</span><span>Coverage</span><span>Status</span><span /></div>{filtered.map((client, index) => <ClientRow key={client.id} client={client} index={index} selected={selected?.id === client.id} onSelect={() => selectClient(client)} />)}</div>}
         </section>

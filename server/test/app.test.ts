@@ -266,7 +266,7 @@ test('client risk-profiler links retain a separate completed questionnaire that 
   }
 });
 
-test('sample catalog is stable and exposes an isolated usable workspace', async () => {
+test('client drafts do not inject hardcoded sample households into a practice', async () => {
   const app = await buildApp(createInMemoryStore());
   try {
     const login = await request(app, {
@@ -279,23 +279,16 @@ test('sample catalog is stable and exposes an isolated usable workspace', async 
       'x-organization-id': login.body.memberships[0].organizationId,
     };
 
-    const first = await request(app, { method: 'GET', url: '/api/v1/client-drafts', headers });
-    const second = await request(app, { method: 'GET', url: '/api/v1/client-drafts', headers });
-    assert.equal(first.response.statusCode, 200);
-    assert.equal(first.body.data.length, 1);
-    assert.deepEqual(
-      first.body.data.map((draft: { id: string }) => draft.id).sort(),
-      second.body.data.map((draft: { id: string }) => draft.id).sort(),
-    );
+    const drafts = await request(app, { method: 'GET', url: '/api/v1/client-drafts', headers });
+    assert.equal(drafts.response.statusCode, 200);
+    assert.equal(drafts.body.data.length, 0);
 
-    const sampleClientId = first.body.data[0].clientId as string;
-    assert.ok(sampleClientId);
-    const profile = await request(app, { method: 'GET', url: `/api/v1/clients/${sampleClientId}/profile`, headers });
-    assert.equal(profile.response.statusCode, 200);
-    assert.equal(profile.body.assets.length, 8);
-    assert.equal(profile.body.liabilities.length, 3);
-    assert.equal(profile.body.cashflows.length, 3);
-    assert.equal(profile.body.goals.length, 6);
+    const client = await request(app, { method: 'POST', url: '/api/v1/clients', headers, payload: { firstName: 'Real', lastName: 'Household' } });
+    assert.equal(client.response.statusCode, 201);
+    const clients = await request(app, { method: 'GET', url: '/api/v1/clients', headers });
+    assert.equal(clients.response.statusCode, 200);
+    assert.ok(clients.body.data.some((row: { name: string }) => row.name === 'Real Household'));
+    assert.ok(!clients.body.data.some((row: { name: string }) => row.name === 'Sample Household'));
   } finally {
     await app.close();
   }

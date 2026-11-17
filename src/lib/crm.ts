@@ -85,8 +85,10 @@ export const CRM_TIERS: CRMTier[] = ['Retail', 'Affluent', 'HNI', 'Ultra HNI', '
 const LOCAL_CLIENTS_KEY = 'stw.local-client-directory.v4';
 const ACTIVE_CLIENT_KEY = 'stw.activeClientId';
 const CRM_LOGS_PREFIX = 'stw.crm.interactions.';
+const LEGACY_SAMPLE_CLIENT_IDS = new Set(['sample-household', 'client-khanna']);
 
-const SAMPLE_CLIENTS: CRMClient[] = [
+/** Legacy fixture retained only for explicit development tooling; never loaded into a practice. */
+export const SAMPLE_CLIENTS: CRMClient[] = [
   // 1. ACTIVE CLIENT: Mid-career mass-affluent family mandate
   {
     id: 'sample-household',
@@ -346,22 +348,21 @@ const SAMPLE_CLIENTS: CRMClient[] = [
   },
 ];
 
-/** Read all clients from local storage, pre-populating defaults if empty. */
+/** Read only locally created offline clients. Samples are never injected. */
 export function getCRMClients(): CRMClient[] {
   try {
     const raw = localStorage.getItem(LOCAL_CLIENTS_KEY);
-    if (!raw) {
-      localStorage.setItem(LOCAL_CLIENTS_KEY, JSON.stringify(SAMPLE_CLIENTS));
-      return SAMPLE_CLIENTS;
-    }
+    if (!raw) return [];
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      localStorage.setItem(LOCAL_CLIENTS_KEY, JSON.stringify(SAMPLE_CLIENTS));
-      return SAMPLE_CLIENTS;
+    if (!Array.isArray(parsed)) return [];
+    const clients = (parsed as CRMClient[]).filter((client) => !LEGACY_SAMPLE_CLIENT_IDS.has(client.id));
+    if (clients.length !== parsed.length) {
+      localStorage.setItem(LOCAL_CLIENTS_KEY, JSON.stringify(clients));
+      if (LEGACY_SAMPLE_CLIENT_IDS.has(localStorage.getItem(ACTIVE_CLIENT_KEY) ?? '')) localStorage.removeItem(ACTIVE_CLIENT_KEY);
     }
-    return parsed as CRMClient[];
+    return clients;
   } catch {
-    return SAMPLE_CLIENTS;
+    return [];
   }
 }
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ClipboardCopy, Download, Link2, RefreshCw, Shield, Upload, UserRound } from 'lucide-react';
+import { ClipboardCopy, Download, ExternalLink, Link2, RefreshCw, Shield, Upload, UserRound } from 'lucide-react';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Button } from '../../../components/ui/Button';
 import { RiskAssessment } from '../../../components/risk/RiskAssessment';
@@ -88,6 +88,16 @@ export function RiskProfilerDesk() {
       setError(cause instanceof ApiRequestError ? cause.message : 'Could not create the risk-profiler link.');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const copyClientLink = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast('Client link copied. Send it by WhatsApp, SMS, or any channel you use.', 'success');
+    } catch {
+      showToast('Select and copy the link below.', 'info');
     }
   };
 
@@ -185,7 +195,7 @@ export function RiskProfilerDesk() {
           </div>
           <Button onClick={() => void createLink()} disabled={!activeClientId || creating}><Link2 size={14} className="mr-1" />{creating ? 'Creating…' : 'Create link'}</Button>
         </div>
-        {shareUrl && <div className="mt-5 rounded-md border border-accent/30 bg-accent-soft p-3"><div className="flex items-center gap-2 text-xs font-semibold text-ink"><ClipboardCopy size={14} /> Send this client link</div><input readOnly value={shareUrl} onFocus={(event) => event.currentTarget.select()} className="mt-2 w-full rounded border border-border bg-surface px-3 py-2 font-mono text-xs text-ink" aria-label="Client risk-profiler link" /></div>}
+        {shareUrl && <div className="mt-5 rounded-md border border-accent/30 bg-accent-soft p-3"><div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-ink"><span className="inline-flex items-center gap-2"><ClipboardCopy size={14} /> Private client link — copy this now</span><span className="text-muted">Works by WhatsApp, SMS, or email</span></div><input readOnly value={shareUrl} onFocus={(event) => event.currentTarget.select()} className="mt-2 w-full rounded border border-border bg-surface px-3 py-2 font-mono text-xs text-ink" aria-label="Client risk-profiler link" /><div className="mt-3 flex flex-wrap gap-2"><Button size="sm" onClick={() => void copyClientLink()}><ClipboardCopy size={14} className="mr-1" />Copy link</Button><a href={shareUrl} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-md border border-border bg-surface px-3 py-2 text-xs font-semibold text-ink hover:bg-sunken"><ExternalLink size={14} className="mr-1" />Preview client view</a></div></div>}
         {activeAssessment && activeAssessment.status === 'invited' && <div className="mt-4 flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={() => void updateLifecycle('shared')} disabled={transferring}>{activeAssessment.sentAt ? 'Shared' : 'Mark as shared'}</Button><Button variant="outline" size="sm" onClick={() => void updateLifecycle('reminded')} disabled={transferring}>Record reminder</Button><Button variant="ghost" size="sm" onClick={() => void updateLifecycle('revoked')} disabled={transferring}>Revoke link</Button></div>}
         {error && <p className="mt-4 text-sm text-negative">{error}</p>}
       </section>
